@@ -33,7 +33,7 @@ export async function haeJulkaistutHankkeet(
   suodatus: HankeSuodatus = {},
 ): Promise<{ hankkeet: HankeListalla[]; virhe: string | null }> {
   if (!supabaseYmparistoAsetettu()) {
-    return { hankkeet: [], virhe: "Tietokantayhteyttä ei ole määritetty." };
+    return { hankkeet: [], virhe: "Julkaistuja hankkeita ei juuri nyt voitu hakea." };
   }
 
   try {
@@ -84,7 +84,7 @@ export async function haeHanke(id: string): Promise<{
   };
 
   if (!supabaseYmparistoAsetettu()) {
-    return { ...tyhja, virhe: "Tietokantayhteyttä ei ole määritetty." };
+    return { ...tyhja, virhe: "Hanketta ei juuri nyt voitu hakea." };
   }
 
   try {
@@ -151,7 +151,7 @@ export async function haeTulevatMaaraajat(): Promise<{
   virhe: string | null;
 }> {
   if (!supabaseYmparistoAsetettu()) {
-    return { maaraajat: [], virhe: "Tietokantayhteyttä ei ole määritetty." };
+    return { maaraajat: [], virhe: "Määräaikoja ei juuri nyt voitu hakea." };
   }
 
   try {

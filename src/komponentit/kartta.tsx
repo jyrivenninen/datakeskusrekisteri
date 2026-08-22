@@ -83,11 +83,8 @@ export function Kartta({ merkit }: { merkit: Karttamerkki[] }) {
   if (!avain) {
     return (
       <p className="rounded border border-border bg-surface px-4 py-3 text-sm">
-        Kartta käyttää Maanmittauslaitoksen avointa taustakarttaa. Lisää avain
-        tiedostoon <code>.env.local</code> nimellä{" "}
-        <code>NEXT_PUBLIC_MML_API_AVAIN</code> ja Vercelin ympäristömuuttujiin.
-        Avaimen saa ilmaiseksi Maanmittauslaitoksen asioinnista. Älä liitä avainta
-        chattiin.
+        Karttaa ei näytetä, ennen kuin Maanmittauslaitoksen avoin kartta-avain
+        on asetettu.
       </p>
     );
   }

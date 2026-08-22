@@ -32,12 +32,20 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
           Siirry sisältöön
         </a>
         <header className="border-b border-border">
-          <div className="mx-auto flex w-full max-w-5xl px-4 py-4">
+          <div className="mx-auto flex w-full max-w-5xl items-center px-4 py-4">
             <p className="text-sm font-medium">
               <a href="/" className="text-foreground no-underline hover:underline">
                 Datakeskushankkeiden kansallinen rekisteri
               </a>
             </p>
+            <nav className="ml-auto flex gap-4 text-sm">
+              <a href="/ilmoitus" className="text-link underline">
+                Ilmoita hanke
+              </a>
+              <a href="/yllapito" className="text-link underline">
+                Ylläpito
+              </a>
+            </nav>
           </div>
         </header>
         {children}

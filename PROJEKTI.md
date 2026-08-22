@@ -168,9 +168,9 @@ ovat valmiit — ne ovat helppo osa, kun tietomalli on kunnossa.
 - [x] Tulevat määräajat etusivulla
 
 ### Vaihe 5 — Ylläpito ja ilmoitus
-- [ ] Ilmoituslomake (uusi hanke / täydennys) → `muutosehdotukset`
-- [ ] Ylläpitonäkymä: ehdotusten tarkistus ja hyväksyntä
-- [ ] Kirjautuminen ylläpitäjille (Supabase Auth)
+- [x] Ilmoituslomake (uusi hanke / täydennys) → `muutosehdotukset`
+- [x] Ylläpitonäkymä: ehdotusten tarkistus ja hyväksyntä
+- [x] Kirjautuminen ylläpitäjille (Supabase Auth)
 
 ### Vaihe 6 — Sisältö
 - [ ] "Näin teet YVA-mielipiteen" -opas: aikajana, mitä missäkin vaiheessa
