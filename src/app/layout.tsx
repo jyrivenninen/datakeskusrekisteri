@@ -32,7 +32,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
           Siirry sisältöön
         </a>
         <header className="border-b border-border">
-          <div className="mx-auto flex w-full max-w-3xl px-4 py-4">
+          <div className="mx-auto flex w-full max-w-5xl px-4 py-4">
             <p className="text-sm font-medium">
               <a href="/" className="text-foreground no-underline hover:underline">
                 Datakeskushankkeiden kansallinen rekisteri
@@ -42,8 +42,8 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         </header>
         {children}
         <footer className="mt-auto border-t border-border">
-          <div className="mx-auto w-full max-w-3xl px-4 py-6 text-sm text-muted">
-            <p>Avoin hanketietokanta ja prosessiopas. Sivusto on rakenteilla.</p>
+          <div className="mx-auto w-full max-w-5xl px-4 py-6 text-sm text-muted">
+            <p>Avoin hanketietokanta ja prosessiopas. Julkaistu tieto merkitään lähteineen.</p>
           </div>
         </footer>
       </body>

@@ -162,10 +162,10 @@ ovat valmiit — ne ovat helppo osa, kun tietomalli on kunnossa.
 - [x] Tämä paljastaa skeeman puutteet ennen kuin mitään on rakennettu päälle
 
 ### Vaihe 4 — Julkinen näkymä
-- [ ] Hankelistaus: suodatus kunnan, vaiheen ja koon mukaan
-- [ ] Yksittäisen hankkeen sivu: kaikki kentät lähdeviitteineen näkyvissä
-- [ ] Kartta
-- [ ] Tulevat määräajat etusivulla
+- [x] Hankelistaus: suodatus kunnan, vaiheen ja koon mukaan
+- [x] Yksittäisen hankkeen sivu: kaikki kentät lähdeviitteineen näkyvissä
+- [x] Kartta
+- [x] Tulevat määräajat etusivulla
 
 ### Vaihe 5 — Ylläpito ja ilmoitus
 - [ ] Ilmoituslomake (uusi hanke / täydennys) → `muutosehdotukset`
