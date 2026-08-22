@@ -158,8 +158,8 @@ ovat valmiit — ne ovat helppo osa, kun tietomalli on kunnossa.
 - [x] Row Level Security: julkinen luku vain julkaistuun tietoon
 
 ### Vaihe 3 — Ensimmäinen hanke käsin
-- [ ] Jokelan (Tuusula) hanke syötettynä loppuun asti
-- [ ] Tämä paljastaa skeeman puutteet ennen kuin mitään on rakennettu päälle
+- [x] Jokelan (Tuusula) hanke syötettynä loppuun asti
+- [x] Tämä paljastaa skeeman puutteet ennen kuin mitään on rakennettu päälle
 
 ### Vaihe 4 — Julkinen näkymä
 - [ ] Hankelistaus: suodatus kunnan, vaiheen ja koon mukaan
