@@ -147,7 +147,7 @@ Tee tässä järjestyksessä. Älä hyppää agentteihin ennen kuin vaiheet 1–
 ovat valmiit — ne ovat helppo osa, kun tietomalli on kunnossa.
 
 ### Vaihe 1 — Pohja
-- [ ] Next.js + TypeScript + Tailwind, Supabase-kytkentä, Vercel-deploy
+- [x] Next.js + TypeScript + Tailwind, Supabase-kytkentä, Vercel-deploy
 - [x] Ympäristömuuttujat `.env.local` (ei koskaan gitiin)
 
 ### Vaihe 2 — Skeema
