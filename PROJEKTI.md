@@ -151,11 +151,11 @@ ovat valmiit — ne ovat helppo osa, kun tietomalli on kunnossa.
 - [x] Ympäristömuuttujat `.env.local` (ei koskaan gitiin)
 
 ### Vaihe 2 — Skeema
-- [ ] Migraatio `supabase/migrations/`: `hankkeet`, `kentta_lahteet`,
+- [x] Migraatio `supabase/migrations/`: `hankkeet`, `kentta_lahteet`,
       `muutosehdotukset`, `maaraajat`, `yhteyshenkilot`, `organisaatiot`
-- [ ] Tietokantatason pakotteet: `NOT NULL`, `CHECK`-ehdot, ei lähteetöntä
+- [x] Tietokantatason pakotteet: `NOT NULL`, `CHECK`-ehdot, ei lähteetöntä
       faktakenttää
-- [ ] Row Level Security: julkinen luku vain julkaistuun tietoon
+- [x] Row Level Security: julkinen luku vain julkaistuun tietoon
 
 ### Vaihe 3 — Ensimmäinen hanke käsin
 - [ ] Jokelan (Tuusula) hanke syötettynä loppuun asti

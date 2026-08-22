@@ -17,6 +17,19 @@ npm run dev
 
 Avaa [http://localhost:3000](http://localhost:3000).
 
+## Tietokanta
+
+Skeema on kansiossa `supabase/migrations/`. Aja migraatiot Supabase-projektiin:
+
+```bash
+npx supabase login
+npx supabase link
+npx supabase db push
+```
+
+Project ref löytyy Supabase-hallintapaneelista (Settings → General).
+Älä liitä avaimia chattiin. Hanketietoja ei tallenneta gittiin.
+
 ## Julkaisu
 
 Julkaisu tapahtuu `git push` → Vercel. Ympäristömuuttujat lisätään Vercelin
