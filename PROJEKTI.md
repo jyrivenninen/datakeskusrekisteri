@@ -1,0 +1,223 @@
+# Datakeskushankkeiden kansallinen rekisteri
+
+> **Cursor: lue tämä tiedosto kokonaan ennen ensimmäistä tehtävää.**
+> Tämä on projektin toimeksianto. `.cursor/rules/` sisältää sitovat säännöt.
+
+---
+
+## 1. Mitä rakennetaan
+
+Julkinen, kansallinen verkkosivusto, jonne kootaan Suomessa vireillä olevat
+datakeskushankkeet, niiden eteneminen, määräajat ja niihin liittyvä tietotaito.
+
+Tavoitteena on, että hankealueiden asukkaat ympäri Suomen voivat
+- nähdä mitä missäkin on vireillä ja missä vaiheessa,
+- saada ajoissa tiedon vaikuttamisen määräajoista (YVA-mielipiteet,
+  kaavamuistutukset, valitusajat),
+- löytää yhteyshenkilöitä, järjestöjä ja viranomaistahoja,
+- hyödyntää muiden jo tekemää selvitystyötä.
+
+### Positiointi — tämä ohjaa kaikkia ratkaisuja
+
+Sivusto on **avoin hanketietokanta ja prosessiopas**, ei kampanjasivu.
+Sävy on neutraali, havaintopohjainen ja lähteistetty. Sivuston pitää olla
+sellainen, että toimittaja, tutkija, virkamies ja hankkeen edustaja voivat
+kaikki käyttää sitä pitämättä sitä propagandana. Neutraalius on tässä
+strateginen valinta, ei kompromissi.
+
+### Ei-tavoitteet
+
+- Ei mielipidekirjoituksia, ei kannanottoja, ei "vastustajien foorumi"
+- Ei väitteitä yksittäisten virkamiesten tai luottamushenkilöiden aikeista
+- Ei keskustelupalstaa (moderointitaakka tappaisi projektin)
+
+---
+
+## 2. Tekninen pino
+
+| Osa | Valinta |
+|---|---|
+| Sovellus | Next.js (App Router, TypeScript) |
+| Tietokanta | Supabase (Postgres) |
+| Hosting | Vercel, kytkettynä GitHub-repoon |
+| Kartta | MapLibre GL + Maanmittauslaitoksen avoin taustakartta |
+| Agenttiajot | TypeScript-skriptit `/agents`, ajossa GitHub Actions (cron) |
+| Malli agenteille | Anthropic API (Claude) + web search -työkalu |
+
+Julkaisu tapahtuu automaattisesti `git push` → Vercel. Ei erillistä
+julkaisuvaihetta.
+
+### Koodi vs. sisältö — pidä raja ehdottomana
+
+- **Koodi** (rakenne, ulkoasu, agenttiskriptit, skeemamigraatiot) → git-repo
+- **Sisältö** (hanketiedot, määräajat, yhteyshenkilöt) → Postgres
+
+Hanketietoja **ei** koskaan tallenneta markdown-tiedostoiksi repoon, vaikka se
+olisi Cursorin kannalta kätevää. Muut ylläpitäjät eivät käytä gitiä,
+ilmoituslomake ei voi kirjoittaa repoon, ja agenttien muutosehdotukset
+tarvitsevat tietokantatason lukituksen.
+
+---
+
+## 3. Tietomallin periaatteet
+
+Nämä ovat projektin tärkein osa. Jälkikäteen korjaaminen on kallista.
+
+1. **Kentät ovat atomisia ja koneluettavia.** Ei vapaata tekstiä muotoa
+   "noin 40 generaattoria, teho epäselvä". Luku omaan kenttäänsä,
+   epävarmuus omaan kenttäänsä.
+
+2. **Jokainen faktaväite kantaa lähteensä.** URL, sivunumero jos
+   dokumentti, vahvistuspäivämäärä ja luottamustaso. Väite ilman lähdettä
+   ei mene tietokantaan — tämä pakotetaan tietokantatasolla, ei
+   käyttöliittymässä.
+
+3. **Julkaistu tieto ja ehdotettu tieto ovat eri tauluissa.**
+   `hankkeet` = julkaistu, vahvistettu tieto.
+   `muutosehdotukset` = kaikki sisääntuleva (lomake, agentti, ylläpitäjä).
+   Ihminen hyväksyy, ennen kuin mikään siirtyy julkaistuun.
+
+4. **Kaikki muutokset ovat jäljitettäviä.** Kuka/mikä ehdotti, milloin,
+   millä lähteellä, kuka hyväksyi.
+
+---
+
+## 4. Agenttiperiaate
+
+**Agentti ei koskaan julkaise. Agentti valmistelee ihmiselle päätöksen.**
+
+Agenteilla on kirjoitusoikeus vain `muutosehdotukset`-tauluun. Ei
+julkaisuoikeutta, ei poisto-oikeutta, ei oikeutta lähettää sähköpostia tai
+tehdä ulkoisia kutsuja käyttäjän puolesta.
+
+Syy on kaksijakoinen:
+- **Virheet.** Yksi hallusinoitu generaattorimäärä julkisella sivulla riittää
+  kaatamaan koko rekisterin uskottavuuden julkisesti.
+- **Prompt injection.** Agentit lukevat sivustoja, joita hankkeiden toimijat
+  hallitsevat. Sivulle voi piilottaa agentille suunnattua tekstiä. Kun
+  agentilla on vain ehdotusoikeus, injektion pahin lopputulos on huono
+  ehdotus, jonka ihminen hylkää.
+
+### Kysymyksenasettelu agenteille
+
+Agentilta ei koskaan kysytä *"mikä on oikea luku"* — silloin se keksii
+luvun jos ei löydä. Agentilta kysytään *"löytyykö tästä dokumentista X, ja
+jos löytyy, miltä sivulta ja millä sanamuodolla"*. Agentin pitää aina
+osoittaa kohta, tai jättää kenttä tyhjäksi.
+
+### Agentit toteutusjärjestyksessä
+
+**A. Lähteenvahvistaja** (tärkein)
+Ottaa yhden kentän ja sen lähdelinkin, hakee dokumentin, palauttaa:
+`tukee` / `ei_tue` / `ei_loydy` / `dokumentti_muuttunut` + sanatarkka kohta.
+Ei tulkintaa, ei täydennystä.
+
+**B. Ilmoitusten esikäsittelijä**
+Uuden hankeilmoituksen saapuessa hakee taustatiedot (YTJ/kaupparekisteri,
+kunnan pöytäkirjat, ELY:n YVA-kuulutukset), täyttää kentät lähteineen,
+merkitsee epävarmat. Ylläpitäjälle jää tarkistus, ei kaivuutyö.
+
+**C. Muutosvahti**
+Ajastettu ajo: kuntien esityslistat, ELY-keskusten kuulutukset, hankkeiden
+omat sivut. Vertaa tallennettuun tilaan, ilmoittaa muutoksista. Tuottaa
+määräaikahälytykset — sivuston arvokkain yksittäinen ominaisuus.
+
+**D. Ristiriitojen etsijä**
+Ajaa tietokannan yli: sama toimija eri nimellä, teho ja generaattorimäärä
+epäsuhdassa, päivämäärä ennen yhtiön rekisteröintiä. Tuottaa
+tarkistuslistan ihmiselle, ei johtopäätöksiä.
+
+---
+
+## 5. Avoin data
+
+Kaikki julkaistu tieto on saatavilla koneluettavasti alusta asti:
+- JSON-endpoint hankekohtaisesti
+- Koko rekisterin lataus CSV- ja JSON-muodossa
+
+Tämä palvelee kolmea asiaa yhtä aikaa: omia agentteja, toimittajia ja
+tutkijoita, sekä sitä että sivusto on aidosti avointa dataa eikä vain
+väitä olevansa.
+
+---
+
+## 6. Toteutusjärjestys
+
+Tee tässä järjestyksessä. Älä hyppää agentteihin ennen kuin vaiheet 1–5
+ovat valmiit — ne ovat helppo osa, kun tietomalli on kunnossa.
+
+### Vaihe 1 — Pohja
+- [ ] Next.js + TypeScript + Tailwind, Supabase-kytkentä, Vercel-deploy
+- [x] Ympäristömuuttujat `.env.local` (ei koskaan gitiin)
+
+### Vaihe 2 — Skeema
+- [ ] Migraatio `supabase/migrations/`: `hankkeet`, `kentta_lahteet`,
+      `muutosehdotukset`, `maaraajat`, `yhteyshenkilot`, `organisaatiot`
+- [ ] Tietokantatason pakotteet: `NOT NULL`, `CHECK`-ehdot, ei lähteetöntä
+      faktakenttää
+- [ ] Row Level Security: julkinen luku vain julkaistuun tietoon
+
+### Vaihe 3 — Ensimmäinen hanke käsin
+- [ ] Jokelan (Tuusula) hanke syötettynä loppuun asti
+- [ ] Tämä paljastaa skeeman puutteet ennen kuin mitään on rakennettu päälle
+
+### Vaihe 4 — Julkinen näkymä
+- [ ] Hankelistaus: suodatus kunnan, vaiheen ja koon mukaan
+- [ ] Yksittäisen hankkeen sivu: kaikki kentät lähdeviitteineen näkyvissä
+- [ ] Kartta
+- [ ] Tulevat määräajat etusivulla
+
+### Vaihe 5 — Ylläpito ja ilmoitus
+- [ ] Ilmoituslomake (uusi hanke / täydennys) → `muutosehdotukset`
+- [ ] Ylläpitonäkymä: ehdotusten tarkistus ja hyväksyntä
+- [ ] Kirjautuminen ylläpitäjille (Supabase Auth)
+
+### Vaihe 6 — Sisältö
+- [ ] "Näin teet YVA-mielipiteen" -opas: aikajana, mitä missäkin vaiheessa
+      voi vielä vaikuttaa, mallipohja
+- [ ] Yhteyshenkilö- ja organisaatiohakemisto
+
+### Vaihe 7 — Agentit
+- [ ] `/agents/lahteenvahvistaja.ts`
+- [ ] `/agents/esikasittelija.ts`
+- [ ] `/agents/muutosvahti.ts` + GitHub Actions cron
+- [ ] `/agents/ristiriidat.ts`
+
+### Vaihe 8 — Avoin data
+- [ ] JSON-endpointit, CSV-lataus, lisenssitieto (suositus: CC BY 4.0)
+
+---
+
+## 7. Mitä Cursor tekee itse, mitä kysyy, mitä pyytää käyttäjältä
+
+**Cursor tekee itse ilman kysymistä:**
+koodin, migraatiot, komponentit, testit, tyylit, agenttiskriptit,
+GitHub Actions -konfiguraatiot, dokumentaation.
+
+**Cursor kysyy ennen etenemistä:**
+- tietomallin muutokset, jotka poistavat tai uudelleennimeävät kenttiä
+- uudet ulkoiset riippuvuudet, jotka maksavat rahaa
+- mikä tahansa ratkaisu, joka poikkeaa `.cursor/rules/`-säännöistä
+- sisällölliset sanamuodot, jotka koskevat hankkeita tai toimijoita
+
+**Cursor pyytää käyttäjää tekemään (ei yritä itse):**
+Nämä vaativat tilin, maksun tai selaimen. Cursor kirjoittaa
+selkeän, numeroidun ohjeen ja odottaa vahvistusta:
+- tilien luonti (GitHub, Supabase, Vercel, Anthropic Console)
+- API-avainten haku ja liittäminen `.env.local`-tiedostoon
+- domainin rekisteröinti ja DNS-asetukset
+- salasanat ja maksutiedot
+
+Cursor ei koskaan pyydä käyttäjää liittämään API-avainta chattiin — avaimet
+menevät suoraan `.env.local`-tiedostoon tai Vercelin asetuksiin.
+
+---
+
+## 8. Projektin ihmisorganisaatio (taustaksi)
+
+- Projektilla tulee olla 2–3 ylläpitäjää ennen julkistusta. Yhden ihmisen
+  projekti kuolee kuudessa kuukaudessa.
+- Harkitaan yhdistysmuotoa tai olemassa olevan yhdistyksen alle menemistä
+  ennen kasvua: rekisterinpitäjän vastuu, domainin omistus ja mahdolliset
+  oikeudelliset yhteydenotot ovat helpompia yhdistyksenä kuin
+  yksityishenkilönä.
