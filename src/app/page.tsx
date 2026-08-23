@@ -42,7 +42,16 @@ export default async function Etusivu({
       </h1>
       <p className="mt-4 max-w-prose text-lg leading-relaxed text-muted">
         Avoin hanketietokanta ja prosessiopas. Julkaistu tieto merkitään
-        lähteineen. Rekisteri ei ota kantaa yksittäisiin hankkeisiin.
+        lähteineen.         Rekisteri ei ota kantaa yksittäisiin hankkeisiin.
+      </p>
+      <p className="mt-3">
+        <a href="/opas/yva-mielipide" className="text-link underline">
+          Näin teet YVA-mielipiteen
+        </a>
+        {" · "}
+        <a href="/hakemisto" className="text-link underline">
+          Organisaatio- ja yhteystietohakemisto
+        </a>
       </p>
 
       <section className="mt-10" aria-labelledby="maaraajat-otsikko">

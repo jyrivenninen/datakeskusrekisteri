@@ -38,7 +38,13 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
                 Datakeskushankkeiden kansallinen rekisteri
               </a>
             </p>
-            <nav className="ml-auto flex gap-4 text-sm">
+            <nav className="ml-auto flex flex-wrap justify-end gap-4 text-sm">
+              <a href="/opas/yva-mielipide" className="text-link underline">
+                YVA-opas
+              </a>
+              <a href="/hakemisto" className="text-link underline">
+                Hakemisto
+              </a>
               <a href="/ilmoitus" className="text-link underline">
                 Ilmoita hanke
               </a>

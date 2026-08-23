@@ -22,16 +22,28 @@ function Faktakentta({
   kentta,
   arvo,
   lahteet,
+  href,
 }: {
   kentta: string;
   arvo: string | null;
   lahteet: KenttaLahde[];
+  href?: string | null;
 }) {
   return (
     <div className="border-b border-border py-4">
       <dt className="font-medium">{HANKE_KENTTA_NIMET[kentta] ?? kentta}</dt>
       <dd className="mt-1">
-        {arvo ? arvo : <span className="text-muted">Ei merkitty</span>}
+        {arvo ? (
+          href ? (
+            <a href={href} className="text-link underline">
+              {arvo}
+            </a>
+          ) : (
+            arvo
+          )
+        ) : (
+          <span className="text-muted">Ei merkitty</span>
+        )}
         {arvo || kentanLahteet(lahteet, kentta).length > 0 ? (
           <Lahdeluettelo lahteet={kentanLahteet(lahteet, kentta)} />
         ) : null}
@@ -40,9 +52,10 @@ function Faktakentta({
   );
 }
 
-function hankeKentat(hanke: Hanke & { toimija: { nimi: string } | null }): {
+function hankeKentat(hanke: Hanke & { toimija: { id: string; nimi: string } | null }): {
   kentta: string;
   arvo: string | null;
+  href?: string | null;
 }[] {
   return [
     { kentta: "nimi", arvo: hanke.nimi },
@@ -84,7 +97,11 @@ function hankeKentat(hanke: Hanke & { toimija: { nimi: string } | null }): {
           ? muotoileLuku(hanke.generaattori_polttoaineteho_mw)
           : null,
     },
-    { kentta: "toimija_organisaatio_id", arvo: hanke.toimija?.nimi ?? null },
+    {
+      kentta: "toimija_organisaatio_id",
+      arvo: hanke.toimija?.nimi ?? null,
+      href: hanke.toimija ? `/organisaatiot/${hanke.toimija.id}` : null,
+    },
     { kentta: "yva_diaarinumero", arvo: hanke.yva_diaarinumero },
   ];
 }
@@ -162,6 +179,7 @@ export default async function HankeSivu({
               key={rivi.kentta}
               kentta={rivi.kentta}
               arvo={rivi.arvo}
+              href={rivi.href}
               lahteet={lahteet}
             />
           ))}
@@ -172,6 +190,11 @@ export default async function HankeSivu({
         <h2 id="maaraajat-otsikko" className="text-xl font-semibold">
           Määräajat
         </h2>
+        <p className="mt-2 text-sm">
+          <a href="/opas/yva-mielipide" className="text-link underline">
+            Näin teet YVA-mielipiteen
+          </a>
+        </p>
         {maaraajat.length === 0 ? (
           <p className="mt-3">Ei merkittyjä määräaikoja.</p>
         ) : (

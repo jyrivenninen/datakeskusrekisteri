@@ -1,5 +1,12 @@
-import type { Hanke, HankeVaihe, Luottamus, MaaraajaTyyppi, Merkinta } from "@/lib/supabase/tietokanta";
-import { HANKE_VAIHEET } from "@/lib/supabase/tietokanta";
+import type {
+  Hanke,
+  HankeVaihe,
+  Luottamus,
+  MaaraajaTyyppi,
+  Merkinta,
+  OrganisaatioTyyppi,
+} from "@/lib/supabase/tietokanta";
+import { HANKE_VAIHEET, ORGANISAATIO_TYYPIT } from "@/lib/supabase/tietokanta";
 
 export const VAIHE_NIMET: Record<HankeVaihe, string> = {
   esiselvitys: "Esiselvitys",
@@ -30,6 +37,20 @@ export const MERKINTA_NIMET: Record<Merkinta, string> = {
   koneen_ehdottama: "Koneen ehdottama",
   ihmisen_vahvistama: "Ihmisen vahvistama",
 };
+
+export const ORGANISAATIO_TYYPPI_NIMET: Record<OrganisaatioTyyppi, string> = {
+  yritys: "Yritys",
+  kunta: "Kunta",
+  ely: "ELY-keskus",
+  avi: "AVI",
+  ministerio: "Ministeriö",
+  jarjesto: "Järjestö",
+  muu: "Muu",
+};
+
+export function onOrganisaatioTyyppi(arvo: string): arvo is OrganisaatioTyyppi {
+  return (ORGANISAATIO_TYYPIT as readonly string[]).includes(arvo);
+}
 
 export const HANKE_KENTTA_NIMET: Record<string, string> = {
   nimi: "Nimi",

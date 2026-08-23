@@ -173,9 +173,9 @@ ovat valmiit — ne ovat helppo osa, kun tietomalli on kunnossa.
 - [x] Kirjautuminen ylläpitäjille (Supabase Auth)
 
 ### Vaihe 6 — Sisältö
-- [ ] "Näin teet YVA-mielipiteen" -opas: aikajana, mitä missäkin vaiheessa
+- [x] "Näin teet YVA-mielipiteen" -opas: aikajana, mitä missäkin vaiheessa
       voi vielä vaikuttaa, mallipohja
-- [ ] Yhteyshenkilö- ja organisaatiohakemisto
+- [x] Yhteyshenkilö- ja organisaatiohakemisto
 
 ### Vaihe 7 — Agentit
 - [ ] `/agents/lahteenvahvistaja.ts`
