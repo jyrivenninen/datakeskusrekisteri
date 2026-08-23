@@ -73,16 +73,32 @@ body {
   background: #3f3f46;
 }
 
-summary {
-  display: list-item;
-  list-style: disclosure-closed inside;
+.faktakortti[open] {
+  grid-column: 1 / -1;
 }
 
-details[open] > summary {
-  list-style-type: disclosure-open;
+.faktakortti-yhteenveto {
+  display: block;
+  list-style: none;
 }
 
-summary:focus-visible {
+.faktakortti-yhteenveto::-webkit-details-marker {
+  display: none;
+}
+
+.faktakortti-yhteenveto::after {
+  display: block;
+  margin-top: 0.5rem;
+  color: var(--muted);
+  font-size: 0.8rem;
+  content: "Avaa lähteet";
+}
+
+.faktakortti[open] > .faktakortti-yhteenveto::after {
+  content: "Piilota lähteet";
+}
+
+.faktakortti-yhteenveto:focus-visible {
   outline: 2px solid var(--link);
   outline-offset: 2px;
 }

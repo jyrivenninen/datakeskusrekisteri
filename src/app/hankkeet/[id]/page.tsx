@@ -1,8 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
+import { AvattavaKortti, Korttiruudukko } from "@/komponentit/avattava-kortti";
 import { Kartta } from "@/komponentit/kartta";
-import { Lahdeluettelo } from "@/komponentit/lahdeluettelo";
-import { Liikennevalo } from "@/komponentit/liikennevalo";
 import {
   DOKUMENTTI_KIELI_NIMET,
   DOKUMENTTI_LAJI_NIMET,
@@ -30,108 +29,118 @@ function kentanLahteet(lahteet: KenttaLahde[], kentta: string): KenttaLahde[] {
   return lahteet.filter((lahde) => lahde.kentta === kentta);
 }
 
-function Faktakentta({
-  kentta,
-  arvo,
-  lahteet,
-  href,
-  lahdeKentta,
-}: {
+type KenttaRivi = {
   kentta: string;
   arvo: string | null;
-  lahteet: KenttaLahde[];
   href?: string | null;
   lahdeKentta?: string;
-}) {
-  const naytettavat = kentanLahteet(lahteet, lahdeKentta ?? kentta);
-  const tila = kentanTila(arvo != null && arvo !== "", naytettavat);
+};
+
+function kenttaArvoksi(rivi: KenttaRivi) {
+  if (!rivi.arvo) return <span className="text-muted">Ei merkitty</span>;
+  if (rivi.href) {
+    return (
+      <a href={rivi.href} className="text-link underline">
+        {rivi.arvo}
+      </a>
+    );
+  }
+  return rivi.arvo;
+}
+
+function Faktakortti({ rivi, lahteet }: { rivi: KenttaRivi; lahteet: KenttaLahde[] }) {
+  const naytettavat = kentanLahteet(lahteet, rivi.lahdeKentta ?? rivi.kentta);
   return (
-    <div className="grid items-start gap-x-4 gap-y-1 border-b border-border py-3 sm:grid-cols-[12rem_minmax(0,1fr)_auto]">
-      <dt className="text-sm font-medium text-muted">
-        {HANKE_KENTTA_NIMET[kentta] ?? kentta}
-      </dt>
-      <dd>
-        {arvo ? (
-          href ? (
-            <a href={href} className="text-link underline">
-              {arvo}
-            </a>
-          ) : (
-            arvo
-          )
-        ) : (
-          <span className="text-muted">Ei merkitty</span>
-        )}
-        <Lahdeluettelo lahteet={naytettavat} />
-      </dd>
-      <div className="sm:justify-self-end">
-        <Liikennevalo tila={tila} />
-      </div>
-    </div>
+    <AvattavaKortti
+      nimi={HANKE_KENTTA_NIMET[rivi.kentta] ?? rivi.kentta}
+      arvo={kenttaArvoksi(rivi)}
+      tila={kentanTila(rivi.arvo != null && rivi.arvo !== "", naytettavat)}
+      lahteet={naytettavat}
+    />
   );
 }
 
-function hankeKentat(hanke: Hanke & { toimija: { id: string; nimi: string } | null }): {
-  kentta: string;
-  arvo: string | null;
-  href?: string | null;
-  lahdeKentta?: string;
+function hankeRyhmat(hanke: Hanke & { toimija: { id: string; nimi: string } | null }): {
+  id: string;
+  otsikko: string;
+  rivit: KenttaRivi[];
 }[] {
   return [
-    { kentta: "nimi", arvo: hanke.nimi },
-    { kentta: "kunta", arvo: hanke.kunta },
-    { kentta: "maakunta", arvo: hanke.maakunta },
     {
-      kentta: "sijainti",
-      arvo:
-        hanke.sijainti_lat != null && hanke.sijainti_lon != null
-          ? `${muotoileLuku(hanke.sijainti_lat)}, ${muotoileLuku(hanke.sijainti_lon)}`
-          : null,
+      id: "perustiedot",
+      otsikko: "Perustiedot",
+      rivit: [
+        { kentta: "nimi", arvo: hanke.nimi },
+        { kentta: "kunta", arvo: hanke.kunta },
+        { kentta: "maakunta", arvo: hanke.maakunta },
+        { kentta: "vaihe", arvo: VAIHE_NIMET[hanke.vaihe] },
+        {
+          kentta: "toimija_organisaatio_id",
+          arvo: hanke.toimija?.nimi ?? null,
+          href: hanke.toimija ? `/organisaatiot/${hanke.toimija.id}` : null,
+        },
+        { kentta: "yva_diaarinumero", arvo: hanke.yva_diaarinumero },
+      ],
     },
     {
-      kentta: "sijainti_alue_tyyppi",
-      arvo: hanke.sijainti_alue_tyyppi
-        ? SIJAINTI_ALUE_TYYPPI_NIMET[hanke.sijainti_alue_tyyppi]
-        : null,
-      lahdeKentta: "sijainti",
-    },
-    { kentta: "kaavatunnus", arvo: hanke.kaavatunnus },
-    { kentta: "kortteli", arvo: hanke.kortteli },
-    { kentta: "vaihe", arvo: VAIHE_NIMET[hanke.vaihe] },
-    { kentta: "teho_mw", arvo: hanke.teho_mw != null ? muotoileLuku(hanke.teho_mw) : null },
-    { kentta: "it_teho_mw", arvo: hanke.it_teho_mw != null ? muotoileLuku(hanke.it_teho_mw) : null },
-    {
-      kentta: "pinta_ala_ha",
-      arvo: hanke.pinta_ala_ha != null ? muotoileLuku(hanke.pinta_ala_ha) : null,
-    },
-    {
-      kentta: "sahkonkaytto_twh_a",
-      arvo: hanke.sahkonkaytto_twh_a != null ? muotoileLuku(hanke.sahkonkaytto_twh_a) : null,
-    },
-    {
-      kentta: "generaattorit_lkm",
-      arvo: hanke.generaattorit_lkm != null ? String(hanke.generaattorit_lkm) : null,
+      id: "sijainti-kaava",
+      otsikko: "Sijainti ja kaava",
+      rivit: [
+        {
+          kentta: "sijainti",
+          arvo:
+            hanke.sijainti_lat != null && hanke.sijainti_lon != null
+              ? `${muotoileLuku(hanke.sijainti_lat)}, ${muotoileLuku(hanke.sijainti_lon)}`
+              : null,
+        },
+        {
+          kentta: "sijainti_alue_tyyppi",
+          arvo: hanke.sijainti_alue_tyyppi
+            ? SIJAINTI_ALUE_TYYPPI_NIMET[hanke.sijainti_alue_tyyppi]
+            : null,
+          lahdeKentta: "sijainti",
+        },
+        { kentta: "kaavatunnus", arvo: hanke.kaavatunnus },
+        { kentta: "kortteli", arvo: hanke.kortteli },
+      ],
     },
     {
-      kentta: "generaattorit_kaytossa_max_lkm",
-      arvo:
-        hanke.generaattorit_kaytossa_max_lkm != null
-          ? String(hanke.generaattorit_kaytossa_max_lkm)
-          : null,
+      id: "teho-mitoitus",
+      otsikko: "Teho ja mitoitus",
+      rivit: [
+        { kentta: "teho_mw", arvo: hanke.teho_mw != null ? muotoileLuku(hanke.teho_mw) : null },
+        {
+          kentta: "it_teho_mw",
+          arvo: hanke.it_teho_mw != null ? muotoileLuku(hanke.it_teho_mw) : null,
+        },
+        {
+          kentta: "pinta_ala_ha",
+          arvo: hanke.pinta_ala_ha != null ? muotoileLuku(hanke.pinta_ala_ha) : null,
+        },
+        {
+          kentta: "sahkonkaytto_twh_a",
+          arvo: hanke.sahkonkaytto_twh_a != null ? muotoileLuku(hanke.sahkonkaytto_twh_a) : null,
+        },
+        {
+          kentta: "generaattorit_lkm",
+          arvo: hanke.generaattorit_lkm != null ? String(hanke.generaattorit_lkm) : null,
+        },
+        {
+          kentta: "generaattorit_kaytossa_max_lkm",
+          arvo:
+            hanke.generaattorit_kaytossa_max_lkm != null
+              ? String(hanke.generaattorit_kaytossa_max_lkm)
+              : null,
+        },
+        {
+          kentta: "generaattori_polttoaineteho_mw",
+          arvo:
+            hanke.generaattori_polttoaineteho_mw != null
+              ? muotoileLuku(hanke.generaattori_polttoaineteho_mw)
+              : null,
+        },
+      ],
     },
-    {
-      kentta: "generaattori_polttoaineteho_mw",
-      arvo:
-        hanke.generaattori_polttoaineteho_mw != null
-          ? muotoileLuku(hanke.generaattori_polttoaineteho_mw)
-          : null,
-    },
-    {
-      kentta: "toimija_organisaatio_id",
-      arvo: hanke.toimija?.nimi ?? null,
-      href: hanke.toimija ? `/organisaatiot/${hanke.toimija.id}` : null,
-    },
-    { kentta: "yva_diaarinumero", arvo: hanke.yva_diaarinumero },
   ];
 }
 
@@ -179,7 +188,7 @@ export default async function HankeSivu({
 
   if (virhe) {
     return (
-      <main id="sisalto" className="mx-auto w-full max-w-5xl flex-1 px-4 py-10">
+      <main id="sisalto" className="mx-auto w-full max-w-6xl flex-1 px-4 py-10">
         <h1 className="text-2xl font-semibold">Hanketta ei voitu ladata</h1>
         <p className="mt-3">{virhe}</p>
       </main>
@@ -254,21 +263,23 @@ export default async function HankeSivu({
           Tiedot ja lähteet
         </h2>
         <p className="mt-2 text-sm text-muted">
-          Vihreä valo: lähde vahvistaa tiedon. Keltainen: merkitty mutta epävarma.
-          Punainen: ei merkitty. Lähteen avaa kentän alta.
+          Kenttä avaa lähteen. Vihreä valo on vahvistettu, keltainen epävarma, punainen
+          puuttuu.
         </p>
-        <dl className="mt-4 rounded border border-border bg-surface px-4">
-          {hankeKentat(hanke).map((rivi) => (
-            <Faktakentta
-              key={rivi.kentta}
-              kentta={rivi.kentta}
-              arvo={rivi.arvo}
-              href={rivi.href}
-              lahdeKentta={rivi.lahdeKentta}
-              lahteet={lahteet}
-            />
+        <div className="mt-6 space-y-8">
+          {hankeRyhmat(hanke).map((ryhma) => (
+            <section key={ryhma.id} aria-labelledby={ryhma.id}>
+              <h3 id={ryhma.id} className="text-base font-semibold">
+                {ryhma.otsikko}
+              </h3>
+              <Korttiruudukko>
+                {ryhma.rivit.map((rivi) => (
+                  <Faktakortti key={rivi.kentta} rivi={rivi} lahteet={lahteet} />
+                ))}
+              </Korttiruudukko>
+            </section>
           ))}
-        </dl>
+        </div>
       </section>
 
       {kunnat.length > 0 ? (
@@ -276,25 +287,20 @@ export default async function HankeSivu({
           <h2 id="kunnat-otsikko" className="text-xl font-semibold">
             Kunnat
           </h2>
-          <ul className="mt-4 space-y-4">
+          <Korttiruudukko>
             {kunnat.map((rivi) => (
-              <li key={rivi.id} className="rounded border border-border bg-surface p-4">
-                <p className="flex flex-wrap items-center gap-x-3 gap-y-1">
-                  <span className="font-medium">{rivi.kunta}</span>
-                  <Liikennevalo
-                    tila={kentanTila(
-                      true,
-                      kuntaLahteet.filter((lahde) => lahde.rivi_id === rivi.id),
-                    )}
-                  />
-                </p>
-                <p className="mt-1 text-sm text-muted">{HANKE_KUNTA_ROOLI_NIMET[rivi.rooli]}</p>
-                <Lahdeluettelo
-                  lahteet={kuntaLahteet.filter((lahde) => lahde.rivi_id === rivi.id)}
-                />
-              </li>
+              <AvattavaKortti
+                key={rivi.id}
+                nimi={HANKE_KUNTA_ROOLI_NIMET[rivi.rooli]}
+                arvo={rivi.kunta}
+                tila={kentanTila(
+                  true,
+                  kuntaLahteet.filter((lahde) => lahde.rivi_id === rivi.id),
+                )}
+                lahteet={kuntaLahteet.filter((lahde) => lahde.rivi_id === rivi.id)}
+              />
             ))}
-          </ul>
+          </Korttiruudukko>
         </section>
       ) : null}
 
@@ -303,28 +309,20 @@ export default async function HankeSivu({
           <h2 id="menettelyt-otsikko" className="text-xl font-semibold">
             Menettelyt
           </h2>
-          <ul className="mt-4 space-y-4">
+          <Korttiruudukko>
             {menettelyt.map((rivi) => (
-              <li key={rivi.id} className="rounded border border-border bg-surface p-4">
-                <p className="flex flex-wrap items-center gap-x-3 gap-y-1">
-                  <span className="font-medium">{MENETTELY_LAJI_NIMET[rivi.laji]}</span>
-                  <Liikennevalo
-                    tila={kentanTila(
-                      true,
-                      menettelyLahteet.filter((lahde) => lahde.rivi_id === rivi.id),
-                    )}
-                  />
-                </p>
-                <p className="mt-1 text-sm">
-                  {MENETTELY_TILA_NIMET[rivi.tila]}
-                  {rivi.tunnus ? ` · ${rivi.tunnus}` : ""}
-                </p>
-                <Lahdeluettelo
-                  lahteet={menettelyLahteet.filter((lahde) => lahde.rivi_id === rivi.id)}
-                />
-              </li>
+              <AvattavaKortti
+                key={rivi.id}
+                nimi={MENETTELY_LAJI_NIMET[rivi.laji]}
+                arvo={`${MENETTELY_TILA_NIMET[rivi.tila]}${rivi.tunnus ? ` · ${rivi.tunnus}` : ""}`}
+                tila={kentanTila(
+                  true,
+                  menettelyLahteet.filter((lahde) => lahde.rivi_id === rivi.id),
+                )}
+                lahteet={menettelyLahteet.filter((lahde) => lahde.rivi_id === rivi.id)}
+              />
             ))}
-          </ul>
+          </Korttiruudukko>
         </section>
       ) : null}
 
@@ -337,20 +335,13 @@ export default async function HankeSivu({
             Luvut on merkitty vaihtoehdoittain. Hankkeen omat kentät voivat olla
             yhteenveto tai tyhjiä, jos lähde antaa vain vaihtoehtokohtaiset arvot.
           </p>
-          <ul className="mt-4 space-y-4">
+          <Korttiruudukko>
             {vaihtoehdot.map((vaihtoehto) => (
-              <li key={vaihtoehto.id} className="rounded border border-border bg-surface p-4">
-                <p className="flex flex-wrap items-center gap-x-3 gap-y-1">
-                  <span className="font-medium">{vaihtoehto.tunnus}</span>
-                  <Liikennevalo
-                    tila={kentanTila(
-                      true,
-                      vaihtoehtoLahteet.filter((lahde) => lahde.rivi_id === vaihtoehto.id),
-                    )}
-                  />
-                </p>
-                <p className="mt-1 text-sm">
-                  {[
+              <AvattavaKortti
+                key={vaihtoehto.id}
+                nimi={vaihtoehto.tunnus}
+                arvo={
+                  [
                     vaihtoehto.it_teho_mw != null
                       ? `IT-teho ${muotoileLuku(vaihtoehto.it_teho_mw)} MW`
                       : null,
@@ -375,14 +366,16 @@ export default async function HankeSivu({
                     vaihtoehto.sijainti_alue ? "alue merkitty" : null,
                   ]
                     .filter(Boolean)
-                    .join(" · ")}
-                </p>
-                <Lahdeluettelo
-                  lahteet={vaihtoehtoLahteet.filter((lahde) => lahde.rivi_id === vaihtoehto.id)}
-                />
-              </li>
+                    .join(" · ") || "Ei merkittyjä lukuja"
+                }
+                tila={kentanTila(
+                  true,
+                  vaihtoehtoLahteet.filter((lahde) => lahde.rivi_id === vaihtoehto.id),
+                )}
+                lahteet={vaihtoehtoLahteet.filter((lahde) => lahde.rivi_id === vaihtoehto.id)}
+              />
             ))}
-          </ul>
+          </Korttiruudukko>
         </section>
       ) : null}
 
@@ -391,20 +384,13 @@ export default async function HankeSivu({
           <h2 id="roolit-otsikko" className="text-xl font-semibold">
             Organisaatiot hankkeessa
           </h2>
-          <ul className="mt-4 space-y-4">
+          <Korttiruudukko>
             {organisaatioroolit.map((rivi) => (
-              <li key={rivi.id} className="rounded border border-border bg-surface p-4">
-                <p className="flex flex-wrap items-center gap-x-3 gap-y-1">
-                  <span className="font-medium">{HANKE_ORGANISAATIO_ROOLI_NIMET[rivi.rooli]}</span>
-                  <Liikennevalo
-                    tila={kentanTila(
-                      rivi.organisaatio != null,
-                      organisaatiorooliLahteet.filter((lahde) => lahde.rivi_id === rivi.id),
-                    )}
-                  />
-                </p>
-                <p className="mt-1 text-sm">
-                  {rivi.organisaatio ? (
+              <AvattavaKortti
+                key={rivi.id}
+                nimi={HANKE_ORGANISAATIO_ROOLI_NIMET[rivi.rooli]}
+                arvo={
+                  rivi.organisaatio ? (
                     <a
                       href={`/organisaatiot/${rivi.organisaatio.id}`}
                       className="text-link underline"
@@ -413,14 +399,16 @@ export default async function HankeSivu({
                     </a>
                   ) : (
                     <span className="text-muted">Ei merkitty</span>
-                  )}
-                </p>
-                <Lahdeluettelo
-                  lahteet={organisaatiorooliLahteet.filter((lahde) => lahde.rivi_id === rivi.id)}
-                />
-              </li>
+                  )
+                }
+                tila={kentanTila(
+                  rivi.organisaatio != null,
+                  organisaatiorooliLahteet.filter((lahde) => lahde.rivi_id === rivi.id),
+                )}
+                lahteet={organisaatiorooliLahteet.filter((lahde) => lahde.rivi_id === rivi.id)}
+              />
             ))}
-          </ul>
+          </Korttiruudukko>
         </section>
       ) : null}
 
@@ -438,7 +426,7 @@ export default async function HankeSivu({
         {asiakirjat.length === 0 ? (
           <p className="mt-3">Ei merkittyjä asiakirjoja.</p>
         ) : (
-          <ul className="mt-4 space-y-4">
+          <ul className="mt-4 grid gap-3 sm:grid-cols-2">
             {asiakirjat.map((asiakirja) => (
               <li key={asiakirja.id} className="rounded border border-border bg-surface p-4">
                 <p className="font-medium">
@@ -490,36 +478,23 @@ export default async function HankeSivu({
         {maaraajat.length === 0 ? (
           <p className="mt-3">Ei merkittyjä määräaikoja.</p>
         ) : (
-          <ul className="mt-4 space-y-4">
+          <Korttiruudukko>
             {maaraajat.map((maaraaika) => {
               const menettely = menettelyt.find((rivi) => rivi.id === maaraaika.menettely_id);
               return (
-              <li key={maaraaika.id} className="rounded border border-border bg-surface p-4">
-                <p className="flex flex-wrap items-center gap-x-3 gap-y-1">
-                  <span className="font-medium">{MAARAAJA_NIMET[maaraaika.tyyppi]}</span>
-                  <Liikennevalo
-                    tila={kentanTila(
-                      true,
-                      maaraajaLahteet.filter((lahde) => lahde.rivi_id === maaraaika.id),
-                    )}
-                  />
-                </p>
-                {menettely ? (
-                  <p className="mt-1 text-sm text-muted">
-                    {MENETTELY_LAJI_NIMET[menettely.laji]}
-                  </p>
-                ) : null}
-                <p className="mt-1 text-sm">
-                  {maaraaika.alkaa_pvm ? `${muotoilePvm(maaraaika.alkaa_pvm)} – ` : ""}
-                  {muotoilePvm(maaraaika.paattyy_pvm)}
-                </p>
-                <Lahdeluettelo
+                <AvattavaKortti
+                  key={maaraaika.id}
+                  nimi={MAARAAJA_NIMET[maaraaika.tyyppi]}
+                  arvo={`${menettely ? `${MENETTELY_LAJI_NIMET[menettely.laji]} · ` : ""}${maaraaika.alkaa_pvm ? `${muotoilePvm(maaraaika.alkaa_pvm)} – ` : ""}${muotoilePvm(maaraaika.paattyy_pvm)}`}
+                  tila={kentanTila(
+                    true,
+                    maaraajaLahteet.filter((lahde) => lahde.rivi_id === maaraaika.id),
+                  )}
                   lahteet={maaraajaLahteet.filter((lahde) => lahde.rivi_id === maaraaika.id)}
                 />
-              </li>
               );
             })}
-          </ul>
+          </Korttiruudukko>
         )}
       </section>
 
@@ -557,37 +532,27 @@ export default async function HankeSivu({
           <h2 id="johdot-otsikko" className="text-xl font-semibold">
             Sähkönsiirto
           </h2>
-          <ul className="mt-4 space-y-4">
+          <Korttiruudukko>
             {johdot.map((johto) => (
-              <li key={johto.id} className="rounded border border-border bg-surface p-4">
-                <p className="flex flex-wrap items-center gap-x-3 gap-y-1">
-                  <span className="font-medium">
-                    {JOHTO_TYYPPI_NIMET[johto.tyyppi]}
-                    {johto.vaihtoehto ? ` · ${johto.vaihtoehto}` : ""}
-                  </span>
-                  <Liikennevalo
-                    tila={kentanTila(
-                      true,
-                      johtoLahteet.filter((lahde) => lahde.rivi_id === johto.id),
-                    )}
-                  />
-                </p>
-                <p className="mt-1 text-sm">
-                  {[
-                    johto.jannite_kv != null ? `${muotoileLuku(johto.jannite_kv)} kV` : null,
-                    johto.pituus_km != null ? `${muotoileLuku(johto.pituus_km)} km` : null,
-                    johto.liittymispiste,
-                    johto.reitti ? "reitti merkitty kartalle" : "reitin koordinaatteja ei merkitty",
-                  ]
-                    .filter(Boolean)
-                    .join(" · ")}
-                </p>
-                <Lahdeluettelo
-                  lahteet={johtoLahteet.filter((lahde) => lahde.rivi_id === johto.id)}
-                />
-              </li>
+              <AvattavaKortti
+                key={johto.id}
+                nimi={`${JOHTO_TYYPPI_NIMET[johto.tyyppi]}${johto.vaihtoehto ? ` · ${johto.vaihtoehto}` : ""}`}
+                arvo={[
+                  johto.jannite_kv != null ? `${muotoileLuku(johto.jannite_kv)} kV` : null,
+                  johto.pituus_km != null ? `${muotoileLuku(johto.pituus_km)} km` : null,
+                  johto.liittymispiste,
+                  johto.reitti ? "reitti merkitty kartalle" : "reitin koordinaatteja ei merkitty",
+                ]
+                  .filter(Boolean)
+                  .join(" · ")}
+                tila={kentanTila(
+                  true,
+                  johtoLahteet.filter((lahde) => lahde.rivi_id === johto.id),
+                )}
+                lahteet={johtoLahteet.filter((lahde) => lahde.rivi_id === johto.id)}
+              />
             ))}
-          </ul>
+          </Korttiruudukko>
         </section>
       ) : null}
     </main>

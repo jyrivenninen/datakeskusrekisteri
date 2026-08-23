@@ -6,9 +6,15 @@ const LAMPUT: { avain: KentanTila; vari: "punainen" | "keltainen" | "vihrea" }[]
   { avain: "vahvistettu", vari: "vihrea" },
 ];
 
-export function Liikennevalo({ tila }: { tila: KentanTila }) {
+export function Liikennevalo({
+  tila,
+  tiivis = false,
+}: {
+  tila: KentanTila;
+  tiivis?: boolean;
+}) {
   return (
-    <span className="inline-flex items-center gap-2 text-sm">
+    <span className="inline-flex shrink-0 items-center gap-2 text-sm">
       <span
         className="liikennevalo"
         role="img"
@@ -23,7 +29,7 @@ export function Liikennevalo({ tila }: { tila: KentanTila }) {
           />
         ))}
       </span>
-      <span className="text-muted">{KENTAN_TILA_NIMET[tila]}</span>
+      {tiivis ? null : <span className="text-muted">{KENTAN_TILA_NIMET[tila]}</span>}
     </span>
   );
 }
