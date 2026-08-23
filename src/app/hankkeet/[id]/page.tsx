@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { AvattavaKortti, Korttiruudukko } from "@/komponentit/avattava-kortti";
 import { Kartta } from "@/komponentit/kartta";
+import { VaiheMerkki } from "@/komponentit/vaihe-merkki";
+import { lomakeKenttaKortista, VAIHTOEHTO_KENTAT } from "@/lib/ehdotus";
 import {
   DOKUMENTTI_KIELI_NIMET,
   DOKUMENTTI_LAJI_NIMET,
@@ -48,14 +50,36 @@ function kenttaArvoksi(rivi: KenttaRivi) {
   return rivi.arvo;
 }
 
-function Faktakortti({ rivi, lahteet }: { rivi: KenttaRivi; lahteet: KenttaLahde[] }) {
+function paivitaLinkki(hankeId: string, kentta: string, vaihtoehto?: string) {
+  const q = new URLSearchParams({ kentta });
+  if (vaihtoehto) q.set("vaihtoehto", vaihtoehto);
+  return `/hankkeet/${hankeId}/paivita?${q.toString()}`;
+}
+
+function Faktakortti({
+  hankeId,
+  rivi,
+  lahteet,
+}: {
+  hankeId: string;
+  rivi: KenttaRivi;
+  lahteet: KenttaLahde[];
+}) {
   const naytettavat = kentanLahteet(lahteet, rivi.lahdeKentta ?? rivi.kentta);
+  const lomakeKentta = lomakeKenttaKortista(rivi.kentta);
   return (
     <AvattavaKortti
       nimi={HANKE_KENTTA_NIMET[rivi.kentta] ?? rivi.kentta}
       arvo={kenttaArvoksi(rivi)}
       tila={kentanTila(rivi.arvo != null && rivi.arvo !== "", naytettavat)}
       lahteet={naytettavat}
+      toiminnot={
+        lomakeKentta ? (
+          <a href={paivitaLinkki(hankeId, lomakeKentta)} className="text-link underline">
+            Päivitä
+          </a>
+        ) : null
+      }
     />
   );
 }
@@ -234,7 +258,8 @@ export default async function HankeSivu({
       <h1 className="mt-4 text-3xl font-semibold tracking-tight">{hanke.nimi}</h1>
       <p className="mt-2 text-muted">
         {hanke.kunta}
-        {hanke.maakunta ? `, ${hanke.maakunta}` : ""} · {VAIHE_NIMET[hanke.vaihe]}
+        {hanke.maakunta ? `, ${hanke.maakunta}` : ""} ·{" "}
+        <VaiheMerkki vaihe={hanke.vaihe} />
       </p>
 
       <section className="mt-6" aria-labelledby="kartta-otsikko">
@@ -263,8 +288,8 @@ export default async function HankeSivu({
           Tiedot ja lähteet
         </h2>
         <p className="mt-2 text-sm text-muted">
-          Kenttä avaa lähteen. Vihreä valo on vahvistettu, keltainen epävarma, punainen
-          puuttuu.
+          Kenttä avaa lähteen ja päivityslomakkeen. Vihreä valo on vahvistettu, keltainen
+          epävarma, punainen puuttuu.
         </p>
         <div className="mt-6 space-y-8">
           {hankeRyhmat(hanke).map((ryhma) => (
@@ -274,7 +299,12 @@ export default async function HankeSivu({
               </h3>
               <Korttiruudukko>
                 {ryhma.rivit.map((rivi) => (
-                  <Faktakortti key={rivi.kentta} rivi={rivi} lahteet={lahteet} />
+                  <Faktakortti
+                    key={rivi.kentta}
+                    hankeId={hanke.id}
+                    rivi={rivi}
+                    lahteet={lahteet}
+                  />
                 ))}
               </Korttiruudukko>
             </section>
@@ -373,6 +403,20 @@ export default async function HankeSivu({
                   vaihtoehtoLahteet.filter((lahde) => lahde.rivi_id === vaihtoehto.id),
                 )}
                 lahteet={vaihtoehtoLahteet.filter((lahde) => lahde.rivi_id === vaihtoehto.id)}
+                toiminnot={
+                  <ul className="flex flex-col gap-1">
+                    {VAIHTOEHTO_KENTAT.map((kentta) => (
+                      <li key={kentta}>
+                        <a
+                          href={paivitaLinkki(hanke.id, kentta, vaihtoehto.tunnus)}
+                          className="text-link underline"
+                        >
+                          Päivitä: {HANKE_KENTTA_NIMET[kentta] ?? kentta}
+                        </a>
+                      </li>
+                    ))}
+                  </ul>
+                }
               />
             ))}
           </Korttiruudukko>

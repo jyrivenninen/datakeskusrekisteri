@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { HANKE_ORGANISAATIO_ROOLI_NIMET, ORGANISAATIO_TYYPPI_NIMET, VAIHE_NIMET } from "@/lib/naytto";
+import { HANKE_ORGANISAATIO_ROOLI_NIMET, ORGANISAATIO_TYYPPI_NIMET } from "@/lib/naytto";
+import { VaiheMerkki } from "@/komponentit/vaihe-merkki";
 import { haeOrganisaatio } from "@/lib/supabase/kyselyt";
 
 export const revalidate = 60;
@@ -93,7 +94,7 @@ export default async function OrganisaatioSivu({
                 <p className="mt-1 text-sm text-muted">
                   {hanke.roolit.map((rooli) => HANKE_ORGANISAATIO_ROOLI_NIMET[rooli]).join(", ")}
                   {" · "}
-                  {hanke.kunta} · {VAIHE_NIMET[hanke.vaihe]}
+                  {hanke.kunta} · <VaiheMerkki vaihe={hanke.vaihe} />
                 </p>
               </li>
             ))}

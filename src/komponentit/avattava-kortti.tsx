@@ -15,11 +15,13 @@ export function AvattavaKortti({
   arvo,
   tila,
   lahteet,
+  toiminnot,
 }: {
   nimi: string;
   arvo: ReactNode;
   tila: KentanTila;
   lahteet: KenttaLahde[];
+  toiminnot?: ReactNode;
 }) {
   return (
     <details className="faktakortti rounded border border-border bg-surface">
@@ -35,6 +37,7 @@ export function AvattavaKortti({
       <div className="border-t border-border px-3 pb-3">
         <p className="sr-only">Lähteet ja tarkenteet: {nimi}</p>
         <Lahdeluettelo lahteet={lahteet} />
+        {toiminnot ? <div className="mt-3 text-sm">{toiminnot}</div> : null}
       </div>
     </details>
   );

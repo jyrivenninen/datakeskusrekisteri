@@ -38,6 +38,40 @@ export const LOMAKE_KENTAT = [
   "generaattori_polttoaineteho_mw",
 ] as const;
 
+/** Hankesivun kortista päivitettävät hanketason kentät. */
+export const PAIVITETTAVAT_HANKE_KENTAT = [
+  "nimi",
+  "kunta",
+  "maakunta",
+  "vaihe",
+  "toimija_nimi",
+  "yva_diaarinumero",
+  "teho_mw",
+  "it_teho_mw",
+  "pinta_ala_ha",
+  "sahkonkaytto_twh_a",
+  "generaattorit_lkm",
+  "generaattorit_kaytossa_max_lkm",
+  "generaattori_polttoaineteho_mw",
+  "kaavatunnus",
+  "kortteli",
+] as const;
+
+export type PaivitettavaHankeKentta = (typeof PAIVITETTAVAT_HANKE_KENTAT)[number];
+
+export function onPaivitettavaHankeKentta(
+  kentta: string,
+): kentta is PaivitettavaHankeKentta {
+  return (PAIVITETTAVAT_HANKE_KENTAT as readonly string[]).includes(kentta);
+}
+
+/** Kortin tunniste → lomakkeen kenttänimi. */
+export function lomakeKenttaKortista(korttiKentta: string): string | null {
+  if (korttiKentta === "toimija_organisaatio_id") return "toimija_nimi";
+  if (onPaivitettavaHankeKentta(korttiKentta)) return korttiKentta;
+  return null;
+}
+
 function onHttpsUrl(arvo: string): boolean {
   return /^https?:\/\//.test(arvo);
 }
@@ -116,3 +150,9 @@ export const VAIHTOEHTO_KENTAT = [
   "generaattorit_kaytossa_max_lkm",
   "generaattori_polttoaineteho_mw",
 ] as const;
+
+export type VaihtoehtoKentta = (typeof VAIHTOEHTO_KENTAT)[number];
+
+export function onVaihtoehtoKentta(kentta: string): kentta is VaihtoehtoKentta {
+  return (VAIHTOEHTO_KENTAT as readonly string[]).includes(kentta);
+}

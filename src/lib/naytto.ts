@@ -113,6 +113,7 @@ export const HANKE_KENTTA_NIMET: Record<string, string> = {
   generaattorit_kaytossa_max_lkm: "Generaattoreita yhtä aikaa enintään (kpl)",
   generaattori_polttoaineteho_mw: "Generaattorin polttoaineteho (MW)",
   toimija_organisaatio_id: "Hankkeesta vastaava",
+  toimija_nimi: "Hankkeesta vastaava",
   yva_diaarinumero: "YVA-diaarinumero",
   kaavatunnus: "Kaavatunnus",
   kortteli: "Kortteli",

@@ -1,8 +1,9 @@
 import { HankeLaskurit } from "@/komponentit/hanke-laskurit";
 import { Kartta, type Karttamerkki } from "@/komponentit/kartta";
 import { Suodatuslomake } from "@/komponentit/suodatuslomake";
+import { VaiheMerkki } from "@/komponentit/vaihe-merkki";
 import { laskeHankeYhteenveto } from "@/lib/hanke-yhteenveto";
-import { MAARAAJA_NIMET, VAIHE_NIMET, hankeTehoMw, muotoileLuku, muotoilePvm } from "@/lib/naytto";
+import { MAARAAJA_NIMET, hankeTehoMw, muotoileLuku, muotoilePvm } from "@/lib/naytto";
 import {
   haeJulkaistutHankkeet,
   haeTulevatMaaraajat,
@@ -163,7 +164,8 @@ export default async function Etusivu({
                   </h4>
                   <p className="mt-1 text-sm text-muted">
                     {hanke.kunta}
-                    {hanke.maakunta ? `, ${hanke.maakunta}` : ""} · {VAIHE_NIMET[hanke.vaihe]}
+                    {hanke.maakunta ? `, ${hanke.maakunta}` : ""} ·{" "}
+                    <VaiheMerkki vaihe={hanke.vaihe} />
                     {teho != null ? ` · ${muotoileLuku(teho)} MW` : ""}
                   </p>
                 </li>

@@ -2,9 +2,18 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { LOMAKE_KENTAT, rakennaSisalto, tarkistaUusiHanke } from "@/lib/ehdotus";
-import { haeKirjautunutKayttaja, luoPalvelinAsiakas } from "@/lib/supabase/palvelin";
+import {
+  LOMAKE_KENTAT,
+  onPaivitettavaHankeKentta,
+  onVaihtoehtoKentta,
+  rakennaSisalto,
+  tarkistaUusiHanke,
+  type EhdotusSisalto,
+} from "@/lib/ehdotus";
+import { LUOTTAMUSTASOT, type Luottamus } from "@/lib/supabase/tietokanta";
+import { haeKirjautunutKayttaja, haeYllapitaja, luoPalvelinAsiakas } from "@/lib/supabase/palvelin";
 import { hylkaaMuutosehdotus, hyvaksyMuutosehdotus } from "@/lib/supabase/hyvaksynta";
+import { luoYllapitoAsiakas, supabasePalvelinAvainAsetettu } from "@/lib/supabase/yllapito-asiakas";
 
 export async function lahetaIlmoitus(formData: FormData): Promise<void> {
   const tyyppi = String(formData.get("tyyppi") ?? "");
@@ -56,6 +65,126 @@ export async function lahetaIlmoitus(formData: FormData): Promise<void> {
   }
 
   redirect("/ilmoitus?valmis=1");
+}
+
+function paivitysPaluu(
+  hankeId: string,
+  kentta: string,
+  vaihtoehto: string,
+  virhe: string,
+): never {
+  const q = new URLSearchParams({ kentta, virhe });
+  if (vaihtoehto) q.set("vaihtoehto", vaihtoehto);
+  redirect(`/hankkeet/${hankeId}/paivita?${q.toString()}`);
+}
+
+export async function lahetaKenttapaivitys(formData: FormData): Promise<void> {
+  const hankeId = String(formData.get("hanke_id") ?? "").trim();
+  const kentta = String(formData.get("kentta") ?? "").trim();
+  const vaihtoehto = String(formData.get("vaihtoehto") ?? "").trim();
+  const arvo = String(formData.get("arvo") ?? "");
+  const lahdeUrl = String(formData.get("lahde_url") ?? "");
+  const lahdeSivu = String(formData.get("lahde_sivu") ?? "");
+  const lainaus = String(formData.get("lainaus") ?? "");
+  const huomautus = String(formData.get("huomautus") ?? "").trim();
+  const tunniste = String(formData.get("ehdottaja_tunniste") ?? "").trim() || "ilmoituslomake";
+  const nykyinen = String(formData.get("nykyinen_arvo") ?? "").trim();
+  const luottamusRaaka = String(formData.get("luottamus") ?? "").trim();
+
+  if (!hankeId) {
+    redirect(`/ilmoitus?virhe=${encodeURIComponent("Hanke puuttuu.")}`);
+  }
+  if (vaihtoehto) {
+    if (!onVaihtoehtoKentta(kentta)) {
+      paivitysPaluu(hankeId, kentta, vaihtoehto, "Vaihtoehdon kenttä ei ole sallittu.");
+    }
+  } else if (!onPaivitettavaHankeKentta(kentta)) {
+    paivitysPaluu(hankeId, kentta, vaihtoehto, "Kenttä ei ole päivitettävissä tällä lomakkeella.");
+  }
+
+  const { sisalto: pohja, virhe } = rakennaSisalto(
+    { [kentta]: arvo },
+    lahdeUrl,
+    lahdeSivu,
+    lainaus,
+  );
+  if (virhe) paivitysPaluu(hankeId, kentta, vaihtoehto, virhe);
+  if (Object.keys(pohja.kentat).length === 0) {
+    paivitysPaluu(hankeId, kentta, vaihtoehto, "Anna kentän arvo ja lähde.");
+  }
+
+  const luottamus: Luottamus | undefined = (LUOTTAMUSTASOT as readonly string[]).includes(
+    luottamusRaaka,
+  )
+    ? (luottamusRaaka as Luottamus)
+    : undefined;
+  if (luottamus) {
+    for (const tieto of Object.values(pohja.kentat)) {
+      tieto.luottamus = luottamus;
+    }
+  }
+
+  const sisalto: EhdotusSisalto = vaihtoehto
+    ? { kentat: {}, vaihtoehdot: { [vaihtoehto]: pohja.kentat } }
+    : pohja;
+
+  const tyyppi = nykyinen ? "korjaus" : "taydennys";
+  const { user: yllapitaja } = await haeYllapitaja();
+  const julkaiseSuoraan = Boolean(yllapitaja && supabasePalvelinAvainAsetettu());
+
+  if (julkaiseSuoraan && yllapitaja) {
+    const yllapito = luoYllapitoAsiakas();
+    const { data, error } = await yllapito
+      .from("muutosehdotukset")
+      .insert({
+        tyyppi,
+        hanke_id: hankeId,
+        ehdottaja_tyyppi: "yllapitaja",
+        ehdottaja_tunniste: yllapitaja.email ?? yllapitaja.id,
+        sisalto,
+        tila: "odottaa",
+        huomautus: huomautus || null,
+        lahde_url: lahdeUrl.trim(),
+      })
+      .select("id")
+      .single();
+    if (error || !data) {
+      paivitysPaluu(hankeId, kentta, vaihtoehto, error?.message ?? "Tallennus epäonnistui.");
+    }
+    try {
+      await hyvaksyMuutosehdotus(data.id, yllapitaja.email ?? yllapitaja.id);
+    } catch (syy) {
+      const viesti = syy instanceof Error ? syy.message : "Julkaisu epäonnistui.";
+      paivitysPaluu(
+        hankeId,
+        kentta,
+        vaihtoehto,
+        `${viesti} Ehdotus jäi tarkistusjonoon.`,
+      );
+    }
+    revalidatePath("/");
+    revalidatePath(`/hankkeet/${hankeId}`);
+    revalidatePath("/yllapito");
+    redirect(`/hankkeet/${hankeId}/paivita?kentta=${encodeURIComponent(kentta)}${vaihtoehto ? `&vaihtoehto=${encodeURIComponent(vaihtoehto)}` : ""}&valmis=julkaistu`);
+  }
+
+  const supabase = await luoPalvelinAsiakas();
+  const { error } = await supabase.from("muutosehdotukset").insert({
+    tyyppi,
+    hanke_id: hankeId,
+    ehdottaja_tyyppi: "lomake",
+    ehdottaja_tunniste: tunniste,
+    sisalto,
+    tila: "odottaa",
+    huomautus: huomautus || null,
+    lahde_url: lahdeUrl.trim(),
+  });
+  if (error) {
+    paivitysPaluu(hankeId, kentta, vaihtoehto, error.message);
+  }
+  redirect(
+    `/hankkeet/${hankeId}/paivita?kentta=${encodeURIComponent(kentta)}${vaihtoehto ? `&vaihtoehto=${encodeURIComponent(vaihtoehto)}` : ""}&valmis=odottaa`,
+  );
 }
 
 export async function kirjauduSisaan(formData: FormData): Promise<void> {

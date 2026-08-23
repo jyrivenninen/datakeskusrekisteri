@@ -172,6 +172,8 @@ ovat valmiit — ne ovat helppo osa, kun tietomalli on kunnossa.
 
 ### Vaihe 5 — Ylläpito ja ilmoitus
 - [x] Ilmoituslomake (uusi hanke / täydennys) → `muutosehdotukset`
+- [x] Hankesivun kentästä «Päivitä»: ylläpitäjä julkaisee lähteineen,
+      muu käyttäjä lähettää tarkistusjonoon
 - [x] Ylläpitonäkymä: ehdotusten tarkistus ja hyväksyntä (myös
       `hanke_vaihtoehdot`)
 - [x] Kirjautuminen ylläpitäjille (Supabase Auth)

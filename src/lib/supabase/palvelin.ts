@@ -39,3 +39,16 @@ export async function haeKirjautunutKayttaja() {
     return { user: null, supabase };
   }
 }
+
+/** Palauttaa kirjautuneen ylläpitäjän tai nullin. Ei ohjaa kirjautumiseen. */
+export async function haeYllapitaja() {
+  const { user, supabase } = await haeKirjautunutKayttaja();
+  if (!user) return { user: null, supabase };
+  const { data } = await supabase
+    .from("yllapitajat")
+    .select("kayttaja_id")
+    .eq("kayttaja_id", user.id)
+    .maybeSingle();
+  if (!data) return { user: null, supabase };
+  return { user, supabase };
+}
