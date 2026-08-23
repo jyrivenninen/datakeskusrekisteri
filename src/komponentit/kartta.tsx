@@ -3,7 +3,7 @@
 import { useEffect, useRef } from "react";
 import { LngLatBounds, Map, Marker, NavigationControl, type StyleSpecification } from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
-import type { SijaintiAlue } from "@/lib/supabase/tietokanta";
+import type { SijaintiAlue, SijaintiViiva } from "@/lib/supabase/tietokanta";
 
 export type Karttamerkki = {
   id: string;
@@ -11,6 +11,7 @@ export type Karttamerkki = {
   lat?: number;
   lon?: number;
   alue?: SijaintiAlue | null;
+  johdot?: { id: string; reitti: SijaintiViiva }[];
 };
 
 function parsiAlue(arvo: unknown): SijaintiAlue | null {
@@ -58,6 +59,58 @@ function taustakarttaTyyli(avain: string): StyleSpecification {
   };
 }
 
+function parsiViiva(arvo: unknown): SijaintiViiva | null {
+  let data = arvo;
+  if (typeof data === "string") {
+    try {
+      data = JSON.parse(data) as unknown;
+    } catch {
+      return null;
+    }
+  }
+  if (
+    data &&
+    typeof data === "object" &&
+    ((data as SijaintiViiva).type === "LineString" ||
+      (data as SijaintiViiva).type === "MultiLineString") &&
+    Array.isArray((data as SijaintiViiva).coordinates)
+  ) {
+    return data as SijaintiViiva;
+  }
+  return null;
+}
+
+function viivanPisteet(viiva: SijaintiViiva): number[][] {
+  if (viiva.type === "LineString") return viiva.coordinates as number[][];
+  return (viiva.coordinates as number[][][]).flat();
+}
+
+function laajennaViivalla(rajat: LngLatBounds, viiva: SijaintiViiva) {
+  for (const piste of viivanPisteet(viiva)) {
+    if (piste.length >= 2) rajat.extend([piste[0], piste[1]]);
+  }
+}
+
+function piirraViiva(kartta: Map, svg: SVGSVGElement, viiva: SijaintiViiva) {
+  const osat: number[][][] =
+    viiva.type === "LineString"
+      ? [viiva.coordinates as number[][]]
+      : (viiva.coordinates as number[][][]);
+  for (const viivaOsa of osat) {
+    if (viivaOsa.length < 2) continue;
+    const d = viivaOsa.map((piste, i) => {
+      const xy = kartta.project([piste[0], piste[1]]);
+      return `${i === 0 ? "M" : "L"}${xy.x.toFixed(1)} ${xy.y.toFixed(1)}`;
+    });
+    const polku = document.createElementNS("http://www.w3.org/2000/svg", "path");
+    polku.setAttribute("d", d.join(" "));
+    polku.setAttribute("fill", "none");
+    polku.setAttribute("stroke", "#0f766e");
+    polku.setAttribute("stroke-width", "3");
+    polku.setAttribute("stroke-dasharray", "8 5");
+    svg.appendChild(polku);
+  }
+}
 function laajennaAlueella(rajat: LngLatBounds, alue: SijaintiAlue) {
   for (const rengas of alue.coordinates) {
     for (const piste of rengas) {
@@ -66,7 +119,7 @@ function laajennaAlueella(rajat: LngLatBounds, alue: SijaintiAlue) {
   }
 }
 
-function piirraAlueet(kartta: Map, svg: SVGSVGElement, merkit: Karttamerkki[]) {
+function piirraGeometriat(kartta: Map, svg: SVGSVGElement, merkit: Karttamerkki[]) {
   const kehys = kartta.getContainer();
   const leveys = kehys.clientWidth;
   const korkeus = kehys.clientHeight;
@@ -78,17 +131,22 @@ function piirraAlueet(kartta: Map, svg: SVGSVGElement, merkit: Karttamerkki[]) {
   for (const merkki of merkit) {
     const alue = parsiAlue(merkki.alue);
     const rengas = alue?.coordinates[0];
-    if (!rengas || rengas.length < 3) continue;
-    const osat = rengas.map((piste, i) => {
-      const xy = kartta.project([piste[0], piste[1]]);
-      return `${i === 0 ? "M" : "L"}${xy.x.toFixed(1)} ${xy.y.toFixed(1)}`;
-    });
-    const polku = document.createElementNS("http://www.w3.org/2000/svg", "path");
-    polku.setAttribute("d", `${osat.join(" ")} Z`);
-    polku.setAttribute("fill", "rgba(30, 58, 138, 0.45)");
-    polku.setAttribute("stroke", "#1e3a8a");
-    polku.setAttribute("stroke-width", "2");
-    svg.appendChild(polku);
+    if (rengas && rengas.length >= 3) {
+      const osat = rengas.map((piste, i) => {
+        const xy = kartta.project([piste[0], piste[1]]);
+        return `${i === 0 ? "M" : "L"}${xy.x.toFixed(1)} ${xy.y.toFixed(1)}`;
+      });
+      const polku = document.createElementNS("http://www.w3.org/2000/svg", "path");
+      polku.setAttribute("d", `${osat.join(" ")} Z`);
+      polku.setAttribute("fill", "rgba(30, 58, 138, 0.45)");
+      polku.setAttribute("stroke", "#1e3a8a");
+      polku.setAttribute("stroke-width", "2");
+      svg.appendChild(polku);
+    }
+    for (const johto of merkki.johdot ?? []) {
+      const viiva = parsiViiva(johto.reitti);
+      if (viiva) piirraViiva(kartta, svg, viiva);
+    }
   }
 }
 
@@ -102,6 +160,12 @@ export function Kartta({ merkit }: { merkit: Karttamerkki[] }) {
     const merkitNyt: Karttamerkki[] = JSON.parse(merkitAvain).map((merkki: Karttamerkki) => ({
       ...merkki,
       alue: parsiAlue(merkki.alue),
+      johdot: (merkki.johdot ?? [])
+        .map((johto) => {
+          const reitti = parsiViiva(johto.reitti);
+          return reitti ? { id: johto.id, reitti } : null;
+        })
+        .filter((johto): johto is { id: string; reitti: SijaintiViiva } => johto != null),
     }));
 
     const kartta = new Map({
@@ -143,13 +207,21 @@ export function Kartta({ merkit }: { merkit: Karttamerkki[] }) {
         laajennaAlueella(rajat, merkki.alue);
         onRajoja = true;
       }
+      for (const johto of merkki.johdot ?? []) {
+        const viiva = parsiViiva(johto.reitti);
+        if (!viiva) continue;
+        laajennaViivalla(rajat, viiva);
+        onRajoja = true;
+      }
     }
 
-    const paivita = () => piirraAlueet(kartta, svg, merkitNyt);
+    const paivita = () => piirraGeometriat(kartta, svg, merkitNyt);
 
     const rajaaKartta = () => {
-      const yhdellaAlue = merkitNyt.length === 1 && merkitNyt[0]?.alue;
-      if (yhdellaAlue && onRajoja) {
+      const yhdellaGeometria =
+        merkitNyt.length === 1 &&
+        Boolean(merkitNyt[0]?.alue || (merkitNyt[0]?.johdot && merkitNyt[0].johdot.length > 0));
+      if (yhdellaGeometria && onRajoja) {
         kartta.fitBounds(rajat, { padding: 36, maxZoom: 16 });
       } else if (merkitNyt.length === 1 && merkitNyt[0].lat != null && merkitNyt[0].lon != null) {
         kartta.setCenter([merkitNyt[0].lon, merkitNyt[0].lat]);

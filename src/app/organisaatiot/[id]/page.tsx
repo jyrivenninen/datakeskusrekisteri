@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { YhteyshenkiloLista } from "@/komponentit/yhteyshenkilo-lista";
-import { ORGANISAATIO_TYYPPI_NIMET, VAIHE_NIMET } from "@/lib/naytto";
+import { HANKE_ORGANISAATIO_ROOLI_NIMET, ORGANISAATIO_TYYPPI_NIMET, VAIHE_NIMET } from "@/lib/naytto";
 import { haeOrganisaatio } from "@/lib/supabase/kyselyt";
 
 export const revalidate = 60;
@@ -80,7 +80,7 @@ export default async function OrganisaatioSivu({
 
       <section className="mt-10" aria-labelledby="hankkeet-otsikko">
         <h2 id="hankkeet-otsikko" className="text-xl font-semibold">
-          Hankkeet, joissa merkitty vastaavaksi
+          Hankkeet
         </h2>
         {hankkeet.length === 0 ? (
           <p className="mt-3">Ei merkittyjä hankkeita.</p>
@@ -92,6 +92,8 @@ export default async function OrganisaatioSivu({
                   {hanke.nimi}
                 </a>
                 <p className="mt-1 text-sm text-muted">
+                  {hanke.roolit.map((rooli) => HANKE_ORGANISAATIO_ROOLI_NIMET[rooli]).join(", ")}
+                  {" · "}
                   {hanke.kunta} · {VAIHE_NIMET[hanke.vaihe]}
                 </p>
               </li>

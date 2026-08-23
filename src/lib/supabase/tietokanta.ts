@@ -22,6 +22,7 @@ export const ORGANISAATIO_TYYPIT = [
   "yritys",
   "kunta",
   "ely",
+  "lvv",
   "avi",
   "ministerio",
   "jarjesto",
@@ -32,11 +33,43 @@ export type OrganisaatioTyyppi = (typeof ORGANISAATIO_TYYPIT)[number];
 
 export const MAARAAJA_TYYPIT = [
   "yva_mielipide",
+  "yva_ohjelma",
+  "yva_selostus",
   "kaavamuistutus",
   "valitusaika",
   "kuulutus",
   "muu",
 ] as const;
+
+export const SIJAINTI_ALUE_TYYPIT = ["kaava_alue", "tontti", "arvio"] as const;
+
+export type SijaintiAlueTyyppi = (typeof SIJAINTI_ALUE_TYYPIT)[number];
+
+export const HANKE_KUNTA_ROOLIT = [
+  "sijaintikunta",
+  "vaikutusalue",
+  "sahkonsiirto",
+] as const;
+
+export type HankeKuntaRooli = (typeof HANKE_KUNTA_ROOLIT)[number];
+
+export const MENETTELY_LAJIT = ["yva", "kaavoitus", "lupamenettely", "muu"] as const;
+
+export type MenettelyLaji = (typeof MENETTELY_LAJIT)[number];
+
+export const MENETTELY_TILAT = ["ei_alkanut", "vireilla", "paattynyt"] as const;
+
+export type MenettelyTila = (typeof MENETTELY_TILAT)[number];
+
+export const HANKE_ORGANISAATIO_ROOLIT = [
+  "toimija",
+  "yva_konsultti",
+  "yhteysviranomainen",
+  "kaavoittaja",
+  "muu",
+] as const;
+
+export type HankeOrganisaatioRooli = (typeof HANKE_ORGANISAATIO_ROOLIT)[number];
 
 export type MaaraajaTyyppi = (typeof MAARAAJA_TYYPIT)[number];
 
@@ -91,6 +124,8 @@ export const HANKE_FAKTAKENTAT_EHDOLLISET = [
   "generaattori_polttoaineteho_mw",
   "toimija_organisaatio_id",
   "yva_diaarinumero",
+  "kaavatunnus",
+  "kortteli",
 ] as const;
 
 export type Organisaatio = {
@@ -109,6 +144,11 @@ export type SijaintiAlue = {
   coordinates: number[][][];
 };
 
+export type SijaintiViiva = {
+  type: "LineString" | "MultiLineString";
+  coordinates: number[][] | number[][][];
+};
+
 export type Hanke = {
   id: string;
   nimi: string;
@@ -117,6 +157,9 @@ export type Hanke = {
   sijainti_lat: number | null;
   sijainti_lon: number | null;
   sijainti_alue: SijaintiAlue | null;
+  sijainti_alue_tyyppi: SijaintiAlueTyyppi | null;
+  kaavatunnus: string | null;
+  kortteli: string | null;
   vaihe: HankeVaihe;
   teho_mw: number | null;
   it_teho_mw: number | null;
@@ -135,9 +178,78 @@ export type Hanke = {
 export type Maaraaja = {
   id: string;
   hanke_id: string;
+  menettely_id: string | null;
   tyyppi: MaaraajaTyyppi;
   alkaa_pvm: string | null;
   paattyy_pvm: string;
+  julkaistu: boolean;
+  luotu_pvm: string;
+  paivitetty_pvm: string;
+};
+
+export type HankeKunta = {
+  id: string;
+  hanke_id: string;
+  kunta: string;
+  rooli: HankeKuntaRooli;
+  julkaistu: boolean;
+  luotu_pvm: string;
+  paivitetty_pvm: string;
+};
+
+export type HankeMenettely = {
+  id: string;
+  hanke_id: string;
+  laji: MenettelyLaji;
+  tila: MenettelyTila;
+  tunnus: string | null;
+  julkaistu: boolean;
+  luotu_pvm: string;
+  paivitetty_pvm: string;
+};
+
+export const JOHTO_TYYPIT = ["ilmajohto", "maakaapeli"] as const;
+
+export type JohtoTyyppi = (typeof JOHTO_TYYPIT)[number];
+
+export type HankeJohto = {
+  id: string;
+  hanke_id: string;
+  menettely_id: string | null;
+  tyyppi: JohtoTyyppi;
+  jannite_kv: number | null;
+  pituus_km: number | null;
+  vaihtoehto: string | null;
+  liittymispiste: string | null;
+  reitti: SijaintiViiva | null;
+  julkaistu: boolean;
+  luotu_pvm: string;
+  paivitetty_pvm: string;
+};
+
+export type HankeVaihtoehto = {
+  id: string;
+  hanke_id: string;
+  menettely_id: string | null;
+  tunnus: string;
+  teho_mw: number | null;
+  it_teho_mw: number | null;
+  pinta_ala_ha: number | null;
+  sahkonkaytto_twh_a: number | null;
+  generaattorit_lkm: number | null;
+  generaattorit_kaytossa_max_lkm: number | null;
+  generaattori_polttoaineteho_mw: number | null;
+  sijainti_alue: SijaintiAlue | null;
+  julkaistu: boolean;
+  luotu_pvm: string;
+  paivitetty_pvm: string;
+};
+
+export type HankeOrganisaatio = {
+  id: string;
+  hanke_id: string;
+  organisaatio_id: string;
+  rooli: HankeOrganisaatioRooli;
   julkaistu: boolean;
   luotu_pvm: string;
   paivitetty_pvm: string;
@@ -156,13 +268,63 @@ export type Yhteyshenkilo = {
   paivitetty_pvm: string;
 };
 
+export const DOKUMENTTI_LAJIT = [
+  "verkkosivu",
+  "kuulutus",
+  "yva_ohjelma",
+  "yva_selostus",
+  "asemakaava",
+  "kaavamaaraykset",
+  "kartta_aineisto",
+  "muu",
+] as const;
+
+export type DokumenttiLaji = (typeof DOKUMENTTI_LAJIT)[number];
+
+export const DOKUMENTTI_MUODOT = ["html", "pdf", "wfs", "muu"] as const;
+
+export type DokumenttiMuoto = (typeof DOKUMENTTI_MUODOT)[number];
+
+export const DOKUMENTTI_KIELET = ["fi", "sv", "en"] as const;
+
+export type DokumenttiKieli = (typeof DOKUMENTTI_KIELET)[number];
+
+export type Dokumentti = {
+  id: string;
+  hanke_id: string | null;
+  url: string;
+  otsikko: string;
+  laji: DokumenttiLaji;
+  muoto: DokumenttiMuoto | null;
+  kieli: DokumenttiKieli | null;
+  julkaisija: string | null;
+  julkaistu_pvm: string | null;
+  tunnus: string | null;
+  sivumaara: number | null;
+  menettely_id: string | null;
+  julkaistu: boolean;
+  luotu_pvm: string;
+  paivitetty_pvm: string;
+};
+
 export type KenttaLahde = {
   id: string;
-  taulu: "hankkeet" | "maaraajat" | "organisaatiot" | "yhteyshenkilot";
+  taulu:
+    | "hankkeet"
+    | "maaraajat"
+    | "organisaatiot"
+    | "yhteyshenkilot"
+    | "hanke_kunnat"
+    | "hanke_menettelyt"
+    | "hanke_organisaatiot"
+    | "dokumentit"
+    | "hanke_johdot"
+    | "hanke_vaihtoehdot";
   rivi_id: string;
   kentta: string;
   lahde_url: string;
   lahde_sivu: number | null;
+  dokumentti_id: string | null;
   vahvistettu_pvm: string;
   luottamus: Luottamus;
   lainaus: string | null;

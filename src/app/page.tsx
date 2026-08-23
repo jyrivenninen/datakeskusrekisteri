@@ -15,7 +15,7 @@ export default async function Etusivu({
 }) {
   const params = await searchParams;
   const suodatus = parsiSuodatus(params);
-  const [{ hankkeet, virhe: hankeVirhe }, { maaraajat, virhe: maaraajaVirhe }] =
+  const [{ hankkeet, johdot, virhe: hankeVirhe }, { maaraajat, virhe: maaraajaVirhe }] =
     await Promise.all([haeJulkaistutHankkeet(suodatus), haeTulevatMaaraajat()]);
 
   const { hankkeet: kaikkiHankkeet } = await haeJulkaistutHankkeet();
@@ -25,7 +25,12 @@ export default async function Etusivu({
 
   const merkit: Karttamerkki[] = hankkeet.flatMap((hanke) => {
     const alue = hanke.sijainti_alue?.type === "Polygon" ? hanke.sijainti_alue : null;
-    if (hanke.sijainti_lat == null && hanke.sijainti_lon == null && !alue) return [];
+    const hankeJohdot = johdot
+      .filter((johto) => johto.hanke_id === hanke.id && johto.reitti)
+      .map((johto) => ({ id: johto.id, reitti: johto.reitti! }));
+    if (hanke.sijainti_lat == null && hanke.sijainti_lon == null && !alue && hankeJohdot.length === 0) {
+      return [];
+    }
     return [
       {
         id: hanke.id,
@@ -33,6 +38,7 @@ export default async function Etusivu({
         lat: hanke.sijainti_lat != null ? Number(hanke.sijainti_lat) : undefined,
         lon: hanke.sijainti_lon != null ? Number(hanke.sijainti_lon) : undefined,
         alue,
+        johdot: hankeJohdot,
       },
     ];
   });

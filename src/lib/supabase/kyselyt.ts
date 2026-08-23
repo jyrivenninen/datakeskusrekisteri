@@ -2,8 +2,15 @@ import { luoPalvelinAsiakas } from "@/lib/supabase/palvelin";
 import { supabaseYmparistoAsetettu } from "@/lib/supabase/ymparisto";
 import type {
   Hanke,
+  HankeJohto,
+  HankeVaihtoehto,
+  HankeKunta,
+  HankeMenettely,
+  HankeOrganisaatio,
+  HankeOrganisaatioRooli,
   HankeVaihe,
   KenttaLahde,
+  Dokumentti,
   Maaraaja,
   Organisaatio,
   OrganisaatioTyyppi,
@@ -32,9 +39,9 @@ function virheViesti(syy: unknown): string {
 
 export async function haeJulkaistutHankkeet(
   suodatus: HankeSuodatus = {},
-): Promise<{ hankkeet: HankeListalla[]; virhe: string | null }> {
+): Promise<{ hankkeet: HankeListalla[]; johdot: HankeJohto[]; virhe: string | null }> {
   if (!supabaseYmparistoAsetettu()) {
-    return { hankkeet: [], virhe: "Julkaistuja hankkeita ei juuri nyt voitu hakea." };
+    return { hankkeet: [], johdot: [], virhe: "Julkaistuja hankkeita ei juuri nyt voitu hakea." };
   }
 
   try {
@@ -53,23 +60,90 @@ export async function haeJulkaistutHankkeet(
     }
 
     const { data, error } = await kysely;
-    if (error) return { hankkeet: [], virhe: error.message };
+    if (error) return { hankkeet: [], johdot: [], virhe: error.message };
 
     let hankkeet = (data ?? []) as HankeListalla[];
     if (suodatus.koko) {
       hankkeet = hankkeet.filter((hanke) => hankeKokoLuokka(hanke) === suodatus.koko);
     }
-    return { hankkeet, virhe: null };
+
+    const idt = hankkeet.map((hanke) => hanke.id);
+    let johdot: HankeJohto[] = [];
+    if (idt.length > 0) {
+      const { data: johtoData } = await supabase
+        .from("hanke_johdot")
+        .select("*")
+        .in("hanke_id", idt)
+        .eq("julkaistu", true);
+      johdot = (johtoData ?? []) as HankeJohto[];
+    }
+
+    return { hankkeet, johdot, virhe: null };
   } catch (syy) {
-    return { hankkeet: [], virhe: virheViesti(syy) };
+    return { hankkeet: [], johdot: [], virhe: virheViesti(syy) };
   }
+}
+
+export type HankeOrganisaatioNakyma = HankeOrganisaatio & {
+  organisaatio: Pick<Organisaatio, "id" | "nimi"> | null;
+};
+
+export type OrganisaationHanke = HankeListalla & {
+  roolit: HankeOrganisaatioRooli[];
+};
+
+export type AsiakirjanKaytto = {
+  taulu: KenttaLahde["taulu"];
+  kentta: string;
+  sivut: number[];
+};
+
+export type HankeAsiakirja = Dokumentti & {
+  kattaa: AsiakirjanKaytto[];
+};
+
+function asiakirjanKaytto(lahteet: KenttaLahde[], dokumentti: Dokumentti): AsiakirjanKaytto[] {
+  const kartta = new Map<string, AsiakirjanKaytto>();
+  for (const lahde of lahteet) {
+    if (lahde.dokumentti_id !== dokumentti.id && lahde.lahde_url !== dokumentti.url) continue;
+    if (lahde.taulu === "dokumentit") continue;
+    const avain = `${lahde.taulu}:${lahde.kentta}`;
+    const aiempi = kartta.get(avain);
+    if (aiempi) {
+      if (lahde.lahde_sivu != null && !aiempi.sivut.includes(lahde.lahde_sivu)) {
+        aiempi.sivut.push(lahde.lahde_sivu);
+        aiempi.sivut.sort((a, b) => a - b);
+      }
+    } else {
+      kartta.set(avain, {
+        taulu: lahde.taulu,
+        kentta: lahde.kentta,
+        sivut: lahde.lahde_sivu == null ? [] : [lahde.lahde_sivu],
+      });
+    }
+  }
+  return [...kartta.values()].sort((a, b) =>
+    `${a.taulu}.${a.kentta}`.localeCompare(`${b.taulu}.${b.kentta}`, "fi"),
+  );
 }
 
 export async function haeHanke(id: string): Promise<{
   hanke: HankeListalla | null;
   lahteet: KenttaLahde[];
+  kunnat: HankeKunta[];
+  kuntaLahteet: KenttaLahde[];
+  menettelyt: HankeMenettely[];
+  menettelyLahteet: KenttaLahde[];
+  organisaatioroolit: HankeOrganisaatioNakyma[];
+  organisaatiorooliLahteet: KenttaLahde[];
   maaraajat: Maaraaja[];
   maaraajaLahteet: KenttaLahde[];
+  asiakirjat: HankeAsiakirja[];
+  asiakirjaLahteet: KenttaLahde[];
+  johdot: HankeJohto[];
+  johtoLahteet: KenttaLahde[];
+  vaihtoehdot: HankeVaihtoehto[];
+  vaihtoehtoLahteet: KenttaLahde[];
   yhteyshenkilot: (Yhteyshenkilo & {
     organisaatio: Pick<Organisaatio, "nimi"> | null;
   })[];
@@ -78,8 +152,20 @@ export async function haeHanke(id: string): Promise<{
   const tyhja = {
     hanke: null,
     lahteet: [],
+    kunnat: [],
+    kuntaLahteet: [],
+    menettelyt: [],
+    menettelyLahteet: [],
+    organisaatioroolit: [],
+    organisaatiorooliLahteet: [],
     maaraajat: [],
     maaraajaLahteet: [],
+    asiakirjat: [],
+    asiakirjaLahteet: [],
+    johdot: [],
+    johtoLahteet: [],
+    vaihtoehdot: [],
+    vaihtoehtoLahteet: [],
     yhteyshenkilot: [],
     virhe: null as string | null,
   };
@@ -100,7 +186,17 @@ export async function haeHanke(id: string): Promise<{
     if (hankeVirhe) return { ...tyhja, virhe: hankeVirhe.message };
     if (!hanke) return tyhja;
 
-    const [{ data: lahteet }, { data: maaraajat }, { data: henkilot }] = await Promise.all([
+    const [
+      { data: lahteet },
+      { data: maaraajat },
+      { data: henkilot },
+      { data: kunnat },
+      { data: menettelyt },
+      { data: organisaatioroolit },
+      { data: dokumentit },
+      { data: johdot },
+      { data: vaihtoehdot },
+    ] = await Promise.all([
       supabase
         .from("kentta_lahteet")
         .select("*")
@@ -119,24 +215,116 @@ export async function haeHanke(id: string): Promise<{
         .eq("hanke_id", id)
         .eq("julkaistu", true)
         .order("nimi"),
+      supabase
+        .from("hanke_kunnat")
+        .select("*")
+        .eq("hanke_id", id)
+        .eq("julkaistu", true)
+        .order("kunta"),
+      supabase
+        .from("hanke_menettelyt")
+        .select("*")
+        .eq("hanke_id", id)
+        .eq("julkaistu", true)
+        .order("laji"),
+      supabase
+        .from("hanke_organisaatiot")
+        .select("*, organisaatio:organisaatiot(id, nimi)")
+        .eq("hanke_id", id)
+        .eq("julkaistu", true)
+        .order("rooli"),
+      supabase
+        .from("dokumentit")
+        .select("*")
+        .eq("hanke_id", id)
+        .eq("julkaistu", true)
+        .order("otsikko"),
+      supabase
+        .from("hanke_johdot")
+        .select("*")
+        .eq("hanke_id", id)
+        .eq("julkaistu", true)
+        .order("vaihtoehto"),
+      supabase
+        .from("hanke_vaihtoehdot")
+        .select("*")
+        .eq("hanke_id", id)
+        .eq("julkaistu", true)
+        .order("tunnus"),
     ]);
 
-    const maaraajaIdt = (maaraajat ?? []).map((rivi) => rivi.id);
-    let maaraajaLahteet: KenttaLahde[] = [];
-    if (maaraajaIdt.length > 0) {
+    async function haeRiviLahteet(
+      taulu: KenttaLahde["taulu"],
+      idt: string[],
+    ): Promise<KenttaLahde[]> {
+      if (idt.length === 0) return [];
       const { data } = await supabase
         .from("kentta_lahteet")
         .select("*")
-        .eq("taulu", "maaraajat")
-        .in("rivi_id", maaraajaIdt);
-      maaraajaLahteet = (data ?? []) as KenttaLahde[];
+        .eq("taulu", taulu)
+        .in("rivi_id", idt);
+      return (data ?? []) as KenttaLahde[];
     }
+
+    const maaraajaIdt = (maaraajat ?? []).map((rivi) => rivi.id);
+    const kuntaIdt = (kunnat ?? []).map((rivi) => rivi.id);
+    const menettelyIdt = (menettelyt ?? []).map((rivi) => rivi.id);
+    const orgRooliIdt = (organisaatioroolit ?? []).map((rivi) => rivi.id);
+
+    const dokumenttiIdt = (dokumentit ?? []).map((rivi) => rivi.id);
+    const johtoIdt = (johdot ?? []).map((rivi) => rivi.id);
+    const vaihtoehtoIdt = (vaihtoehdot ?? []).map((rivi) => rivi.id);
+
+    const [
+      maaraajaLahteet,
+      kuntaLahteet,
+      menettelyLahteet,
+      organisaatiorooliLahteet,
+      asiakirjaLahteet,
+      johtoLahteet,
+      vaihtoehtoLahteet,
+    ] = await Promise.all([
+        haeRiviLahteet("maaraajat", maaraajaIdt),
+        haeRiviLahteet("hanke_kunnat", kuntaIdt),
+        haeRiviLahteet("hanke_menettelyt", menettelyIdt),
+        haeRiviLahteet("hanke_organisaatiot", orgRooliIdt),
+        haeRiviLahteet("dokumentit", dokumenttiIdt),
+        haeRiviLahteet("hanke_johdot", johtoIdt),
+        haeRiviLahteet("hanke_vaihtoehdot", vaihtoehtoIdt),
+      ]);
+
+    const kaikkiLahteet: KenttaLahde[] = [
+      ...((lahteet ?? []) as KenttaLahde[]),
+      ...maaraajaLahteet,
+      ...kuntaLahteet,
+      ...menettelyLahteet,
+      ...organisaatiorooliLahteet,
+      ...johtoLahteet,
+      ...vaihtoehtoLahteet,
+    ];
+
+    const asiakirjat: HankeAsiakirja[] = ((dokumentit ?? []) as Dokumentti[]).map((dokumentti) => ({
+      ...dokumentti,
+      kattaa: asiakirjanKaytto(kaikkiLahteet, dokumentti),
+    }));
 
     return {
       hanke: hanke as HankeListalla,
       lahteet: (lahteet ?? []) as KenttaLahde[],
+      kunnat: (kunnat ?? []) as HankeKunta[],
+      kuntaLahteet,
+      menettelyt: (menettelyt ?? []) as HankeMenettely[],
+      menettelyLahteet,
+      organisaatioroolit: (organisaatioroolit ?? []) as HankeOrganisaatioNakyma[],
+      organisaatiorooliLahteet,
       maaraajat: (maaraajat ?? []) as Maaraaja[],
       maaraajaLahteet,
+      asiakirjat,
+      asiakirjaLahteet,
+      johdot: (johdot ?? []) as HankeJohto[],
+      johtoLahteet,
+      vaihtoehdot: (vaihtoehdot ?? []) as HankeVaihtoehto[],
+      vaihtoehtoLahteet,
       yhteyshenkilot: (henkilot ?? []) as (Yhteyshenkilo & {
         organisaatio: Pick<Organisaatio, "nimi"> | null;
       })[],
@@ -230,13 +418,13 @@ export async function haeJulkaistutYhteyshenkilot(): Promise<{
 
 export async function haeOrganisaatio(id: string): Promise<{
   organisaatio: Organisaatio | null;
-  hankkeet: HankeListalla[];
+  hankkeet: OrganisaationHanke[];
   henkilot: YhteyshenkiloHakemistossa[];
   virhe: string | null;
 }> {
   const tyhja = {
     organisaatio: null,
-    hankkeet: [] as HankeListalla[],
+    hankkeet: [] as OrganisaationHanke[],
     henkilot: [] as YhteyshenkiloHakemistossa[],
     virhe: null as string | null,
   };
@@ -256,13 +444,18 @@ export async function haeOrganisaatio(id: string): Promise<{
     if (error) return { ...tyhja, virhe: error.message };
     if (!organisaatio) return tyhja;
 
-    const [{ data: hankkeet }, { data: henkilot }] = await Promise.all([
+    const [{ data: vastaavana }, { data: roolirivit }, { data: henkilot }] = await Promise.all([
       supabase
         .from("hankkeet")
         .select("*, toimija:toimija_organisaatio_id(id, nimi)")
         .eq("julkaistu", true)
         .eq("toimija_organisaatio_id", id)
         .order("nimi", { ascending: true }),
+      supabase
+        .from("hanke_organisaatiot")
+        .select("rooli, hanke:hankkeet!hanke_id(*, toimija:toimija_organisaatio_id(id, nimi))")
+        .eq("organisaatio_id", id)
+        .eq("julkaistu", true),
       supabase
         .from("yhteyshenkilot")
         .select(
@@ -273,9 +466,33 @@ export async function haeOrganisaatio(id: string): Promise<{
         .order("nimi", { ascending: true }),
     ]);
 
+    const hankkeetKartta = new Map<string, OrganisaationHanke>();
+    for (const hanke of (vastaavana ?? []) as HankeListalla[]) {
+      hankkeetKartta.set(hanke.id, { ...hanke, roolit: ["toimija"] });
+    }
+    for (const rivi of roolirivit ?? []) {
+      const raaka = rivi as unknown as {
+        rooli: HankeOrganisaatioRooli;
+        hanke: HankeListalla | HankeListalla[] | null;
+      };
+      const hanke = Array.isArray(raaka.hanke) ? (raaka.hanke[0] ?? null) : raaka.hanke;
+      const rooli = raaka.rooli;
+      if (!hanke || !hanke.julkaistu) continue;
+      const aiempi = hankkeetKartta.get(hanke.id);
+      if (aiempi) {
+        if (!aiempi.roolit.includes(rooli)) aiempi.roolit.push(rooli);
+      } else {
+        hankkeetKartta.set(hanke.id, { ...hanke, roolit: [rooli] });
+      }
+    }
+
+    const hankkeet = [...hankkeetKartta.values()].sort((a, b) =>
+      a.nimi.localeCompare(b.nimi, "fi"),
+    );
+
     return {
       organisaatio: organisaatio as Organisaatio,
-      hankkeet: (hankkeet ?? []) as HankeListalla[],
+      hankkeet,
       henkilot: (henkilot ?? []) as YhteyshenkiloHakemistossa[],
       virhe: null,
     };

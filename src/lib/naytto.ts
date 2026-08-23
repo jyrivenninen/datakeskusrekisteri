@@ -1,10 +1,19 @@
 import type {
   Hanke,
+  HankeKuntaRooli,
+  HankeOrganisaatioRooli,
   HankeVaihe,
+  JohtoTyyppi,
   Luottamus,
   MaaraajaTyyppi,
+  MenettelyLaji,
+  MenettelyTila,
   Merkinta,
   OrganisaatioTyyppi,
+  SijaintiAlueTyyppi,
+  DokumenttiLaji,
+  DokumenttiMuoto,
+  DokumenttiKieli,
 } from "@/lib/supabase/tietokanta";
 import { HANKE_VAIHEET, ORGANISAATIO_TYYPIT } from "@/lib/supabase/tietokanta";
 
@@ -21,6 +30,8 @@ export const VAIHE_NIMET: Record<HankeVaihe, string> = {
 
 export const MAARAAJA_NIMET: Record<MaaraajaTyyppi, string> = {
   yva_mielipide: "YVA-mielipide",
+  yva_ohjelma: "YVA-ohjelma",
+  yva_selostus: "YVA-selostus",
   kaavamuistutus: "Kaavamuistutus",
   valitusaika: "Valitusaika",
   kuulutus: "Kuulutus",
@@ -42,6 +53,7 @@ export const ORGANISAATIO_TYYPPI_NIMET: Record<OrganisaatioTyyppi, string> = {
   yritys: "Yritys",
   kunta: "Kunta",
   ely: "ELY-keskus",
+  lvv: "Lupa- ja valvontavirasto",
   avi: "AVI",
   ministerio: "Ministeriö",
   jarjesto: "Järjestö",
@@ -67,6 +79,72 @@ export const HANKE_KENTTA_NIMET: Record<string, string> = {
   generaattori_polttoaineteho_mw: "Generaattorin polttoaineteho (MW)",
   toimija_organisaatio_id: "Hankkeesta vastaava",
   yva_diaarinumero: "YVA-diaarinumero",
+  kaavatunnus: "Kaavatunnus",
+  kortteli: "Kortteli",
+  sijainti_alue_tyyppi: "Alueen tyyppi",
+  tunnus: "Tunnus",
+};
+
+export const SIJAINTI_ALUE_TYYPPI_NIMET: Record<SijaintiAlueTyyppi, string> = {
+  kaava_alue: "Kaava-alue",
+  tontti: "Tontti",
+  arvio: "Arvio",
+};
+
+export const HANKE_KUNTA_ROOLI_NIMET: Record<HankeKuntaRooli, string> = {
+  sijaintikunta: "Sijaintikunta",
+  vaikutusalue: "Vaikutusalue",
+  sahkonsiirto: "Sähkönsiirto",
+};
+
+export const MENETTELY_LAJI_NIMET: Record<MenettelyLaji, string> = {
+  yva: "YVA",
+  kaavoitus: "Kaavoitus",
+  lupamenettely: "Lupamenettely",
+  muu: "Muu menettely",
+};
+
+export const MENETTELY_TILA_NIMET: Record<MenettelyTila, string> = {
+  ei_alkanut: "Ei alkanut",
+  vireilla: "Vireillä",
+  paattynyt: "Päättynyt",
+};
+
+export const HANKE_ORGANISAATIO_ROOLI_NIMET: Record<HankeOrganisaatioRooli, string> = {
+  toimija: "Hankkeesta vastaava",
+  yva_konsultti: "YVA-konsultti",
+  yhteysviranomainen: "Yhteysviranomainen",
+  kaavoittaja: "Kaavoittaja",
+  muu: "Muu",
+};
+
+export const DOKUMENTTI_LAJI_NIMET: Record<DokumenttiLaji, string> = {
+  verkkosivu: "Verkkosivu",
+  kuulutus: "Kuulutus",
+  yva_ohjelma: "YVA-ohjelma",
+  yva_selostus: "YVA-selostus",
+  asemakaava: "Asemakaava",
+  kaavamaaraykset: "Kaavamääräykset",
+  kartta_aineisto: "Kartta-aineisto",
+  muu: "Muu asiakirja",
+};
+
+export const DOKUMENTTI_MUOTO_NIMET: Record<DokumenttiMuoto, string> = {
+  html: "HTML",
+  pdf: "PDF",
+  wfs: "WFS",
+  muu: "Muu muoto",
+};
+
+export const DOKUMENTTI_KIELI_NIMET: Record<DokumenttiKieli, string> = {
+  fi: "suomi",
+  sv: "ruotsi",
+  en: "englanti",
+};
+
+export const JOHTO_TYYPPI_NIMET: Record<JohtoTyyppi, string> = {
+  ilmajohto: "Ilmajohto",
+  maakaapeli: "Maakaapeli",
 };
 
 export const KOKO_LUOKAT = [
@@ -105,6 +183,11 @@ export function muotoilePvm(arvo: string): string {
   const [vuosi, kuukausi, paiva] = pvm.split("-");
   if (!vuosi || !kuukausi || !paiva) return arvo;
   return `${Number(paiva)}.${Number(kuukausi)}.${vuosi}`;
+}
+
+export function kenttaNayttonimi(taulu: string, kentta: string): string {
+  if (HANKE_KENTTA_NIMET[kentta]) return HANKE_KENTTA_NIMET[kentta];
+  return `${taulu}.${kentta}`;
 }
 
 export function muotoileLuku(arvo: number | string): string {

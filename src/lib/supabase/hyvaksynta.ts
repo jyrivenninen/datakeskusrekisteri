@@ -26,31 +26,14 @@ export async function hyvaksyMuutosehdotus(ehdotusId: string, kasittelija: strin
     throw new Error("Ehdotuksessa ei ole kenttiä.");
   }
 
-  let toimijaId: string | null = null;
-  if (kentat.toimija_nimi?.arvo) {
-    const { data: org, error: orgVirhe } = await supabase
-      .from("organisaatiot")
-      .insert({
-        nimi: kentat.toimija_nimi.arvo,
-        tyyppi: "yritys",
-        julkaistu: true,
-      })
-      .select("id")
-      .single();
-    if (orgVirhe || !org) {
-      throw new Error("Organisaatiota ei voitu lisätä.");
-    }
-    toimijaId = org.id;
-  }
-
   const hanke: Record<string, string> = {};
   for (const [kentta, tieto] of Object.entries(kentat)) {
-    if (kentta === "toimija_nimi") continue;
+    if (kentta === "toimija_nimi") {
+      hanke.toimija_nimi = tieto.arvo;
+      continue;
+    }
     const arvo = kenttaArvoksi(kentta, tieto.arvo);
     hanke[kentta] = arvo == null ? "" : String(arvo);
-  }
-  if (toimijaId) {
-    hanke.toimija_organisaatio_id = toimijaId;
   }
 
   const lahteet = Object.entries(kentat).map(([kentta, tieto]) => ({
