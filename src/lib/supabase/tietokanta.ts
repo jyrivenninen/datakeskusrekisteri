@@ -104,6 +104,11 @@ export type Organisaatio = {
   paivitetty_pvm: string;
 };
 
+export type SijaintiAlue = {
+  type: "Polygon";
+  coordinates: number[][][];
+};
+
 export type Hanke = {
   id: string;
   nimi: string;
@@ -111,6 +116,7 @@ export type Hanke = {
   maakunta: string | null;
   sijainti_lat: number | null;
   sijainti_lon: number | null;
+  sijainti_alue: SijaintiAlue | null;
   vaihe: HankeVaihe;
   teho_mw: number | null;
   it_teho_mw: number | null;

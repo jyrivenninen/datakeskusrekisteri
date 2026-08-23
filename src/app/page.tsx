@@ -24,13 +24,15 @@ export default async function Etusivu({
   );
 
   const merkit: Karttamerkki[] = hankkeet.flatMap((hanke) => {
-    if (hanke.sijainti_lat == null || hanke.sijainti_lon == null) return [];
+    const alue = hanke.sijainti_alue?.type === "Polygon" ? hanke.sijainti_alue : null;
+    if (hanke.sijainti_lat == null && hanke.sijainti_lon == null && !alue) return [];
     return [
       {
         id: hanke.id,
         nimi: hanke.nimi,
-        lat: Number(hanke.sijainti_lat),
-        lon: Number(hanke.sijainti_lon),
+        lat: hanke.sijainti_lat != null ? Number(hanke.sijainti_lat) : undefined,
+        lon: hanke.sijainti_lon != null ? Number(hanke.sijainti_lon) : undefined,
+        alue,
       },
     ];
   });
@@ -105,6 +107,7 @@ export default async function Etusivu({
         </h2>
         <p className="mt-2 max-w-prose text-sm text-muted">
           Merkki lisätään, kun hankkeella on lähteistetyt koordinaatit.
+          Hankealue värjäytyy kartalle zoomatessa lähelle, jos alue on merkitty.
         </p>
         <div className="mt-4">
           <Kartta merkit={merkit} />

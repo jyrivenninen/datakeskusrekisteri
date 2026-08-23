@@ -144,14 +144,16 @@ export default async function HankeSivu({
     notFound();
   }
 
+  const alue = hanke.sijainti_alue?.type === "Polygon" ? hanke.sijainti_alue : null;
   const merkit =
-    hanke.sijainti_lat != null && hanke.sijainti_lon != null
+    hanke.sijainti_lat != null || hanke.sijainti_lon != null || alue
       ? [
           {
             id: hanke.id,
             nimi: hanke.nimi,
-            lat: Number(hanke.sijainti_lat),
-            lon: Number(hanke.sijainti_lon),
+            lat: hanke.sijainti_lat != null ? Number(hanke.sijainti_lat) : undefined,
+            lon: hanke.sijainti_lon != null ? Number(hanke.sijainti_lon) : undefined,
+            alue,
           },
         ]
       : [];
@@ -251,6 +253,12 @@ export default async function HankeSivu({
         <div className="mt-4">
           <Kartta merkit={merkit} />
         </div>
+        {alue ? (
+          <p className="mt-2 text-sm text-muted">
+            Värjätty alue on merkitty hankealue. Se näkyy, kun karttaa zoomaa
+            lähelle.
+          </p>
+        ) : null}
       </section>
     </main>
   );
