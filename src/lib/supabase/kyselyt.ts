@@ -15,7 +15,7 @@ import type {
   Organisaatio,
   OrganisaatioTyyppi,
 } from "@/lib/supabase/tietokanta";
-import { hankeKokoLuokka, type KokoLuokka } from "@/lib/naytto";
+import { hankeKokoLuokka, onHankeVaihe, onKokoLuokka, type KokoLuokka } from "@/lib/naytto";
 
 export type HankeListalla = Hanke & {
   toimija: Pick<Organisaatio, "id" | "nimi"> | null;
@@ -26,6 +26,18 @@ export type HankeSuodatus = {
   vaihe?: HankeVaihe;
   koko?: KokoLuokka;
 };
+
+export function parsiSuodatus(params: {
+  kunta?: string;
+  vaihe?: string;
+  koko?: string;
+}): HankeSuodatus {
+  return {
+    kunta: params.kunta || undefined,
+    vaihe: params.vaihe && onHankeVaihe(params.vaihe) ? params.vaihe : undefined,
+    koko: params.koko && onKokoLuokka(params.koko) ? params.koko : undefined,
+  };
+}
 
 export type TulevaMaaraaika = Maaraaja & {
   hanke: Pick<Hanke, "id" | "nimi" | "kunta">;

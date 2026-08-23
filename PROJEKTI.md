@@ -166,6 +166,9 @@ ovat valmiit — ne ovat helppo osa, kun tietomalli on kunnossa.
 - [x] Yksittäisen hankkeen sivu: kaikki kentät lähdeviitteineen näkyvissä
 - [x] Kartta
 - [x] Tulevat määräajat etusivulla
+- [x] Etusivun suodatin, laskurit (lukumäärä, sähkönkäyttö vs. Suomen
+      sähköntuotanto, verkkosähkön CO₂-arvio, teho, pinta-ala, generaattorit)
+      ja kartta ennen hankeluetteloa
 
 ### Vaihe 5 — Ylläpito ja ilmoitus
 - [x] Ilmoituslomake (uusi hanke / täydennys) → `muutosehdotukset`

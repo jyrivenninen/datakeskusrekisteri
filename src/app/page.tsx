@@ -1,9 +1,12 @@
+import { HankeLaskurit } from "@/komponentit/hanke-laskurit";
 import { Kartta, type Karttamerkki } from "@/komponentit/kartta";
-import { Suodatuslomake, parsiSuodatus } from "@/komponentit/suodatuslomake";
+import { Suodatuslomake } from "@/komponentit/suodatuslomake";
+import { laskeHankeYhteenveto } from "@/lib/hanke-yhteenveto";
 import { MAARAAJA_NIMET, VAIHE_NIMET, hankeTehoMw, muotoileLuku, muotoilePvm } from "@/lib/naytto";
 import {
   haeJulkaistutHankkeet,
   haeTulevatMaaraajat,
+  parsiSuodatus,
 } from "@/lib/supabase/kyselyt";
 
 export const revalidate = 60;
@@ -108,10 +111,24 @@ export default async function Etusivu({
         )}
       </section>
 
-      <section className="mt-10" aria-labelledby="kartta-otsikko">
-        <h2 id="kartta-otsikko" className="text-xl font-semibold">
-          Kartta
+      <section className="mt-10" aria-labelledby="hankkeet-otsikko">
+        <h2 id="hankkeet-otsikko" className="text-xl font-semibold">
+          Hankkeet
         </h2>
+        <p className="mt-2 max-w-prose text-sm text-muted">
+          Suodatin päivittää laskurit, kartan ja luettelon. Ilman JavaScriptiä
+          valitse ehdot ja paina Suodata.
+        </p>
+        <Suodatuslomake suodatus={suodatus} kunnat={kunnat} />
+        {hankeVirhe ? (
+          <p className="mt-4 text-sm">{hankeVirhe}</p>
+        ) : (
+          <HankeLaskurit yhteenveto={laskeHankeYhteenveto(hankkeet)} />
+        )}
+
+        <h3 id="kartta-otsikko" className="mt-10 text-lg font-semibold">
+          Kartta
+        </h3>
         <p className="mt-2 max-w-prose text-sm text-muted">
           Nuppineulan väri kertoo hankkeen vaiheen. Lähizoomissa näkyy myös
           hankealue ja sähkönsiirtoreitti, jos ne on merkitty.
@@ -122,31 +139,28 @@ export default async function Etusivu({
         <noscript>
           <p className="mt-3 text-sm">
             Kartta vaatii JavaScriptin. Hankkeet ovat luettavissa alla olevasta
-            listasta.
+            luettelosta.
           </p>
         </noscript>
-      </section>
 
-      <section className="mt-10" aria-labelledby="hankkeet-otsikko">
-        <h2 id="hankkeet-otsikko" className="text-xl font-semibold">
-          Hankkeet
-        </h2>
-        <Suodatuslomake suodatus={suodatus} kunnat={kunnat} />
+        <h3 id="hankeluettelo-otsikko" className="mt-10 text-lg font-semibold">
+          Luettelo
+        </h3>
         {hankeVirhe ? (
           <p className="mt-4 text-sm">{hankeVirhe}</p>
         ) : hankkeet.length === 0 ? (
           <p className="mt-4 leading-relaxed">Ei hankkeita valituilla suodattimilla.</p>
         ) : (
-          <ul className="mt-6 divide-y divide-border border-y border-border">
+          <ul className="mt-4 divide-y divide-border border-y border-border">
             {hankkeet.map((hanke) => {
               const teho = hankeTehoMw(hanke);
               return (
                 <li key={hanke.id} className="py-4">
-                  <h3 className="text-lg font-semibold">
+                  <h4 className="text-lg font-semibold">
                     <a href={`/hankkeet/${hanke.id}`} className="text-link underline">
                       {hanke.nimi}
                     </a>
-                  </h3>
+                  </h4>
                   <p className="mt-1 text-sm text-muted">
                     {hanke.kunta}
                     {hanke.maakunta ? `, ${hanke.maakunta}` : ""} · {VAIHE_NIMET[hanke.vaihe]}

@@ -1,10 +1,7 @@
+"use client";
+
 import { HANKE_VAIHEET } from "@/lib/supabase/tietokanta";
-import {
-  KOKO_LUOKAT,
-  VAIHE_NIMET,
-  onHankeVaihe,
-  onKokoLuokka,
-} from "@/lib/naytto";
+import { KOKO_LUOKAT, VAIHE_NIMET } from "@/lib/naytto";
 import type { HankeSuodatus } from "@/lib/supabase/kyselyt";
 
 export function Suodatuslomake({
@@ -15,7 +12,15 @@ export function Suodatuslomake({
   kunnat: string[];
 }) {
   return (
-    <form method="get" className="mt-4 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-end">
+    <form
+      key={`${suodatus.kunta ?? ""}-${suodatus.vaihe ?? ""}-${suodatus.koko ?? ""}`}
+      method="get"
+      action="/"
+      className="mt-4 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-end"
+      onChange={(tapahtuma) => {
+        tapahtuma.currentTarget.requestSubmit();
+      }}
+    >
       <p className="flex min-w-40 flex-1 flex-col gap-1">
         <label htmlFor="kunta" className="text-sm font-medium">
           Kunta
@@ -78,16 +83,4 @@ export function Suodatuslomake({
       </button>
     </form>
   );
-}
-
-export function parsiSuodatus(params: {
-  kunta?: string;
-  vaihe?: string;
-  koko?: string;
-}): HankeSuodatus {
-  return {
-    kunta: params.kunta || undefined,
-    vaihe: params.vaihe && onHankeVaihe(params.vaihe) ? params.vaihe : undefined,
-    koko: params.koko && onKokoLuokka(params.koko) ? params.koko : undefined,
-  };
 }
