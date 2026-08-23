@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { YhteyshenkiloLista } from "@/komponentit/yhteyshenkilo-lista";
 import { HANKE_ORGANISAATIO_ROOLI_NIMET, ORGANISAATIO_TYYPPI_NIMET, VAIHE_NIMET } from "@/lib/naytto";
 import { haeOrganisaatio } from "@/lib/supabase/kyselyt";
 
@@ -28,7 +27,7 @@ export default async function OrganisaatioSivu({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const { organisaatio, hankkeet, henkilot, virhe } = await haeOrganisaatio(id);
+  const { organisaatio, hankkeet, virhe } = await haeOrganisaatio(id);
 
   if (virhe) {
     return (
@@ -100,13 +99,6 @@ export default async function OrganisaatioSivu({
             ))}
           </ul>
         )}
-      </section>
-
-      <section className="mt-10" aria-labelledby="yhteydet-otsikko">
-        <h2 id="yhteydet-otsikko" className="text-xl font-semibold">
-          Yhteyshenkilöt
-        </h2>
-        <YhteyshenkiloLista henkilot={henkilot} />
       </section>
     </main>
   );

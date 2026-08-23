@@ -14,7 +14,6 @@ import type {
   Maaraaja,
   Organisaatio,
   OrganisaatioTyyppi,
-  Yhteyshenkilo,
 } from "@/lib/supabase/tietokanta";
 import { hankeKokoLuokka, type KokoLuokka } from "@/lib/naytto";
 
@@ -144,9 +143,6 @@ export async function haeHanke(id: string): Promise<{
   johtoLahteet: KenttaLahde[];
   vaihtoehdot: HankeVaihtoehto[];
   vaihtoehtoLahteet: KenttaLahde[];
-  yhteyshenkilot: (Yhteyshenkilo & {
-    organisaatio: Pick<Organisaatio, "nimi"> | null;
-  })[];
   virhe: string | null;
 }> {
   const tyhja = {
@@ -166,7 +162,6 @@ export async function haeHanke(id: string): Promise<{
     johtoLahteet: [],
     vaihtoehdot: [],
     vaihtoehtoLahteet: [],
-    yhteyshenkilot: [],
     virhe: null as string | null,
   };
 
@@ -189,7 +184,6 @@ export async function haeHanke(id: string): Promise<{
     const [
       { data: lahteet },
       { data: maaraajat },
-      { data: henkilot },
       { data: kunnat },
       { data: menettelyt },
       { data: organisaatioroolit },
@@ -209,12 +203,6 @@ export async function haeHanke(id: string): Promise<{
         .eq("hanke_id", id)
         .eq("julkaistu", true)
         .order("paattyy_pvm"),
-      supabase
-        .from("yhteyshenkilot")
-        .select("*, organisaatio:organisaatiot(nimi)")
-        .eq("hanke_id", id)
-        .eq("julkaistu", true)
-        .order("nimi"),
       supabase
         .from("hanke_kunnat")
         .select("*")
@@ -325,9 +313,6 @@ export async function haeHanke(id: string): Promise<{
       johtoLahteet,
       vaihtoehdot: (vaihtoehdot ?? []) as HankeVaihtoehto[],
       vaihtoehtoLahteet,
-      yhteyshenkilot: (henkilot ?? []) as (Yhteyshenkilo & {
-        organisaatio: Pick<Organisaatio, "nimi"> | null;
-      })[],
       virhe: null,
     };
   } catch (syy) {
@@ -362,11 +347,6 @@ export async function haeTulevatMaaraajat(): Promise<{
   }
 }
 
-export type YhteyshenkiloHakemistossa = Yhteyshenkilo & {
-  organisaatio: Pick<Organisaatio, "id" | "nimi" | "tyyppi"> | null;
-  hanke: Pick<Hanke, "id" | "nimi" | "kunta"> | null;
-};
-
 export async function haeJulkaistutOrganisaatiot(
   tyyppi?: OrganisaatioTyyppi,
 ): Promise<{ organisaatiot: Organisaatio[]; virhe: string | null }> {
@@ -392,40 +372,14 @@ export async function haeJulkaistutOrganisaatiot(
   }
 }
 
-export async function haeJulkaistutYhteyshenkilot(): Promise<{
-  henkilot: YhteyshenkiloHakemistossa[];
-  virhe: string | null;
-}> {
-  if (!supabaseYmparistoAsetettu()) {
-    return { henkilot: [], virhe: "Yhteyshenkilöitä ei juuri nyt voitu hakea." };
-  }
-
-  try {
-    const supabase = await luoPalvelinAsiakas();
-    const { data, error } = await supabase
-      .from("yhteyshenkilot")
-      .select(
-        "*, organisaatio:organisaatiot(id, nimi, tyyppi), hanke:hankkeet(id, nimi, kunta)",
-      )
-      .eq("julkaistu", true)
-      .order("nimi", { ascending: true });
-    if (error) return { henkilot: [], virhe: error.message };
-    return { henkilot: (data ?? []) as YhteyshenkiloHakemistossa[], virhe: null };
-  } catch (syy) {
-    return { henkilot: [], virhe: virheViesti(syy) };
-  }
-}
-
 export async function haeOrganisaatio(id: string): Promise<{
   organisaatio: Organisaatio | null;
   hankkeet: OrganisaationHanke[];
-  henkilot: YhteyshenkiloHakemistossa[];
   virhe: string | null;
 }> {
   const tyhja = {
     organisaatio: null,
     hankkeet: [] as OrganisaationHanke[],
-    henkilot: [] as YhteyshenkiloHakemistossa[],
     virhe: null as string | null,
   };
 
@@ -444,7 +398,7 @@ export async function haeOrganisaatio(id: string): Promise<{
     if (error) return { ...tyhja, virhe: error.message };
     if (!organisaatio) return tyhja;
 
-    const [{ data: vastaavana }, { data: roolirivit }, { data: henkilot }] = await Promise.all([
+    const [{ data: vastaavana }, { data: roolirivit }] = await Promise.all([
       supabase
         .from("hankkeet")
         .select("*, toimija:toimija_organisaatio_id(id, nimi)")
@@ -456,14 +410,6 @@ export async function haeOrganisaatio(id: string): Promise<{
         .select("rooli, hanke:hankkeet!hanke_id(*, toimija:toimija_organisaatio_id(id, nimi))")
         .eq("organisaatio_id", id)
         .eq("julkaistu", true),
-      supabase
-        .from("yhteyshenkilot")
-        .select(
-          "*, organisaatio:organisaatiot(id, nimi, tyyppi), hanke:hankkeet(id, nimi, kunta)",
-        )
-        .eq("julkaistu", true)
-        .eq("organisaatio_id", id)
-        .order("nimi", { ascending: true }),
     ]);
 
     const hankkeetKartta = new Map<string, OrganisaationHanke>();
@@ -493,7 +439,6 @@ export async function haeOrganisaatio(id: string): Promise<{
     return {
       organisaatio: organisaatio as Organisaatio,
       hankkeet,
-      henkilot: (henkilot ?? []) as YhteyshenkiloHakemistossa[],
       virhe: null,
     };
   } catch (syy) {

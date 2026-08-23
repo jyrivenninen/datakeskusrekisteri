@@ -182,7 +182,6 @@ export default async function HankeSivu({
     johtoLahteet,
     vaihtoehdot,
     vaihtoehtoLahteet,
-    yhteyshenkilot,
     virhe,
   } = await haeHanke(id);
 
@@ -495,35 +494,6 @@ export default async function HankeSivu({
               );
             })}
           </Korttiruudukko>
-        )}
-      </section>
-
-      <section className="mt-10" aria-labelledby="yhteydet-otsikko">
-        <h2 id="yhteydet-otsikko" className="text-xl font-semibold">
-          Yhteyshenkilöt
-        </h2>
-        {yhteyshenkilot.length === 0 ? (
-          <p className="mt-3">Ei merkittyjä yhteyshenkilöitä.</p>
-        ) : (
-          <ul className="mt-4 space-y-3">
-            {yhteyshenkilot.map((henkilo) => (
-              <li key={henkilo.id}>
-                <p className="font-medium">{henkilo.nimi}</p>
-                <p className="text-sm text-muted">
-                  {henkilo.rooli}
-                  {henkilo.organisaatio ? `, ${henkilo.organisaatio.nimi}` : ""}
-                </p>
-                {henkilo.sahkoposti ? (
-                  <p className="text-sm">
-                    <a href={`mailto:${henkilo.sahkoposti}`} className="text-link underline">
-                      {henkilo.sahkoposti}
-                    </a>
-                  </p>
-                ) : null}
-                {henkilo.puhelin ? <p className="text-sm">{henkilo.puhelin}</p> : null}
-              </li>
-            ))}
-          </ul>
         )}
       </section>
 
