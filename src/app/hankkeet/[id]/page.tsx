@@ -215,6 +215,7 @@ export default async function HankeSivu({
           {
             id: hanke.id,
             nimi: hanke.nimi,
+            vaihe: hanke.vaihe,
             lat: hanke.sijainti_lat != null ? Number(hanke.sijainti_lat) : undefined,
             lon: hanke.sijainti_lon != null ? Number(hanke.sijainti_lon) : undefined,
             alue,

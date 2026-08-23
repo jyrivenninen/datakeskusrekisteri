@@ -3,16 +3,34 @@
 import { useEffect, useRef } from "react";
 import { LngLatBounds, Map, Marker, NavigationControl, type StyleSpecification } from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
-import type { SijaintiAlue, SijaintiViiva } from "@/lib/supabase/tietokanta";
+import { VAIHE_NIMET, VAIHE_VARIT } from "@/lib/naytto";
+import { HANKE_VAIHEET, type HankeVaihe, type SijaintiAlue, type SijaintiViiva } from "@/lib/supabase/tietokanta";
 
 export type Karttamerkki = {
   id: string;
   nimi: string;
+  vaihe?: HankeVaihe;
   lat?: number;
   lon?: number;
   alue?: SijaintiAlue | null;
   johdot?: { id: string; reitti: SijaintiViiva }[];
 };
+
+const OLETUSVARI = "#1d4ed8";
+
+function vaiheVari(vaihe?: HankeVaihe): string {
+  return vaihe ? VAIHE_VARIT[vaihe] : OLETUSVARI;
+}
+
+function variAlueeksi(hex: string, peitto: number): string {
+  const m = /^#([0-9a-f]{6})$/i.exec(hex);
+  if (!m) return `rgba(30, 58, 138, ${peitto})`;
+  const n = Number.parseInt(m[1], 16);
+  const r = (n >> 16) & 255;
+  const g = (n >> 8) & 255;
+  const b = n & 255;
+  return `rgba(${r}, ${g}, ${b}, ${peitto})`;
+}
 
 function parsiAlue(arvo: unknown): SijaintiAlue | null {
   let data = arvo;
@@ -135,11 +153,12 @@ function alueenKeskipiste(alue: SijaintiAlue): { lon: number; lat: number } | nu
   return { lon: summaLon / lkm, lat: summaLat / lkm };
 }
 
-function luoNuppineula(nimi: string, hankeId: string) {
+function luoNuppineula(merkki: Karttamerkki) {
   const el = document.createElement("a");
-  el.href = `/hankkeet/${hankeId}`;
+  el.href = `/hankkeet/${merkki.id}`;
   el.className = "kartta-nuppineula";
-  el.setAttribute("aria-label", nimi);
+  const vaihenimi = merkki.vaihe ? VAIHE_NIMET[merkki.vaihe] : null;
+  el.setAttribute("aria-label", vaihenimi ? `${merkki.nimi}, ${vaihenimi}` : merkki.nimi);
 
   const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
   svg.setAttribute("viewBox", "0 0 28 40");
@@ -152,7 +171,7 @@ function luoNuppineula(nimi: string, hankeId: string) {
     "d",
     "M14 1.5c-6.4 0-11.5 5-11.5 11.2 0 8.6 11.5 25.3 11.5 25.3s11.5-16.7 11.5-25.3C25.5 6.5 20.4 1.5 14 1.5z",
   );
-  tausta.setAttribute("fill", "#1d4ed8");
+  tausta.setAttribute("fill", vaiheVari(merkki.vaihe));
   tausta.setAttribute("stroke", "#fff");
   tausta.setAttribute("stroke-width", "2");
 
@@ -189,8 +208,9 @@ function piirraGeometriat(kartta: Map, svg: SVGSVGElement, merkit: Karttamerkki[
       });
       const polku = document.createElementNS("http://www.w3.org/2000/svg", "path");
       polku.setAttribute("d", `${osat.join(" ")} Z`);
-      polku.setAttribute("fill", "rgba(30, 58, 138, 0.45)");
-      polku.setAttribute("stroke", "#1e3a8a");
+      const vari = vaiheVari(merkki.vaihe);
+      polku.setAttribute("fill", variAlueeksi(vari, 0.4));
+      polku.setAttribute("stroke", vari);
       polku.setAttribute("stroke-width", "2");
       svg.appendChild(polku);
     }
@@ -251,7 +271,7 @@ export function Kartta({
             : null;
       if (!keskipiste) continue;
       merkkiluokat.push(
-        new Marker({ element: luoNuppineula(merkki.nimi, merkki.id), anchor: "bottom" })
+        new Marker({ element: luoNuppineula(merkki), anchor: "bottom" })
           .setLngLat([keskipiste.lon, keskipiste.lat])
           .addTo(kartta),
       );
@@ -320,11 +340,33 @@ export function Kartta({
   }
 
   return (
-    <div
-      ref={kehys}
-      className={`relative w-full overflow-hidden rounded border border-border ${luokka ?? "h-[28rem]"}`}
-      role="region"
-      aria-label="Hankkeiden sijaintikartta"
-    />
+    <div className="flex flex-col gap-4 sm:flex-row sm:items-stretch">
+      <div
+        ref={kehys}
+        className={`relative min-h-[18rem] w-full min-w-0 flex-1 overflow-hidden rounded border border-border ${luokka ?? "h-[28rem]"}`}
+        role="region"
+        aria-label="Hankkeiden sijaintikartta"
+      />
+      <aside
+        className="sm:w-44 sm:shrink-0"
+        aria-labelledby="kartta-selite-otsikko"
+      >
+        <h3 id="kartta-selite-otsikko" className="text-sm font-semibold">
+          Vaihe
+        </h3>
+        <ul className="mt-2 space-y-1.5 text-sm">
+          {HANKE_VAIHEET.map((vaihe) => (
+            <li key={vaihe} className="flex items-center gap-2">
+              <span
+                className="inline-block size-3 shrink-0 rounded-full border border-white shadow-[0_0_0_1px_rgba(0,0,0,0.25)]"
+                style={{ backgroundColor: VAIHE_VARIT[vaihe] }}
+                aria-hidden="true"
+              />
+              {VAIHE_NIMET[vaihe]}
+            </li>
+          ))}
+        </ul>
+      </aside>
+    </div>
   );
 }

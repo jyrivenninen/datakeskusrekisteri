@@ -28,6 +28,18 @@ export const VAIHE_NIMET: Record<HankeVaihe, string> = {
   peruttu: "Peruttu",
 };
 
+/** Karttanuppineulan väri. Ei sama kuin lähteen liikennevalo. */
+export const VAIHE_VARIT: Record<HankeVaihe, string> = {
+  esiselvitys: "#57534e",
+  yva_vireilla: "#ca8a04",
+  yva_paattynyt: "#a16207",
+  kaavoitus: "#0369a1",
+  lupamenettely: "#6d28d9",
+  rakenteilla: "#c2410c",
+  toiminnassa: "#15803d",
+  peruttu: "#9f1239",
+};
+
 export const MAARAAJA_NIMET: Record<MaaraajaTyyppi, string> = {
   yva_mielipide: "YVA-mielipide",
   yva_ohjelma: "YVA-ohjelma",

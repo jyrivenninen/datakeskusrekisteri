@@ -35,6 +35,7 @@ export default async function Etusivu({
       {
         id: hanke.id,
         nimi: hanke.nimi,
+        vaihe: hanke.vaihe,
         lat: hanke.sijainti_lat != null ? Number(hanke.sijainti_lat) : undefined,
         lon: hanke.sijainti_lon != null ? Number(hanke.sijainti_lon) : undefined,
         alue,
@@ -112,8 +113,8 @@ export default async function Etusivu({
           Kartta
         </h2>
         <p className="mt-2 max-w-prose text-sm text-muted">
-          Nuppineula merkitsee hankkeen, jolla on lähteistetyt koordinaatit.
-          Lähizoomissa näkyy myös hankealue ja sähkönsiirtoreitti, jos ne on merkitty.
+          Nuppineulan väri kertoo hankkeen vaiheen. Lähizoomissa näkyy myös
+          hankealue ja sähkönsiirtoreitti, jos ne on merkitty.
         </p>
         <div className="mt-4">
           <Kartta merkit={merkit} />
