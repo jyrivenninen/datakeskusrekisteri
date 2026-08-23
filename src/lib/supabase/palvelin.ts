@@ -1,5 +1,6 @@
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
+import { haeAjalla } from "@/lib/hae-ajalla";
 import { supabaseJulkinenAvain, supabaseUrl } from "@/lib/supabase/ymparisto";
 
 /**
@@ -10,6 +11,7 @@ export async function luoPalvelinAsiakas() {
   const evasteet = await cookies();
 
   return createServerClient(supabaseUrl(), supabaseJulkinenAvain(), {
+    global: { fetch: haeAjalla },
     cookies: {
       getAll() {
         return evasteet.getAll();
@@ -20,10 +22,20 @@ export async function luoPalvelinAsiakas() {
             evasteet.set(name, value, options);
           });
         } catch {
-          // setAll-kutsu Server Componentista voidaan ohittaa:
-          // istuntoa ei vielä käytetä (kirjautuminen tulee vaiheessa 5).
+          // setAll-kutsu Server Componentista voidaan ohittaa.
         }
       },
     },
   });
+}
+
+export async function haeKirjautunutKayttaja() {
+  const supabase = await luoPalvelinAsiakas();
+  try {
+    const { data, error } = await supabase.auth.getUser();
+    if (error || !data.user) return { user: null, supabase };
+    return { user: data.user, supabase };
+  } catch {
+    return { user: null, supabase };
+  }
 }

@@ -1,15 +1,12 @@
 import { notFound, redirect } from "next/navigation";
 import { hyvaksyEhdotusToiminto, hylkaaEhdotusToiminto } from "@/app/toiminnot";
 import { HANKE_KENTTA_NIMET } from "@/lib/naytto";
-import { luoPalvelinAsiakas } from "@/lib/supabase/palvelin";
+import { haeKirjautunutKayttaja } from "@/lib/supabase/palvelin";
 import type { EhdotusSisalto } from "@/lib/ehdotus";
 import { supabasePalvelinAvainAsetettu } from "@/lib/supabase/yllapito-asiakas";
 
 async function vaadiYllapitaja() {
-  const supabase = await luoPalvelinAsiakas();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const { user, supabase } = await haeKirjautunutKayttaja();
   if (!user) redirect("/kirjaudu");
   const { data } = await supabase
     .from("yllapitajat")

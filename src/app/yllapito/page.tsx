@@ -1,13 +1,10 @@
-import { luoPalvelinAsiakas } from "@/lib/supabase/palvelin";
+import { haeKirjautunutKayttaja } from "@/lib/supabase/palvelin";
 import { redirect } from "next/navigation";
 import { kirjauduUlos } from "@/app/toiminnot";
 import { muotoilePvm } from "@/lib/naytto";
 
 async function vaadiYllapitaja() {
-  const supabase = await luoPalvelinAsiakas();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const { user, supabase } = await haeKirjautunutKayttaja();
   if (!user) redirect("/kirjaudu");
   const { data } = await supabase
     .from("yllapitajat")

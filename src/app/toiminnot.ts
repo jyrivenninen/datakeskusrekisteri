@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { LOMAKE_KENTAT, rakennaSisalto, tarkistaUusiHanke } from "@/lib/ehdotus";
-import { luoPalvelinAsiakas } from "@/lib/supabase/palvelin";
+import { haeKirjautunutKayttaja, luoPalvelinAsiakas } from "@/lib/supabase/palvelin";
 import { hylkaaMuutosehdotus, hyvaksyMuutosehdotus } from "@/lib/supabase/hyvaksynta";
 
 export async function lahetaIlmoitus(formData: FormData): Promise<void> {
@@ -80,10 +80,7 @@ export async function kirjauduUlos(): Promise<void> {
 }
 
 async function vaadiYllapitaja() {
-  const supabase = await luoPalvelinAsiakas();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const { user, supabase } = await haeKirjautunutKayttaja();
   if (!user) redirect("/kirjaudu");
   const { data } = await supabase
     .from("yllapitajat")
