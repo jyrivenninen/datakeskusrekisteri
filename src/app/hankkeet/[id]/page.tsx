@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { AvattavaKortti, Korttiruudukko } from "@/komponentit/avattava-kortti";
 import { Kartta } from "@/komponentit/kartta";
+import { HankeGalleria } from "@/komponentit/hanke-galleria";
 import { VaiheMerkki } from "@/komponentit/vaihe-merkki";
 import { lomakeKenttaKortista, VAIHTOEHTO_KENTAT } from "@/lib/ehdotus";
 import {
@@ -206,6 +207,8 @@ export default async function HankeSivu({
     johtoLahteet,
     vaihtoehdot,
     vaihtoehtoLahteet,
+    kuvat,
+    kuvaLahteet,
     virhe,
   } = await haeHanke(id);
 
@@ -281,6 +284,18 @@ export default async function HankeSivu({
             Katkoviiva on merkitty sähkönsiirtoreitti.
           </p>
         ) : null}
+      </section>
+
+      <section className="mt-8" aria-labelledby="kuvat-otsikko">
+        <h2 id="kuvat-otsikko" className="text-xl font-semibold">
+          Valokuvat
+        </h2>
+        <p className="mt-2 text-sm">
+          <a href={`/hankkeet/${hanke.id}/kuva`} className="text-link underline">
+            Lisää valokuva
+          </a>
+        </p>
+        <HankeGalleria kuvat={kuvat} lahteet={kuvaLahteet} />
       </section>
 
       <section className="mt-8" aria-labelledby="tiedot-otsikko">

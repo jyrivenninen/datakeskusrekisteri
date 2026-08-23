@@ -174,6 +174,8 @@ ovat valmiit — ne ovat helppo osa, kun tietomalli on kunnossa.
 - [x] Ilmoituslomake (uusi hanke / täydennys) → `muutosehdotukset`
 - [x] Hankesivun kentästä «Päivitä»: ylläpitäjä julkaisee lähteineen,
       muu käyttäjä lähettää tarkistusjonoon
+- [x] Hankesivun valokuvagalleria (URL, kuvateksti, kuvaaja); muut kuin
+      ylläpitäjä hyväksynnän kautta
 - [x] Ylläpitonäkymä: ehdotusten tarkistus ja hyväksyntä (myös
       `hanke_vaihtoehdot`)
 - [x] Kirjautuminen ylläpitäjille (Supabase Auth)

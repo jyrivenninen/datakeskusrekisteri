@@ -8,9 +8,20 @@ export type EhdotettuKentta = {
   luottamus?: Luottamus;
 };
 
+export type EhdotettuKuva = {
+  kuva_url: string;
+  kuvateksti: string;
+  kuvaaja: string;
+  lahde_url: string;
+  lahde_sivu: number | null;
+  lainaus: string | null;
+  luottamus?: Luottamus;
+};
+
 export type EhdotusSisalto = {
   kentat: Record<string, EhdotettuKentta>;
   vaihtoehdot?: Record<string, Record<string, EhdotettuKentta>>;
+  kuvat?: EhdotettuKuva[];
 };
 
 const NUMEERISET = new Set([
@@ -155,4 +166,95 @@ export type VaihtoehtoKentta = (typeof VAIHTOEHTO_KENTAT)[number];
 
 export function onVaihtoehtoKentta(kentta: string): kentta is VaihtoehtoKentta {
   return (VAIHTOEHTO_KENTAT as readonly string[]).includes(kentta);
+}
+
+export function rakennaKuvaEhdotus(
+  kuvaUrl: string,
+  kuvateksti: string,
+  kuvaaja: string,
+  lahdeUrl: string,
+  lahdeSivu: string,
+  lainaus: string,
+): { kuva: EhdotettuKuva; virhe: string | null } {
+  const osoite = kuvaUrl.trim();
+  const teksti = kuvateksti.trim();
+  const kuvaajaTrim = kuvaaja.trim();
+  const lahde = (lahdeUrl.trim() || osoite);
+  if (!/^https:\/\//.test(osoite)) {
+    return {
+      kuva: {
+        kuva_url: "",
+        kuvateksti: "",
+        kuvaaja: "",
+        lahde_url: "",
+        lahde_sivu: null,
+        lainaus: null,
+      },
+      virhe: "Kuvan osoitteen pitää alkaa https://.",
+    };
+  }
+  if (!/^https?:\/\//.test(lahde)) {
+    return {
+      kuva: {
+        kuva_url: "",
+        kuvateksti: "",
+        kuvaaja: "",
+        lahde_url: "",
+        lahde_sivu: null,
+        lainaus: null,
+      },
+      virhe: "Lähteen osoitteen pitää alkaa http:// tai https://.",
+    };
+  }
+  if (!teksti) {
+    return {
+      kuva: {
+        kuva_url: "",
+        kuvateksti: "",
+        kuvaaja: "",
+        lahde_url: "",
+        lahde_sivu: null,
+        lainaus: null,
+      },
+      virhe: "Kuvatekstin on oltava merkitty.",
+    };
+  }
+  if (!kuvaajaTrim) {
+    return {
+      kuva: {
+        kuva_url: "",
+        kuvateksti: "",
+        kuvaaja: "",
+        lahde_url: "",
+        lahde_sivu: null,
+        lainaus: null,
+      },
+      virhe: "Valokuvaajan on oltava merkitty.",
+    };
+  }
+  const sivu = lahdeSivu.trim() === "" ? null : Number(lahdeSivu);
+  if (sivu != null && (!Number.isInteger(sivu) || sivu < 1)) {
+    return {
+      kuva: {
+        kuva_url: "",
+        kuvateksti: "",
+        kuvaaja: "",
+        lahde_url: "",
+        lahde_sivu: null,
+        lainaus: null,
+      },
+      virhe: "Sivunumero ei ole kelvollinen.",
+    };
+  }
+  return {
+    kuva: {
+      kuva_url: osoite,
+      kuvateksti: teksti,
+      kuvaaja: kuvaajaTrim,
+      lahde_url: lahde,
+      lahde_sivu: sivu,
+      lainaus: lainaus.trim() || null,
+    },
+    virhe: null,
+  };
 }

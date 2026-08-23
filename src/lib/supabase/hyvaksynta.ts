@@ -45,6 +45,44 @@ export async function hyvaksyMuutosehdotus(ehdotusId: string, kasittelija: strin
   const sisalto = ehdotus.sisalto as EhdotusSisalto;
   const kentat = sisalto.kentat ?? {};
   const vaihtoehdot = sisalto.vaihtoehdot ?? {};
+  const kuvat = sisalto.kuvat ?? [];
+
+  if (kuvat.length > 0) {
+    if (Object.keys(kentat).length > 0 || Object.keys(vaihtoehdot).length > 0) {
+      throw new Error("Kuvaehdotusta ei voi yhdistää muihin kenttiin.");
+    }
+    if (!ehdotus.hanke_id) {
+      throw new Error("Kuvaehdotukselta puuttuu hanke.");
+    }
+    const kuvaRivit = kuvat.map((kuva) => {
+      const pohja: EhdotettuKentta = {
+        arvo: kuva.kuva_url,
+        lahde_url: kuva.lahde_url,
+        lahde_sivu: kuva.lahde_sivu,
+        lainaus: kuva.lainaus,
+        luottamus: kuva.luottamus,
+      };
+      return {
+        kuva_url: kuva.kuva_url,
+        kuvateksti: kuva.kuvateksti,
+        kuvaaja: kuva.kuvaaja,
+        lahteet: [
+          lahdeRivi("kuva_url", { ...pohja, arvo: kuva.kuva_url }, "vahvistettu"),
+          lahdeRivi("kuvateksti", { ...pohja, arvo: kuva.kuvateksti }, "vahvistettu"),
+          lahdeRivi("kuvaaja", { ...pohja, arvo: kuva.kuvaaja }, "vahvistettu"),
+        ],
+      };
+    });
+    const { error: kuvaVirhe } = await supabase.rpc("julkaise_hanke_kuvat", {
+      p_hanke_id: ehdotus.hanke_id,
+      p_kuvat: kuvaRivit,
+      p_ehdotus_id: ehdotusId,
+      p_kasittelija: kasittelija,
+    });
+    if (kuvaVirhe) throw new Error(kuvaVirhe.message);
+    return;
+  }
+
   if (Object.keys(kentat).length === 0 && Object.keys(vaihtoehdot).length === 0) {
     throw new Error("Ehdotuksessa ei ole kenttiä.");
   }

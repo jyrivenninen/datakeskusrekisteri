@@ -7,6 +7,7 @@ import {
   onPaivitettavaHankeKentta,
   onVaihtoehtoKentta,
   rakennaSisalto,
+  rakennaKuvaEhdotus,
   tarkistaUusiHanke,
   type EhdotusSisalto,
 } from "@/lib/ehdotus";
@@ -187,6 +188,93 @@ export async function lahetaKenttapaivitys(formData: FormData): Promise<void> {
   );
 }
 
+function kuvaPaluu(hankeId: string, virhe: string): never {
+  redirect(`/hankkeet/${hankeId}/kuva?virhe=${encodeURIComponent(virhe)}`);
+}
+
+export async function lahetaKuva(formData: FormData): Promise<void> {
+  const hankeId = String(formData.get("hanke_id") ?? "").trim();
+  const kuvaUrl = String(formData.get("kuva_url") ?? "");
+  const kuvateksti = String(formData.get("kuvateksti") ?? "");
+  const kuvaaja = String(formData.get("kuvaaja") ?? "");
+  const lahdeUrl = String(formData.get("lahde_url") ?? "");
+  const lahdeSivu = String(formData.get("lahde_sivu") ?? "");
+  const lainaus = String(formData.get("lainaus") ?? "");
+  const huomautus = String(formData.get("huomautus") ?? "").trim();
+  const tunniste = String(formData.get("ehdottaja_tunniste") ?? "").trim() || "ilmoituslomake";
+  const luottamusRaaka = String(formData.get("luottamus") ?? "").trim();
+
+  if (!hankeId) {
+    redirect(`/ilmoitus?virhe=${encodeURIComponent("Hanke puuttuu.")}`);
+  }
+
+  const { kuva, virhe } = rakennaKuvaEhdotus(
+    kuvaUrl,
+    kuvateksti,
+    kuvaaja,
+    lahdeUrl,
+    lahdeSivu,
+    lainaus,
+  );
+  if (virhe) kuvaPaluu(hankeId, virhe);
+
+  const luottamus: Luottamus | undefined = (LUOTTAMUSTASOT as readonly string[]).includes(
+    luottamusRaaka,
+  )
+    ? (luottamusRaaka as Luottamus)
+    : undefined;
+  if (luottamus) kuva.luottamus = luottamus;
+
+  const sisalto: EhdotusSisalto = { kentat: {}, kuvat: [kuva] };
+  const { user: yllapitaja } = await haeYllapitaja();
+  const julkaiseSuoraan = Boolean(yllapitaja && supabasePalvelinAvainAsetettu());
+
+  if (julkaiseSuoraan && yllapitaja) {
+    const yllapito = luoYllapitoAsiakas();
+    const { data, error } = await yllapito
+      .from("muutosehdotukset")
+      .insert({
+        tyyppi: "kuva",
+        hanke_id: hankeId,
+        ehdottaja_tyyppi: "yllapitaja",
+        ehdottaja_tunniste: yllapitaja.email ?? yllapitaja.id,
+        sisalto,
+        tila: "odottaa",
+        huomautus: huomautus || null,
+        lahde_url: kuva.lahde_url,
+      })
+      .select("id")
+      .single();
+    if (error || !data) {
+      kuvaPaluu(hankeId, error?.message ?? "Tallennus epäonnistui.");
+    }
+    try {
+      await hyvaksyMuutosehdotus(data.id, yllapitaja.email ?? yllapitaja.id);
+    } catch (syy) {
+      const viesti = syy instanceof Error ? syy.message : "Julkaisu epäonnistui.";
+      kuvaPaluu(hankeId, `${viesti} Ehdotus jäi tarkistusjonoon.`);
+    }
+    revalidatePath("/");
+    revalidatePath(`/hankkeet/${hankeId}`);
+    revalidatePath("/yllapito");
+    redirect(`/hankkeet/${hankeId}/kuva?valmis=julkaistu`);
+  }
+
+  const supabase = await luoPalvelinAsiakas();
+  const { error } = await supabase.from("muutosehdotukset").insert({
+    tyyppi: "kuva",
+    hanke_id: hankeId,
+    ehdottaja_tyyppi: "lomake",
+    ehdottaja_tunniste: tunniste,
+    sisalto,
+    tila: "odottaa",
+    huomautus: huomautus || null,
+    lahde_url: kuva.lahde_url,
+  });
+  if (error) kuvaPaluu(hankeId, error.message);
+  redirect(`/hankkeet/${hankeId}/kuva?valmis=odottaa`);
+}
+
 export async function kirjauduSisaan(formData: FormData): Promise<void> {
   const sahkoposti = String(formData.get("sahkoposti") ?? "");
   const salasana = String(formData.get("salasana") ?? "");
@@ -231,6 +319,7 @@ export async function hyvaksyEhdotusToiminto(formData: FormData): Promise<void> 
   }
   revalidatePath("/");
   revalidatePath("/yllapito");
+  revalidatePath("/hankkeet", "layout");
   redirect("/yllapito?hyvaksytty=1");
 }
 

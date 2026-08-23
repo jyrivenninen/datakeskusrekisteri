@@ -119,6 +119,9 @@ export const HANKE_KENTTA_NIMET: Record<string, string> = {
   kortteli: "Kortteli",
   sijainti_alue_tyyppi: "Alueen tyyppi",
   tunnus: "Tunnus",
+  kuva_url: "Kuvan osoite",
+  kuvateksti: "Kuvateksti",
+  kuvaaja: "Valokuvaaja",
 };
 
 export const SIJAINTI_ALUE_TYYPPI_NIMET: Record<SijaintiAlueTyyppi, string> = {

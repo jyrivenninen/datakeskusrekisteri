@@ -89,6 +89,7 @@ export const MUUTOSEHDOTUS_TYYPIT = [
   "uusi_hanke",
   "taydennys",
   "korjaus",
+  "kuva",
 ] as const;
 
 export type MuutosehdotusTyyppi = (typeof MUUTOSEHDOTUS_TYYPIT)[number];
@@ -227,6 +228,18 @@ export type HankeJohto = {
   paivitetty_pvm: string;
 };
 
+export type HankeKuva = {
+  id: string;
+  hanke_id: string;
+  kuva_url: string;
+  kuvateksti: string;
+  kuvaaja: string;
+  jarjestys: number;
+  julkaistu: boolean;
+  luotu_pvm: string;
+  paivitetty_pvm: string;
+};
+
 export type HankeVaihtoehto = {
   id: string;
   hanke_id: string;
@@ -319,7 +332,8 @@ export type KenttaLahde = {
     | "hanke_organisaatiot"
     | "dokumentit"
     | "hanke_johdot"
-    | "hanke_vaihtoehdot";
+    | "hanke_vaihtoehdot"
+    | "hanke_kuvat";
   rivi_id: string;
   kentta: string;
   lahde_url: string;

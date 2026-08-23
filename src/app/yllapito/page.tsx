@@ -46,7 +46,13 @@ export default async function YllapitoSivu({
           (ehdotukset ?? []).map((ehdotus) => (
             <li key={ehdotus.id} className="py-4">
               <a href={`/yllapito/${ehdotus.id}`} className="text-link underline">
-                {ehdotus.tyyppi === "uusi_hanke" ? "Uusi hanke" : "Täydennys"}
+                {ehdotus.tyyppi === "uusi_hanke"
+                  ? "Uusi hanke"
+                  : ehdotus.tyyppi === "kuva"
+                    ? "Valokuva"
+                    : ehdotus.tyyppi === "korjaus"
+                      ? "Korjaus"
+                      : "Täydennys"}
               </a>
               <p className="mt-1 text-sm text-muted">
                 {ehdotus.tila} · {muotoilePvm(ehdotus.luotu_pvm)} · {ehdotus.ehdottaja_tunniste}

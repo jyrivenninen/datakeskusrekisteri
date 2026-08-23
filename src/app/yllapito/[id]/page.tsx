@@ -81,6 +81,40 @@ export default async function EhdotusSivu({
         ))}
       </dl>
 
+      {sisalto.kuvat && sisalto.kuvat.length > 0 ? (
+        <section className="mt-8" aria-labelledby="kuvat-otsikko">
+          <h2 id="kuvat-otsikko" className="text-xl font-semibold">
+            Valokuvat
+          </h2>
+          <ul className="mt-4 space-y-6">
+            {sisalto.kuvat.map((kuva, indeksi) => (
+              <li key={`${kuva.kuva_url}-${indeksi}`}>
+                <figure className="overflow-hidden rounded border border-border bg-surface">
+                  <img
+                    src={kuva.kuva_url}
+                    alt={kuva.kuvateksti}
+                    className="h-64 w-full object-cover"
+                  />
+                  <figcaption className="space-y-1 p-3 text-sm">
+                    <p>{kuva.kuvateksti}</p>
+                    <p className="text-muted">Valokuva: {kuva.kuvaaja}</p>
+                    <p>
+                      <a
+                        href={kuva.lahde_url}
+                        className="text-link underline"
+                        rel="noopener noreferrer"
+                      >
+                        {kuva.lahde_url}
+                      </a>
+                    </p>
+                  </figcaption>
+                </figure>
+              </li>
+            ))}
+          </ul>
+        </section>
+      ) : null}
+
       {sisalto.vaihtoehdot && Object.keys(sisalto.vaihtoehdot).length > 0 ? (
         <section className="mt-8" aria-labelledby="vaihtoehdot-otsikko">
           <h2 id="vaihtoehdot-otsikko" className="text-xl font-semibold">
