@@ -107,7 +107,7 @@ export default async function Etusivu({
         </h2>
         <p className="mt-2 max-w-prose text-sm text-muted">
           Merkki lisätään, kun hankkeella on lähteistetyt koordinaatit.
-          Hankealue värjäytyy kartalle zoomatessa lähelle, jos alue on merkitty.
+          Hankealue näkyy sinisenä alueena, jos se on merkitty.
         </p>
         <div className="mt-4">
           <Kartta merkit={merkit} />

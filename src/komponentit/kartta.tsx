@@ -1,7 +1,14 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import { LngLatBounds, Map, Marker, NavigationControl, type StyleSpecification } from "maplibre-gl";
+import {
+  LngLatBounds,
+  Map,
+  Marker,
+  NavigationControl,
+  type GeoJSONSource,
+  type StyleSpecification,
+} from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
 import type { SijaintiAlue } from "@/lib/supabase/tietokanta";
 
@@ -13,9 +20,23 @@ export type Karttamerkki = {
   alue?: SijaintiAlue | null;
 };
 
-const ALUE_MINZOOM = 12;
+function alueKokoelma(merkit: Karttamerkki[]) {
+  return {
+    type: "FeatureCollection" as const,
+    features: merkit
+      .filter((merkki) => merkki.alue?.type === "Polygon" && merkki.alue.coordinates?.length)
+      .map((merkki) => ({
+        type: "Feature" as const,
+        properties: { id: merkki.id, nimi: merkki.nimi },
+        geometry: {
+          type: "Polygon" as const,
+          coordinates: merkki.alue!.coordinates,
+        },
+      })),
+  };
+}
 
-function taustakarttaTyyli(avain: string): StyleSpecification {
+function taustakarttaTyyli(avain: string, merkit: Karttamerkki[]): StyleSpecification {
   return {
     version: 8,
     name: "MML taustakartta",
@@ -29,12 +50,34 @@ function taustakarttaTyyli(avain: string): StyleSpecification {
         attribution: "Maanmittauslaitos",
         maxzoom: 18,
       },
+      hankealueet: {
+        type: "geojson",
+        data: alueKokoelma(merkit),
+      },
     },
     layers: [
       {
         id: "taustakartta",
         type: "raster",
         source: "taustakartta",
+      },
+      {
+        id: "hankealue-taytto",
+        type: "fill",
+        source: "hankealueet",
+        paint: {
+          "fill-color": "#1e3a8a",
+          "fill-opacity": 0.4,
+        },
+      },
+      {
+        id: "hankealue-reuna",
+        type: "line",
+        source: "hankealueet",
+        paint: {
+          "line-color": "#1e3a8a",
+          "line-width": 2,
+        },
       },
     ],
   };
@@ -51,13 +94,15 @@ function laajennaAlueella(rajat: LngLatBounds, alue: SijaintiAlue) {
 export function Kartta({ merkit }: { merkit: Karttamerkki[] }) {
   const kehys = useRef<HTMLDivElement>(null);
   const avain = process.env.NEXT_PUBLIC_MML_API_AVAIN;
+  const merkitAvain = JSON.stringify(merkit);
 
   useEffect(() => {
     if (!kehys.current || !avain) return;
+    const merkitNyt: Karttamerkki[] = JSON.parse(merkitAvain);
 
     const kartta = new Map({
       container: kehys.current,
-      style: taustakarttaTyyli(avain),
+      style: taustakarttaTyyli(avain, merkitNyt),
       center: [26.0, 64.5],
       zoom: 4.4,
       attributionControl: { compact: true },
@@ -65,53 +110,7 @@ export function Kartta({ merkit }: { merkit: Karttamerkki[] }) {
     kartta.addControl(new NavigationControl({ showCompass: false }), "top-right");
 
     const merkkiluokat: Marker[] = [];
-
-    kartta.on("load", () => {
-      const alueet = merkit.filter((merkki) => merkki.alue?.type === "Polygon");
-      kartta.addSource("hankealueet", {
-        type: "geojson",
-        data: {
-          type: "FeatureCollection",
-          features: alueet.map((merkki) => ({
-            type: "Feature" as const,
-            properties: { id: merkki.id, nimi: merkki.nimi },
-            geometry: merkki.alue as SijaintiAlue,
-          })),
-        },
-      });
-      kartta.addLayer({
-        id: "hankealue-taytto",
-        type: "fill",
-        source: "hankealueet",
-        minzoom: ALUE_MINZOOM,
-        paint: {
-          "fill-color": "#1e3a8a",
-          "fill-opacity": 0.35,
-        },
-      });
-      kartta.addLayer({
-        id: "hankealue-reuna",
-        type: "line",
-        source: "hankealueet",
-        minzoom: ALUE_MINZOOM,
-        paint: {
-          "line-color": "#1e3a8a",
-          "line-width": 2,
-        },
-      });
-      kartta.on("click", "hankealue-taytto", (tapahtuma) => {
-        const id = tapahtuma.features?.[0]?.properties?.id;
-        if (typeof id === "string") window.location.assign(`/hankkeet/${id}`);
-      });
-      kartta.on("mouseenter", "hankealue-taytto", () => {
-        kartta.getCanvas().style.cursor = "pointer";
-      });
-      kartta.on("mouseleave", "hankealue-taytto", () => {
-        kartta.getCanvas().style.cursor = "";
-      });
-    });
-
-    for (const merkki of merkit) {
+    for (const merkki of merkitNyt) {
       if (merkki.lat == null || merkki.lon == null) continue;
       const el = document.createElement("a");
       el.href = `/hankkeet/${merkki.id}`;
@@ -125,31 +124,53 @@ export function Kartta({ merkit }: { merkit: Karttamerkki[] }) {
 
     const rajat = new LngLatBounds();
     let onRajoja = false;
-    for (const merkki of merkit) {
+    for (const merkki of merkitNyt) {
       if (merkki.lat != null && merkki.lon != null) {
         rajat.extend([merkki.lon, merkki.lat]);
         onRajoja = true;
       }
-      if (merkki.alue) {
+      if (merkki.alue?.coordinates) {
         laajennaAlueella(rajat, merkki.alue);
         onRajoja = true;
       }
     }
-    const yhdellaAlue = merkit.length === 1 && merkit[0]?.alue;
-    if (yhdellaAlue) {
-      kartta.fitBounds(rajat, { padding: 40, maxZoom: 15 });
-    } else if (merkit.length === 1 && merkit[0].lat != null && merkit[0].lon != null) {
-      kartta.setCenter([merkit[0].lon, merkit[0].lat]);
-      kartta.setZoom(11);
-    } else if (onRajoja) {
-      kartta.fitBounds(rajat, { padding: 48, maxZoom: 11 });
+
+    const rajaaKartta = () => {
+      const lahde = kartta.getSource("hankealueet") as GeoJSONSource | undefined;
+      lahde?.setData(alueKokoelma(merkitNyt));
+      const yhdellaAlue = merkitNyt.length === 1 && merkitNyt[0]?.alue;
+      if (yhdellaAlue && onRajoja) {
+        kartta.fitBounds(rajat, { padding: 36, maxZoom: 16 });
+      } else if (merkitNyt.length === 1 && merkitNyt[0].lat != null && merkitNyt[0].lon != null) {
+        kartta.setCenter([merkitNyt[0].lon, merkitNyt[0].lat]);
+        kartta.setZoom(14);
+      } else if (onRajoja) {
+        kartta.fitBounds(rajat, { padding: 48, maxZoom: 14 });
+      }
+    };
+
+    if (kartta.loaded()) {
+      rajaaKartta();
+    } else {
+      kartta.once("load", rajaaKartta);
     }
+
+    kartta.on("click", "hankealue-taytto", (tapahtuma) => {
+      const id = tapahtuma.features?.[0]?.properties?.id;
+      if (typeof id === "string") window.location.assign(`/hankkeet/${id}`);
+    });
+    kartta.on("mouseenter", "hankealue-taytto", () => {
+      kartta.getCanvas().style.cursor = "pointer";
+    });
+    kartta.on("mouseleave", "hankealue-taytto", () => {
+      kartta.getCanvas().style.cursor = "";
+    });
 
     return () => {
       merkkiluokat.forEach((merkki) => merkki.remove());
       kartta.remove();
     };
-  }, [avain, merkit]);
+  }, [avain, merkitAvain]);
 
   if (!avain) {
     return (
@@ -163,7 +184,7 @@ export function Kartta({ merkit }: { merkit: Karttamerkki[] }) {
   return (
     <div
       ref={kehys}
-      className="h-80 w-full overflow-hidden rounded border border-border"
+      className="h-[28rem] w-full overflow-hidden rounded border border-border"
       role="region"
       aria-label="Hankkeiden sijaintikartta"
     />

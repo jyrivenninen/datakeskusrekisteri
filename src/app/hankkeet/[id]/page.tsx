@@ -255,8 +255,7 @@ export default async function HankeSivu({
         </div>
         {alue ? (
           <p className="mt-2 text-sm text-muted">
-            Värjätty alue on merkitty hankealue. Se näkyy, kun karttaa zoomaa
-            lähelle.
+            Sininen alue on merkitty hankealue.
           </p>
         ) : null}
       </section>
