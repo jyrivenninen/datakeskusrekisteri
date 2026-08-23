@@ -44,6 +44,29 @@ export const LUOTTAMUS_NIMET: Record<Luottamus, string> = {
   ristiriitainen: "Ristiriitainen",
 };
 
+export const KENTAN_TILAT = ["vahvistettu", "vahvistamaton", "puuttuu"] as const;
+
+export type KentanTila = (typeof KENTAN_TILAT)[number];
+
+export const KENTAN_TILA_NIMET: Record<KentanTila, string> = {
+  vahvistettu: "Vahvistettu",
+  vahvistamaton: "Vahvistamaton",
+  puuttuu: "Puuttuu",
+};
+
+/** Kentän tila: arvo ja lähteiden luottamus. Ristiriita tai epävarma → vahvistamaton. */
+export function kentanTila(
+  arvoOn: boolean,
+  lahteet: ReadonlyArray<{ luottamus: Luottamus }>,
+): KentanTila {
+  if (!arvoOn) return "puuttuu";
+  if (lahteet.length === 0) return "vahvistamaton";
+  if (lahteet.some((lahde) => lahde.luottamus !== "vahvistettu")) {
+    return "vahvistamaton";
+  }
+  return "vahvistettu";
+}
+
 export const MERKINTA_NIMET: Record<Merkinta, string> = {
   koneen_ehdottama: "Koneen ehdottama",
   ihmisen_vahvistama: "Ihmisen vahvistama",

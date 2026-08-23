@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { Kartta } from "@/komponentit/kartta";
 import { Lahdeluettelo } from "@/komponentit/lahdeluettelo";
+import { Liikennevalo } from "@/komponentit/liikennevalo";
 import {
   DOKUMENTTI_KIELI_NIMET,
   DOKUMENTTI_LAJI_NIMET,
@@ -15,6 +16,7 @@ import {
   MENETTELY_TILA_NIMET,
   SIJAINTI_ALUE_TYYPPI_NIMET,
   VAIHE_NIMET,
+  kentanTila,
   kenttaNayttonimi,
   muotoileLuku,
   muotoilePvm,
@@ -42,9 +44,13 @@ function Faktakentta({
   lahdeKentta?: string;
 }) {
   const naytettavat = kentanLahteet(lahteet, lahdeKentta ?? kentta);
+  const tila = kentanTila(arvo != null && arvo !== "", naytettavat);
   return (
     <div className="border-b border-border py-4">
-      <dt className="font-medium">{HANKE_KENTTA_NIMET[kentta] ?? kentta}</dt>
+      <dt className="flex flex-wrap items-center gap-x-3 gap-y-1">
+        <span className="font-medium">{HANKE_KENTTA_NIMET[kentta] ?? kentta}</span>
+        <Liikennevalo tila={tila} />
+      </dt>
       <dd className="mt-1">
         {arvo ? (
           href ? (
@@ -57,7 +63,7 @@ function Faktakentta({
         ) : (
           <span className="text-muted">Ei merkitty</span>
         )}
-        {arvo || naytettavat.length > 0 ? <Lahdeluettelo lahteet={naytettavat} /> : null}
+        <Lahdeluettelo lahteet={naytettavat} />
       </dd>
     </div>
   );
@@ -224,6 +230,10 @@ export default async function HankeSivu({
         <h2 id="tiedot-otsikko" className="text-xl font-semibold">
           Tiedot ja lähteet
         </h2>
+        <p className="mt-2 text-sm text-muted">
+          Liikennevalo: vihreä on vahvistettu lähteellä, keltainen on merkitty mutta
+          vahvistamaton tai epävarma, punainen puuttuu. Lähteet avautuvat kentän alta.
+        </p>
         <dl className="mt-2">
           {hankeKentat(hanke).map((rivi) => (
             <Faktakentta
@@ -246,7 +256,15 @@ export default async function HankeSivu({
           <ul className="mt-4 space-y-4">
             {kunnat.map((rivi) => (
               <li key={rivi.id} className="rounded border border-border bg-surface p-4">
-                <p className="font-medium">{rivi.kunta}</p>
+                <p className="flex flex-wrap items-center gap-x-3 gap-y-1">
+                  <span className="font-medium">{rivi.kunta}</span>
+                  <Liikennevalo
+                    tila={kentanTila(
+                      true,
+                      kuntaLahteet.filter((lahde) => lahde.rivi_id === rivi.id),
+                    )}
+                  />
+                </p>
                 <p className="mt-1 text-sm text-muted">{HANKE_KUNTA_ROOLI_NIMET[rivi.rooli]}</p>
                 <Lahdeluettelo
                   lahteet={kuntaLahteet.filter((lahde) => lahde.rivi_id === rivi.id)}
@@ -265,7 +283,15 @@ export default async function HankeSivu({
           <ul className="mt-4 space-y-4">
             {menettelyt.map((rivi) => (
               <li key={rivi.id} className="rounded border border-border bg-surface p-4">
-                <p className="font-medium">{MENETTELY_LAJI_NIMET[rivi.laji]}</p>
+                <p className="flex flex-wrap items-center gap-x-3 gap-y-1">
+                  <span className="font-medium">{MENETTELY_LAJI_NIMET[rivi.laji]}</span>
+                  <Liikennevalo
+                    tila={kentanTila(
+                      true,
+                      menettelyLahteet.filter((lahde) => lahde.rivi_id === rivi.id),
+                    )}
+                  />
+                </p>
                 <p className="mt-1 text-sm">
                   {MENETTELY_TILA_NIMET[rivi.tila]}
                   {rivi.tunnus ? ` · ${rivi.tunnus}` : ""}
@@ -291,7 +317,15 @@ export default async function HankeSivu({
           <ul className="mt-4 space-y-4">
             {vaihtoehdot.map((vaihtoehto) => (
               <li key={vaihtoehto.id} className="rounded border border-border bg-surface p-4">
-                <p className="font-medium">{vaihtoehto.tunnus}</p>
+                <p className="flex flex-wrap items-center gap-x-3 gap-y-1">
+                  <span className="font-medium">{vaihtoehto.tunnus}</span>
+                  <Liikennevalo
+                    tila={kentanTila(
+                      true,
+                      vaihtoehtoLahteet.filter((lahde) => lahde.rivi_id === vaihtoehto.id),
+                    )}
+                  />
+                </p>
                 <p className="mt-1 text-sm">
                   {[
                     vaihtoehto.it_teho_mw != null
@@ -337,7 +371,15 @@ export default async function HankeSivu({
           <ul className="mt-4 space-y-4">
             {organisaatioroolit.map((rivi) => (
               <li key={rivi.id} className="rounded border border-border bg-surface p-4">
-                <p className="font-medium">{HANKE_ORGANISAATIO_ROOLI_NIMET[rivi.rooli]}</p>
+                <p className="flex flex-wrap items-center gap-x-3 gap-y-1">
+                  <span className="font-medium">{HANKE_ORGANISAATIO_ROOLI_NIMET[rivi.rooli]}</span>
+                  <Liikennevalo
+                    tila={kentanTila(
+                      rivi.organisaatio != null,
+                      organisaatiorooliLahteet.filter((lahde) => lahde.rivi_id === rivi.id),
+                    )}
+                  />
+                </p>
                 <p className="mt-1 text-sm">
                   {rivi.organisaatio ? (
                     <a
@@ -430,7 +472,15 @@ export default async function HankeSivu({
               const menettely = menettelyt.find((rivi) => rivi.id === maaraaika.menettely_id);
               return (
               <li key={maaraaika.id} className="rounded border border-border bg-surface p-4">
-                <p className="font-medium">{MAARAAJA_NIMET[maaraaika.tyyppi]}</p>
+                <p className="flex flex-wrap items-center gap-x-3 gap-y-1">
+                  <span className="font-medium">{MAARAAJA_NIMET[maaraaika.tyyppi]}</span>
+                  <Liikennevalo
+                    tila={kentanTila(
+                      true,
+                      maaraajaLahteet.filter((lahde) => lahde.rivi_id === maaraaika.id),
+                    )}
+                  />
+                </p>
                 {menettely ? (
                   <p className="mt-1 text-sm text-muted">
                     {MENETTELY_LAJI_NIMET[menettely.laji]}
@@ -487,9 +537,17 @@ export default async function HankeSivu({
           <ul className="mt-4 space-y-4">
             {johdot.map((johto) => (
               <li key={johto.id} className="rounded border border-border bg-surface p-4">
-                <p className="font-medium">
-                  {JOHTO_TYYPPI_NIMET[johto.tyyppi]}
-                  {johto.vaihtoehto ? ` · ${johto.vaihtoehto}` : ""}
+                <p className="flex flex-wrap items-center gap-x-3 gap-y-1">
+                  <span className="font-medium">
+                    {JOHTO_TYYPPI_NIMET[johto.tyyppi]}
+                    {johto.vaihtoehto ? ` · ${johto.vaihtoehto}` : ""}
+                  </span>
+                  <Liikennevalo
+                    tila={kentanTila(
+                      true,
+                      johtoLahteet.filter((lahde) => lahde.rivi_id === johto.id),
+                    )}
+                  />
                 </p>
                 <p className="mt-1 text-sm">
                   {[

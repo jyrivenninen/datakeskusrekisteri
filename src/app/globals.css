@@ -36,3 +36,17 @@ body {
   color: var(--foreground);
   font-family: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
 }
+
+summary {
+  display: list-item;
+  list-style: disclosure-closed inside;
+}
+
+details[open] > summary {
+  list-style-type: disclosure-open;
+}
+
+summary:focus-visible {
+  outline: 2px solid var(--link);
+  outline-offset: 2px;
+}
