@@ -46,12 +46,11 @@ function Faktakentta({
   const naytettavat = kentanLahteet(lahteet, lahdeKentta ?? kentta);
   const tila = kentanTila(arvo != null && arvo !== "", naytettavat);
   return (
-    <div className="border-b border-border py-4">
-      <dt className="flex flex-wrap items-center gap-x-3 gap-y-1">
-        <span className="font-medium">{HANKE_KENTTA_NIMET[kentta] ?? kentta}</span>
-        <Liikennevalo tila={tila} />
+    <div className="grid items-start gap-x-4 gap-y-1 border-b border-border py-3 sm:grid-cols-[12rem_minmax(0,1fr)_auto]">
+      <dt className="text-sm font-medium text-muted">
+        {HANKE_KENTTA_NIMET[kentta] ?? kentta}
       </dt>
-      <dd className="mt-1">
+      <dd>
         {arvo ? (
           href ? (
             <a href={href} className="text-link underline">
@@ -65,6 +64,9 @@ function Faktakentta({
         )}
         <Lahdeluettelo lahteet={naytettavat} />
       </dd>
+      <div className="sm:justify-self-end">
+        <Liikennevalo tila={tila} />
+      </div>
     </div>
   );
 }
@@ -226,15 +228,36 @@ export default async function HankeSivu({
         {hanke.maakunta ? `, ${hanke.maakunta}` : ""} · {VAIHE_NIMET[hanke.vaihe]}
       </p>
 
+      <section className="mt-6" aria-labelledby="kartta-otsikko">
+        <h2 id="kartta-otsikko" className="sr-only">
+          Sijainti kartalla
+        </h2>
+        <Kartta merkit={merkit} luokka="h-[22rem] sm:h-[28rem]" />
+        {alue ? (
+          <p className="mt-2 text-sm text-muted">
+            Sininen alue on merkitty{" "}
+            {hanke.sijainti_alue_tyyppi
+              ? SIJAINTI_ALUE_TYYPPI_NIMET[hanke.sijainti_alue_tyyppi].toLowerCase()
+              : "hankealue"}
+            .
+          </p>
+        ) : null}
+        {karttajohdot.length > 0 ? (
+          <p className="mt-2 text-sm text-muted">
+            Katkoviiva on merkitty sähkönsiirtoreitti.
+          </p>
+        ) : null}
+      </section>
+
       <section className="mt-8" aria-labelledby="tiedot-otsikko">
         <h2 id="tiedot-otsikko" className="text-xl font-semibold">
           Tiedot ja lähteet
         </h2>
         <p className="mt-2 text-sm text-muted">
-          Liikennevalo: vihreä on vahvistettu lähteellä, keltainen on merkitty mutta
-          vahvistamaton tai epävarma, punainen puuttuu. Lähteet avautuvat kentän alta.
+          Vihreä valo: lähde vahvistaa tiedon. Keltainen: merkitty mutta epävarma.
+          Punainen: ei merkitty. Lähteen avaa kentän alta.
         </p>
-        <dl className="mt-2">
+        <dl className="mt-4 rounded border border-border bg-surface px-4">
           {hankeKentat(hanke).map((rivi) => (
             <Faktakentta
               key={rivi.kentta}
@@ -567,29 +590,6 @@ export default async function HankeSivu({
           </ul>
         </section>
       ) : null}
-
-      <section className="mt-10" aria-labelledby="kartta-otsikko">
-        <h2 id="kartta-otsikko" className="text-xl font-semibold">
-          Sijainti kartalla
-        </h2>
-        <div className="mt-4">
-          <Kartta merkit={merkit} />
-        </div>
-        {alue ? (
-          <p className="mt-2 text-sm text-muted">
-            Sininen alue on merkitty{" "}
-            {hanke.sijainti_alue_tyyppi
-              ? SIJAINTI_ALUE_TYYPPI_NIMET[hanke.sijainti_alue_tyyppi].toLowerCase()
-              : "hankealue"}
-            .
-          </p>
-        ) : null}
-        {karttajohdot.length > 0 ? (
-          <p className="mt-2 text-sm text-muted">
-            Katkoviiva on merkitty sähkönsiirtoreitti.
-          </p>
-        ) : null}
-      </section>
     </main>
   );
 }

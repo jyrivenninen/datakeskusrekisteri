@@ -150,7 +150,13 @@ function piirraGeometriat(kartta: Map, svg: SVGSVGElement, merkit: Karttamerkki[
   }
 }
 
-export function Kartta({ merkit }: { merkit: Karttamerkki[] }) {
+export function Kartta({
+  merkit,
+  luokka,
+}: {
+  merkit: Karttamerkki[];
+  luokka?: string;
+}) {
   const kehys = useRef<HTMLDivElement>(null);
   const avain = process.env.NEXT_PUBLIC_MML_API_AVAIN;
   const merkitAvain = JSON.stringify(merkit);
@@ -261,7 +267,7 @@ export function Kartta({ merkit }: { merkit: Karttamerkki[] }) {
   return (
     <div
       ref={kehys}
-      className="relative h-[28rem] w-full overflow-hidden rounded border border-border"
+      className={`relative w-full overflow-hidden rounded border border-border ${luokka ?? "h-[28rem]"}`}
       role="region"
       aria-label="Hankkeiden sijaintikartta"
     />

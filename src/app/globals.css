@@ -37,6 +37,42 @@ body {
   font-family: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
 }
 
+.liikennevalo {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.2rem;
+  padding: 0.2rem 0.35rem;
+  border: 1px solid var(--border);
+  border-radius: 9999px;
+  background: #111;
+}
+
+.liikennevalo-pallo {
+  width: 0.85rem;
+  height: 0.85rem;
+  border-radius: 9999px;
+  border: 1px solid rgb(0 0 0 / 0.55);
+}
+
+.liikennevalo-pallo[data-vari="punainen"][data-paalla="true"] {
+  background: #ff3b30;
+  box-shadow: 0 0 0.45rem #ff3b30;
+}
+
+.liikennevalo-pallo[data-vari="keltainen"][data-paalla="true"] {
+  background: #ffd60a;
+  box-shadow: 0 0 0.45rem #ffd60a;
+}
+
+.liikennevalo-pallo[data-vari="vihrea"][data-paalla="true"] {
+  background: #30d158;
+  box-shadow: 0 0 0.45rem #30d158;
+}
+
+.liikennevalo-pallo[data-paalla="false"] {
+  background: #3f3f46;
+}
+
 summary {
   display: list-item;
   list-style: disclosure-closed inside;

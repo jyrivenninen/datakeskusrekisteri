@@ -5,7 +5,7 @@ export function Lahdeluettelo({ lahteet }: { lahteet: KenttaLahde[] }) {
   const maara = lahteet.length;
   return (
     <details className="mt-2">
-      <summary className="cursor-pointer text-sm text-muted underline decoration-dotted underline-offset-2">
+      <summary className="w-fit cursor-pointer rounded border border-border bg-surface px-2 py-1 text-sm text-foreground">
         {maara === 0
           ? "Lähteet ja tarkenteet"
           : `Lähteet ja tarkenteet (${maara})`}

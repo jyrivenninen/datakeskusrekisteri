@@ -1,28 +1,27 @@
 import { KENTAN_TILA_NIMET, type KentanTila } from "@/lib/naytto";
 
-const VALO_LUOKAT: Record<KentanTila, string> = {
-  vahvistettu: "bg-green-800",
-  vahvistamaton: "bg-amber-600",
-  puuttuu: "bg-red-800",
-};
+const LAMPUT: { avain: KentanTila; vari: "punainen" | "keltainen" | "vihrea" }[] = [
+  { avain: "puuttuu", vari: "punainen" },
+  { avain: "vahvistamaton", vari: "keltainen" },
+  { avain: "vahvistettu", vari: "vihrea" },
+];
 
 export function Liikennevalo({ tila }: { tila: KentanTila }) {
   return (
-    <span className="inline-flex items-center gap-1.5 text-sm">
+    <span className="inline-flex items-center gap-2 text-sm">
       <span
-        className="inline-flex items-center gap-0.5"
+        className="liikennevalo"
         role="img"
         aria-label={`Tila: ${KENTAN_TILA_NIMET[tila]}`}
       >
-        <span
-          className={`inline-block size-2.5 shrink-0 rounded-full ${tila === "puuttuu" ? VALO_LUOKAT.puuttuu : "bg-red-800/25"}`}
-        />
-        <span
-          className={`inline-block size-2.5 shrink-0 rounded-full ${tila === "vahvistamaton" ? VALO_LUOKAT.vahvistamaton : "bg-amber-600/25"}`}
-        />
-        <span
-          className={`inline-block size-2.5 shrink-0 rounded-full ${tila === "vahvistettu" ? VALO_LUOKAT.vahvistettu : "bg-green-800/25"}`}
-        />
+        {LAMPUT.map((lamppu) => (
+          <span
+            key={lamppu.avain}
+            className="liikennevalo-pallo"
+            data-vari={lamppu.vari}
+            data-paalla={tila === lamppu.avain ? "true" : "false"}
+          />
+        ))}
       </span>
       <span className="text-muted">{KENTAN_TILA_NIMET[tila]}</span>
     </span>
