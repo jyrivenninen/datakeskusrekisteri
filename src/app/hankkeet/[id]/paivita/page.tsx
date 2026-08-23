@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import { lahetaKenttapaivitys } from "@/app/toiminnot";
+import { LomakeLahetysNappi } from "@/komponentit/lomake-lahetysnappi";
 import {
   onPaivitettavaHankeKentta,
   onVaihtoehtoKentta,
@@ -216,12 +217,10 @@ export default async function KenttapaivitysSivu({
               />
             </p>
           )}
-          <button
-            type="submit"
-            className="rounded border border-foreground bg-foreground px-4 py-2 text-sm font-medium text-background"
-          >
-            {julkaiseSuoraan ? "Julkaise päivitys" : "Lähetä tarkistettavaksi"}
-          </button>
+          <LomakeLahetysNappi
+            valmis={julkaiseSuoraan ? "Julkaise päivitys" : "Lähetä tarkistettavaksi"}
+            odottaa="Lähetetään…"
+          />
         </form>
       )}
     </main>

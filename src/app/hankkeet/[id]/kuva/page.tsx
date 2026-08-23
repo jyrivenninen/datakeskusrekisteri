@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import { lahetaKuva } from "@/app/toiminnot";
+import { LomakeLahetysNappi } from "@/komponentit/lomake-lahetysnappi";
 import { LUOTTAMUS_NIMET } from "@/lib/naytto";
 import { haeHanke } from "@/lib/supabase/kyselyt";
 import { haeYllapitaja } from "@/lib/supabase/palvelin";
@@ -174,12 +175,10 @@ export default async function KuvaEhdotusSivu({
               />
             </p>
           )}
-          <button
-            type="submit"
-            className="rounded border border-foreground bg-foreground px-4 py-2 text-sm font-medium text-background"
-          >
-            {julkaiseSuoraan ? "Julkaise valokuva" : "Lähetä tarkistettavaksi"}
-          </button>
+          <LomakeLahetysNappi
+            valmis={julkaiseSuoraan ? "Julkaise valokuva" : "Lähetä tarkistettavaksi"}
+            odottaa="Lähetetään…"
+          />
         </form>
       )}
     </main>
