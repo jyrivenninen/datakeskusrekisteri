@@ -112,8 +112,8 @@ export default async function Etusivu({
           Kartta
         </h2>
         <p className="mt-2 max-w-prose text-sm text-muted">
-          Merkki lisätään, kun hankkeella on lähteistetyt koordinaatit.
-          Hankealue näkyy sinisenä alueena, jos se on merkitty.
+          Nuppineula merkitsee hankkeen, jolla on lähteistetyt koordinaatit.
+          Lähizoomissa näkyy myös hankealue ja sähkönsiirtoreitti, jos ne on merkitty.
         </p>
         <div className="mt-4">
           <Kartta merkit={merkit} />

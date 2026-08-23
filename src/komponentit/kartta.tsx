@@ -119,6 +119,55 @@ function laajennaAlueella(rajat: LngLatBounds, alue: SijaintiAlue) {
   }
 }
 
+function alueenKeskipiste(alue: SijaintiAlue): { lon: number; lat: number } | null {
+  const rengas = alue.coordinates[0];
+  if (!rengas || rengas.length < 3) return null;
+  let summaLon = 0;
+  let summaLat = 0;
+  let lkm = 0;
+  for (const piste of rengas) {
+    if (piste.length < 2) continue;
+    summaLon += piste[0];
+    summaLat += piste[1];
+    lkm += 1;
+  }
+  if (lkm === 0) return null;
+  return { lon: summaLon / lkm, lat: summaLat / lkm };
+}
+
+function luoNuppineula(nimi: string, hankeId: string) {
+  const el = document.createElement("a");
+  el.href = `/hankkeet/${hankeId}`;
+  el.className = "kartta-nuppineula";
+  el.setAttribute("aria-label", nimi);
+
+  const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+  svg.setAttribute("viewBox", "0 0 28 40");
+  svg.setAttribute("width", "28");
+  svg.setAttribute("height", "40");
+  svg.setAttribute("aria-hidden", "true");
+
+  const tausta = document.createElementNS("http://www.w3.org/2000/svg", "path");
+  tausta.setAttribute(
+    "d",
+    "M14 1.5c-6.4 0-11.5 5-11.5 11.2 0 8.6 11.5 25.3 11.5 25.3s11.5-16.7 11.5-25.3C25.5 6.5 20.4 1.5 14 1.5z",
+  );
+  tausta.setAttribute("fill", "#1d4ed8");
+  tausta.setAttribute("stroke", "#fff");
+  tausta.setAttribute("stroke-width", "2");
+
+  const keskus = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+  keskus.setAttribute("cx", "14");
+  keskus.setAttribute("cy", "12.2");
+  keskus.setAttribute("r", "4.2");
+  keskus.setAttribute("fill", "#fff");
+
+  svg.appendChild(tausta);
+  svg.appendChild(keskus);
+  el.appendChild(svg);
+  return el;
+}
+
 function piirraGeometriat(kartta: Map, svg: SVGSVGElement, merkit: Karttamerkki[]) {
   const kehys = kartta.getContainer();
   const leveys = kehys.clientWidth;
@@ -128,10 +177,12 @@ function piirraGeometriat(kartta: Map, svg: SVGSVGElement, merkit: Karttamerkki[
   svg.setAttribute("viewBox", `0 0 ${leveys} ${korkeus}`);
   while (svg.firstChild) svg.removeChild(svg.firstChild);
 
+  const naytaAlueet = kartta.getZoom() >= 9;
+
   for (const merkki of merkit) {
     const alue = parsiAlue(merkki.alue);
     const rengas = alue?.coordinates[0];
-    if (rengas && rengas.length >= 3) {
+    if (naytaAlueet && rengas && rengas.length >= 3) {
       const osat = rengas.map((piste, i) => {
         const xy = kartta.project([piste[0], piste[1]]);
         return `${i === 0 ? "M" : "L"}${xy.x.toFixed(1)} ${xy.y.toFixed(1)}`;
@@ -143,6 +194,7 @@ function piirraGeometriat(kartta: Map, svg: SVGSVGElement, merkit: Karttamerkki[
       polku.setAttribute("stroke-width", "2");
       svg.appendChild(polku);
     }
+    if (!naytaAlueet) continue;
     for (const johto of merkki.johdot ?? []) {
       const viiva = parsiViiva(johto.reitti);
       if (viiva) piirraViiva(kartta, svg, viiva);
@@ -191,14 +243,17 @@ export function Kartta({
 
     const merkkiluokat: Marker[] = [];
     for (const merkki of merkitNyt) {
-      if (merkki.lat == null || merkki.lon == null) continue;
-      const el = document.createElement("a");
-      el.href = `/hankkeet/${merkki.id}`;
-      el.className =
-        "block h-4 w-4 rounded-full border-2 border-white bg-link shadow outline-none focus:ring-2 focus:ring-link";
-      el.setAttribute("aria-label", merkki.nimi);
+      const keskipiste =
+        merkki.lat != null && merkki.lon != null
+          ? { lat: merkki.lat, lon: merkki.lon }
+          : merkki.alue
+            ? alueenKeskipiste(merkki.alue)
+            : null;
+      if (!keskipiste) continue;
       merkkiluokat.push(
-        new Marker({ element: el }).setLngLat([merkki.lon, merkki.lat]).addTo(kartta),
+        new Marker({ element: luoNuppineula(merkki.nimi, merkki.id), anchor: "bottom" })
+          .setLngLat([keskipiste.lon, keskipiste.lat])
+          .addTo(kartta),
       );
     }
 
