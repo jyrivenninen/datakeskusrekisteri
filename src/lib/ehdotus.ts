@@ -1,14 +1,16 @@
-import { HANKE_VAIHEET, type HankeVaihe } from "@/lib/supabase/tietokanta";
+import { HANKE_VAIHEET, type HankeVaihe, type Luottamus } from "@/lib/supabase/tietokanta";
 
 export type EhdotettuKentta = {
   arvo: string;
   lahde_url: string;
   lahde_sivu: number | null;
   lainaus: string | null;
+  luottamus?: Luottamus;
 };
 
 export type EhdotusSisalto = {
   kentat: Record<string, EhdotettuKentta>;
+  vaihtoehdot?: Record<string, Record<string, EhdotettuKentta>>;
 };
 
 const NUMEERISET = new Set([
@@ -94,3 +96,23 @@ export function kenttaArvoksi(
   if (NUMEERISET.has(kentta)) return luku(arvo);
   return arvo;
 }
+
+const LUOTTAMUKSET = new Set<Luottamus>(["vahvistettu", "epavarma", "ristiriitainen"]);
+
+export function kentanLuottamus(
+  tieto: EhdotettuKentta,
+  oletus: Luottamus,
+): Luottamus {
+  if (tieto.luottamus && LUOTTAMUKSET.has(tieto.luottamus)) return tieto.luottamus;
+  return oletus;
+}
+
+export const VAIHTOEHTO_KENTAT = [
+  "teho_mw",
+  "it_teho_mw",
+  "pinta_ala_ha",
+  "sahkonkaytto_twh_a",
+  "generaattorit_lkm",
+  "generaattorit_kaytossa_max_lkm",
+  "generaattori_polttoaineteho_mw",
+] as const;

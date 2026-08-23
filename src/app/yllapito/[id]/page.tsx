@@ -84,6 +84,49 @@ export default async function EhdotusSivu({
         ))}
       </dl>
 
+      {sisalto.vaihtoehdot && Object.keys(sisalto.vaihtoehdot).length > 0 ? (
+        <section className="mt-8" aria-labelledby="vaihtoehdot-otsikko">
+          <h2 id="vaihtoehdot-otsikko" className="text-xl font-semibold">
+            Vaihtoehdot
+          </h2>
+          <p className="mt-2 text-sm text-muted">
+            Luvut kirjoitetaan vaihtoehtoriveille, ei hankkeen yhteisiin
+            teho- tai sähkökenttiin.
+          </p>
+          {Object.entries(sisalto.vaihtoehdot).map(([tunnus, kentat]) => (
+            <div key={tunnus} className="mt-4">
+              <h3 className="font-medium">{tunnus}</h3>
+              <dl className="mt-2 divide-y divide-border border-y border-border">
+                {Object.entries(kentat).map(([kentta, tieto]) => (
+                  <div key={kentta} className="py-3">
+                    <dt className="font-medium">{HANKE_KENTTA_NIMET[kentta] ?? kentta}</dt>
+                    <dd className="mt-1">
+                      {tieto.arvo}
+                      {tieto.luottamus ? (
+                        <span className="text-sm text-muted"> · {tieto.luottamus}</span>
+                      ) : null}
+                      <p className="mt-1 text-sm">
+                        <a
+                          href={tieto.lahde_url}
+                          className="text-link underline"
+                          rel="noopener noreferrer"
+                        >
+                          {tieto.lahde_url}
+                        </a>
+                        {tieto.lahde_sivu ? ` (s. ${tieto.lahde_sivu})` : ""}
+                      </p>
+                      {tieto.lainaus ? (
+                        <blockquote className="mt-2 border-l-2 pl-3">{tieto.lainaus}</blockquote>
+                      ) : null}
+                    </dd>
+                  </div>
+                ))}
+              </dl>
+            </div>
+          ))}
+        </section>
+      ) : null}
+
       {odottaa && !supabasePalvelinAvainAsetettu() ? (
         <p className="mt-6 text-sm">
           Hyväksyntä vaatii palvelinavaimen <code>SUPABASE_SERVICE_ROLE_KEY</code>. Lisää se
