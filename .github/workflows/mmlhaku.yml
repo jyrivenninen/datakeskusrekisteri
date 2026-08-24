@@ -1,10 +1,10 @@
-# Viikoittainen MML-geokoodaus (7A.5.3). Ei kielimallia.
+# Päivittäinen MML-geokoodaus (7A.5.3). Ei kielimallia. Cron UTC.
 
 name: mmlhaku
 
 on:
   schedule:
-    - cron: "0 6 * * 1"
+    - cron: "0 5 * * *"
   workflow_dispatch:
 
 jobs:

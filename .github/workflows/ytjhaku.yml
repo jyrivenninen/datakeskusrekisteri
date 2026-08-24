@@ -1,10 +1,10 @@
-# Viikoittainen YTJ-haku (7A.5.2). Ei kielimallia.
+# Päivittäinen YTJ-haku (7A.5.2). Ei kielimallia. Cron UTC.
 
 name: ytjhaku
 
 on:
   schedule:
-    - cron: "30 5 * * 1"
+    - cron: "40 4 * * *"
   workflow_dispatch:
 
 jobs:

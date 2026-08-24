@@ -1,10 +1,10 @@
-# Viikoittainen linkkitarkistus (7A.1). Ei kielimallia.
+# Päivittäinen linkkitarkistus (7A.1). Ei kielimallia. Cron UTC.
 
 name: linkkitarkistus
 
 on:
   schedule:
-    - cron: "0 4 * * 1"
+    - cron: "0 4 * * *"
   workflow_dispatch:
 
 jobs:

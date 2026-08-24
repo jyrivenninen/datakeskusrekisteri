@@ -1,10 +1,10 @@
-# Viikoittainen Ryhti-kaavahaku (7A.5.1). Ei kielimallia.
+# Päivittäinen Ryhti-kaavahaku (7A.5.1). Ei kielimallia. Cron UTC.
 
 name: ryhtihaku
 
 on:
   schedule:
-    - cron: "0 5 * * 1"
+    - cron: "20 4 * * *"
   workflow_dispatch:
 
 jobs:
