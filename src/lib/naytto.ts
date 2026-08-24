@@ -131,6 +131,8 @@ export const HANKE_KENTTA_NIMET: Record<string, string> = {
   kunta: "Kunta",
   maakunta: "Maakunta",
   sijainti: "Sijainti",
+  sijainti_lat: "Leveysaste",
+  sijainti_lon: "Pituusaste",
   vaihe: "Vaihe",
   teho_mw: "Teho (MW)",
   it_teho_mw: "IT-teho (MW)",

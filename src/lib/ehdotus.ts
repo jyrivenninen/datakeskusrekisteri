@@ -32,6 +32,8 @@ const NUMEERISET = new Set([
   "generaattorit_lkm",
   "generaattorit_kaytossa_max_lkm",
   "generaattori_polttoaineteho_mw",
+  "sijainti_lat",
+  "sijainti_lon",
 ]);
 
 export const LOMAKE_KENTAT = [
@@ -66,6 +68,9 @@ export const PAIVITETTAVAT_HANKE_KENTAT = [
   "generaattori_polttoaineteho_mw",
   "kaavatunnus",
   "kortteli",
+  "sijainti_lat",
+  "sijainti_lon",
+  "sijainti_alue_tyyppi",
 ] as const;
 
 export type PaivitettavaHankeKentta = (typeof PAIVITETTAVAT_HANKE_KENTAT)[number];

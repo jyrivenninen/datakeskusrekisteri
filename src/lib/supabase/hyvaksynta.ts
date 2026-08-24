@@ -87,6 +87,12 @@ export async function hyvaksyMuutosehdotus(ehdotusId: string, kasittelija: strin
     throw new Error("Ehdotuksessa ei ole kenttiä.");
   }
 
+  const SIJAINTI_KENTAT = new Set([
+    "sijainti_lat",
+    "sijainti_lon",
+    "sijainti_alue_tyyppi",
+  ]);
+
   const hanke: Record<string, string> = {};
   for (const [kentta, tieto] of Object.entries(kentat)) {
     if (kentta === "toimija_nimi") {
@@ -97,13 +103,20 @@ export async function hyvaksyMuutosehdotus(ehdotusId: string, kasittelija: strin
     hanke[kentta] = arvo == null ? "" : String(arvo);
   }
 
-  const lahteet = Object.entries(kentat).map(([kentta, tieto]) =>
-    lahdeRivi(
-      kentta === "toimija_nimi" ? "toimija_organisaatio_id" : kentta,
-      tieto,
-      "vahvistettu",
-    ),
-  );
+  const lahteet = Object.entries(kentat)
+    .filter(([kentta]) => !SIJAINTI_KENTAT.has(kentta))
+    .map(([kentta, tieto]) =>
+      lahdeRivi(
+        kentta === "toimija_nimi" ? "toimija_organisaatio_id" : kentta,
+        tieto,
+        "vahvistettu",
+      ),
+    );
+  const sijaintiLahde =
+    kentat.sijainti_lat ?? kentat.sijainti_lon ?? kentat.sijainti_alue_tyyppi;
+  if (sijaintiLahde) {
+    lahteet.push(lahdeRivi("sijainti", sijaintiLahde, "epavarma"));
+  }
 
   const sallitut = new Set<string>(VAIHTOEHTO_KENTAT);
   const vaihtoehtoRivit = Object.entries(vaihtoehdot).map(([tunnus, kentatVe]) => {
