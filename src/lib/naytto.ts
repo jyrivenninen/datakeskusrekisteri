@@ -234,3 +234,12 @@ export function muotoileLuku(arvo: number | string): string {
   if (Number.isNaN(luku)) return String(arvo);
   return new Intl.NumberFormat("fi-FI", { maximumFractionDigits: 3 }).format(luku);
 }
+
+export function muotoileVaihtelvali(
+  min: number,
+  max: number,
+  yksikko: string,
+): string {
+  if (min === max) return `${muotoileLuku(min)} ${yksikko}`;
+  return `${muotoileLuku(min)}–${muotoileLuku(max)} ${yksikko}`;
+}

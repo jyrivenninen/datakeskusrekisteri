@@ -1,4 +1,4 @@
-import { muotoileLuku } from "@/lib/naytto";
+import { muotoileLuku, muotoileVaihtelvali } from "@/lib/naytto";
 import type { HankeYhteenveto } from "@/lib/hanke-yhteenveto";
 import {
   SUOMI_SAHKON_TUOTANTO_2024,
@@ -18,27 +18,39 @@ function muotoileProsentti(osuus: number): string {
   }).format(prosentti)} %`;
 }
 
+function muotoileProsenttivali(min: number | null, max: number | null): string {
+  if (min == null || max == null) return "Ei laskettavissa";
+  if (min === max) return muotoileProsentti(min);
+  return `${muotoileProsentti(min)}–${muotoileProsentti(max)}`;
+}
+
 export function HankeLaskurit({ yhteenveto }: { yhteenveto: HankeYhteenveto }) {
   const { hankeita } = yhteenveto;
   const sahkoTeksti =
     yhteenveto.sahkonkayttoMerkittyLkm === 0
       ? "Ei merkitty"
-      : `${muotoileLuku(yhteenveto.sahkonkayttoTwh)} TWh/a`;
-  const osuusTeksti =
-    yhteenveto.osuusSuomenTuotannosta == null
-      ? "Ei laskettavissa"
-      : muotoileProsentti(yhteenveto.osuusSuomenTuotannosta);
+      : muotoileVaihtelvali(
+          yhteenveto.sahkonkayttoTwhMin,
+          yhteenveto.sahkonkayttoTwhMax,
+          "TWh/a",
+        );
+  const osuusTeksti = muotoileProsenttivali(
+    yhteenveto.osuusSuomenTuotannostaMin,
+    yhteenveto.osuusSuomenTuotannostaMax,
+  );
   const co2Teksti =
-    yhteenveto.co2T == null
+    yhteenveto.co2TMin == null || yhteenveto.co2TMax == null
       ? "Ei laskettavissa"
-      : `${muotoileLuku(yhteenveto.co2T)} t CO₂/a`;
+      : muotoileVaihtelvali(yhteenveto.co2TMin, yhteenveto.co2TMax, "t CO₂/a");
 
   return (
     <div className="mt-6">
       <h3 className="text-base font-semibold">Valittujen hankkeiden luvut</h3>
       <p className="mt-1 max-w-prose text-sm text-muted">
         Summat koskevat vain suodattimeen osuvia julkaistuja hankkeita. Tyhjä
-        kenttä ei ole nolla: puuttuva tieto jätetään pois sumasta.
+        kenttä ei ole nolla. Jos hankkeella on merkittyjä YVA-vaihtoehtoja,
+        laskuri käyttää niiden alinta ja ylintä lukua; vaihtoehtoja ei lasketa
+        yhteen.
       </p>
       <ul className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
         <li className="rounded border border-border bg-surface p-4">
@@ -73,11 +85,11 @@ export function HankeLaskurit({ yhteenveto }: { yhteenveto: HankeYhteenveto }) {
           <p className="mt-1 text-2xl font-semibold tabular-nums">
             {yhteenveto.tehoMerkittyLkm === 0
               ? "Ei merkitty"
-              : `${muotoileLuku(yhteenveto.tehoMw)} MW`}
+              : muotoileVaihtelvali(yhteenveto.tehoMwMin, yhteenveto.tehoMwMax, "MW")}
           </p>
           <p className="mt-1 text-sm text-muted">
             {kattavuus(yhteenveto.tehoMerkittyLkm, hankeita)}. IT-teho, jos
-            merkitty, muuten teho.
+            merkitty, muuten teho. Generaattorin polttoainetehoa ei käytetä.
           </p>
         </li>
         <li className="rounded border border-border bg-surface p-4">
@@ -85,7 +97,11 @@ export function HankeLaskurit({ yhteenveto }: { yhteenveto: HankeYhteenveto }) {
           <p className="mt-1 text-2xl font-semibold tabular-nums">
             {yhteenveto.pintaAlaMerkittyLkm === 0
               ? "Ei merkitty"
-              : `${muotoileLuku(yhteenveto.pintaAlaHa)} ha`}
+              : muotoileVaihtelvali(
+                  yhteenveto.pintaAlaHaMin,
+                  yhteenveto.pintaAlaHaMax,
+                  "ha",
+                )}
           </p>
           <p className="mt-1 text-sm text-muted">
             {kattavuus(yhteenveto.pintaAlaMerkittyLkm, hankeita)}
@@ -96,7 +112,11 @@ export function HankeLaskurit({ yhteenveto }: { yhteenveto: HankeYhteenveto }) {
           <p className="mt-1 text-2xl font-semibold tabular-nums">
             {yhteenveto.generaattoritMerkittyLkm === 0
               ? "Ei merkitty"
-              : `${muotoileLuku(yhteenveto.generaattoritLkm)} kpl`}
+              : muotoileVaihtelvali(
+                  yhteenveto.generaattoritLkmMin,
+                  yhteenveto.generaattoritLkmMax,
+                  "kpl",
+                )}
           </p>
           <p className="mt-1 text-sm text-muted">
             {kattavuus(yhteenveto.generaattoritMerkittyLkm, hankeita)}

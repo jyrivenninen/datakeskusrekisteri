@@ -3,7 +3,8 @@ import { Kartta, type Karttamerkki } from "@/komponentit/kartta";
 import { Suodatuslomake } from "@/komponentit/suodatuslomake";
 import { VaiheMerkki } from "@/komponentit/vaihe-merkki";
 import { laskeHankeYhteenveto } from "@/lib/hanke-yhteenveto";
-import { MAARAAJA_NIMET, hankeTehoMw, muotoileLuku, muotoilePvm } from "@/lib/naytto";
+import { hankeVaihtelvalit } from "@/lib/hanke-vaihtelvali";
+import { MAARAAJA_NIMET, muotoilePvm, muotoileVaihtelvali } from "@/lib/naytto";
 import {
   haeJulkaistutHankkeet,
   haeTulevatMaaraajat,
@@ -118,7 +119,8 @@ export default async function Etusivu({
         </h2>
         <p className="mt-2 max-w-prose text-sm text-muted">
           Suodatin päivittää laskurit, kartan ja luettelon. Ilman JavaScriptiä
-          valitse ehdot ja paina Suodata.
+          valitse ehdot ja paina Suodata. Kokoluokka osuu hankkeeseen, jos
+          hanketason teho tai jokin merkitty YVA-vaihtoehto osuu luokkaan.
         </p>
         <Suodatuslomake suodatus={suodatus} kunnat={kunnat} />
         {hankeVirhe ? (
@@ -154,7 +156,7 @@ export default async function Etusivu({
         ) : (
           <ul className="mt-4 divide-y divide-border border-y border-border">
             {hankkeet.map((hanke) => {
-              const teho = hankeTehoMw(hanke);
+              const teho = hankeVaihtelvalit(hanke, hanke.vaihtoehdot).teho;
               return (
                 <li key={hanke.id} className="py-4">
                   <h4 className="text-lg font-semibold">
@@ -166,7 +168,9 @@ export default async function Etusivu({
                     {hanke.kunta}
                     {hanke.maakunta ? `, ${hanke.maakunta}` : ""} ·{" "}
                     <VaiheMerkki vaihe={hanke.vaihe} />
-                    {teho != null ? ` · ${muotoileLuku(teho)} MW` : ""}
+                    {teho
+                      ? ` · ${muotoileVaihtelvali(teho.min, teho.max, "MW")}`
+                      : ""}
                   </p>
                 </li>
               );
