@@ -84,48 +84,20 @@ Nämä ovat projektin tärkein osa. Jälkikäteen korjaaminen on kallista.
 
 ## 4. Agenttiperiaate
 
+Tarkennettu: `PROJEKTI-lisays-vaihe7.md`.
+
 **Agentti ei koskaan julkaise. Agentti valmistelee ihmiselle päätöksen.**
 
 Agenteilla on kirjoitusoikeus vain `muutosehdotukset`-tauluun. Ei
 julkaisuoikeutta, ei poisto-oikeutta, ei oikeutta lähettää sähköpostia tai
 tehdä ulkoisia kutsuja käyttäjän puolesta.
 
-Syy on kaksijakoinen:
-- **Virheet.** Yksi hallusinoitu generaattorimäärä julkisella sivulla riittää
-  kaatamaan koko rekisterin uskottavuuden julkisesti.
-- **Prompt injection.** Agentit lukevat sivustoja, joita hankkeiden toimijat
-  hallitsevat. Sivulle voi piilottaa agentille suunnattua tekstiä. Kun
-  agentilla on vain ehdotusoikeus, injektion pahin lopputulos on huono
-  ehdotus, jonka ihminen hylkää.
+**Älä käytä mallia siihen mikä hoituu koodilla.** Jos tarkistuksen voi
+ilmaista SQL:llä, HTTP-pyyntönä tai merkkijonovertailuna, se ei saa
+kutsua kielimallia.
 
-### Kysymyksenasettelu agenteille
-
-Agentilta ei koskaan kysytä *"mikä on oikea luku"* — silloin se keksii
-luvun jos ei löydä. Agentilta kysytään *"löytyykö tästä dokumentista X, ja
-jos löytyy, miltä sivulta ja millä sanamuodolla"*. Agentin pitää aina
-osoittaa kohta, tai jättää kenttä tyhjäksi.
-
-### Agentit toteutusjärjestyksessä
-
-**A. Lähteenvahvistaja** (tärkein)
-Ottaa yhden kentän ja sen lähdelinkin, hakee dokumentin, palauttaa:
-`tukee` / `ei_tue` / `ei_loydy` / `dokumentti_muuttunut` + sanatarkka kohta.
-Ei tulkintaa, ei täydennystä.
-
-**B. Ilmoitusten esikäsittelijä**
-Uuden hankeilmoituksen saapuessa hakee taustatiedot (YTJ/kaupparekisteri,
-kunnan pöytäkirjat, ELY:n YVA-kuulutukset), täyttää kentät lähteineen,
-merkitsee epävarmat. Ylläpitäjälle jää tarkistus, ei kaivuutyö.
-
-**C. Muutosvahti**
-Ajastettu ajo: kuntien esityslistat, ELY-keskusten kuulutukset, hankkeiden
-omat sivut. Vertaa tallennettuun tilaan, ilmoittaa muutoksista. Tuottaa
-määräaikahälytykset — sivuston arvokkain yksittäinen ominaisuus.
-
-**D. Ristiriitojen etsijä**
-Ajaa tietokannan yli: sama toimija eri nimellä, teho ja generaattorimäärä
-epäsuhdassa, päivämäärä ennen yhtiön rekisteröintiä. Tuottaa
-tarkistuslistan ihmiselle, ei johtopäätöksiä.
+Mallia vaativille agenteille kysytään todennettavaa: lähdekohta tai
+`ei_loydy`. Tyhjä kenttä on parempi kuin arvattu.
 
 ---
 
@@ -185,11 +157,23 @@ ovat valmiit — ne ovat helppo osa, kun tietomalli on kunnossa.
       voi vielä vaikuttaa, mallipohja
 - [x] Yhteyshenkilö- ja organisaatiohakemisto
 
-### Vaihe 7 — Agentit
-- [ ] `/agents/lahteenvahvistaja.ts`
-- [ ] `/agents/esikasittelija.ts`
-- [ ] `/agents/muutosvahti.ts` + GitHub Actions cron
-- [ ] `/agents/ristiriidat.ts`
+### Vaihe 7 — Tarkistukset ja agentit
+Tarkennettu: `PROJEKTI-lisays-vaihe7.md`. Luku 7A.5 ja uusi 7A.6:
+`PROJEKTI-lisays-7A5-rajapinnat.md`.
+- [x] 7A.1 Linkkitarkistus (`agents/tarkistukset/linkit.ts`)
+- [ ] 7A.2 Dokumenttien muutosvahti (`agents/tarkistukset/dokumentit.ts`)
+- [ ] 7A.3 Ristiriidat SQL:llä (`agents/tarkistukset/ristiriidat.ts`)
+- [ ] 7A.4 Vanhentumisvahti (`agents/tarkistukset/vanhentuneet.ts`)
+- [ ] 7A.5 Rakenteiset rajapinnat (`agents/lahteet/`)
+- [x] 7A.5.1 Ryhti, avoin kaava-aineisto (`agents/lahteet/ryhti.ts`)
+- [x] 7A.5.2 YTJ/PRH (`agents/lahteet/ytj.ts`)
+- [x] 7A.5.3 MML geokoodaus (`agents/lahteet/mml.ts`)
+- [x] 7A.5.5 Syken hakemisto, kuntakoodisto (`agents/lahteet/hakemisto.ts`)
+- [ ] 7A.6 Kuntien esityslistat (`agents/lahteet/kunnat/`)
+- [ ] Mallirajapinta (`agents/malli.ts`) ennen 7B:tä
+- [ ] 7B.1 Lähteenvahvistaja (`agents/lahteenvahvistaja.ts`)
+- [ ] 7B.2 Esikäsittelijä (`agents/esikasittelija.ts`)
+- [ ] 7B.3 Muutosten tiivistäjä (`agents/tiivistaja.ts`)
 
 ### Vaihe 8 — Avoin data
 - [ ] JSON-endpointit, CSV-lataus, lisenssitieto (suositus: CC BY 4.0)

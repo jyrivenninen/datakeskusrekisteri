@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import { RyhtiKattavuus } from "@/komponentit/ryhti-kattavuus";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -58,6 +59,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         <footer className="mt-auto border-t border-border">
           <div className="mx-auto w-full max-w-5xl px-4 py-6 text-sm text-muted">
             <p>Avoin hanketietokanta ja prosessiopas. Julkaistu tieto merkitään lähteineen.</p>
+            <RyhtiKattavuus luokka="mt-3" />
           </div>
         </footer>
       </body>

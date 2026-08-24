@@ -5,7 +5,9 @@ alwaysApply: true
 
 # Datakeskusrekisteri — sitovat säännöt
 
-Projektin toimeksianto on `PROJEKTI.md`. Lue se, jos et ole vielä lukenut.
+Projektin toimeksianto on `PROJEKTI.md`. Vaihe 7 on tarkennettu tiedostossa
+`PROJEKTI-lisays-vaihe7.md`. Luku 7A.5 ja 7A.6: `PROJEKTI-lisays-7A5-rajapinnat.md`.
+Lue ne, jos et ole vielä lukenut.
 Nämä säännöt ovat sitovia ja ohittavat mukavuussyistä tehdyt oikaisut.
 Jos sääntö estää tehtävän suorittamisen, kerro se — älä kierrä sääntöä.
 
@@ -26,11 +28,18 @@ Rakenna tietokantapakotteet ennen kuin rakennat lomakkeita.
 
 ## 2. Agentit eivät julkaise
 
-Agenteilla on kirjoitusoikeus **vain** `muutosehdotukset`-tauluun.
+Sääntö on **sisältökohtainen**, ei taulukohtainen. Agentit eivät koskaan
+kirjoita julkaistuun sisältöön (`hankkeet` ja muut julkaistut taulut).
+
+Sisältöehdotukset → `muutosehdotukset`.
+
+Tekniset ajolokit ovat oma luokkansa. Palvelinajo saa kirjoittaa tauluihin
+`lahdeajot`, `dokumentti_tiivisteet`, `rajapinta_tiivisteet` ja
+`mallikutsut`. Niihin ei ole poisto-oikeutta.
 
 Kiellettyä agenteilta poikkeuksetta:
-- kirjoitus `hankkeet`-tauluun tai muihin julkaistuihin tauluihin
-- rivien poisto missään taulussa
+- kirjoitus julkaistuihin sisältötauluihin
+- rivien poisto missään taulussa (ei myöskään lokitauluista)
 - sähköpostin tai viestien lähetys
 - ulkoiset kutsut, joilla on sivuvaikutuksia
 
@@ -57,6 +66,38 @@ Jokainen agentin koskettama kenttä merkitään tietokantaan ja näytetään
 käyttöliittymässä: koneen ehdottama / ihmisen vahvistama / päivämäärä.
 Kun joku kysyy, onko sisältö tekoälyn tuottamaa, vastauksen pitää olla
 dokumentoitu eikä muistinvarainen.
+
+## 4b. Ei mallia siihen mikä hoituu koodilla
+
+Jos tarkistuksen voi ilmaista SQL-kyselynä, HTTP-pyyntönä tai
+merkkijonovertailuna, se ei saa kutsua kielimallia. Koodipohjainen
+tarkistus on ilmainen, nopea ja luotettavampi.
+
+Mallia käytetään vain luonnollisen kielen dokumenttien lukemiseen.
+Ristiriitatarkistukset, linkkitarkistus, muutoksen havaitseminen ja
+vanhentumisvalvonta ovat koodia, eivät agentteja.
+
+## 4c. Mallikutsut kulkevat abstraktion läpi
+
+Kaikki mallikutsut menevät `/agents/malli.ts`-rajapinnan kautta. Suora
+kutsu palveluntarjoajan SDK:hen agenttitiedostosta on kielletty.
+Tarjoajan vaihdon pitää olla ympäristömuuttujan muutos.
+
+Jokainen kutsu kirjataan `mallikutsut`-tauluun. Päiväkohtainen
+kutsukatto on pakollinen.
+
+## 4d. Viranomaisrajapinta ennen mallia
+
+Jos tieto on saatavilla rakenteisesta viranomaisrajapinnasta, se haetaan
+sieltä. Mallia ei käytetä arvaamaan koneluettavaa tietoa.
+
+Rajapintojen osoitteita ei koskaan oleteta muistista. Ennen sovittimen
+toteutusta haetaan ajantasainen osoite, versio, käyttöehdot ja
+API-avainvaatimus. Jos osoite ei vastaa, kysy käyttäjältä — älä arvaa
+uutta.
+
+Rajapinnasta haettu arvo saa lähde-URL:ksi pysyvän viittauksen
+alkuperäiseen tietueeseen, ei rajapinnan juuriosoitetta.
 
 ## 5. Sävy ja sisältö
 

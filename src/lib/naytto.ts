@@ -85,6 +85,18 @@ export const MERKINTA_NIMET: Record<Merkinta, string> = {
   ihmisen_vahvistama: "Ihmisen vahvistama",
 };
 
+export const MUUTOSEHDOTUS_TYYPPI_NIMET: Record<string, string> = {
+  uusi_hanke: "Uusi hanke",
+  taydennys: "Täydennys",
+  korjaus: "Korjaus",
+  kuva: "Valokuva",
+  linkki_rikki: "Rikkinäinen linkki",
+  ryhti_havainto: "Ryhti-havainto",
+  kunta_havainto: "Kuntahavainto",
+  ytj_havainto: "YTJ-havainto",
+  mml_havainto: "MML-havainto",
+};
+
 export const MUUTOSEHDOTUS_TILA_NIMET: Record<MuutosehdotusTila, string> = {
   odottaa: "Odottaa",
   hyvaksytty: "Hyväksytty",

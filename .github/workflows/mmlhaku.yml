@@ -1,0 +1,26 @@
+# Viikoittainen MML-geokoodaus (7A.5.3). Ei kielimallia.
+
+name: mmlhaku
+
+on:
+  schedule:
+    - cron: "0 6 * * 1"
+  workflow_dispatch:
+
+jobs:
+  mml:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+      - run: npm ci
+      - name: Käänteinen geokoodaus
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          NEXT_PUBLIC_MML_API_AVAIN: ${{ secrets.NEXT_PUBLIC_MML_API_AVAIN }}
+        run: npx tsx agents/lahteet/mml.ts

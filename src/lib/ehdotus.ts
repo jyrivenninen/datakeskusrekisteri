@@ -1,4 +1,4 @@
-import { HANKE_VAIHEET, type HankeVaihe, type Luottamus } from "@/lib/supabase/tietokanta";
+import { HANKE_VAIHEET, type HankeVaihe, type LahdeLaji, type Luottamus } from "@/lib/supabase/tietokanta";
 
 export type EhdotettuKentta = {
   arvo: string;
@@ -6,6 +6,7 @@ export type EhdotettuKentta = {
   lahde_sivu: number | null;
   lainaus: string | null;
   luottamus?: Luottamus;
+  lahde_laji?: LahdeLaji;
 };
 
 export type EhdotettuKuva = {
@@ -22,6 +23,45 @@ export type EhdotusSisalto = {
   kentat: Record<string, EhdotettuKentta>;
   vaihtoehdot?: Record<string, Record<string, EhdotettuKentta>>;
   kuvat?: EhdotettuKuva[];
+  linkki?: {
+    url: string;
+    http_tila: number | null;
+    vaste_ms: number;
+    virhe: string | null;
+    taulu: string;
+    rivi_id: string;
+    kentta: string;
+  };
+  ryhti?: {
+    kokoelma: string;
+    kokoelma_nimi: string;
+    kohde_id: string;
+    nimi: string | null;
+    kuvaus: string | null;
+    kunta_tunnukset: string[];
+    kaavatunnus: string | null;
+    elinkaari: string | null;
+    hakuehto: string;
+    muuttunut: boolean;
+  };
+  ytj?: {
+    organisaatio_id: string;
+    y_tunnus: string;
+    rekisterin_nimi: string;
+    ytj_nimi: string | null;
+    rekisterointi_pvm: string | null;
+    toimiala: string | null;
+    kotipaikka: string | null;
+    muuttunut: boolean;
+    ei_loydy: boolean;
+  };
+  mml?: {
+    nimi: string | null;
+    kunta: string | null;
+    kiinteistotunnus: string | null;
+    muuttunut: boolean;
+    ei_loydy: boolean;
+  };
 };
 
 const NUMEERISET = new Set([

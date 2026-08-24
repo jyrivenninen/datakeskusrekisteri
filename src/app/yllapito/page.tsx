@@ -1,7 +1,7 @@
 import { haeKirjautunutKayttaja } from "@/lib/supabase/palvelin";
 import { redirect } from "next/navigation";
 import { hyvaksyKaikkiOdottavatToiminto, kirjauduUlos } from "@/app/toiminnot";
-import { jarjestaMuutosehdotukset, muotoilePvm } from "@/lib/naytto";
+import { jarjestaMuutosehdotukset, muotoilePvm, MUUTOSEHDOTUS_TYYPPI_NIMET } from "@/lib/naytto";
 import {
   EhdotusTila,
   ehdotusTilaRiviLuokka,
@@ -31,6 +31,11 @@ export default async function YllapitoSivu({
     .from("muutosehdotukset")
     .select("id, tyyppi, tila, luotu_pvm, ehdottaja_tunniste")
     .order("luotu_pvm", { ascending: false });
+  const { data: ajot } = await supabase
+    .from("lahdeajot")
+    .select("id, sovitin, tila, alkoi_pvm, paattyi_pvm, http_tila, osumia, virhe")
+    .order("alkoi_pvm", { ascending: false })
+    .limit(20);
   const jarjestetyt = jarjestaMuutosehdotukset(ehdotukset ?? []);
   const odottavia = jarjestetyt.filter((e) => e.tila === "odottaa").length;
   const hyvaksyttyLkm = Number(params.hyvaksytty ?? "");
@@ -46,12 +51,34 @@ export default async function YllapitoSivu({
         </form>
       </div>
       {hyvaksyttyLkm === 1 ? (
-        <p className="mt-4">Ehdotus hyväksyttiin ja julkaistiin.</p>
+        <p className="mt-4">Ehdotus käsiteltiin.</p>
       ) : hyvaksyttyLkm > 1 ? (
-        <p className="mt-4">{hyvaksyttyLkm} ehdotusta hyväksyttiin ja julkaistiin.</p>
+        <p className="mt-4">{hyvaksyttyLkm} ehdotusta käsiteltiin.</p>
       ) : null}
       {params.hylatty ? <p className="mt-4">Ehdotus hylättiin.</p> : null}
       {params.virhe ? <p className="mt-4">{params.virhe}</p> : null}
+      {(ajot ?? []).length > 0 ? (
+        <section className="mt-8" aria-labelledby="ajot-otsikko">
+          <h2 id="ajot-otsikko" className="text-xl font-semibold">
+            Lähdeajot
+          </h2>
+          <ul className="mt-4 divide-y divide-border border-y border-border">
+            {(ajot ?? []).map((ajo) => (
+              <li key={ajo.id} className="py-3">
+                <p>
+                  {ajo.sovitin} · {ajo.tila}
+                  {ajo.http_tila != null ? ` · HTTP ${ajo.http_tila}` : ""}
+                  {` · ${ajo.osumia} osumaa`}
+                </p>
+                <p className="mt-1 text-sm text-muted">
+                  {muotoilePvm(ajo.alkoi_pvm)}
+                  {ajo.virhe ? ` · ${ajo.virhe}` : ""}
+                </p>
+              </li>
+            ))}
+          </ul>
+        </section>
+      ) : null}
       {odottavia > 0 ? (
         <form action={hyvaksyKaikkiOdottavatToiminto} className="mt-6 space-y-3">
           <div className="flex flex-wrap items-start gap-3">
@@ -64,8 +91,10 @@ export default async function YllapitoSivu({
               className="mt-1"
             />
             <label htmlFor="vahvista-kaikki" className="max-w-prose text-sm">
-              Julkaise kaikki {odottavia} odottavaa ehdotusta. Merkintä on ihmisen
-              vahvistama.
+              Käsittele kaikki {odottavia} odottavaa ehdotusta. Hanketiedot
+              julkaistaan; rikkinäiset linkit sekä Ryhti-, YTJ-, MML- ja
+              kuntahavainnot merkitään vain käsitellyiksi. Merkintä on
+              ihmisen vahvistama.
             </label>
           </div>
           {supabasePalvelinAvainAsetettu() ? (
@@ -96,13 +125,7 @@ export default async function YllapitoSivu({
             >
               <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
                 <a href={`/yllapito/${ehdotus.id}`} className="text-link underline">
-                  {ehdotus.tyyppi === "uusi_hanke"
-                    ? "Uusi hanke"
-                    : ehdotus.tyyppi === "kuva"
-                      ? "Valokuva"
-                      : ehdotus.tyyppi === "korjaus"
-                        ? "Korjaus"
-                        : "Täydennys"}
+                  {MUUTOSEHDOTUS_TYYPPI_NIMET[ehdotus.tyyppi] ?? ehdotus.tyyppi}
                 </a>
                 <EhdotusTila tila={ehdotus.tila} />
               </div>

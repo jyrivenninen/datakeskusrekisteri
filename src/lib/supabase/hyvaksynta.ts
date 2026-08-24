@@ -5,10 +5,21 @@ import {
   type EhdotettuKentta,
   type EhdotusSisalto,
 } from "@/lib/ehdotus";
+import { LAHDE_LAJIT, type LahdeLaji } from "@/lib/supabase/tietokanta";
 import { luoYllapitoAsiakas } from "@/lib/supabase/yllapito-asiakas";
 
 function tanaan(): string {
   return new Date().toISOString().slice(0, 10);
+}
+
+function lahdeLajiRiville(tieto: EhdotettuKentta): LahdeLaji {
+  if (tieto.lahde_laji) {
+    if (!(LAHDE_LAJIT as readonly string[]).includes(tieto.lahde_laji)) {
+      throw new Error("lahde_laji ei ole sallittu.");
+    }
+    return tieto.lahde_laji;
+  }
+  return tieto.lahde_sivu == null ? "html" : "dokumentti";
 }
 
 function lahdeRivi(
@@ -20,6 +31,7 @@ function lahdeRivi(
     kentta,
     lahde_url: tieto.lahde_url,
     lahde_sivu: tieto.lahde_sivu == null ? "" : String(tieto.lahde_sivu),
+    lahde_laji: lahdeLajiRiville(tieto),
     vahvistettu_pvm: tanaan(),
     luottamus: kentanLuottamus(tieto, oletusLuottamus),
     lainaus: tieto.lainaus ?? "",
@@ -40,6 +52,26 @@ export async function hyvaksyMuutosehdotus(ehdotusId: string, kasittelija: strin
   }
   if (ehdotus.tila !== "odottaa") {
     throw new Error("Ehdotus on jo käsitelty.");
+  }
+
+  if (
+    ehdotus.tyyppi === "linkki_rikki" ||
+    ehdotus.tyyppi === "ryhti_havainto" ||
+    ehdotus.tyyppi === "kunta_havainto" ||
+    ehdotus.tyyppi === "ytj_havainto" ||
+    ehdotus.tyyppi === "mml_havainto"
+  ) {
+    const { error: paivitysVirhe } = await supabase
+      .from("muutosehdotukset")
+      .update({
+        tila: "hyvaksytty",
+        kasitelty_pvm: new Date().toISOString(),
+        kasittelija,
+      })
+      .eq("id", ehdotusId)
+      .eq("tila", "odottaa");
+    if (paivitysVirhe) throw new Error(paivitysVirhe.message);
+    return;
   }
 
   const sisalto = ehdotus.sisalto as EhdotusSisalto;

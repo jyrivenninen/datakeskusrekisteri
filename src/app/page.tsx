@@ -1,5 +1,6 @@
 import { HankeLaskurit } from "@/komponentit/hanke-laskurit";
 import { Kartta, type Karttamerkki } from "@/komponentit/kartta";
+import { RyhtiKattavuus } from "@/komponentit/ryhti-kattavuus";
 import { Suodatuslomake } from "@/komponentit/suodatuslomake";
 import { VaiheMerkki } from "@/komponentit/vaihe-merkki";
 import { laskeHankeYhteenveto } from "@/lib/hanke-yhteenveto";
@@ -59,6 +60,7 @@ export default async function Etusivu({
         Avoin hanketietokanta ja prosessiopas. Julkaistu tieto merkitään
         lähteineen.         Rekisteri ei ota kantaa yksittäisiin hankkeisiin.
       </p>
+      <RyhtiKattavuus luokka="mt-3" />
       <p className="mt-3">
         <a href="/opas/yva-mielipide" className="text-link underline">
           Näin teet YVA-mielipiteen

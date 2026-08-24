@@ -1,7 +1,7 @@
 import { notFound, redirect } from "next/navigation";
 import { hyvaksyEhdotusToiminto, hylkaaEhdotusToiminto } from "@/app/toiminnot";
 import { EhdotusTila } from "@/komponentit/ehdotus-tila";
-import { HANKE_KENTTA_NIMET } from "@/lib/naytto";
+import { HANKE_KENTTA_NIMET, MUUTOSEHDOTUS_TYYPPI_NIMET } from "@/lib/naytto";
 import { haeKirjautunutKayttaja } from "@/lib/supabase/palvelin";
 import type { EhdotusSisalto } from "@/lib/ehdotus";
 import { supabasePalvelinAvainAsetettu } from "@/lib/supabase/yllapito-asiakas";
@@ -37,6 +37,16 @@ export default async function EhdotusSivu({
   if (!ehdotus) notFound();
   const sisalto = ehdotus.sisalto as EhdotusSisalto;
   const odottaa = ehdotus.tila === "odottaa";
+  const eiJulkaista =
+    ehdotus.tyyppi === "linkki_rikki" ||
+    ehdotus.tyyppi === "ryhti_havainto" ||
+    ehdotus.tyyppi === "kunta_havainto" ||
+    ehdotus.tyyppi === "ytj_havainto" ||
+    ehdotus.tyyppi === "mml_havainto";
+  const linkki = sisalto.linkki;
+  const ryhti = sisalto.ryhti;
+  const ytj = sisalto.ytj;
+  const mml = sisalto.mml;
 
   return (
     <main id="sisalto" className="mx-auto w-full max-w-3xl flex-1 px-4 py-10">
@@ -47,7 +57,7 @@ export default async function EhdotusSivu({
       </p>
       <h1 className="mt-4 text-3xl font-semibold">Muutosehdotus</h1>
       <p className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1 text-muted">
-        <span>{ehdotus.tyyppi}</span>
+        <span>{MUUTOSEHDOTUS_TYYPPI_NIMET[ehdotus.tyyppi] ?? ehdotus.tyyppi}</span>
         <span aria-hidden="true">·</span>
         <EhdotusTila tila={ehdotus.tila} />
         <span aria-hidden="true">·</span>
@@ -64,7 +74,205 @@ export default async function EhdotusSivu({
         </p>
       ) : null}
 
-      <dl className="mt-6 divide-y divide-border border-y border-border">
+      {ryhti ? (
+        <section className="mt-6" aria-labelledby="ryhti-otsikko">
+          <h2 id="ryhti-otsikko" className="text-xl font-semibold">
+            Ryhti-kaavakohde
+          </h2>
+          <p className="mt-2 text-sm text-muted">
+            Hyväksyntä merkitsee havainnon käsitellyksi. Se ei julkaise
+            hanketta. Ryhdistä puuttuva kaava ei ole todiste siitä, ettei
+            hanketta ole.
+          </p>
+          <dl className="mt-4 divide-y divide-border border-y border-border">
+            <div className="py-3">
+              <dt className="font-medium">Kokoelma</dt>
+              <dd className="mt-1">{ryhti.kokoelma_nimi}</dd>
+            </div>
+            {ryhti.nimi ? (
+              <div className="py-3">
+                <dt className="font-medium">Nimi aineistossa</dt>
+                <dd className="mt-1">{ryhti.nimi}</dd>
+              </div>
+            ) : null}
+            {ryhti.kaavatunnus ? (
+              <div className="py-3">
+                <dt className="font-medium">Kaavatunnus</dt>
+                <dd className="mt-1">{ryhti.kaavatunnus}</dd>
+              </div>
+            ) : null}
+            {ryhti.kunta_tunnukset.length > 0 ? (
+              <div className="py-3">
+                <dt className="font-medium">Kuntatunnukset</dt>
+                <dd className="mt-1">{ryhti.kunta_tunnukset.join(", ")}</dd>
+              </div>
+            ) : null}
+            <div className="py-3">
+              <dt className="font-medium">Hakuehto</dt>
+              <dd className="mt-1">{ryhti.hakuehto}</dd>
+            </div>
+            <div className="py-3">
+              <dt className="font-medium">Tietue</dt>
+              <dd className="mt-1">
+                <a
+                  href={ehdotus.lahde_url ?? "#"}
+                  className="text-link underline"
+                  rel="noopener noreferrer"
+                >
+                  {ehdotus.lahde_url}
+                </a>
+              </dd>
+            </div>
+            {ryhti.kuvaus ? (
+              <div className="py-3">
+                <dt className="font-medium">Kuvaus aineistossa</dt>
+                <dd className="mt-1">{ryhti.kuvaus}</dd>
+              </div>
+            ) : null}
+          </dl>
+        </section>
+      ) : null}
+
+      {ytj ? (
+        <section className="mt-6" aria-labelledby="ytj-otsikko">
+          <h2 id="ytj-otsikko" className="text-xl font-semibold">
+            YTJ-tiedot
+          </h2>
+          <p className="mt-2 text-sm text-muted">
+            Hyväksyntä merkitsee havainnon käsitellyksi. Se ei päivitä
+            organisaatiota. Lähde: PRH avoin data (YTJ), CC BY 4.0.
+          </p>
+          <dl className="mt-4 divide-y divide-border border-y border-border">
+            <div className="py-3">
+              <dt className="font-medium">Y-tunnus</dt>
+              <dd className="mt-1">{ytj.y_tunnus}</dd>
+            </div>
+            <div className="py-3">
+              <dt className="font-medium">Nimi rekisterissä</dt>
+              <dd className="mt-1">{ytj.rekisterin_nimi}</dd>
+            </div>
+            <div className="py-3">
+              <dt className="font-medium">Toiminimi YTJ:ssä</dt>
+              <dd className="mt-1">{ytj.ytj_nimi ?? "ei tietuetta"}</dd>
+            </div>
+            {ytj.rekisterointi_pvm ? (
+              <div className="py-3">
+                <dt className="font-medium">Rekisteröintipäivä YTJ:ssä</dt>
+                <dd className="mt-1">{ytj.rekisterointi_pvm}</dd>
+              </div>
+            ) : null}
+            {ytj.toimiala ? (
+              <div className="py-3">
+                <dt className="font-medium">Toimiala YTJ:ssä</dt>
+                <dd className="mt-1">{ytj.toimiala}</dd>
+              </div>
+            ) : null}
+            {ytj.kotipaikka ? (
+              <div className="py-3">
+                <dt className="font-medium">Kotipaikka YTJ:ssä</dt>
+                <dd className="mt-1">{ytj.kotipaikka}</dd>
+              </div>
+            ) : null}
+            <div className="py-3">
+              <dt className="font-medium">Tietue</dt>
+              <dd className="mt-1">
+                <a
+                  href={ehdotus.lahde_url ?? "#"}
+                  className="text-link underline"
+                  rel="noopener noreferrer"
+                >
+                  {ehdotus.lahde_url}
+                </a>
+              </dd>
+            </div>
+          </dl>
+        </section>
+      ) : null}
+
+      {mml ? (
+        <section className="mt-6" aria-labelledby="mml-otsikko">
+          <h2 id="mml-otsikko" className="text-xl font-semibold">
+            MML-geokoodaus
+          </h2>
+          <p className="mt-2 text-sm text-muted">
+            Hyväksyntä merkitsee havainnon käsitellyksi. Se ei päivitä
+            hankkeen sijaintia. Lähde: Maanmittauslaitos, CC BY 4.0.
+          </p>
+          <dl className="mt-4 divide-y divide-border border-y border-border">
+            {mml.nimi ? (
+              <div className="py-3">
+                <dt className="font-medium">Kohde aineistossa</dt>
+                <dd className="mt-1">{mml.nimi}</dd>
+              </div>
+            ) : null}
+            {mml.kunta ? (
+              <div className="py-3">
+                <dt className="font-medium">Kunta aineistossa</dt>
+                <dd className="mt-1">{mml.kunta}</dd>
+              </div>
+            ) : null}
+            {mml.kiinteistotunnus ? (
+              <div className="py-3">
+                <dt className="font-medium">Kiinteistötunnus aineistossa</dt>
+                <dd className="mt-1">{mml.kiinteistotunnus}</dd>
+              </div>
+            ) : null}
+            <div className="py-3">
+              <dt className="font-medium">Tietue</dt>
+              <dd className="mt-1">
+                <a
+                  href={ehdotus.lahde_url ?? "#"}
+                  className="text-link underline"
+                  rel="noopener noreferrer"
+                >
+                  {ehdotus.lahde_url}
+                </a>
+              </dd>
+            </div>
+          </dl>
+        </section>
+      ) : null}
+
+      {linkki ? (
+        <section className="mt-6" aria-labelledby="linkki-otsikko">
+          <h2 id="linkki-otsikko" className="text-xl font-semibold">
+            Linkkitarkistus
+          </h2>
+          <dl className="mt-4 divide-y divide-border border-y border-border">
+            <div className="py-3">
+              <dt className="font-medium">Osoite</dt>
+              <dd className="mt-1">
+                <a href={linkki.url} className="text-link underline" rel="noopener noreferrer">
+                  {linkki.url}
+                </a>
+              </dd>
+            </div>
+            <div className="py-3">
+              <dt className="font-medium">HTTP-tila</dt>
+              <dd className="mt-1">{linkki.http_tila ?? "ei vastausta"}</dd>
+            </div>
+            <div className="py-3">
+              <dt className="font-medium">Vaste</dt>
+              <dd className="mt-1">{linkki.vaste_ms} ms</dd>
+            </div>
+            {linkki.virhe ? (
+              <div className="py-3">
+                <dt className="font-medium">Virhe</dt>
+                <dd className="mt-1">{linkki.virhe}</dd>
+              </div>
+            ) : null}
+            <div className="py-3">
+              <dt className="font-medium">Kenttä</dt>
+              <dd className="mt-1">
+                {linkki.taulu}.{linkki.kentta}
+              </dd>
+            </div>
+          </dl>
+        </section>
+      ) : null}
+
+      {Object.keys(sisalto.kentat ?? {}).length > 0 ? (
+        <dl className="mt-6 divide-y divide-border border-y border-border">
         {Object.entries(sisalto.kentat ?? {}).map(([kentta, tieto]) => (
           <div key={kentta} className="py-3">
             <dt className="font-medium">
@@ -84,7 +292,8 @@ export default async function EhdotusSivu({
             </dd>
           </div>
         ))}
-      </dl>
+        </dl>
+      ) : null}
 
       {sisalto.kuvat && sisalto.kuvat.length > 0 ? (
         <section className="mt-8" aria-labelledby="kuvat-otsikko">
@@ -178,7 +387,7 @@ export default async function EhdotusSivu({
               type="submit"
               className="rounded border border-foreground bg-foreground px-4 py-2 text-sm font-medium text-background"
             >
-              Hyväksy ja julkaise
+              {eiJulkaista ? "Merkitse käsitellyksi" : "Hyväksy ja julkaise"}
             </button>
           </form>
           <form action={hylkaaEhdotusToiminto} className="space-y-2">

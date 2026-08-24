@@ -327,7 +327,7 @@ export async function hyvaksyKaikkiOdottavatToiminto(formData: FormData): Promis
   const user = await vaadiYllapitaja();
   if (String(formData.get("vahvista")) !== "kylla") {
     redirect(
-      `/yllapito?virhe=${encodeURIComponent("Vahvista, että kaikki odottavat julkaistaan.")}`,
+      `/yllapito?virhe=${encodeURIComponent("Vahvista, että kaikki odottavat käsitellään.")}`,
     );
   }
   if (!supabasePalvelinAvainAsetettu()) {

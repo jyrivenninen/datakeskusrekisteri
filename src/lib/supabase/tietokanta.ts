@@ -81,6 +81,10 @@ export const LUOTTAMUSTASOT = [
 
 export type Luottamus = (typeof LUOTTAMUSTASOT)[number];
 
+export const LAHDE_LAJIT = ["dokumentti", "rajapinta", "rss", "html"] as const;
+
+export type LahdeLaji = (typeof LAHDE_LAJIT)[number];
+
 export const MERKINNAT = ["koneen_ehdottama", "ihmisen_vahvistama"] as const;
 
 export type Merkinta = (typeof MERKINNAT)[number];
@@ -90,6 +94,11 @@ export const MUUTOSEHDOTUS_TYYPIT = [
   "taydennys",
   "korjaus",
   "kuva",
+  "linkki_rikki",
+  "ryhti_havainto",
+  "kunta_havainto",
+  "ytj_havainto",
+  "mml_havainto",
 ] as const;
 
 export type MuutosehdotusTyyppi = (typeof MUUTOSEHDOTUS_TYYPIT)[number];
@@ -154,6 +163,7 @@ export type Hanke = {
   id: string;
   nimi: string;
   kunta: string;
+  kunta_id: string | null;
   maakunta: string | null;
   sijainti_lat: number | null;
   sijainti_lon: number | null;
@@ -338,6 +348,7 @@ export type KenttaLahde = {
   kentta: string;
   lahde_url: string;
   lahde_sivu: number | null;
+  lahde_laji: LahdeLaji;
   dokumentti_id: string | null;
   vahvistettu_pvm: string;
   luottamus: Luottamus;
@@ -361,4 +372,40 @@ export type Muutosehdotus = {
   luotu_pvm: string;
   kasitelty_pvm: string | null;
   kasittelija: string | null;
+};
+
+export const ESITYSLISTA_JARJESTELMAT = [
+  "casem",
+  "dynasty",
+  "tweb",
+  "rss",
+  "ical",
+  "avoindata",
+  "muu",
+] as const;
+
+export type EsityslistaJarjestelma = (typeof ESITYSLISTA_JARJESTELMAT)[number];
+
+export type Kunta = {
+  id: string;
+  koodi: string;
+  nimi: string;
+  nimi_sv: string | null;
+  maakunta: string | null;
+  ely: string | null;
+  voimassa: boolean;
+  lahde_url: string | null;
+  luotu_pvm: string;
+  paivitetty_pvm: string;
+};
+
+export type KuntaEsityslistaLahde = {
+  id: string;
+  kunta_id: string;
+  jarjestelma: EsityslistaJarjestelma;
+  perus_url: string;
+  seurannassa: boolean;
+  huomautus: string | null;
+  luotu_pvm: string;
+  paivitetty_pvm: string;
 };

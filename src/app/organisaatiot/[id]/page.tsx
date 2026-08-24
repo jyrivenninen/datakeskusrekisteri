@@ -58,6 +58,12 @@ export default async function OrganisaatioSivu({
           <dt className="font-medium">Y-tunnus</dt>
           <dd className="mt-1">
             {organisaatio.y_tunnus ?? <span className="text-muted">Ei merkitty</span>}
+            {organisaatio.y_tunnus ? (
+              <p className="mt-2 text-sm text-muted">
+                PRH:n avoin YTJ-aineisto ei kata toiminimiä, kuntia eikä
+                hyvinvointialueita.
+              </p>
+            ) : null}
           </dd>
         </div>
         <div className="py-4">

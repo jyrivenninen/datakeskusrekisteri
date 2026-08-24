@@ -10,7 +10,7 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 
 # Datakeskusrekisteri
 
-Lue `PROJEKTI.md` ja `.cursor/rules/datakeskusrekisteri.mdc` ennen työtä.
+Lue `PROJEKTI.md`, `PROJEKTI-lisays-vaihe7.md` ja `.cursor/rules/datakeskusrekisteri.mdc` ennen työtä.
 Käyttöliittymä ja kommentit suomeksi. Hanketiedot kuuluvat Postgresiin, ei
 tiedostoihin.
 
