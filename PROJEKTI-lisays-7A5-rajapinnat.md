@@ -85,6 +85,8 @@ rekisteröintiä.
 
 Todettu 24.8.2026:
 - `https://avoindata.prh.fi/opendata-ytj-api/v3/companies?businessId={y-tunnus}`
+- `https://avoindata.prh.fi/opendata-ytj-api/v3/companies?name={toiminimi}`
+  (`page`, 100 osumaa per sivu)
 - ei API-avainta, lisenssi CC BY 4.0, päivitys kerran vuorokaudessa
 - yksittäistä `/companies/{id}`-polkua ei ole (400); tietueosoite on
   businessId-kysely
@@ -94,7 +96,13 @@ Todettu 24.8.2026:
 
 Sovitin: `agents/lahteet/ytj.ts` (`npm run agentti:ytj`).
 Kirjoittaa `ytj_havainto`-ehdotuksia, `rajapinta_tiivisteet` ja `lahdeajot`.
+Nimihaku julkaistuille organisaatioille ilman Y-tunnusta (ei kunta/ELY/AVI/LVV/
+ministeriö): tasan yksi osuma, jonka nykyinen toiminimi täsmää → ehdotus
+`ehdota_tunnus`. Hyväksyntä kutsuu `julkaise_organisaation_y_tunnus`
+(kenttä + `kentta_lahteet`, `lahde_laji` `rajapinta`). Agentti ei kirjoita
+`organisaatiot`-tauluun. Tyhjä on parempi kuin arvaus.
 Kuiva-ajo: `YTJ_KUIVA=1`.
+Migraatio: `20260824230000_julkaise_organisaation_y_tunnus.sql`.
 
 ## 7A.5.3 Maanmittauslaitos
 

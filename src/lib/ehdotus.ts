@@ -54,6 +54,7 @@ export type EhdotusSisalto = {
     kotipaikka: string | null;
     muuttunut: boolean;
     ei_loydy: boolean;
+    ehdota_tunnus?: boolean;
   };
   mml?: {
     nimi: string | null;

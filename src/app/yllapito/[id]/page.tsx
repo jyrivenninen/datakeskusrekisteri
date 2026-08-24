@@ -41,7 +41,7 @@ export default async function EhdotusSivu({
     ehdotus.tyyppi === "linkki_rikki" ||
     ehdotus.tyyppi === "ryhti_havainto" ||
     ehdotus.tyyppi === "kunta_havainto" ||
-    ehdotus.tyyppi === "ytj_havainto" ||
+    (ehdotus.tyyppi === "ytj_havainto" && !sisalto.ytj?.ehdota_tunnus) ||
     ehdotus.tyyppi === "mml_havainto";
   const linkki = sisalto.linkki;
   const ryhti = sisalto.ryhti;
@@ -139,8 +139,9 @@ export default async function EhdotusSivu({
             YTJ-tiedot
           </h2>
           <p className="mt-2 text-sm text-muted">
-            Hyväksyntä merkitsee havainnon käsitellyksi. Se ei päivitä
-            organisaatiota. Lähde: PRH avoin data (YTJ), CC BY 4.0.
+            {ytj.ehdota_tunnus
+              ? "Hyväksyntä tallentaa Y-tunnuksen organisaatiolle. Lähde on PRH:n YTJ-tietue (CC BY 4.0), ei rajapinnan juurta."
+              : "Hyväksyntä merkitsee havainnon käsitellyksi. Se ei päivitä organisaatiota. Lähde: PRH avoin data (YTJ), CC BY 4.0."}
           </p>
           <dl className="mt-4 divide-y divide-border border-y border-border">
             <div className="py-3">

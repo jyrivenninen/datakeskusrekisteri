@@ -3,9 +3,12 @@
  *
  * Todennettu 24.8.2026: ei API-avainta, CC BY 4.0.
  * GET https://avoindata.prh.fi/opendata-ytj-api/v3/companies?businessId={y-tunnus}
- * Tietueosoite on tämä kysely (yksittäistä /companies/{id} -polkua ei ole).
+ * GET https://avoindata.prh.fi/opendata-ytj-api/v3/companies?name={toiminimi}&page=
+ * Tietueosoite on businessId-kysely (yksittäistä /companies/{id} -polkua ei ole).
  *
- * Ei kata toiminimiä, kuntia eikä hyvinvointialueita. Ei sähköposteja eikä puhelimia.
+ * Nimihaku: vain jos nykyinen toiminimi (tyyppi 1, ei endDate) täsmää ja
+ * osumia on tasan yksi. Tyhjä on parempi kuin arvaus. Kunta, ELY, AVI, LVV
+ * ja ministeriö eivät kuulu avoimeen kaupparekisteriaineistoon.
  * Ei kirjoita organisaatiot- eikä hankkeet-tauluun.
  */
 import { createHash } from "node:crypto";
@@ -19,6 +22,10 @@ const SOVITIN = "ytj-prh";
 const EHDOTTAJA = "agents/lahteet/ytj";
 const JUURI = "https://avoindata.prh.fi/opendata-ytj-api/v3/companies";
 const Y_TUNNUS = /^[0-9]{7}-[0-9]$/;
+const EI_NIMIHAKU_TYYPIT = new Set(["kunta", "ely", "lvv", "avi", "ministerio"]);
+const NIMI_MIN = 4;
+const NIMI_SIVU_KATTO = 10;
+const NIMI_SIVU_KOKO = 100;
 
 type TietokantaAsiakas = SupabaseClient;
 
@@ -73,6 +80,13 @@ function tietueUrl(yTunnus: string): string {
   return u.toString();
 }
 
+function nimiHakuUrl(nimi: string, sivu: number): string {
+  const u = new URL(JUURI);
+  u.searchParams.set("name", nimi);
+  if (sivu > 1) u.searchParams.set("page", String(sivu));
+  return u.toString();
+}
+
 function jarjesta(arvo: unknown): unknown {
   if (Array.isArray(arvo)) return arvo.map(jarjesta);
   if (arvo && typeof arvo === "object") {
@@ -113,6 +127,11 @@ function kotipaikka(yritys: YtjYritys): string | null {
   return merkkijono(fi?.city) ?? merkkijono(osoite?.postOffices?.[0]?.city);
 }
 
+function yTunnusArvo(yritys: YtjYritys): string | null {
+  const arvo = merkkijono(yritys.businessId?.value);
+  return arvo && Y_TUNNUS.test(arvo) ? arvo : null;
+}
+
 async function haeJson(url: string): Promise<{ tila: number; runko: unknown; ms: number }> {
   const alku = Date.now();
   const vastaus = await fetch(url, {
@@ -128,6 +147,40 @@ async function haeJson(url: string): Promise<{ tila: number; runko: unknown; ms:
     runko = { raaka: teksti.slice(0, 200) };
   }
   return { tila: vastaus.status, runko, ms: Date.now() - alku };
+}
+
+async function haeYksiNykyinenToiminimi(
+  nimi: string,
+  merkitseTila: (tila: number) => void,
+): Promise<YtjYritys | null> {
+  const osumat: YtjYritys[] = [];
+  let sivuNro = 1;
+  let haettu = 0;
+  let kokonais = Number.POSITIVE_INFINITY;
+
+  while (haettu < kokonais && sivuNro <= NIMI_SIVU_KATTO) {
+    const tulos = await haeJson(nimiHakuUrl(nimi, sivuNro));
+    merkitseTila(tulos.tila);
+    console.log(`${tulos.tila} ${tulos.ms}ms nimi "${nimi}" sivu ${sivuNro}`);
+    if (tulos.tila >= 400) return null;
+    const sivu = tulos.runko as YtjSivu;
+    const yritykset = sivu.companies ?? [];
+    kokonais = Number(sivu.totalResults ?? 0);
+    haettu += yritykset.length;
+    for (const yritys of yritykset) {
+      const toiminimi = nykyinenToiminimi(yritys);
+      if (toiminimi && vertaaNimi(nimi, toiminimi)) {
+        osumat.push(yritys);
+        if (osumat.length > 1) return null;
+      }
+    }
+    if (yritykset.length === 0) break;
+    if (haettu < kokonais && sivuNro >= NIMI_SIVU_KATTO) return null;
+    sivuNro += 1;
+    if (haettu < kokonais) await odota(viiveMs());
+  }
+
+  return osumat.length === 1 ? (osumat[0] ?? null) : null;
 }
 
 async function main() {
@@ -151,12 +204,18 @@ async function main() {
 
   const { data: organisaatiot, error: orgVirhe } = await supabase
     .from("organisaatiot")
-    .select("id, nimi, y_tunnus")
-    .eq("julkaistu", true)
-    .not("y_tunnus", "is", null);
+    .select("id, nimi, y_tunnus, tyyppi")
+    .eq("julkaistu", true);
   if (orgVirhe) throw new Error(orgVirhe.message);
 
   const rivit = (organisaatiot ?? []).filter((o) => Y_TUNNUS.test(String(o.y_tunnus ?? "")));
+  const kaytossa = new Set(rivit.map((o) => String(o.y_tunnus)));
+  const ilmanTunnusta = (organisaatiot ?? []).filter((o) => {
+    if (merkkijono(o.y_tunnus)) return false;
+    if (EI_NIMIHAKU_TYYPIT.has(String(o.tyyppi))) return false;
+    const nimi = merkkijono(o.nimi);
+    return nimi != null && nimi.length >= NIMI_MIN;
+  });
   const katto = Number(process.env.YTJ_KATTO ?? "0");
 
   let ajoId: string | null = null;
@@ -176,12 +235,18 @@ async function main() {
 
   const { data: odottavat } = await supabase
     .from("muutosehdotukset")
-    .select("lahde_url")
+    .select("lahde_url, sisalto")
     .eq("tyyppi", "ytj_havainto")
     .eq("tila", "odottaa");
   const jonossa = new Set(
     (odottavat ?? []).map((r) => r.lahde_url).filter((u): u is string => Boolean(u)),
   );
+  const jonossaOrg = new Set<string>();
+  for (const rivi of odottavat ?? []) {
+    const sisalto = rivi.sisalto as { ytj?: { organisaatio_id?: string; y_tunnus?: string } };
+    if (sisalto.ytj?.organisaatio_id) jonossaOrg.add(sisalto.ytj.organisaatio_id);
+    if (sisalto.ytj?.y_tunnus) kaytossa.add(sisalto.ytj.y_tunnus);
+  }
 
   let httpTila: number | null = null;
   let osumia = 0;
@@ -189,6 +254,70 @@ async function main() {
   let tarkistettu = 0;
 
   try {
+    for (const org of ilmanTunnusta) {
+      if (katto > 0 && tarkistettu >= katto) break;
+      if (jonossaOrg.has(org.id)) continue;
+      const nimi = String(org.nimi);
+      tarkistettu += 1;
+      const yritys = await haeYksiNykyinenToiminimi(nimi, (tila) => {
+        httpTila = tila;
+      });
+      const yTunnus = yritys ? yTunnusArvo(yritys) : null;
+      if (yritys && yTunnus) osumia += 1;
+
+      const ehdotettava =
+        yritys != null &&
+        yTunnus != null &&
+        !kaytossa.has(yTunnus) &&
+        !jonossa.has(tietueUrl(yTunnus));
+
+      if (ehdotettava && yTunnus && yritys) {
+        const tietue = tietueUrl(yTunnus);
+        const ytjNimi = nykyinenToiminimi(yritys);
+        const huomautus =
+          `YTJ-nimihaku antoi yhden osuman, jonka nykyinen toiminimi vastaa ` +
+          `rekisterin nimeä ${nimi}. Ehdotettu Y-tunnus ${yTunnus}. ` +
+          `Hyväksyntä tallentaa tunnuksen organisaatiolle. Lähde on PRH-tietue.`;
+        if (!kuiva) {
+          const { error: lisaysVirhe } = await supabase.from("muutosehdotukset").insert({
+            tyyppi: "ytj_havainto",
+            hanke_id: null,
+            ehdottaja_tyyppi: "agentti",
+            ehdottaja_tunniste: EHDOTTAJA,
+            lahde_url: tietue,
+            huomautus,
+            tila: "odottaa",
+            sisalto: {
+              kentat: {},
+              ytj: {
+                organisaatio_id: org.id,
+                y_tunnus: yTunnus,
+                rekisterin_nimi: nimi,
+                ytj_nimi: ytjNimi,
+                rekisterointi_pvm:
+                  merkkijono(yritys.registrationDate) ??
+                  merkkijono(yritys.businessId?.registrationDate),
+                toimiala: kuvausFi(yritys.mainBusinessLine?.descriptions),
+                kotipaikka: kotipaikka(yritys),
+                muuttunut: false,
+                ei_loydy: false,
+                ehdota_tunnus: true,
+              },
+            },
+          });
+          if (lisaysVirhe) throw new Error(lisaysVirhe.message);
+        } else {
+          console.log(`kuiva: ${huomautus}`);
+        }
+        jonossa.add(tietue);
+        jonossaOrg.add(org.id);
+        kaytossa.add(yTunnus);
+        kirjattu += 1;
+      }
+
+      await odota(viiveMs());
+    }
+
     for (const org of rivit) {
       if (katto > 0 && tarkistettu >= katto) break;
       const yTunnus = String(org.y_tunnus);

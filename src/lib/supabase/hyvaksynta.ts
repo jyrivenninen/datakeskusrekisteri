@@ -54,6 +54,22 @@ export async function hyvaksyMuutosehdotus(ehdotusId: string, kasittelija: strin
     throw new Error("Ehdotus on jo käsitelty.");
   }
 
+  if (ehdotus.tyyppi === "ytj_havainto") {
+    const ytj = (ehdotus.sisalto as EhdotusSisalto).ytj;
+    if (ytj?.ehdota_tunnus) {
+      const { error: rpcVirhe } = await supabase.rpc("julkaise_organisaation_y_tunnus", {
+        p_organisaatio_id: ytj.organisaatio_id,
+        p_y_tunnus: ytj.y_tunnus,
+        p_lahde_url: ehdotus.lahde_url,
+        p_lainaus: ytj.ytj_nimi ?? ytj.rekisterin_nimi,
+        p_ehdotus_id: ehdotusId,
+        p_kasittelija: kasittelija,
+      });
+      if (rpcVirhe) throw new Error(rpcVirhe.message);
+      return;
+    }
+  }
+
   if (
     ehdotus.tyyppi === "linkki_rikki" ||
     ehdotus.tyyppi === "ryhti_havainto" ||
