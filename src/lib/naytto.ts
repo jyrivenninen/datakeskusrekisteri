@@ -14,6 +14,7 @@ import type {
   DokumenttiLaji,
   DokumenttiMuoto,
   DokumenttiKieli,
+  MuutosehdotusTila,
 } from "@/lib/supabase/tietokanta";
 import { HANKE_VAIHEET, ORGANISAATIO_TYYPIT } from "@/lib/supabase/tietokanta";
 
@@ -83,6 +84,32 @@ export const MERKINTA_NIMET: Record<Merkinta, string> = {
   koneen_ehdottama: "Koneen ehdottama",
   ihmisen_vahvistama: "Ihmisen vahvistama",
 };
+
+export const MUUTOSEHDOTUS_TILA_NIMET: Record<MuutosehdotusTila, string> = {
+  odottaa: "Odottaa",
+  hyvaksytty: "Hyväksytty",
+  hylatty: "Hylätty",
+};
+
+const MUUTOSEHDOTUS_TILA_JARJESTYS: Record<MuutosehdotusTila, number> = {
+  odottaa: 0,
+  hyvaksytty: 1,
+  hylatty: 2,
+};
+
+/** Odottaa ylimpänä, sitten hyväksytyt, alimpana hylätyt. Saman tilan sisällä uusin ensin. */
+export function jarjestaMuutosehdotukset<
+  T extends { tila: string; luotu_pvm: string },
+>(rivit: readonly T[]): T[] {
+  return [...rivit].sort((a, b) => {
+    const ja =
+      MUUTOSEHDOTUS_TILA_JARJESTYS[a.tila as MuutosehdotusTila] ?? 99;
+    const jb =
+      MUUTOSEHDOTUS_TILA_JARJESTYS[b.tila as MuutosehdotusTila] ?? 99;
+    if (ja !== jb) return ja - jb;
+    return b.luotu_pvm.localeCompare(a.luotu_pvm);
+  });
+}
 
 export const ORGANISAATIO_TYYPPI_NIMET: Record<OrganisaatioTyyppi, string> = {
   yritys: "Yritys",

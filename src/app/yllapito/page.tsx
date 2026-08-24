@@ -1,7 +1,11 @@
 import { haeKirjautunutKayttaja } from "@/lib/supabase/palvelin";
 import { redirect } from "next/navigation";
 import { kirjauduUlos } from "@/app/toiminnot";
-import { muotoilePvm } from "@/lib/naytto";
+import { jarjestaMuutosehdotukset, muotoilePvm } from "@/lib/naytto";
+import {
+  EhdotusTila,
+  ehdotusTilaRiviLuokka,
+} from "@/komponentit/ehdotus-tila";
 
 async function vaadiYllapitaja() {
   const { user, supabase } = await haeKirjautunutKayttaja();
@@ -26,6 +30,7 @@ export default async function YllapitoSivu({
     .from("muutosehdotukset")
     .select("id, tyyppi, tila, luotu_pvm, ehdottaja_tunniste")
     .order("luotu_pvm", { ascending: false });
+  const jarjestetyt = jarjestaMuutosehdotukset(ehdotukset ?? []);
 
   return (
     <main id="sisalto" className="mx-auto w-full max-w-5xl flex-1 px-4 py-10">
@@ -40,22 +45,28 @@ export default async function YllapitoSivu({
       {params.hyvaksytty ? <p className="mt-4">Ehdotus hyväksyttiin ja julkaistiin.</p> : null}
       {params.hylatty ? <p className="mt-4">Ehdotus hylättiin.</p> : null}
       <ul className="mt-8 divide-y divide-border border-y border-border">
-        {(ehdotukset ?? []).length === 0 ? (
+        {jarjestetyt.length === 0 ? (
           <li className="py-4">Ei muutosehdotuksia.</li>
         ) : (
-          (ehdotukset ?? []).map((ehdotus) => (
-            <li key={ehdotus.id} className="py-4">
-              <a href={`/yllapito/${ehdotus.id}`} className="text-link underline">
-                {ehdotus.tyyppi === "uusi_hanke"
-                  ? "Uusi hanke"
-                  : ehdotus.tyyppi === "kuva"
-                    ? "Valokuva"
-                    : ehdotus.tyyppi === "korjaus"
-                      ? "Korjaus"
-                      : "Täydennys"}
-              </a>
+          jarjestetyt.map((ehdotus) => (
+            <li
+              key={ehdotus.id}
+              className={`border-l-4 py-4 pl-3 ${ehdotusTilaRiviLuokka(ehdotus.tila)}`}
+            >
+              <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+                <a href={`/yllapito/${ehdotus.id}`} className="text-link underline">
+                  {ehdotus.tyyppi === "uusi_hanke"
+                    ? "Uusi hanke"
+                    : ehdotus.tyyppi === "kuva"
+                      ? "Valokuva"
+                      : ehdotus.tyyppi === "korjaus"
+                        ? "Korjaus"
+                        : "Täydennys"}
+                </a>
+                <EhdotusTila tila={ehdotus.tila} />
+              </div>
               <p className="mt-1 text-sm text-muted">
-                {ehdotus.tila} · {muotoilePvm(ehdotus.luotu_pvm)} · {ehdotus.ehdottaja_tunniste}
+                {muotoilePvm(ehdotus.luotu_pvm)} · {ehdotus.ehdottaja_tunniste}
               </p>
             </li>
           ))

@@ -1,5 +1,6 @@
 import { notFound, redirect } from "next/navigation";
 import { hyvaksyEhdotusToiminto, hylkaaEhdotusToiminto } from "@/app/toiminnot";
+import { EhdotusTila } from "@/komponentit/ehdotus-tila";
 import { HANKE_KENTTA_NIMET } from "@/lib/naytto";
 import { haeKirjautunutKayttaja } from "@/lib/supabase/palvelin";
 import type { EhdotusSisalto } from "@/lib/ehdotus";
@@ -45,8 +46,12 @@ export default async function EhdotusSivu({
         </a>
       </p>
       <h1 className="mt-4 text-3xl font-semibold">Muutosehdotus</h1>
-      <p className="mt-2 text-muted">
-        {ehdotus.tyyppi} · {ehdotus.tila} · {ehdotus.ehdottaja_tunniste}
+      <p className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1 text-muted">
+        <span>{ehdotus.tyyppi}</span>
+        <span aria-hidden="true">·</span>
+        <EhdotusTila tila={ehdotus.tila} />
+        <span aria-hidden="true">·</span>
+        <span>{ehdotus.ehdottaja_tunniste}</span>
       </p>
       {query.virhe ? (
         <p className="mt-4" role="alert">
