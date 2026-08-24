@@ -5,6 +5,7 @@ import { VaiheMerkki } from "@/komponentit/vaihe-merkki";
 import { laskeHankeYhteenveto } from "@/lib/hanke-yhteenveto";
 import { hankeVaihtelvalit } from "@/lib/hanke-vaihtelvali";
 import { MAARAAJA_NIMET, muotoilePvm, muotoileVaihtelvali } from "@/lib/naytto";
+import { HANKE_VAIHEET } from "@/lib/supabase/tietokanta";
 import {
   haeJulkaistutHankkeet,
   haeTulevatMaaraajat,
@@ -137,7 +138,15 @@ export default async function Etusivu({
           hankealue ja sähkönsiirtoreitti, jos ne on merkitty.
         </p>
         <div className="mt-4">
-          <Kartta merkit={merkit} />
+          <Kartta
+            merkit={merkit}
+            vaiheLkm={Object.fromEntries(
+              HANKE_VAIHEET.map((vaihe) => [
+                vaihe,
+                hankkeet.filter((hanke) => hanke.vaihe === vaihe).length,
+              ]),
+            )}
+          />
         </div>
         <noscript>
           <p className="mt-3 text-sm">

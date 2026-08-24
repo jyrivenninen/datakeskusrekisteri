@@ -225,9 +225,11 @@ function piirraGeometriat(kartta: Map, svg: SVGSVGElement, merkit: Karttamerkki[
 export function Kartta({
   merkit,
   luokka,
+  vaiheLkm,
 }: {
   merkit: Karttamerkki[];
   luokka?: string;
+  vaiheLkm?: Partial<Record<HankeVaihe, number>>;
 }) {
   const kehys = useRef<HTMLDivElement>(null);
   const avain = process.env.NEXT_PUBLIC_MML_API_AVAIN;
@@ -348,23 +350,31 @@ export function Kartta({
         aria-label="Hankkeiden sijaintikartta"
       />
       <aside
-        className="sm:w-44 sm:shrink-0"
+        className="sm:w-52 sm:shrink-0"
         aria-labelledby="kartta-selite-otsikko"
       >
         <h3 id="kartta-selite-otsikko" className="text-sm font-semibold">
           Vaihe
         </h3>
         <ul className="mt-2 space-y-1.5 text-sm">
-          {HANKE_VAIHEET.map((vaihe) => (
-            <li key={vaihe} className="flex items-center gap-2">
-              <span
-                className="inline-block size-3 shrink-0 rounded-full border border-white shadow-[0_0_0_1px_rgba(0,0,0,0.25)]"
-                style={{ backgroundColor: VAIHE_VARIT[vaihe] }}
-                aria-hidden="true"
-              />
-              {VAIHE_NIMET[vaihe]}
-            </li>
-          ))}
+          {HANKE_VAIHEET.map((vaihe) => {
+            const lkm = vaiheLkm?.[vaihe];
+            return (
+              <li key={vaihe} className="flex items-center gap-2">
+                <span
+                  className="inline-block size-3 shrink-0 rounded-full border border-white shadow-[0_0_0_1px_rgba(0,0,0,0.25)]"
+                  style={{ backgroundColor: VAIHE_VARIT[vaihe] }}
+                  aria-hidden="true"
+                />
+                <span className="min-w-0 flex-1">{VAIHE_NIMET[vaihe]}</span>
+                {lkm != null ? (
+                  <span className="tabular-nums text-muted" aria-label={`${lkm} hanketta`}>
+                    {lkm}
+                  </span>
+                ) : null}
+              </li>
+            );
+          })}
         </ul>
       </aside>
     </div>
