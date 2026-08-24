@@ -323,6 +323,60 @@ export async function hyvaksyEhdotusToiminto(formData: FormData): Promise<void> 
   redirect("/yllapito?hyvaksytty=1");
 }
 
+export async function hyvaksyKaikkiOdottavatToiminto(formData: FormData): Promise<void> {
+  const user = await vaadiYllapitaja();
+  if (String(formData.get("vahvista")) !== "kylla") {
+    redirect(
+      `/yllapito?virhe=${encodeURIComponent("Vahvista, että kaikki odottavat julkaistaan.")}`,
+    );
+  }
+  if (!supabasePalvelinAvainAsetettu()) {
+    redirect(
+      `/yllapito?virhe=${encodeURIComponent("Hyväksyntä vaatii palvelinavaimen.")}`,
+    );
+  }
+
+  const { supabase } = await haeKirjautunutKayttaja();
+  const { data: odottavat, error } = await supabase
+    .from("muutosehdotukset")
+    .select("id")
+    .eq("tila", "odottaa")
+    .order("luotu_pvm", { ascending: true });
+  if (error) {
+    redirect(`/yllapito?virhe=${encodeURIComponent(error.message)}`);
+  }
+
+  const kasittelija = user.email ?? user.id;
+  let hyvaksytty = 0;
+  const epaonnistuneet: string[] = [];
+  for (const rivi of odottavat ?? []) {
+    try {
+      await hyvaksyMuutosehdotus(rivi.id, kasittelija);
+      hyvaksytty += 1;
+    } catch (syy) {
+      const viesti = syy instanceof Error ? syy.message : "Hyväksyntä epäonnistui.";
+      epaonnistuneet.push(`${rivi.id.slice(0, 8)}: ${viesti}`);
+    }
+  }
+
+  revalidatePath("/");
+  revalidatePath("/yllapito");
+  revalidatePath("/hankkeet", "layout");
+
+  const q = new URLSearchParams();
+  if (hyvaksytty > 0) q.set("hyvaksytty", String(hyvaksytty));
+  if (epaonnistuneet.length > 0) {
+    q.set(
+      "virhe",
+      `${epaonnistuneet.length} ehdotusta jäi jonoon. ${epaonnistuneet.slice(0, 5).join(" · ")}`,
+    );
+  }
+  if (hyvaksytty === 0 && epaonnistuneet.length === 0) {
+    q.set("virhe", "Ei odottavia ehdotuksia.");
+  }
+  redirect(`/yllapito?${q.toString()}`);
+}
+
 export async function hylkaaEhdotusToiminto(formData: FormData): Promise<void> {
   const user = await vaadiYllapitaja();
   const id = String(formData.get("id") ?? "");
