@@ -99,6 +99,21 @@ export const MUUTOSEHDOTUS_TYYPPI_NIMET: Record<string, string> = {
   ristiriita_havainto: "Ristiriitahavainto",
 };
 
+/** Agentin tai tarkistuksen havainto: hyväksyntä ei yleensä julkaise hanketietoa. */
+export const HAVAINTO_TYYPIT = new Set([
+  "linkki_rikki",
+  "ryhti_havainto",
+  "kunta_havainto",
+  "ytj_havainto",
+  "mml_havainto",
+  "dokumentti_muuttunut",
+  "ristiriita_havainto",
+]);
+
+export function onHavaintoTyyppi(tyyppi: string): boolean {
+  return HAVAINTO_TYYPIT.has(tyyppi);
+}
+
 export const RISTIRIITA_SAANTO_NIMET: Record<string, string> = {
   ytunnus_nimet: "Sama Y-tunnus, eri nimet",
   nimi_ytunnukset: "Sama nimi, eri Y-tunnukset",

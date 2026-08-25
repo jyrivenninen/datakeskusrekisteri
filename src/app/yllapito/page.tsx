@@ -3,9 +3,11 @@ import { redirect } from "next/navigation";
 import { hyvaksyKaikkiOdottavatToiminto, kirjauduUlos } from "@/app/toiminnot";
 import { jarjestaMuutosehdotukset, muotoilePvm, MUUTOSEHDOTUS_TYYPPI_NIMET } from "@/lib/naytto";
 import {
+  EhdotusLuokka,
   EhdotusTila,
-  ehdotusTilaRiviLuokka,
+  ehdotusLuokkaRiviLuokka,
 } from "@/komponentit/ehdotus-tila";
+import { YllapitoOhjeet } from "@/komponentit/yllapito-ohjeet";
 import {
   haeHankkeetYllapitoon,
   supabasePalvelinAvainAsetettu,
@@ -16,11 +18,11 @@ async function vaadiYllapitaja() {
   if (!user) redirect("/kirjaudu");
   const { data } = await supabase
     .from("yllapitajat")
-    .select("nimi")
+    .select("nimi, massahyvaksynta")
     .eq("kayttaja_id", user.id)
     .maybeSingle();
   if (!data) redirect("/kirjaudu?virhe=" + encodeURIComponent("Ei ylläpito-oikeutta."));
-  return { user, supabase };
+  return { user, supabase, massahyvaksynta: Boolean(data.massahyvaksynta) };
 }
 
 export default async function YllapitoSivu({
@@ -28,7 +30,7 @@ export default async function YllapitoSivu({
 }: {
   searchParams: Promise<{ hyvaksytty?: string; hylatty?: string; virhe?: string }>;
 }) {
-  const { supabase } = await vaadiYllapitaja();
+  const { supabase, massahyvaksynta } = await vaadiYllapitaja();
   const params = await searchParams;
   const { data: ehdotukset } = await supabase
     .from("muutosehdotukset")
@@ -66,6 +68,7 @@ export default async function YllapitoSivu({
           </button>
         </form>
       </div>
+      <YllapitoOhjeet massahyvaksynta={massahyvaksynta} />
       {hyvaksyttyLkm === 1 ? (
         <p className="mt-4">Ehdotus käsiteltiin.</p>
       ) : hyvaksyttyLkm > 1 ? (
@@ -95,7 +98,7 @@ export default async function YllapitoSivu({
           </ul>
         </section>
       ) : null}
-      {odottavia > 0 ? (
+      {odottavia > 0 && massahyvaksynta ? (
         <form action={hyvaksyKaikkiOdottavatToiminto} className="mt-6 space-y-3">
           <div className="flex flex-wrap items-start gap-3">
             <input
@@ -139,12 +142,13 @@ export default async function YllapitoSivu({
           jarjestetyt.map((ehdotus) => (
             <li
               key={ehdotus.id}
-              className={`border-l-4 py-4 pl-3 ${ehdotusTilaRiviLuokka(ehdotus.tila)}`}
+              className={`border-l-4 py-4 pl-3 ${ehdotusLuokkaRiviLuokka(ehdotus.tyyppi)}`}
             >
               <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
                 <a href={`/yllapito/${ehdotus.id}`} className="text-link underline">
                   {MUUTOSEHDOTUS_TYYPPI_NIMET[ehdotus.tyyppi] ?? ehdotus.tyyppi}
                 </a>
+                <EhdotusLuokka tyyppi={ehdotus.tyyppi} />
                 <EhdotusTila tila={ehdotus.tila} />
               </div>
               <p className="mt-1 text-sm text-muted">

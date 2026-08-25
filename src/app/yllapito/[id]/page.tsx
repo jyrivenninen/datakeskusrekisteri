@@ -1,6 +1,6 @@
 import { notFound, redirect } from "next/navigation";
 import { hyvaksyEhdotusToiminto, hylkaaEhdotusToiminto } from "@/app/toiminnot";
-import { EhdotusTila } from "@/komponentit/ehdotus-tila";
+import { EhdotusLuokka, EhdotusTila } from "@/komponentit/ehdotus-tila";
 import {
   ehdotuksenHankeIdt,
   HANKE_KENTTA_NIMET,
@@ -80,6 +80,8 @@ export default async function EhdotusSivu({
       <h1 className="mt-4 text-3xl font-semibold">Muutosehdotus</h1>
       <p className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1 text-muted">
         <span>{MUUTOSEHDOTUS_TYYPPI_NIMET[ehdotus.tyyppi] ?? ehdotus.tyyppi}</span>
+        <span aria-hidden="true">·</span>
+        <EhdotusLuokka tyyppi={ehdotus.tyyppi} />
         <span aria-hidden="true">·</span>
         <EhdotusTila tila={ehdotus.tila} />
         <span aria-hidden="true">·</span>

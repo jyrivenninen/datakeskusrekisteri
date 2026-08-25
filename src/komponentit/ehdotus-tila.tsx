@@ -1,4 +1,4 @@
-import { MUUTOSEHDOTUS_TILA_NIMET } from "@/lib/naytto";
+import { MUUTOSEHDOTUS_TILA_NIMET, onHavaintoTyyppi } from "@/lib/naytto";
 import type { MuutosehdotusTila } from "@/lib/supabase/tietokanta";
 
 const LUOKAT: Record<MuutosehdotusTila, string> = {
@@ -19,6 +19,33 @@ const RIVI_LUOKAT: Record<MuutosehdotusTila, string> = {
 export function ehdotusTilaRiviLuokka(tila: string): string {
   const avain = tila as MuutosehdotusTila;
   return RIVI_LUOKAT[avain] ?? "";
+}
+
+const LUOKKA_RIVI = {
+  havainto: "border-l-violet-700 bg-violet-50/90 dark:bg-violet-950/40",
+  taydennys: "border-l-teal-700 bg-teal-50/90 dark:bg-teal-950/40",
+};
+
+const LUOKKA_MERKKI = {
+  havainto:
+    "border-violet-800 bg-violet-100 text-violet-950 dark:border-violet-300 dark:bg-violet-950 dark:text-violet-50",
+  taydennys:
+    "border-teal-800 bg-teal-100 text-teal-950 dark:border-teal-300 dark:bg-teal-950 dark:text-teal-50",
+};
+
+export function ehdotusLuokkaRiviLuokka(tyyppi: string): string {
+  return onHavaintoTyyppi(tyyppi) ? LUOKKA_RIVI.havainto : LUOKKA_RIVI.taydennys;
+}
+
+export function EhdotusLuokka({ tyyppi }: { tyyppi: string }) {
+  const havainto = onHavaintoTyyppi(tyyppi);
+  return (
+    <span
+      className={`inline-block rounded-sm border px-2 py-0.5 text-sm font-medium ${havainto ? LUOKKA_MERKKI.havainto : LUOKKA_MERKKI.taydennys}`}
+    >
+      {havainto ? "Havainto" : "Täydennys"}
+    </span>
+  );
 }
 
 export function EhdotusTila({ tila }: { tila: string }) {

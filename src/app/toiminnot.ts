@@ -301,15 +301,15 @@ async function vaadiYllapitaja() {
   if (!user) redirect("/kirjaudu");
   const { data } = await supabase
     .from("yllapitajat")
-    .select("kayttaja_id")
+    .select("kayttaja_id, massahyvaksynta")
     .eq("kayttaja_id", user.id)
     .maybeSingle();
   if (!data) redirect("/kirjaudu?virhe=" + encodeURIComponent("Ei ylläpito-oikeutta."));
-  return user;
+  return { user, massahyvaksynta: Boolean(data.massahyvaksynta) };
 }
 
 export async function hyvaksyEhdotusToiminto(formData: FormData): Promise<void> {
-  const user = await vaadiYllapitaja();
+  const { user } = await vaadiYllapitaja();
   const id = String(formData.get("id") ?? "");
   const toiminto = String(formData.get("toiminto") ?? "kasittele");
   try {
@@ -336,7 +336,12 @@ export async function hyvaksyEhdotusToiminto(formData: FormData): Promise<void> 
 }
 
 export async function hyvaksyKaikkiOdottavatToiminto(formData: FormData): Promise<void> {
-  const user = await vaadiYllapitaja();
+  const { user, massahyvaksynta } = await vaadiYllapitaja();
+  if (!massahyvaksynta) {
+    redirect(
+      `/yllapito?virhe=${encodeURIComponent("Massakäsittely vaatii erillisen oikeuden.")}`,
+    );
+  }
   if (String(formData.get("vahvista")) !== "kylla") {
     redirect(
       `/yllapito?virhe=${encodeURIComponent("Vahvista, että kaikki odottavat käsitellään.")}`,
@@ -398,7 +403,7 @@ export async function hyvaksyKaikkiOdottavatToiminto(formData: FormData): Promis
 }
 
 export async function hylkaaEhdotusToiminto(formData: FormData): Promise<void> {
-  const user = await vaadiYllapitaja();
+  const { user } = await vaadiYllapitaja();
   const id = String(formData.get("id") ?? "");
   const perustelu = String(formData.get("perustelu") ?? "");
   try {
