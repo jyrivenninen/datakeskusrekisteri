@@ -7,7 +7,6 @@ import {
 } from "@/lib/naytto";
 import { haeJulkisetLahdeajot } from "@/lib/supabase/kyselyt";
 import { ESIVERSIO_TEKSTI, OSALLISTUMINEN_TEKSTI } from "@/lib/esiversio";
-import { Yhteistyokumppanit } from "@/komponentit/yhteistyokumppanit";
 
 export const metadata: Metadata = {
   title: "Tietoa palvelusta – Datakeskushankkeiden kansallinen rekisteri",
@@ -60,12 +59,13 @@ export default async function TietoaPalvelustaSivu() {
             ehdottama havainto ei siirry rekisteriin ennen kuin ylläpitäjä on
             tarkistanut lähteen.
           </p>
+          <p>
+            <a href="/yhteistyokumppanit" className="text-link underline">
+              Yhteistyökumppaneita
+            </a>
+          </p>
         </div>
       </section>
-
-      <div className="mt-10">
-        <Yhteistyokumppanit />
-      </div>
 
       <section className="mt-10" aria-labelledby="aineistot-otsikko">
         <h2 id="aineistot-otsikko" className="text-xl font-semibold">

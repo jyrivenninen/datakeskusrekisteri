@@ -3,7 +3,6 @@ import { Geist, Geist_Mono } from "next/font/google";
 import { cookies } from "next/headers";
 import { ESIVERSIO_EVASTE } from "@/lib/esiversio";
 import { EsiversioIlmoitus } from "@/komponentit/esiversio-ilmoitus";
-import { Yhteistyokumppanit } from "@/komponentit/yhteistyokumppanit";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -83,13 +82,13 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
                 lähteineen. Esiversio: tietoja täydennetään ja varmennetaan.
               </p>
               <p className="mt-3 text-sm text-muted">Palvelun tuottaa Kansallisdata ry.</p>
-              <div className="mt-6">
-                <Yhteistyokumppanit otsikkoTaso="p" otsikkoId="alatunniste-kumppanit" />
-              </div>
             </div>
             <nav aria-label="Alatunniste" className="flex flex-col gap-2 text-sm sm:items-end">
               <a href="/tietoa" className="text-link underline">
                 Tietoa palvelusta
+              </a>
+              <a href="/yhteistyokumppanit" className="text-link underline">
+                Yhteistyökumppaneita
               </a>
               <a href="/yhteys" className="text-link underline">
                 Ota yhteyttä

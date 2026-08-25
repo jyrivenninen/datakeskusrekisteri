@@ -1,4 +1,4 @@
-/** Julkiset yhteistyökumppanit. Nimi ja osoite, ei kuvausta toimijoiden kannasta. */
+/** Julkiset yhteistyökumppanit. Lisää rivi taulukkoon; sivu järjestää nimen mukaan. */
 export const YHTEISTYOKUMPPANIT = [
   {
     nimi: "Järvi-Suomen puolesta ry",
