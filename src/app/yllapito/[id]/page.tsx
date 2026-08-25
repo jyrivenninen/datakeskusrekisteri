@@ -397,6 +397,18 @@ export default async function EhdotusSivu({
               </dd>
             </div>
           </dl>
+          {linkki.http_tila === 401 ||
+          linkki.http_tila === 403 ||
+          linkki.http_tila === 429 ||
+          linkki.http_tila === 503 ||
+          linkki.http_tila === 502 ||
+          linkki.http_tila === 504 ? (
+            <p className="mt-3 text-sm text-muted">
+              Tämä tilakoodi on kielletty tai tilapäinen vastaus, ei todiste
+              siitä että osoite olisi kadonnut. Jos osoite avautuu selaimessa,
+              merkitse havainto käsitellyksi.
+            </p>
+          ) : null}
         </section>
       ) : null}
 

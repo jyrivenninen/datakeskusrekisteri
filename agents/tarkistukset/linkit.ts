@@ -1,6 +1,7 @@
 /**
  * 7A.1 Linkkitarkistus. Ei kielimallia.
  * Kirjoittaa vain muutosehdotukset-tauluun tyypillä linkki_rikki.
+ * HTTP 401/403/429 ja 5xx eivät ole rikkinäinen linkki: GET-uudelleenyritys, sitten ohitus.
  *
  * Ympäristö: NEXT_PUBLIC_SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY
  * Valinnainen: LINKIT_VIIVE_MS (oletus 1000), LINKIT_KATTO, LINKIT_KUIVA=1
@@ -38,38 +39,63 @@ function odota(ms: number) {
   return new Promise((r) => setTimeout(r, ms));
 }
 
+const EI_JONOON_TILAT = new Set([401, 403, 408, 425, 429, 500, 502, 503, 504]);
+
+function eiKirjataJonoon(tila: number | null): boolean {
+  return tila != null && EI_JONOON_TILAT.has(tila);
+}
+
 function onRikki(t: Tarkistus): boolean {
-  if (t.virhe) return true;
+  if (t.virhe) {
+    return !/timeout|aborted|ETIMEDOUT|ECONNRESET/i.test(t.virhe);
+  }
   if (t.http_tila == null) return true;
+  if (eiKirjataJonoon(t.http_tila)) return false;
   return t.http_tila >= 400;
+}
+
+function odotus429(vastaus: Response, yritys: number): number {
+  const raaka = vastaus.headers.get("retry-after");
+  if (raaka) {
+    const sekunnit = Number(raaka);
+    if (Number.isFinite(sekunnit) && sekunnit > 0) {
+      return Math.min(60, sekunnit) * 1000;
+    }
+  }
+  return Math.min(8000, 1000 * 2 ** yritys);
+}
+
+async function pyynto(url: string, method: "HEAD" | "GET", osittainen = false): Promise<Response> {
+  const otsikot: Record<string, string> = { "User-Agent": USER_AGENT };
+  if (method === "GET" && osittainen) otsikot.Range = "bytes=0-0";
+  return fetch(url, {
+    method,
+    redirect: "follow",
+    headers: otsikot,
+    signal: AbortSignal.timeout(15_000),
+  });
 }
 
 async function tarkistaOsoite(url: string): Promise<Tarkistus> {
   const alku = Date.now();
   try {
-    let vastaus = await fetch(url, {
-      method: "HEAD",
-      redirect: "follow",
-      headers: { "User-Agent": USER_AGENT },
-      signal: AbortSignal.timeout(15_000),
-    });
+    let vastaus = await pyynto(url, "HEAD");
     if (vastaus.status === 405 || vastaus.status === 501) {
-      const keskeytys = new AbortController();
-      const ajastin = setTimeout(() => keskeytys.abort(), 15_000);
-      try {
-        vastaus = await fetch(url, {
-          method: "GET",
-          redirect: "follow",
-          headers: {
-            "User-Agent": USER_AGENT,
-            Range: "bytes=0-0",
-          },
-          signal: keskeytys.signal,
-        });
-      } finally {
-        clearTimeout(ajastin);
-        keskeytys.abort();
-      }
+      vastaus = await pyynto(url, "GET", true);
+    } else if (
+      vastaus.status === 401 ||
+      vastaus.status === 403 ||
+      vastaus.status === 404 ||
+      vastaus.status === 410 ||
+      vastaus.status === 429
+    ) {
+      vastaus = await pyynto(url, "GET");
+    }
+    let yritys = 0;
+    while (vastaus.status === 429 && yritys < 4) {
+      await odota(odotus429(vastaus, yritys));
+      vastaus = await pyynto(url, "GET");
+      yritys += 1;
     }
     return {
       url,
@@ -169,6 +195,8 @@ async function main() {
   let tarkistettu = 0;
   let kirjattu = 0;
   let ohitettuRobots = 0;
+  let ohitettuEiJonoon = 0;
+  const viimeksiHost = new Map<string, number>();
 
   for (const rivi of rivit) {
     if (katto > 0 && tarkistettu >= katto) break;
@@ -180,24 +208,36 @@ async function main() {
     }
     if (osoite.protocol !== "http:" && osoite.protocol !== "https:") continue;
 
+    const hostTauko = Math.max(viiveMs(), 2000);
+    const edellinen = viimeksiHost.get(osoite.hostname) ?? 0;
+    const hostOdotus = hostTauko - (Date.now() - edellinen);
+    if (hostOdotus > 0) await odota(hostOdotus);
+
     if (!(await robotsSallii(osoite, USER_AGENT))) {
       ohitettuRobots += 1;
       console.log(`robots.txt estää: ${rivi.lahde_url}`);
-      await odota(viiveMs());
+      viimeksiHost.set(osoite.hostname, Date.now());
       continue;
     }
 
     const tulos = await tarkistaOsoite(rivi.lahde_url);
+    viimeksiHost.set(osoite.hostname, Date.now());
     tarkistettu += 1;
     console.log(
       `${tulos.http_tila ?? "virhe"} ${tulos.vaste_ms}ms ${rivi.lahde_url}${tulos.virhe ? ` (${tulos.virhe})` : ""}`,
     );
 
+    if (eiKirjataJonoon(tulos.http_tila)) {
+      ohitettuEiJonoon += 1;
+      console.log(`HTTP ${tulos.http_tila}, ei jonoon: ${rivi.lahde_url}`);
+      continue;
+    }
+
     if (onRikki(tulos) && !jonossa.has(rivi.lahde_url)) {
       const hankeId = await haeHankeId(supabase, rivi.taulu, rivi.rivi_id);
       const huomautus = tulos.virhe
         ? `Linkki ei vastannut: ${tulos.virhe}`
-        : `HTTP ${tulos.http_tila}. ${tulos.http_tila === 401 || tulos.http_tila === 403 ? "Pääsy kielletty; ei välttämättä poistettu." : "Tarkista, onko lähde siirtynyt."}`;
+        : `HTTP ${tulos.http_tila}. Tarkista, onko lähde siirtynyt.`;
       if (!kuiva) {
         const { error: lisaysVirhe } = await supabase.from("muutosehdotukset").insert({
           tyyppi: "linkki_rikki",
@@ -230,7 +270,7 @@ async function main() {
   }
 
   console.log(
-    `Valmis. Tarkistettu ${tarkistettu}, kirjattu ${kirjattu}${kuiva ? " (kuiva-ajo)" : ""}, robots.txt ohitti ${ohitettuRobots}.`,
+    `Valmis. Tarkistettu ${tarkistettu}, kirjattu ${kirjattu}${kuiva ? " (kuiva-ajo)" : ""}, robots.txt ohitti ${ohitettuRobots}, ei jonoon ${ohitettuEiJonoon}.`,
   );
 }
 

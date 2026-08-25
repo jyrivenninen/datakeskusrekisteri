@@ -72,8 +72,9 @@ export function YllapitoOhjeet({ massahyvaksynta = false }: { massahyvaksynta?: 
 
           <OhjeKohta otsikko="Rikkinäinen linkki" id="ohje-linkki">
             <li>
-              Avaa osoite selaimessa. HTTP 401/403 ei tarkoita, että lähde olisi
-              poistettu; pääsy voi olla rajoitettu.
+              Avaa osoite selaimessa. HTTP 401, 403 ja 429 tarkoittavat
+              kiellettyä tai rajoitettua pyyntöä, ei kadonnutta osoitetta.
+              Uudet tällaiset havainnot eivät nouse jonoon.
             </li>
             <li>
               Tilapäinen katko: hylkää, jotta tarkistus voi nostaa osoitteen
