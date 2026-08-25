@@ -70,11 +70,16 @@ Todettu 24.8.2026:
 - `odata`-tyylinen ILIKE ei toimi; käytä `strToLowerCase(...) like`
 - valmisteilla olevat kokoelmat olivat tyhjiä; hakemistoissa tuhansia
   kohteita. Maksullista lupatietoa (`ryhti_permit` tietoluvalla) ei käytetä.
-- pitkäkestoiseen käyttöön Syke edellyttää sovelluskohtaista tunnistetta:
-  pyyntö osoitteeseen gistuki (at) syke.fi. Agentti ei lähetä sähköpostia.
+- pitkäkestoiseen käyttöön Syke edellyttää sovelluskohtaista tunnistetta
+  (`sykeuserid` OGC/WFS/WCS-kutsussa, ei salasanaa). Tunniste on
+  `datakeskusrekisteri`. Rakennusten ja osoitteiden täyttä vetoa rajapinnasta
+  ei tehdä; siihen on vuorokausipaketit. Eräajo peräkkäin, ei satoja
+  kutsuja sekunnissa. Ajo ilta-aikaan (ei heti keskiyön jälkeen).
 
 Sovitin: `agents/lahteet/ryhti.ts` (`npm run agentti:ryhti`).
-Kuiva-ajo: `RYHTI_KUIVA=1`. Valinnainen `SYKE_RAJAPINTA_TUNNISTE` User-Agentiin.
+Kuiva-ajo: `RYHTI_KUIVA=1`. Oletus `sykeuserid=datakeskusrekisteri`;
+ympäristömuuttuja `SYKE_RAJAPINTA_TUNNISTE` yliajaa. Tietueen `lahde_url`
+on ilman tunnistetta. GitHub Actions: cron 19:20 UTC.
 
 ## 7A.5.2 YTJ / PRH
 

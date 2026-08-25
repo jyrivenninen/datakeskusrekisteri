@@ -1,8 +1,12 @@
 /**
  * 7A.5.1 Ryhti, avoin kaava-aineisto (OGC API Features). Ei kielimallia.
  *
- * Juuri (todennettu 24.8.2026, ei API-avainta):
+ * Juuri (todennettu 24.8.2026):
  * https://paikkatiedot.ymparisto.fi/geoserver/ryhti_plan/ogc/features/v1
+ * Syke (gistuki): sykeuserid URL-parametrina, ei salasanaa. Oletus on
+ * tämän sovelluksen tunniste. Rakennuksia/osoitteita ei ladata OGC:stä
+ * kokonaan (siihen Syke ohjaa vuorokausipaketit). Kutsut peräkkäin,
+ * ei rinnakkain. Tietueen lähde-URL ilman tunnistetta.
  * Maksullista lupa- tai tarkennettua rakennustietoa ei haeta.
  *
  * Kattavuus: velvoite 1.1.2024 alkaen, valtakunnallinen kattavuus 1.1.2029.
@@ -60,14 +64,28 @@ type OgcSivu = {
   code?: string;
 };
 
+const SYKE_USERID_OLETUS = "datakeskusrekisteri";
+
+function sykeUserid(): string {
+  return process.env.SYKE_RAJAPINTA_TUNNISTE?.trim() || SYKE_USERID_OLETUS;
+}
+
 function userAgent(): string {
-  const tunnus = process.env.SYKE_RAJAPINTA_TUNNISTE?.trim();
-  return tunnus ? `${USER_AGENT_POHJA} tunniste/${tunnus}` : USER_AGENT_POHJA;
+  return `${USER_AGENT_POHJA} sykeuserid/${sykeUserid()}`;
+}
+
+/** Liittää Syken edellyttämän sykeuserid-parametrin. Ei muuta tietueen lähde-URL:ää. */
+function osoiteSykeTunnisteella(url: string): string {
+  const u = new URL(url);
+  if (!u.searchParams.has("sykeuserid")) {
+    u.searchParams.set("sykeuserid", sykeUserid());
+  }
+  return u.toString();
 }
 
 function viiveMs(): number {
-  const n = Number(process.env.RYHTI_VIIVE_MS ?? "500");
-  return Number.isFinite(n) && n >= 0 ? n : 500;
+  const n = Number(process.env.RYHTI_VIIVE_MS ?? "1000");
+  return Number.isFinite(n) && n >= 0 ? n : 1000;
 }
 
 function odota(ms: number) {
@@ -153,7 +171,7 @@ function tiivisteOminaisuuksista(ominaisuudet: Record<string, unknown>): string 
 
 async function haeJson(url: string): Promise<{ tila: number; runko: unknown; ms: number }> {
   const alku = Date.now();
-  const vastaus = await fetch(url, {
+  const vastaus = await fetch(osoiteSykeTunnisteella(url), {
     method: "GET",
     headers: {
       "User-Agent": userAgent(),
