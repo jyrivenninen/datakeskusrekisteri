@@ -71,6 +71,53 @@ export async function lahetaIlmoitus(formData: FormData): Promise<void> {
     ilmoitusPaluu(tyyppi, "Valitse ilmoituksen tyyppi.");
   }
 
+  const ehdotuksenLahde =
+    lahdeUrl.trim() || Object.values(sisalto.kentat)[0]?.lahde_url || null;
+  const { user: yllapitaja, nimi: yllapitajaNimi } = await haeYllapitaja();
+  const julkaiseSuoraan = Boolean(yllapitaja && supabasePalvelinAvainAsetettu());
+
+  if (julkaiseSuoraan && yllapitaja) {
+    const kasittelija = kasittelijaMerkinta(yllapitajaNimi, yllapitaja.email, yllapitaja.id);
+    const yllapito = luoYllapitoAsiakas();
+    const { data, error } = await yllapito
+      .from("muutosehdotukset")
+      .insert({
+        tyyppi,
+        hanke_id: tyyppi === "taydennys" ? hankeIdRaaka : null,
+        ehdottaja_tyyppi: "yllapitaja",
+        ehdottaja_tunniste: kasittelija,
+        sisalto,
+        tila: "odottaa",
+        huomautus: huomautus || null,
+        lahde_url: ehdotuksenLahde,
+      })
+      .select("id")
+      .single();
+    if (error || !data) {
+      ilmoitusPaluu(tyyppi, error?.message ?? "Tallennus epäonnistui.");
+    }
+    try {
+      await hyvaksyMuutosehdotus(data.id, kasittelija);
+    } catch (syy) {
+      const viesti = syy instanceof Error ? syy.message : "Julkaisu epäonnistui.";
+      ilmoitusPaluu(tyyppi, `${viesti} Ehdotus jäi tarkistusjonoon.`);
+    }
+    const { data: julkaistu } = await yllapito
+      .from("muutosehdotukset")
+      .select("hanke_id")
+      .eq("id", data.id)
+      .single();
+    revalidatePath("/");
+    revalidatePath("/yllapito");
+    if (julkaistu?.hanke_id) {
+      revalidatePath(`/hankkeet/${julkaistu.hanke_id}`);
+      redirect(`/hankkeet/${julkaistu.hanke_id}`);
+    }
+    const valmis = new URLSearchParams({ valmis: "julkaistu" });
+    if (tyyppi === "taydennys") valmis.set("tyyppi", "taydennys");
+    redirect(`/ilmoitus?${valmis.toString()}`);
+  }
+
   const supabase = await luoPalvelinAsiakas();
   const { error } = await supabase.from("muutosehdotukset").insert({
     tyyppi,
@@ -80,7 +127,7 @@ export async function lahetaIlmoitus(formData: FormData): Promise<void> {
     sisalto,
     tila: "odottaa",
     huomautus: huomautus || null,
-    lahde_url: lahdeUrl.trim() || Object.values(sisalto.kentat)[0]?.lahde_url || null,
+    lahde_url: ehdotuksenLahde,
   });
 
   if (error) {

@@ -1,7 +1,10 @@
 import { lahetaIlmoitus } from "@/app/toiminnot";
 import { IlmoitusKenttalohko } from "@/komponentit/ilmoitus-kenttalohko";
+import { LomakeLahetysNappi } from "@/komponentit/lomake-lahetysnappi";
 import { LOMAKE_KENTAT } from "@/lib/ehdotus";
 import { haeJulkaistutHankkeet } from "@/lib/supabase/kyselyt";
+import { haeYllapitaja } from "@/lib/supabase/palvelin";
+import { supabasePalvelinAvainAsetettu } from "@/lib/supabase/yllapito-asiakas";
 
 export default async function IlmoitusSivu({
   searchParams,
@@ -11,14 +14,16 @@ export default async function IlmoitusSivu({
   const params = await searchParams;
   const tyyppi = params.tyyppi === "taydennys" ? "taydennys" : "uusi_hanke";
   const { hankkeet } = await haeJulkaistutHankkeet();
+  const { user: yllapitaja } = await haeYllapitaja();
+  const julkaiseSuoraan = Boolean(yllapitaja && supabasePalvelinAvainAsetettu());
 
   return (
     <main id="sisalto" className="mx-auto w-full max-w-3xl flex-1 px-4 py-10">
       <h1 className="text-3xl font-semibold tracking-tight">Ilmoita hanke tai täydennys</h1>
       <p className="mt-4 leading-relaxed text-muted">
-        Ilmoitus ei julkaise tietoja suoraan. Ylläpitäjä tarkistaa lähteet ennen
-        kuin mikään siirtyy rekisteriin. Täytä vain kentät, joille on julkinen
-        lähde. Tyhjä kenttä on parempi kuin arvattu.
+        {julkaiseSuoraan
+          ? "Ylläpitäjänä tallennus julkaistaan heti. Täytä vain kentät, joille on julkinen lähde. Tyhjä kenttä on parempi kuin arvattu."
+          : "Ilmoitus ei julkaise tietoja suoraan. Ylläpitäjä tarkistaa lähteet ennen kuin mikään siirtyy rekisteriin. Täytä vain kentät, joille on julkinen lähde. Tyhjä kenttä on parempi kuin arvattu."}
       </p>
       <p className="mt-3 leading-relaxed text-muted">
         Yhteinen lähde riittää, jos kaikki täytetyt tiedot ovat samasta
@@ -27,7 +32,12 @@ export default async function IlmoitusSivu({
         vain, kun kohta on lähteessä suoraan.
       </p>
 
-      {params.valmis ? (
+      {params.valmis === "julkaistu" ? (
+        <p className="mt-6 rounded border border-border bg-surface px-4 py-3" role="status">
+          Tiedot julkaistiin.
+        </p>
+      ) : null}
+      {params.valmis === "1" ? (
         <p className="mt-6 rounded border border-border bg-surface px-4 py-3" role="status">
           Kiitos. Ilmoitus on vastaanotettu ja odottaa tarkistusta.
         </p>
@@ -132,7 +142,7 @@ export default async function IlmoitusSivu({
 
         <p className="flex flex-col gap-1">
           <label htmlFor="huomautus" className="text-sm font-medium">
-            Lisätieto ylläpitäjälle
+            {julkaiseSuoraan ? "Muistiinpano (ei julkaista)" : "Lisätieto ylläpitäjälle"}
           </label>
           <textarea
             id="huomautus"
@@ -141,22 +151,22 @@ export default async function IlmoitusSivu({
             className="rounded border border-border bg-surface px-2 py-2"
           />
         </p>
-        <p className="flex flex-col gap-1">
-          <label htmlFor="ehdottaja_tunniste" className="text-sm font-medium">
-            Sähköposti tai muu yhteystieto (ei julkaista)
-          </label>
-          <input
-            id="ehdottaja_tunniste"
-            name="ehdottaja_tunniste"
-            className="rounded border border-border bg-surface px-2 py-2"
-          />
-        </p>
-        <button
-          type="submit"
-          className="rounded border border-foreground bg-foreground px-4 py-2 text-sm font-medium text-background"
-        >
-          Lähetä tarkistettavaksi
-        </button>
+        {julkaiseSuoraan ? null : (
+          <p className="flex flex-col gap-1">
+            <label htmlFor="ehdottaja_tunniste" className="text-sm font-medium">
+              Sähköposti tai muu yhteystieto (ei julkaista)
+            </label>
+            <input
+              id="ehdottaja_tunniste"
+              name="ehdottaja_tunniste"
+              className="rounded border border-border bg-surface px-2 py-2"
+            />
+          </p>
+        )}
+        <LomakeLahetysNappi
+          valmis={julkaiseSuoraan ? "Julkaise" : "Lähetä tarkistettavaksi"}
+          odottaa={julkaiseSuoraan ? "Julkaistaan…" : "Lähetetään…"}
+        />
       </form>
     </main>
   );

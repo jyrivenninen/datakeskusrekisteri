@@ -59,9 +59,15 @@ export function YllapitoOhjeet({ massahyvaksynta = false }: { massahyvaksynta?: 
               on parempi kuin arvattu.
             </li>
             <li>
+              Kirjautuneen ylläpitäjän ilmoitus tai täydennys{" "}
+              <code className="text-xs">/ilmoitus</code>-lomakkeelta, kentän
+              päivitys ja valokuva julkaistaan heti. Ulkopuolisen ilmoitus jää
+              jonoon.
+            </li>
+            <li>
               <strong className="font-medium">Hyväksy ja julkaise</strong>{" "}
-              kirjoittaa tiedot hankkeeseen ja merkitsee ne ihmisen
-              vahvistamiksi.
+              kirjoittaa jonossa odottavat tiedot hankkeeseen ja merkitsee ne
+              ihmisen vahvistamiksi.
             </li>
             <li>Hylkäys jättää julkaisematta. Perustelu jää lokiin.</li>
             {massahyvaksynta ? (
