@@ -4,6 +4,7 @@ import { EhdotusLuokka, EhdotusTila } from "@/komponentit/ehdotus-tila";
 import {
   ehdotuksenHankeIdt,
   HANKE_KENTTA_NIMET,
+  LUOTTAMUS_NIMET,
   kasittelySelite,
   MUUTOSEHDOTUS_TYYPPI_NIMET,
   RISTIRIITA_SAANTO_NIMET,
@@ -423,6 +424,12 @@ export default async function EhdotusSivu({
             </dt>
             <dd className="mt-1">
               {tieto.arvo}
+              {tieto.luottamus ? (
+                <span className="text-sm text-muted">
+                  {" "}
+                  · {LUOTTAMUS_NIMET[tieto.luottamus]}
+                </span>
+              ) : null}
               <p className="mt-1 text-sm">
                 <a href={tieto.lahde_url} className="text-link underline" rel="noopener noreferrer">
                   {tieto.lahde_url}

@@ -7,10 +7,12 @@ import {
   LOMAKE_KENTAT,
   onPaivitettavaHankeKentta,
   onVaihtoehtoKentta,
+  rakennaIlmoitusSisalto,
   rakennaSisalto,
   rakennaKuvaEhdotus,
   tarkistaUusiHanke,
   type EhdotusSisalto,
+  type IlmoitusKentanLahde,
 } from "@/lib/ehdotus";
 import { kasittelijaMerkinta } from "@/lib/naytto";
 import { LUOTTAMUSTASOT, PALAUTE_AIHEET, type Luottamus } from "@/lib/supabase/tietokanta";
@@ -18,6 +20,12 @@ import { haeKirjautunutKayttaja, haeYllapitaja, luoPalvelinAsiakas } from "@/lib
 import { hylkaaMuutosehdotus, hyvaksyMuutosehdotus, yhdistaHankkeetEhdotuksesta } from "@/lib/supabase/hyvaksynta";
 import { luoYllapitoAsiakas, supabasePalvelinAvainAsetettu } from "@/lib/supabase/yllapito-asiakas";
 import { ESIVERSIO_EVASTE } from "@/lib/esiversio";
+
+function ilmoitusPaluu(tyyppi: string, virhe: string): never {
+  const q = new URLSearchParams({ virhe });
+  if (tyyppi === "taydennys") q.set("tyyppi", "taydennys");
+  redirect(`/ilmoitus?${q.toString()}`);
+}
 
 export async function lahetaIlmoitus(formData: FormData): Promise<void> {
   const tyyppi = String(formData.get("tyyppi") ?? "");
@@ -29,27 +37,38 @@ export async function lahetaIlmoitus(formData: FormData): Promise<void> {
   const tunniste = String(formData.get("ehdottaja_tunniste") ?? "").trim() || "ilmoituslomake";
 
   const kentat: Record<string, string> = {};
+  const kohdat: Record<string, IlmoitusKentanLahde> = {};
   for (const kentta of LOMAKE_KENTAT) {
     kentat[kentta] = String(formData.get(kentta) ?? "");
+    kohdat[kentta] = {
+      lahde_url: String(formData.get(`${kentta}_lahde_url`) ?? ""),
+      lahde_sivu: String(formData.get(`${kentta}_lahde_sivu`) ?? ""),
+      lainaus: String(formData.get(`${kentta}_lainaus`) ?? ""),
+      luottamus: String(formData.get(`${kentta}_luottamus`) ?? ""),
+    };
   }
 
-  const { sisalto, virhe } = rakennaSisalto(kentat, lahdeUrl, lahdeSivu, lainaus);
-  if (virhe) {
-    redirect(`/ilmoitus?virhe=${encodeURIComponent(virhe)}`);
-  }
+  const { sisalto, virhe } = rakennaIlmoitusSisalto(
+    kentat,
+    lahdeUrl,
+    lahdeSivu,
+    lainaus,
+    kohdat,
+  );
+  if (virhe) ilmoitusPaluu(tyyppi, virhe);
 
   if (tyyppi === "uusi_hanke") {
     const puute = tarkistaUusiHanke(sisalto);
-    if (puute) redirect(`/ilmoitus?virhe=${encodeURIComponent(puute)}`);
+    if (puute) ilmoitusPaluu(tyyppi, puute);
   } else if (tyyppi === "taydennys") {
     if (!hankeIdRaaka) {
-      redirect(`/ilmoitus?virhe=${encodeURIComponent("Valitse täydennettävä hanke.")}`);
+      ilmoitusPaluu(tyyppi, "Valitse täydennettävä hanke.");
     }
     if (Object.keys(sisalto.kentat).length === 0) {
-      redirect(`/ilmoitus?virhe=${encodeURIComponent("Lisää vähintään yksi kenttä ja lähde.")}`);
+      ilmoitusPaluu(tyyppi, "Lisää vähintään yksi kenttä ja lähde.");
     }
   } else {
-    redirect(`/ilmoitus?virhe=${encodeURIComponent("Valitse ilmoituksen tyyppi.")}`);
+    ilmoitusPaluu(tyyppi, "Valitse ilmoituksen tyyppi.");
   }
 
   const supabase = await luoPalvelinAsiakas();
@@ -61,14 +80,16 @@ export async function lahetaIlmoitus(formData: FormData): Promise<void> {
     sisalto,
     tila: "odottaa",
     huomautus: huomautus || null,
-    lahde_url: lahdeUrl.trim(),
+    lahde_url: lahdeUrl.trim() || Object.values(sisalto.kentat)[0]?.lahde_url || null,
   });
 
   if (error) {
-    redirect(`/ilmoitus?virhe=${encodeURIComponent(error.message)}`);
+    ilmoitusPaluu(tyyppi, error.message);
   }
 
-  redirect("/ilmoitus?valmis=1");
+  const valmis = new URLSearchParams({ valmis: "1" });
+  if (tyyppi === "taydennys") valmis.set("tyyppi", "taydennys");
+  redirect(`/ilmoitus?${valmis.toString()}`);
 }
 
 function paivitysPaluu(

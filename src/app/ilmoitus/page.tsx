@@ -1,7 +1,6 @@
 import { lahetaIlmoitus } from "@/app/toiminnot";
-import { HANKE_KENTTA_NIMET, VAIHE_NIMET } from "@/lib/naytto";
+import { IlmoitusKenttalohko } from "@/komponentit/ilmoitus-kenttalohko";
 import { LOMAKE_KENTAT } from "@/lib/ehdotus";
-import { HANKE_VAIHEET } from "@/lib/supabase/tietokanta";
 import { haeJulkaistutHankkeet } from "@/lib/supabase/kyselyt";
 
 export default async function IlmoitusSivu({
@@ -16,9 +15,16 @@ export default async function IlmoitusSivu({
   return (
     <main id="sisalto" className="mx-auto w-full max-w-3xl flex-1 px-4 py-10">
       <h1 className="text-3xl font-semibold tracking-tight">Ilmoita hanke tai täydennys</h1>
-      <p className="mt-4 max-w-prose leading-relaxed text-muted">
+      <p className="mt-4 leading-relaxed text-muted">
         Ilmoitus ei julkaise tietoja suoraan. Ylläpitäjä tarkistaa lähteet ennen
-        kuin mikään siirtyy rekisteriin.
+        kuin mikään siirtyy rekisteriin. Täytä vain kentät, joille on julkinen
+        lähde. Tyhjä kenttä on parempi kuin arvattu.
+      </p>
+      <p className="mt-3 leading-relaxed text-muted">
+        Yhteinen lähde riittää, jos kaikki täytetyt tiedot ovat samasta
+        osoitteesta. Jos kenttä on eri asiakirjasta, anna sille oma osoite.
+        Epävarma luku merkitään luottamuksella Epävarma (oletus); vahvistettu
+        vain, kun kohta on lähteessä suoraan.
       </p>
 
       {params.valmis ? (
@@ -72,77 +78,58 @@ export default async function IlmoitusSivu({
           </p>
         ) : null}
 
-        {LOMAKE_KENTAT.map((kentta) => (
-          <p key={kentta} className="flex flex-col gap-1">
-            <label htmlFor={kentta} className="text-sm font-medium">
-              {kentta === "toimija_nimi"
-                ? "Hankkeesta vastaava (nimi)"
-                : HANKE_KENTTA_NIMET[kentta] ?? kentta}
-              {tyyppi === "uusi_hanke" && ["nimi", "kunta", "vaihe"].includes(kentta)
-                ? " (pakollinen)"
-                : ""}
-            </label>
-            {kentta === "vaihe" ? (
-              <select
-                id={kentta}
-                name={kentta}
-                required={tyyppi === "uusi_hanke"}
-                className="rounded border border-border bg-surface px-2 py-2"
-                defaultValue=""
-              >
-                <option value="">Valitse vaihe</option>
-                {HANKE_VAIHEET.map((vaihe) => (
-                  <option key={vaihe} value={vaihe}>
-                    {VAIHE_NIMET[vaihe]}
-                  </option>
-                ))}
-              </select>
-            ) : (
-              <input
-                id={kentta}
-                name={kentta}
-                required={tyyppi === "uusi_hanke" && ["nimi", "kunta"].includes(kentta)}
-                className="rounded border border-border bg-surface px-2 py-2"
-              />
-            )}
+        <fieldset className="space-y-3 rounded border border-border px-3 py-3">
+          <legend className="px-1 text-sm font-medium">Yhteinen lähde</legend>
+          <p className="text-sm text-muted">
+            Käytetään kentille, joille ei anneta omaa osoitetta.
+            {tyyppi === "uusi_hanke"
+              ? " Uudessa hankkeessa tarvitaan lähde nimelle, kunnalle ja vaiheelle."
+              : ""}
           </p>
+          <p className="flex flex-col gap-1">
+            <label htmlFor="lahde_url" className="text-sm font-medium">
+              Lähteen osoite
+            </label>
+            <input
+              id="lahde_url"
+              name="lahde_url"
+              type="url"
+              placeholder="https://"
+              className="rounded border border-border bg-surface px-2 py-2"
+            />
+          </p>
+          <p className="flex flex-col gap-1">
+            <label htmlFor="lahde_sivu" className="text-sm font-medium">
+              Sivunumero (jos asiakirja)
+            </label>
+            <input
+              id="lahde_sivu"
+              name="lahde_sivu"
+              inputMode="numeric"
+              className="rounded border border-border bg-surface px-2 py-2"
+            />
+          </p>
+          <p className="flex flex-col gap-1">
+            <label htmlFor="lainaus" className="text-sm font-medium">
+              Sanatarkka kohta (jos sama kaikille)
+            </label>
+            <textarea
+              id="lainaus"
+              name="lainaus"
+              rows={3}
+              className="rounded border border-border bg-surface px-2 py-2"
+            />
+          </p>
+        </fieldset>
+
+        {LOMAKE_KENTAT.map((kentta) => (
+          <IlmoitusKenttalohko
+            key={kentta}
+            kentta={kentta}
+            pakollinen={tyyppi === "uusi_hanke" && ["nimi", "kunta", "vaihe"].includes(kentta)}
+          />
         ))}
 
-        <p className="flex flex-col gap-1">
-          <label htmlFor="lahde_url" className="text-sm font-medium">
-            Lähteen osoite (pakollinen)
-          </label>
-          <input
-            id="lahde_url"
-            name="lahde_url"
-            type="url"
-            required
-            placeholder="https://"
-            className="rounded border border-border bg-surface px-2 py-2"
-          />
-        </p>
-        <p className="flex flex-col gap-1">
-          <label htmlFor="lahde_sivu" className="text-sm font-medium">
-            Sivunumero (jos asiakirja)
-          </label>
-          <input
-            id="lahde_sivu"
-            name="lahde_sivu"
-            inputMode="numeric"
-            className="rounded border border-border bg-surface px-2 py-2"
-          />
-        </p>
-        <p className="flex flex-col gap-1">
-          <label htmlFor="lainaus" className="text-sm font-medium">
-            Sanatarkka kohta lähteestä
-          </label>
-          <textarea
-            id="lainaus"
-            name="lainaus"
-            rows={3}
-            className="rounded border border-border bg-surface px-2 py-2"
-          />
-        </p>
         <p className="flex flex-col gap-1">
           <label htmlFor="huomautus" className="text-sm font-medium">
             Lisätieto ylläpitäjälle

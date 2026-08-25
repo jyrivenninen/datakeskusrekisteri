@@ -147,6 +147,25 @@ function onHttpsUrl(arvo: string): boolean {
   return /^https?:\/\//.test(arvo);
 }
 
+function sivunumero(lahdeSivu: string): { sivu: number | null; virhe: string | null } {
+  if (lahdeSivu.trim() === "") return { sivu: null, virhe: null };
+  const sivu = Number(lahdeSivu);
+  if (!Number.isInteger(sivu) || sivu < 1) {
+    return { sivu: null, virhe: "Sivunumero ei ole kelvollinen." };
+  }
+  return { sivu, virhe: null };
+}
+
+export type IlmoitusKentanLahde = {
+  lahde_url: string;
+  lahde_sivu: string;
+  lainaus: string;
+  luottamus: string;
+};
+
+/** Ilmoituksen luottamusvalinnat. Ristiriita käsitellään jonossa, ei tällä lomakkeella. */
+export const ILMOITUS_LUOTTAMUKSET = ["vahvistettu", "epavarma"] as const;
+
 export function rakennaSisalto(
   kentat: Record<string, string>,
   lahdeUrl: string,
@@ -156,10 +175,8 @@ export function rakennaSisalto(
   if (!onHttpsUrl(lahdeUrl)) {
     return { sisalto: { kentat: {} }, virhe: "Lähteen osoitteen pitää alkaa http:// tai https://." };
   }
-  const sivu = lahdeSivu.trim() === "" ? null : Number(lahdeSivu);
-  if (sivu != null && (!Number.isInteger(sivu) || sivu < 1)) {
-    return { sisalto: { kentat: {} }, virhe: "Sivunumero ei ole kelvollinen." };
-  }
+  const { sivu, virhe: sivuVirhe } = sivunumero(lahdeSivu);
+  if (sivuVirhe) return { sisalto: { kentat: {} }, virhe: sivuVirhe };
 
   const tulos: Record<string, EhdotettuKentta> = {};
   for (const [kentta, raaka] of Object.entries(kentat)) {
@@ -173,6 +190,72 @@ export function rakennaSisalto(
       lahde_url: lahdeUrl.trim(),
       lahde_sivu: sivu,
       lainaus: lainaus.trim() || null,
+    };
+  }
+
+  return { sisalto: { kentat: tulos }, virhe: null };
+}
+
+export function rakennaIlmoitusSisalto(
+  kentat: Record<string, string>,
+  yhteinenLahdeUrl: string,
+  yhteinenLahdeSivu: string,
+  yhteinenLainaus: string,
+  kohdat: Record<string, IlmoitusKentanLahde>,
+): { sisalto: EhdotusSisalto; virhe: string | null } {
+  const yhteinenUrl = yhteinenLahdeUrl.trim();
+  if (yhteinenUrl && !onHttpsUrl(yhteinenUrl)) {
+    return {
+      sisalto: { kentat: {} },
+      virhe: "Yhteisen lähteen osoitteen pitää alkaa http:// tai https://.",
+    };
+  }
+  const yhteinenSivu = sivunumero(yhteinenLahdeSivu);
+  if (yhteinenSivu.virhe) return { sisalto: { kentat: {} }, virhe: yhteinenSivu.virhe };
+
+  const tulos: Record<string, EhdotettuKentta> = {};
+  for (const [kentta, raaka] of Object.entries(kentat)) {
+    const arvo = raaka.trim();
+    if (!arvo) continue;
+    if (kentta === "vaihe" && !(HANKE_VAIHEET as readonly string[]).includes(arvo)) {
+      return { sisalto: { kentat: {} }, virhe: "Vaihe ei ole sallittu." };
+    }
+
+    const kohta = kohdat[kentta];
+    const omaUrl = kohta?.lahde_url.trim() ?? "";
+    if (omaUrl && !onHttpsUrl(omaUrl)) {
+      return {
+        sisalto: { kentat: {} },
+        virhe: `Kentän lähteen osoitteen pitää alkaa http:// tai https://.`,
+      };
+    }
+    const lahdeUrl = omaUrl || yhteinenUrl;
+    if (!lahdeUrl) {
+      return {
+        sisalto: { kentat: {} },
+        virhe: "Jokaisella täytetyllä kentällä pitää olla lähteen osoite.",
+      };
+    }
+
+    const omaSivu = sivunumero(kohta?.lahde_sivu ?? "");
+    if (omaSivu.virhe) return { sisalto: { kentat: {} }, virhe: omaSivu.virhe };
+
+    const luottamusRaaka = (kohta?.luottamus ?? "").trim();
+    const luottamus: Luottamus = (ILMOITUS_LUOTTAMUKSET as readonly string[]).includes(
+      luottamusRaaka,
+    )
+      ? (luottamusRaaka as (typeof ILMOITUS_LUOTTAMUKSET)[number])
+      : "epavarma";
+
+    const lainaus =
+      (kohta?.lainaus.trim() || yhteinenLainaus.trim()) || null;
+
+    tulos[kentta] = {
+      arvo,
+      lahde_url: lahdeUrl,
+      lahde_sivu: omaSivu.sivu ?? (omaUrl ? null : yhteinenSivu.sivu),
+      lainaus,
+      luottamus,
     };
   }
 

@@ -48,8 +48,11 @@ export function YllapitoOhjeet({ massahyvaksynta = false }: { massahyvaksynta?: 
         <div className="space-y-2">
           <OhjeKohta otsikko="Täydennys, korjaus, uusi hanke ja valokuva" id="ohje-taydennys">
             <li>
-              Avaa ehdotus. Vertaa arvoa lähdeosoitteeseen ja lainaukseen.
-              Sivunumero tarvitaan, jos lähde on dokumentti.
+              Avaa ehdotus. Vertaa jokaista kenttää sen omaan lähdeosoitteeseen
+              ja lainaukseen (osoite voi olla yhteinen tai kenttäkohtainen).
+              Sivunumero tarvitaan, jos lähde on dokumentti. Luottamus
+              (vahvistettu / epävarma) tulee ehdotuksesta; älä hyväksy
+              epävarmaa lukua vahvistettuna.
             </li>
             <li>
               Jos lainaus ei tue arvoa tai lähde ei avaudu, hylkää. Tyhjä kenttä
