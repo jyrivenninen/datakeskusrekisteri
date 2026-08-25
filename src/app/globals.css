@@ -151,3 +151,76 @@ dialog.esiversio-ilmoitus::backdrop {
 .maplibregl-canvas {
   background: #d2e7f0;
 }
+
+button {
+  touch-action: manipulation;
+}
+
+button:not(:disabled) {
+  cursor: pointer;
+}
+
+button:disabled {
+  cursor: not-allowed;
+}
+
+button:hover:not(:disabled) {
+  filter: brightness(1.1);
+}
+
+button:active:not(:disabled) {
+  transform: translateY(1px) scale(0.98);
+  filter: brightness(0.88);
+}
+
+button:focus-visible {
+  outline: 2px solid var(--link);
+  outline-offset: 2px;
+}
+
+select:focus-visible,
+input[type="checkbox"]:focus-visible,
+input[type="radio"]:focus-visible,
+input[type="text"]:focus-visible,
+input[type="email"]:focus-visible,
+input[type="url"]:focus-visible,
+input[type="number"]:focus-visible,
+textarea:focus-visible {
+  outline: 2px solid var(--link);
+  outline-offset: 2px;
+}
+
+select:active,
+input[type="checkbox"]:active,
+input[type="radio"]:active {
+  filter: brightness(0.92);
+}
+
+summary {
+  cursor: pointer;
+}
+
+summary:active {
+  filter: brightness(0.9);
+}
+
+.kartta-nuppineula:active {
+  transform: scale(0.9);
+}
+
+.maplibregl-ctrl-group button:active {
+  transform: translateY(1px) scale(0.96);
+}
+
+form[aria-busy="true"] select,
+form[aria-busy="true"] input[type="checkbox"] {
+  opacity: 0.7;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  button:active:not(:disabled),
+  .kartta-nuppineula:active,
+  .maplibregl-ctrl-group button:active {
+    transform: none;
+  }
+}

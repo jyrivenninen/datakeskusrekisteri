@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { HANKE_VAIHEET } from "@/lib/supabase/tietokanta";
 import { KOKO_LUOKAT, VAIHE_NIMET } from "@/lib/naytto";
 import type { HankeSuodatus } from "@/lib/supabase/kyselyt";
@@ -11,13 +12,17 @@ export function Suodatuslomake({
   suodatus: HankeSuodatus;
   kunnat: string[];
 }) {
+  const [odottaa, setOdottaa] = useState(false);
+
   return (
     <form
       key={`${suodatus.kunta ?? ""}-${suodatus.vaihe ?? ""}-${suodatus.koko ?? ""}-${suodatus.kuvalliset ? "1" : "0"}`}
       method="get"
       action="/"
       className="mt-4 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-end"
+      aria-busy={odottaa}
       onChange={(tapahtuma) => {
+        setOdottaa(true);
         tapahtuma.currentTarget.requestSubmit();
       }}
     >
@@ -96,6 +101,11 @@ export function Suodatuslomake({
           Suodata
         </button>
       </noscript>
+      {odottaa ? (
+        <p className="w-full text-sm text-muted" aria-live="polite">
+          Päivitetään…
+        </p>
+      ) : null}
     </form>
   );
 }
