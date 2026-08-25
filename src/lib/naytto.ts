@@ -99,6 +99,32 @@ export const MUUTOSEHDOTUS_TYYPPI_NIMET: Record<string, string> = {
   ristiriita_havainto: "Ristiriitahavainto",
 };
 
+export const RISTIRIITA_SAANTO_NIMET: Record<string, string> = {
+  ytunnus_nimet: "Sama Y-tunnus, eri nimet",
+  nimi_ytunnukset: "Sama nimi, eri Y-tunnukset",
+  rekisterointi_ennen_hanketta: "Määräaika ennen toimijan rekisteröintiä",
+  teho_suhde: "Generaattoriteho ja ilmoitettu teho",
+  koordinaatit_suomi: "Sijainti Suomen alueen ulkopuolella",
+  maaraaika_mennyt: "Päättynyt määräaika yhä julkaistu",
+  lahekkaiset_hankkeet: "Lähekkäiset hankkeet",
+};
+
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+export function ehdotuksenHankeIdt(
+  hankeId: string | null,
+  ristiriita?: { saanto?: string; avain?: string } | null,
+): string[] {
+  const idt: string[] = [];
+  if (hankeId) idt.push(hankeId);
+  if (ristiriita?.saanto === "lahekkaiset_hankkeet" && ristiriita.avain) {
+    for (const osa of ristiriita.avain.split(":")) {
+      if (UUID.test(osa) && !idt.includes(osa)) idt.push(osa);
+    }
+  }
+  return idt;
+}
+
 export const MUUTOSEHDOTUS_TILA_NIMET: Record<MuutosehdotusTila, string> = {
   odottaa: "Odottaa",
   hyvaksytty: "Hyväksytty",

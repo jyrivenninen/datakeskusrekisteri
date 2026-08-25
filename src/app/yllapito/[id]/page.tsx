@@ -1,7 +1,12 @@
 import { notFound, redirect } from "next/navigation";
 import { hyvaksyEhdotusToiminto, hylkaaEhdotusToiminto } from "@/app/toiminnot";
 import { EhdotusTila } from "@/komponentit/ehdotus-tila";
-import { HANKE_KENTTA_NIMET, MUUTOSEHDOTUS_TYYPPI_NIMET } from "@/lib/naytto";
+import {
+  ehdotuksenHankeIdt,
+  HANKE_KENTTA_NIMET,
+  MUUTOSEHDOTUS_TYYPPI_NIMET,
+  RISTIRIITA_SAANTO_NIMET,
+} from "@/lib/naytto";
 import { haeKirjautunutKayttaja } from "@/lib/supabase/palvelin";
 import type { EhdotusSisalto } from "@/lib/ehdotus";
 import { supabasePalvelinAvainAsetettu } from "@/lib/supabase/yllapito-asiakas";
@@ -51,6 +56,11 @@ export default async function EhdotusSivu({
   const mml = sisalto.mml;
   const dokumentti = sisalto.dokumentti;
   const ristiriita = sisalto.ristiriita;
+  const hankeIdt = ehdotuksenHankeIdt(ehdotus.hanke_id, ristiriita);
+  const { data: hankkeet } =
+    hankeIdt.length > 0
+      ? await supabase.from("hankkeet").select("id, nimi, kunta").in("id", hankeIdt)
+      : { data: [] };
 
   return (
     <main id="sisalto" className="mx-auto w-full max-w-3xl flex-1 px-4 py-10">
@@ -71,6 +81,23 @@ export default async function EhdotusSivu({
         <p className="mt-4" role="alert">
           {query.virhe}
         </p>
+      ) : null}
+      {(hankkeet ?? []).length > 0 ? (
+        <section className="mt-4" aria-labelledby="koskee-otsikko">
+          <h2 id="koskee-otsikko" className="text-lg font-semibold">
+            {(hankkeet ?? []).length === 1 ? "Hanke" : "Hankkeet"}
+          </h2>
+          <ul className="mt-2">
+            {(hankkeet ?? []).map((hanke) => (
+              <li key={hanke.id}>
+                <a href={`/hankkeet/${hanke.id}`} className="text-link underline">
+                  {hanke.nimi}
+                </a>
+                {hanke.kunta ? ` · ${hanke.kunta}` : ""}
+              </li>
+            ))}
+          </ul>
+        </section>
       ) : null}
       {ehdotus.huomautus ? (
         <p className="mt-4">
@@ -303,7 +330,9 @@ export default async function EhdotusSivu({
           <dl className="mt-4 divide-y divide-border border-y border-border">
             <div className="py-3">
               <dt className="font-medium">Sääntö</dt>
-              <dd className="mt-1">{ristiriita.saanto}</dd>
+              <dd className="mt-1">
+                {RISTIRIITA_SAANTO_NIMET[ristiriita.saanto] ?? ristiriita.saanto}
+              </dd>
             </div>
           </dl>
         </section>

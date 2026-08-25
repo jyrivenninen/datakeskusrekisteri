@@ -29,7 +29,7 @@ export default async function YllapitoSivu({
   const params = await searchParams;
   const { data: ehdotukset } = await supabase
     .from("muutosehdotukset")
-    .select("id, tyyppi, tila, luotu_pvm, ehdottaja_tunniste")
+    .select("id, tyyppi, tila, luotu_pvm, ehdottaja_tunniste, hanke:hankkeet(nimi)")
     .order("luotu_pvm", { ascending: false });
   const { data: ajot } = await supabase
     .from("lahdeajot")
@@ -131,7 +131,13 @@ export default async function YllapitoSivu({
                 <EhdotusTila tila={ehdotus.tila} />
               </div>
               <p className="mt-1 text-sm text-muted">
-                {muotoilePvm(ehdotus.luotu_pvm)} · {ehdotus.ehdottaja_tunniste}
+                {muotoilePvm(ehdotus.luotu_pvm)}
+                {(() => {
+                  const hanke = ehdotus.hanke as { nimi?: string } | { nimi?: string }[] | null;
+                  const nimi = Array.isArray(hanke) ? hanke[0]?.nimi : hanke?.nimi;
+                  return nimi ? ` · ${nimi}` : "";
+                })()}
+                {` · ${ehdotus.ehdottaja_tunniste}`}
               </p>
             </li>
           ))
