@@ -64,6 +64,10 @@ export type EhdotusSisalto = {
     merkkimaara: number;
     muoto: string | null;
   };
+  ristiriita?: {
+    saanto: string;
+    avain: string;
+  };
   mml?: {
     nimi: string | null;
     kunta: string | null;

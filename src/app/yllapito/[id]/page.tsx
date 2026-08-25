@@ -43,12 +43,14 @@ export default async function EhdotusSivu({
     ehdotus.tyyppi === "kunta_havainto" ||
     (ehdotus.tyyppi === "ytj_havainto" && !sisalto.ytj?.ehdota_tunnus) ||
     ehdotus.tyyppi === "mml_havainto" ||
-    ehdotus.tyyppi === "dokumentti_muuttunut";
+    ehdotus.tyyppi === "dokumentti_muuttunut" ||
+    ehdotus.tyyppi === "ristiriita_havainto";
   const linkki = sisalto.linkki;
   const ryhti = sisalto.ryhti;
   const ytj = sisalto.ytj;
   const mml = sisalto.mml;
   const dokumentti = sisalto.dokumentti;
+  const ristiriita = sisalto.ristiriita;
 
   return (
     <main id="sisalto" className="mx-auto w-full max-w-3xl flex-1 px-4 py-10">
@@ -284,6 +286,24 @@ export default async function EhdotusSivu({
                   {ehdotus.lahde_url}
                 </a>
               </dd>
+            </div>
+          </dl>
+        </section>
+      ) : null}
+
+      {ristiriita ? (
+        <section className="mt-6" aria-labelledby="ristiriita-otsikko">
+          <h2 id="ristiriita-otsikko" className="text-xl font-semibold">
+            Ristiriitahavainto
+          </h2>
+          <p className="mt-2 text-sm text-muted">
+            Hyväksyntä merkitsee havainnon käsitellyksi. Se ei muuta
+            hankekenttiä eikä päättele syytä.
+          </p>
+          <dl className="mt-4 divide-y divide-border border-y border-border">
+            <div className="py-3">
+              <dt className="font-medium">Sääntö</dt>
+              <dd className="mt-1">{ristiriita.saanto}</dd>
             </div>
           </dl>
         </section>

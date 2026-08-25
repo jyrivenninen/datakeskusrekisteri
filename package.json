@@ -9,6 +9,7 @@
     "lint": "eslint",
     "agentti:linkit": "tsx agents/tarkistukset/linkit.ts",
     "agentti:dokumentit": "tsx agents/tarkistukset/dokumentit.ts",
+    "agentti:ristiriidat": "tsx agents/tarkistukset/ristiriidat.ts",
     "agentti:hakemisto": "tsx agents/lahteet/hakemisto.ts",
     "agentti:ryhti": "tsx agents/lahteet/ryhti.ts",
     "agentti:ytj": "tsx agents/lahteet/ytj.ts",

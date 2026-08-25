@@ -76,7 +76,8 @@ export async function hyvaksyMuutosehdotus(ehdotusId: string, kasittelija: strin
     ehdotus.tyyppi === "kunta_havainto" ||
     ehdotus.tyyppi === "ytj_havainto" ||
     ehdotus.tyyppi === "mml_havainto" ||
-    ehdotus.tyyppi === "dokumentti_muuttunut"
+    ehdotus.tyyppi === "dokumentti_muuttunut" ||
+    ehdotus.tyyppi === "ristiriita_havainto"
   ) {
     const { error: paivitysVirhe } = await supabase
       .from("muutosehdotukset")
