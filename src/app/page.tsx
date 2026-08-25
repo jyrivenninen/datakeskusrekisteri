@@ -144,6 +144,8 @@ export default async function Etusivu({
         <div className="mt-4">
           <Kartta
             merkit={merkit}
+            sovitaSuomeen
+            luokka="min-h-[28rem] h-[min(70svh,42rem)]"
             vaiheLkm={Object.fromEntries(
               HANKE_VAIHEET.map((vaihe) => [
                 vaihe,

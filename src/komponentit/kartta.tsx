@@ -18,6 +18,12 @@ export type Karttamerkki = {
 
 const OLETUSVARI = "#1d4ed8";
 
+/** Manner-Suomi ja Ahvenanmaa, hieman reunusta. */
+const SUOMI_RAJAT: [[number, number], [number, number]] = [
+  [19.08, 59.45],
+  [31.59, 70.09],
+];
+
 function vaiheVari(vaihe?: HankeVaihe): string {
   return vaihe ? VAIHE_VARIT[vaihe] : OLETUSVARI;
 }
@@ -226,10 +232,12 @@ export function Kartta({
   merkit,
   luokka,
   vaiheLkm,
+  sovitaSuomeen = false,
 }: {
   merkit: Karttamerkki[];
   luokka?: string;
   vaiheLkm?: Partial<Record<HankeVaihe, number>>;
+  sovitaSuomeen?: boolean;
 }) {
   const kehys = useRef<HTMLDivElement>(null);
   const avain = process.env.NEXT_PUBLIC_MML_API_AVAIN;
@@ -301,6 +309,11 @@ export function Kartta({
     const paivita = () => piirraGeometriat(kartta, svg, merkitNyt);
 
     const rajaaKartta = () => {
+      if (sovitaSuomeen) {
+        kartta.fitBounds(SUOMI_RAJAT, { padding: 24, maxZoom: 6 });
+        paivita();
+        return;
+      }
       const yhdellaGeometria =
         merkitNyt.length === 1 &&
         Boolean(merkitNyt[0]?.alue || (merkitNyt[0]?.johdot && merkitNyt[0].johdot.length > 0));
@@ -330,7 +343,7 @@ export function Kartta({
       svg.remove();
       kartta.remove();
     };
-  }, [avain, merkitAvain]);
+  }, [avain, merkitAvain, sovitaSuomeen]);
 
   if (!avain) {
     return (
