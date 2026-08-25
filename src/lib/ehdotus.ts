@@ -56,6 +56,14 @@ export type EhdotusSisalto = {
     ei_loydy: boolean;
     ehdota_tunnus?: boolean;
   };
+  dokumentti?: {
+    dokumentti_id: string;
+    otsikko: string;
+    vanha_tiiviste: string | null;
+    uusi_tiiviste: string;
+    merkkimaara: number;
+    muoto: string | null;
+  };
   mml?: {
     nimi: string | null;
     kunta: string | null;

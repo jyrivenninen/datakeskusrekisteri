@@ -42,11 +42,13 @@ export default async function EhdotusSivu({
     ehdotus.tyyppi === "ryhti_havainto" ||
     ehdotus.tyyppi === "kunta_havainto" ||
     (ehdotus.tyyppi === "ytj_havainto" && !sisalto.ytj?.ehdota_tunnus) ||
-    ehdotus.tyyppi === "mml_havainto";
+    ehdotus.tyyppi === "mml_havainto" ||
+    ehdotus.tyyppi === "dokumentti_muuttunut";
   const linkki = sisalto.linkki;
   const ryhti = sisalto.ryhti;
   const ytj = sisalto.ytj;
   const mml = sisalto.mml;
+  const dokumentti = sisalto.dokumentti;
 
   return (
     <main id="sisalto" className="mx-auto w-full max-w-3xl flex-1 px-4 py-10">
@@ -220,6 +222,59 @@ export default async function EhdotusSivu({
             ) : null}
             <div className="py-3">
               <dt className="font-medium">Tietue</dt>
+              <dd className="mt-1">
+                <a
+                  href={ehdotus.lahde_url ?? "#"}
+                  className="text-link underline"
+                  rel="noopener noreferrer"
+                >
+                  {ehdotus.lahde_url}
+                </a>
+              </dd>
+            </div>
+          </dl>
+        </section>
+      ) : null}
+
+      {dokumentti ? (
+        <section className="mt-6" aria-labelledby="dokumentti-otsikko">
+          <h2 id="dokumentti-otsikko" className="text-xl font-semibold">
+            Dokumentin muutos
+          </h2>
+          <p className="mt-2 text-sm text-muted">
+            Hyväksyntä merkitsee havainnon käsitellyksi. Se ei muuta
+            hankekenttiä. Tiiviste on uutettusta tekstistä, ei PDF-tiedoston
+            raakabinääristä.
+          </p>
+          <dl className="mt-4 divide-y divide-border border-y border-border">
+            <div className="py-3">
+              <dt className="font-medium">Otsikko</dt>
+              <dd className="mt-1">{dokumentti.otsikko}</dd>
+            </div>
+            {dokumentti.muoto ? (
+              <div className="py-3">
+                <dt className="font-medium">Muoto</dt>
+                <dd className="mt-1">{dokumentti.muoto}</dd>
+              </div>
+            ) : null}
+            <div className="py-3">
+              <dt className="font-medium">Merkkimäärä</dt>
+              <dd className="mt-1">{dokumentti.merkkimaara}</dd>
+            </div>
+            <div className="py-3">
+              <dt className="font-medium">Edellinen tiiviste</dt>
+              <dd className="mt-1 break-all font-mono text-sm">
+                {dokumentti.vanha_tiiviste ?? "ei aiempaa"}
+              </dd>
+            </div>
+            <div className="py-3">
+              <dt className="font-medium">Uusi tiiviste</dt>
+              <dd className="mt-1 break-all font-mono text-sm">
+                {dokumentti.uusi_tiiviste}
+              </dd>
+            </div>
+            <div className="py-3">
+              <dt className="font-medium">Osoite</dt>
               <dd className="mt-1">
                 <a
                   href={ehdotus.lahde_url ?? "#"}

@@ -161,7 +161,7 @@ ovat valmiit — ne ovat helppo osa, kun tietomalli on kunnossa.
 Tarkennettu: `PROJEKTI-lisays-vaihe7.md`. Luku 7A.5 ja uusi 7A.6:
 `PROJEKTI-lisays-7A5-rajapinnat.md`.
 - [x] 7A.1 Linkkitarkistus (`agents/tarkistukset/linkit.ts`)
-- [ ] 7A.2 Dokumenttien muutosvahti (`agents/tarkistukset/dokumentit.ts`)
+- [x] 7A.2 Dokumenttien muutosvahti (`agents/tarkistukset/dokumentit.ts`)
 - [ ] 7A.3 Ristiriidat SQL:llä (`agents/tarkistukset/ristiriidat.ts`)
 - [ ] 7A.4 Vanhentumisvahti (`agents/tarkistukset/vanhentuneet.ts`)
 - [ ] 7A.5 Rakenteiset rajapinnat (`agents/lahteet/`)

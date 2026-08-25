@@ -99,6 +99,7 @@ export const MUUTOSEHDOTUS_TYYPIT = [
   "kunta_havainto",
   "ytj_havainto",
   "mml_havainto",
+  "dokumentti_muuttunut",
 ] as const;
 
 export type MuutosehdotusTyyppi = (typeof MUUTOSEHDOTUS_TYYPIT)[number];

@@ -95,6 +95,7 @@ export const MUUTOSEHDOTUS_TYYPPI_NIMET: Record<string, string> = {
   kunta_havainto: "Kuntahavainto",
   ytj_havainto: "YTJ-havainto",
   mml_havainto: "MML-havainto",
+  dokumentti_muuttunut: "Dokumentti muuttunut",
 };
 
 export const MUUTOSEHDOTUS_TILA_NIMET: Record<MuutosehdotusTila, string> = {

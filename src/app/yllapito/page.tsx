@@ -92,9 +92,10 @@ export default async function YllapitoSivu({
             />
             <label htmlFor="vahvista-kaikki" className="max-w-prose text-sm">
               Käsittele kaikki {odottavia} odottavaa ehdotusta. Hanketiedot
-              julkaistaan; rikkinäiset linkit sekä Ryhti-, YTJ-, MML- ja
-              kuntahavainnot merkitään vain käsitellyiksi. Merkintä on
-              ihmisen vahvistama.
+              julkaistaan; rikkinäiset linkit, muuttuneet dokumentit sekä
+              Ryhti-, YTJ-, MML- ja kuntahavainnot merkitään vain
+              käsitellyiksi (YTJ-Y-tunnusehdotus julkaisee tunnuksen).
+              Merkintä on ihmisen vahvistama.
             </label>
           </div>
           {supabasePalvelinAvainAsetettu() ? (
