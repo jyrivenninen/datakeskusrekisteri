@@ -67,6 +67,8 @@ export type EhdotusSisalto = {
   ristiriita?: {
     saanto: string;
     avain: string;
+    ei_uudelleen?: boolean;
+    ei_uudelleen_perustelu?: string;
   };
   mml?: {
     nimi: string | null;

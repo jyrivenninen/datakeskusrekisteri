@@ -107,11 +107,12 @@ export default async function YllapitoSivu({
               className="mt-1"
             />
             <label htmlFor="vahvista-kaikki" className="max-w-prose text-sm">
-              Käsittele kaikki {odottavia} odottavaa ehdotusta. Hanketiedot
-              julkaistaan; rikkinäiset linkit, muuttuneet dokumentit sekä
-              Ryhti-, YTJ-, MML-, kunta- ja ristiriitahavainnot merkitään vain
+              Käsittele kaikki odottavat ehdotukset paitsi ristiriitahavainnot.
+              Hanketiedot julkaistaan; rikkinäiset linkit, muuttuneet dokumentit
+              sekä Ryhti-, YTJ-, MML- ja kuntahavainnot merkitään vain
               käsitellyiksi (YTJ-Y-tunnusehdotus julkaisee tunnuksen).
-              Merkintä on ihmisen vahvistama.
+              Ristiriitahavainto vaatii oman kommentin, miksi se ei nouse
+              uudelleen. Merkintä on ihmisen vahvistama.
             </label>
           </div>
           {supabasePalvelinAvainAsetettu() ? (

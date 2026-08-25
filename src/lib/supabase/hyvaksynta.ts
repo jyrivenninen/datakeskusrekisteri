@@ -39,7 +39,36 @@ function lahdeRivi(
   };
 }
 
-export async function hyvaksyMuutosehdotus(ehdotusId: string, kasittelija: string) {
+function ristiriitaEiUudelleenPerustelu(teksti: string | undefined): string {
+  const t = (teksti ?? "").trim();
+  if (t.length < 12) {
+    throw new Error(
+      "Kirjaa miksi havainto ei nouse uudelleen (vähintään 12 merkkiä).",
+    );
+  }
+  return t;
+}
+
+function ristiriitaSisaltoEiUudelleen(
+  sisalto: EhdotusSisalto,
+  perustelu: string,
+): EhdotusSisalto {
+  if (!sisalto.ristiriita) return sisalto;
+  return {
+    ...sisalto,
+    ristiriita: {
+      ...sisalto.ristiriita,
+      ei_uudelleen: true,
+      ei_uudelleen_perustelu: perustelu,
+    },
+  };
+}
+
+export async function hyvaksyMuutosehdotus(
+  ehdotusId: string,
+  kasittelija: string,
+  valinnat?: { eiUudelleen?: boolean; perustelu?: string },
+) {
   const supabase = luoYllapitoAsiakas();
   const { data: ehdotus, error } = await supabase
     .from("muutosehdotukset")
@@ -79,12 +108,27 @@ export async function hyvaksyMuutosehdotus(ehdotusId: string, kasittelija: strin
     ehdotus.tyyppi === "dokumentti_muuttunut" ||
     ehdotus.tyyppi === "ristiriita_havainto"
   ) {
+    const sisalto = ehdotus.sisalto as EhdotusSisalto;
+    let ristiriitaPaivitys: Record<string, unknown> = {};
+    if (ehdotus.tyyppi === "ristiriita_havainto") {
+      if (!valinnat?.eiUudelleen) {
+        throw new Error(
+          "Ristiriitahavainto merkitään käsitellyksi vain, jos valitset ettei se nouse uudelleen.",
+        );
+      }
+      const perustelu = ristiriitaEiUudelleenPerustelu(valinnat.perustelu);
+      ristiriitaPaivitys = {
+        sisalto: ristiriitaSisaltoEiUudelleen(sisalto, perustelu),
+        perustelu,
+      };
+    }
     const { error: paivitysVirhe } = await supabase
       .from("muutosehdotukset")
       .update({
         tila: "hyvaksytty",
         kasitelty_pvm: new Date().toISOString(),
         kasittelija,
+        ...ristiriitaPaivitys,
       })
       .eq("id", ehdotusId)
       .eq("tila", "odottaa");
@@ -206,15 +250,37 @@ export async function hylkaaMuutosehdotus(
   ehdotusId: string,
   kasittelija: string,
   perustelu: string,
+  valinnat?: { eiUudelleen?: boolean },
 ) {
   const supabase = luoYllapitoAsiakas();
+  const { data: ehdotus, error: hakuVirhe } = await supabase
+    .from("muutosehdotukset")
+    .select("tyyppi, sisalto")
+    .eq("id", ehdotusId)
+    .eq("tila", "odottaa")
+    .maybeSingle();
+  if (hakuVirhe) throw new Error(hakuVirhe.message);
+  if (!ehdotus) throw new Error("Ehdotusta ei löytynyt tai se on jo käsitelty.");
+
+  const sisalto = ehdotus.sisalto as EhdotusSisalto;
+  let ristiriitaPaivitys: Record<string, unknown> = {};
+  if (ehdotus.tyyppi === "ristiriita_havainto" && valinnat?.eiUudelleen) {
+    const eiUudelleenPerustelu = ristiriitaEiUudelleenPerustelu(perustelu);
+    ristiriitaPaivitys = {
+      sisalto: ristiriitaSisaltoEiUudelleen(sisalto, eiUudelleenPerustelu),
+      perustelu: eiUudelleenPerustelu,
+    };
+  }
   const { error } = await supabase
     .from("muutosehdotukset")
     .update({
       tila: "hylatty",
       kasitelty_pvm: new Date().toISOString(),
       kasittelija,
-      perustelu: perustelu.trim() || "Hylätty ylläpidossa.",
+      perustelu:
+        (ristiriitaPaivitys.perustelu as string | undefined) ??
+        (perustelu.trim() || "Hylätty ylläpidossa."),
+      ...(ristiriitaPaivitys.sisalto ? { sisalto: ristiriitaPaivitys.sisalto } : {}),
     })
     .eq("id", ehdotusId)
     .eq("tila", "odottaa");

@@ -115,6 +115,11 @@ export default async function EhdotusSivu({
           <strong>Huomautus:</strong> {ehdotus.huomautus}
         </p>
       ) : null}
+      {ehdotus.perustelu ? (
+        <p className="mt-4">
+          <strong>Käsittelyn perustelu:</strong> {ehdotus.perustelu}
+        </p>
+      ) : null}
 
       {ryhti ? (
         <section className="mt-6" aria-labelledby="ryhti-otsikko">
@@ -338,6 +343,9 @@ export default async function EhdotusSivu({
             Hyväksyntä merkitsee havainnon käsitellyksi. Se ei muuta
             hankekenttiä eikä päättele syytä.
           </p>
+          {ristiriita.ei_uudelleen ? (
+            <p className="mt-2 text-sm">Sama havainto ei nouse uudelleen.</p>
+          ) : null}
           <dl className="mt-4 divide-y divide-border border-y border-border">
             <div className="py-3">
               <dt className="font-medium">Sääntö</dt>
@@ -497,8 +505,37 @@ export default async function EhdotusSivu({
 
       {odottaa ? (
         <div className="mt-8 flex flex-col gap-6">
-          <form action={hyvaksyEhdotusToiminto}>
+          <form action={hyvaksyEhdotusToiminto} className="space-y-3">
             <input type="hidden" name="id" value={ehdotus.id} />
+            {ristiriita ? (
+              <div className="space-y-3">
+                <div className="flex flex-wrap items-start gap-3">
+                  <input
+                    id="ei-uudelleen-hyvaksy"
+                    type="checkbox"
+                    name="ei_uudelleen"
+                    value="kylla"
+                    required
+                    className="mt-1"
+                  />
+                  <label htmlFor="ei-uudelleen-hyvaksy" className="max-w-prose text-sm">
+                    Havainto on käsitelty. Sama havainto ei nouse uudelleen,
+                    vaikka koordinaatit tai muut luvut pysyisivät ennallaan.
+                  </label>
+                </div>
+                <label htmlFor="ei-uudelleen-perustelu" className="block text-sm font-medium">
+                  Miksi havainto ei nouse uudelleen
+                </label>
+                <textarea
+                  id="ei-uudelleen-perustelu"
+                  name="ei_uudelleen_perustelu"
+                  rows={3}
+                  required
+                  minLength={12}
+                  className="w-full rounded border border-border bg-surface px-2 py-2"
+                />
+              </div>
+            ) : null}
             <button
               type="submit"
               className="rounded border border-foreground bg-foreground px-4 py-2 text-sm font-medium text-background"
@@ -508,6 +545,21 @@ export default async function EhdotusSivu({
           </form>
           <form action={hylkaaEhdotusToiminto} className="space-y-2">
             <input type="hidden" name="id" value={ehdotus.id} />
+            {ristiriita ? (
+              <div className="flex flex-wrap items-start gap-3">
+                <input
+                  id="ei-uudelleen-hylkaa"
+                  type="checkbox"
+                  name="ei_uudelleen"
+                  value="kylla"
+                  className="mt-1"
+                />
+                <label htmlFor="ei-uudelleen-hylkaa" className="max-w-prose text-sm">
+                  Älä nosta samaa havaintoa uudelleen. Jos valitset tämän,
+                  perusteluun kirjataan miksi.
+                </label>
+              </div>
+            ) : null}
             <label htmlFor="perustelu" className="text-sm font-medium">
               Hylkäyksen perustelu
             </label>

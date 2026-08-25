@@ -3,7 +3,8 @@
  * Uusi sääntö: yksi Postgres-funktio + rivi ristiriita_havainnot-unioniin.
  *
  * Kirjaa muutosehdotukset tyypillä ristiriita_havainto. Ei kirjoita
- * hankkeet- eikä organisaatiot-tauluun.
+ * hankkeet- eikä organisaatiot-tauluun. Sama avain kirjataan uudelleen
+ * vain jos aiempi rivi ei ole jonossa eikä merkitty «ei uudelleen».
  *
  * Ympäristö: NEXT_PUBLIC_SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY
  * Valinnainen: RISTIRIITA_KUIVA=1, RISTIRIITA_TEHO_SUHDE (oletus 3),
@@ -42,16 +43,20 @@ async function main() {
     auth: { persistSession: false, autoRefreshToken: false },
   });
 
-  const { data: odottavat, error: jonoVirhe } = await supabase
+  const { data: aiemmat, error: jonoVirhe } = await supabase
     .from("muutosehdotukset")
-    .select("sisalto")
-    .eq("tyyppi", "ristiriita_havainto")
-    .eq("tila", "odottaa");
+    .select("tila, sisalto")
+    .eq("tyyppi", "ristiriita_havainto");
   if (jonoVirhe) throw new Error(jonoVirhe.message);
-  const jonossa = new Set<string>();
-  for (const rivi of odottavat ?? []) {
-    const avain = (rivi.sisalto as { ristiriita?: { avain?: string } }).ristiriita?.avain;
-    if (avain) jonossa.add(avain);
+  const nakyneet = new Set<string>();
+  for (const rivi of aiemmat ?? []) {
+    const ristiriita = (
+      rivi.sisalto as { ristiriita?: { avain?: string; ei_uudelleen?: boolean } }
+    ).ristiriita;
+    if (!ristiriita?.avain) continue;
+    if (rivi.tila === "odottaa" || ristiriita.ei_uudelleen) {
+      nakyneet.add(ristiriita.avain);
+    }
   }
 
   let ajoId: string | null = null;
@@ -79,7 +84,7 @@ async function main() {
 
     let kirjattu = 0;
     for (const h of havainnot) {
-      if (!h.avain || jonossa.has(h.avain)) continue;
+      if (!h.avain || nakyneet.has(h.avain)) continue;
       if (!kuiva) {
         const { error: lisaysVirhe } = await supabase.from("muutosehdotukset").insert({
           tyyppi: "ristiriita_havainto",
@@ -98,7 +103,7 @@ async function main() {
           },
         });
         if (lisaysVirhe) throw new Error(lisaysVirhe.message);
-        jonossa.add(h.avain);
+        nakyneet.add(h.avain);
       } else {
         console.log(`kuiva: ${h.saanto} ${h.huomautus}`);
       }
