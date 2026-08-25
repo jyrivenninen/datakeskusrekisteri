@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
-import { RyhtiKattavuus } from "@/komponentit/ryhti-kattavuus";
+import { cookies } from "next/headers";
+import { ESIVERSIO_EVASTE } from "@/lib/esiversio";
+import { EsiversioIlmoitus } from "@/komponentit/esiversio-ilmoitus";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -19,7 +21,10 @@ export const metadata: Metadata = {
     "Avoin hanketietokanta ja prosessiopas Suomessa vireillä olevista datakeskushankkeista, niiden etenemisestä ja määräajoista.",
 };
 
-export default function RootLayout({ children }: LayoutProps<"/">) {
+export default async function RootLayout({ children }: LayoutProps<"/">) {
+  const evasteet = await cookies();
+  const esiversioKuitattu = evasteet.get(ESIVERSIO_EVASTE)?.value === "kylla";
+
   return (
     <html
       lang="fi"
@@ -38,10 +43,16 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
               <a href="/" className="text-foreground no-underline hover:underline">
                 Datakeskushankkeiden kansallinen rekisteri
               </a>
+              <span className="mt-1 block text-xs font-normal text-muted">
+                Esiversio · tietoja täydennetään
+              </span>
             </p>
             <nav className="ml-auto flex flex-wrap justify-end gap-4 text-sm">
               <a href="/opas/yva-mielipide" className="text-link underline">
                 YVA-opas
+              </a>
+              <a href="/tietoa" className="text-link underline">
+                Tietoa
               </a>
               <a href="/hakemisto" className="text-link underline">
                 Hakemisto
@@ -55,12 +66,17 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
             </nav>
           </div>
         </header>
+        {esiversioKuitattu ? null : <EsiversioIlmoitus />}
         {children}
         <footer className="mt-auto border-t border-border">
           <div className="mx-auto w-full max-w-5xl px-4 py-6 text-sm text-muted">
             <p>Avoin hanketietokanta ja prosessiopas. Julkaistu tieto merkitään lähteineen.</p>
             <p className="mt-2">Palvelun tuottaa Kansallisdata ry.</p>
-            <RyhtiKattavuus luokka="mt-3" />
+            <p className="mt-2">
+              <a href="/tietoa" className="text-link underline">
+                Tietoa palvelusta
+              </a>
+            </p>
           </div>
         </footer>
       </body>

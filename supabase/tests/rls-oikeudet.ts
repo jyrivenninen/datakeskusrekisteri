@@ -7,7 +7,6 @@ import { createClient } from "@supabase/supabase-js";
 import { lataaPaikallinenYmparisto } from "../../agents/ymparisto";
 
 const LOKITAULUT = [
-  "lahdeajot",
   "dokumentti_tiivisteet",
   "rajapinta_tiivisteet",
   "mallikutsut",
@@ -92,7 +91,7 @@ async function main() {
   }
 
   console.log(
-    "PostgREST-RLS ok: service_role ei lisää hankkeisiin; anon ei lue lokitauluja.",
+    "PostgREST-RLS ok: service_role ei lisää hankkeisiin; anon ei lue tiiviste- ja mallilokeja.",
   );
 }
 

@@ -37,6 +37,17 @@ body {
   font-family: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
 }
 
+dialog.esiversio-ilmoitus {
+  position: fixed;
+  inset: auto;
+  margin: auto;
+  max-width: min(32rem, calc(100vw - 2rem));
+}
+
+dialog.esiversio-ilmoitus::backdrop {
+  background: rgb(0 0 0 / 0.5);
+}
+
 .liikennevalo {
   display: inline-flex;
   align-items: center;

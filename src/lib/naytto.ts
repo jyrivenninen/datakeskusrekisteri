@@ -308,6 +308,31 @@ export function muotoilePvm(arvo: string): string {
   return `${Number(paiva)}.${Number(kuukausi)}.${vuosi}`;
 }
 
+export function muotoileAika(arvo: string): string {
+  const pvm = new Date(arvo);
+  if (Number.isNaN(pvm.getTime())) return arvo;
+  return new Intl.DateTimeFormat("fi-FI", {
+    dateStyle: "short",
+    timeStyle: "short",
+  }).format(pvm);
+}
+
+export const LAHDEAJO_SOVITIN_NIMET: Record<string, string> = {
+  "ryhti-kaava": "Ryhti, kaava-aineisto",
+  "ytj-prh": "YTJ (PRH avoin data)",
+  "mml-geokoodaus": "MML, geokoodaus",
+  "hakemisto-kunta": "Kuntahakemisto",
+  ristiriidat: "Ristiriitatarkistus",
+  dokumentit: "Dokumenttien muutosvahti",
+  linkit: "Linkkitarkistus",
+};
+
+export const LAHDEAJO_TILA_NIMET: Record<string, string> = {
+  kaynnissa: "Käynnissä",
+  valmis: "Valmis",
+  epaonnistui: "Epäonnistui",
+};
+
 export function kenttaNayttonimi(taulu: string, kentta: string): string {
   if (HANKE_KENTTA_NIMET[kentta]) return HANKE_KENTTA_NIMET[kentta];
   return `${taulu}.${kentta}`;

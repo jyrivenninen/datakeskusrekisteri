@@ -512,3 +512,44 @@ export async function haeOrganisaatio(id: string): Promise<{
     return { ...tyhja, virhe: virheViesti(syy) };
   }
 }
+
+export type JulkinenLahdeajo = {
+  id: string;
+  sovitin: string;
+  tila: string;
+  alkoi_pvm: string;
+  paattyi_pvm: string | null;
+  http_tila: number | null;
+  osumia: number;
+  virhe: string | null;
+  kysely_url: string | null;
+};
+
+const LAHDEAJO_KATTO = 500;
+
+export async function haeJulkisetLahdeajot(): Promise<{
+  ajot: JulkinenLahdeajo[];
+  katkaistu: boolean;
+  virhe: string | null;
+}> {
+  if (!supabaseYmparistoAsetettu()) {
+    return { ajot: [], katkaistu: false, virhe: "Lähdeajoja ei juuri nyt voitu hakea." };
+  }
+  try {
+    const supabase = await luoPalvelinAsiakas();
+    const { data, error } = await supabase
+      .from("lahdeajot")
+      .select("id, sovitin, tila, alkoi_pvm, paattyi_pvm, http_tila, osumia, virhe, kysely_url")
+      .order("alkoi_pvm", { ascending: false })
+      .limit(LAHDEAJO_KATTO);
+    if (error) throw error;
+    const ajot = (data ?? []) as JulkinenLahdeajo[];
+    return {
+      ajot,
+      katkaistu: ajot.length === LAHDEAJO_KATTO,
+      virhe: null,
+    };
+  } catch (syy) {
+    return { ajot: [], katkaistu: false, virhe: virheViesti(syy) };
+  }
+}

@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import {
   LOMAKE_KENTAT,
@@ -15,6 +16,7 @@ import { LUOTTAMUSTASOT, type Luottamus } from "@/lib/supabase/tietokanta";
 import { haeKirjautunutKayttaja, haeYllapitaja, luoPalvelinAsiakas } from "@/lib/supabase/palvelin";
 import { hylkaaMuutosehdotus, hyvaksyMuutosehdotus, yhdistaHankkeetEhdotuksesta } from "@/lib/supabase/hyvaksynta";
 import { luoYllapitoAsiakas, supabasePalvelinAvainAsetettu } from "@/lib/supabase/yllapito-asiakas";
+import { ESIVERSIO_EVASTE } from "@/lib/esiversio";
 
 export async function lahetaIlmoitus(formData: FormData): Promise<void> {
   const tyyppi = String(formData.get("tyyppi") ?? "");
@@ -414,4 +416,14 @@ export async function hylkaaEhdotusToiminto(formData: FormData): Promise<void> {
   }
   revalidatePath("/yllapito");
   redirect("/yllapito?hylatty=1");
+}
+
+export async function kuittaaEsiversio(): Promise<void> {
+  const evasteet = await cookies();
+  evasteet.set(ESIVERSIO_EVASTE, "kylla", {
+    path: "/",
+    maxAge: 60 * 60 * 24 * 30,
+    sameSite: "lax",
+    httpOnly: true,
+  });
 }

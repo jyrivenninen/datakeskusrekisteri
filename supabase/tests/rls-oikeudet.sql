@@ -31,21 +31,7 @@ DECLARE
   n integer;
 BEGIN
   SET LOCAL ROLE anon;
-  BEGIN
-    SELECT count(*) INTO n FROM lahdeajot;
-    RAISE EXCEPTION 'anon sai lukea lahdeajot (% riviä)', n;
-  EXCEPTION
-    WHEN insufficient_privilege THEN
-      NULL;
-    WHEN undefined_table THEN
-      NULL;
-    WHEN OTHERS THEN
-      IF SQLSTATE = '42501' THEN
-        NULL;
-      ELSE
-        RAISE;
-      END IF;
-  END;
+  SELECT count(*) INTO n FROM lahdeajot;
 END;
 $$;
 
