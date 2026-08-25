@@ -70,7 +70,7 @@ function onHtml(muoto: string | null, tyyppi: string): boolean {
 
 async function pdfTekstiksi(puskuri: Uint8Array): Promise<string> {
   const tulos = await extractText(puskuri, { mergePages: true });
-  return tasaaValilyonnit(typeof tulos.text === "string" ? tulos.text : tulos.text.join(" "));
+  return tasaaValilyonnit(tulos.text);
 }
 
 async function nouda(url: string): Promise<{

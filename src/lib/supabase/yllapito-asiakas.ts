@@ -5,6 +5,20 @@ export function supabasePalvelinAvainAsetettu(): boolean {
   return Boolean(process.env.SUPABASE_SERVICE_ROLE_KEY);
 }
 
+export type YllapitoHanke = { id: string; nimi: string; kunta: string | null };
+
+/** Ylläpidon lukuhaku: palvelinavain ohittaa julkaistu-RLS:n. */
+export async function haeHankkeetYllapitoon(
+  idt: string[],
+): Promise<YllapitoHanke[]> {
+  if (idt.length === 0 || !supabasePalvelinAvainAsetettu()) return [];
+  const { data } = await luoYllapitoAsiakas()
+    .from("hankkeet")
+    .select("id, nimi, kunta")
+    .in("id", idt);
+  return data ?? [];
+}
+
 /** Vain palvelintoiminnot. Älä tuo selainkoodiin. */
 export function luoYllapitoAsiakas() {
   const avain = process.env.SUPABASE_SERVICE_ROLE_KEY;

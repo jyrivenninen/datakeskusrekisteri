@@ -6,7 +6,10 @@ import {
   EhdotusTila,
   ehdotusTilaRiviLuokka,
 } from "@/komponentit/ehdotus-tila";
-import { supabasePalvelinAvainAsetettu } from "@/lib/supabase/yllapito-asiakas";
+import {
+  haeHankkeetYllapitoon,
+  supabasePalvelinAvainAsetettu,
+} from "@/lib/supabase/yllapito-asiakas";
 
 async function vaadiYllapitaja() {
   const { user, supabase } = await haeKirjautunutKayttaja();
@@ -29,8 +32,21 @@ export default async function YllapitoSivu({
   const params = await searchParams;
   const { data: ehdotukset } = await supabase
     .from("muutosehdotukset")
-    .select("id, tyyppi, tila, luotu_pvm, ehdottaja_tunniste, hanke:hankkeet(nimi)")
+    .select("id, tyyppi, tila, luotu_pvm, ehdottaja_tunniste, hanke_id")
     .order("luotu_pvm", { ascending: false });
+  const hankeIdt = [
+    ...new Set(
+      (ehdotukset ?? [])
+        .map((rivi) => rivi.hanke_id)
+        .filter((id): id is string => Boolean(id)),
+    ),
+  ];
+  let hankkeet = await haeHankkeetYllapitoon(hankeIdt);
+  if (hankkeet.length === 0 && hankeIdt.length > 0) {
+    const { data } = await supabase.from("hankkeet").select("id, nimi, kunta").in("id", hankeIdt);
+    hankkeet = data ?? [];
+  }
+  const hankeNimella = new Map(hankkeet.map((hanke) => [hanke.id, hanke.nimi]));
   const { data: ajot } = await supabase
     .from("lahdeajot")
     .select("id, sovitin, tila, alkoi_pvm, paattyi_pvm, http_tila, osumia, virhe")
@@ -132,11 +148,9 @@ export default async function YllapitoSivu({
               </div>
               <p className="mt-1 text-sm text-muted">
                 {muotoilePvm(ehdotus.luotu_pvm)}
-                {(() => {
-                  const hanke = ehdotus.hanke as { nimi?: string } | { nimi?: string }[] | null;
-                  const nimi = Array.isArray(hanke) ? hanke[0]?.nimi : hanke?.nimi;
-                  return nimi ? ` · ${nimi}` : "";
-                })()}
+                {ehdotus.hanke_id && hankeNimella.get(ehdotus.hanke_id)
+                  ? ` · ${hankeNimella.get(ehdotus.hanke_id)}`
+                  : ""}
                 {` · ${ehdotus.ehdottaja_tunniste}`}
               </p>
             </li>

@@ -9,7 +9,10 @@ import {
 } from "@/lib/naytto";
 import { haeKirjautunutKayttaja } from "@/lib/supabase/palvelin";
 import type { EhdotusSisalto } from "@/lib/ehdotus";
-import { supabasePalvelinAvainAsetettu } from "@/lib/supabase/yllapito-asiakas";
+import {
+  haeHankkeetYllapitoon,
+  supabasePalvelinAvainAsetettu,
+} from "@/lib/supabase/yllapito-asiakas";
 
 async function vaadiYllapitaja() {
   const { user, supabase } = await haeKirjautunutKayttaja();
@@ -57,10 +60,15 @@ export default async function EhdotusSivu({
   const dokumentti = sisalto.dokumentti;
   const ristiriita = sisalto.ristiriita;
   const hankeIdt = ehdotuksenHankeIdt(ehdotus.hanke_id, ristiriita);
-  const { data: hankkeet } =
-    hankeIdt.length > 0
-      ? await supabase.from("hankkeet").select("id, nimi, kunta").in("id", hankeIdt)
-      : { data: [] };
+  let hankkeet = await haeHankkeetYllapitoon(hankeIdt);
+  if (hankkeet.length === 0 && hankeIdt.length > 0) {
+    const { data } = await supabase
+      .from("hankkeet")
+      .select("id, nimi, kunta")
+      .in("id", hankeIdt);
+    hankkeet = data ?? [];
+  }
+  const hankeNimella = new Map(hankkeet.map((hanke) => [hanke.id, hanke]));
 
   return (
     <main id="sisalto" className="mx-auto w-full max-w-3xl flex-1 px-4 py-10">
@@ -82,20 +90,23 @@ export default async function EhdotusSivu({
           {query.virhe}
         </p>
       ) : null}
-      {(hankkeet ?? []).length > 0 ? (
+      {hankeIdt.length > 0 ? (
         <section className="mt-4" aria-labelledby="koskee-otsikko">
           <h2 id="koskee-otsikko" className="text-lg font-semibold">
-            {(hankkeet ?? []).length === 1 ? "Hanke" : "Hankkeet"}
+            {hankeIdt.length === 1 ? "Hanke" : "Hankkeet"}
           </h2>
           <ul className="mt-2">
-            {(hankkeet ?? []).map((hanke) => (
-              <li key={hanke.id}>
-                <a href={`/hankkeet/${hanke.id}`} className="text-link underline">
-                  {hanke.nimi}
-                </a>
-                {hanke.kunta ? ` · ${hanke.kunta}` : ""}
-              </li>
-            ))}
+            {hankeIdt.map((hankeId) => {
+              const hanke = hankeNimella.get(hankeId);
+              return (
+                <li key={hankeId}>
+                  <a href={`/hankkeet/${hankeId}`} className="text-link underline">
+                    {hanke?.nimi ?? "Avaa hanke"}
+                  </a>
+                  {hanke?.kunta ? ` · ${hanke.kunta}` : ""}
+                </li>
+              );
+            })}
           </ul>
         </section>
       ) : null}
