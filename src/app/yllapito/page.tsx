@@ -55,8 +55,34 @@ export default async function YllapitoSivu({
     .order("alkoi_pvm", { ascending: false })
     .limit(20);
   const jarjestetyt = jarjestaMuutosehdotukset(ehdotukset ?? []);
-  const odottavia = jarjestetyt.filter((e) => e.tila === "odottaa").length;
+  const odottavat = jarjestetyt.filter((e) => e.tila === "odottaa");
+  const kasitellyt = jarjestetyt.filter((e) => e.tila !== "odottaa");
+  const odottavia = odottavat.length;
   const hyvaksyttyLkm = Number(params.hyvaksytty ?? "");
+
+  function ehdotusRivi(ehdotus: (typeof jarjestetyt)[number]) {
+    return (
+      <li
+        key={ehdotus.id}
+        className={`border-l-4 py-4 pl-3 ${ehdotusLuokkaRiviLuokka(ehdotus.tyyppi)}`}
+      >
+        <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+          <a href={`/yllapito/${ehdotus.id}`} className="text-link underline">
+            {MUUTOSEHDOTUS_TYYPPI_NIMET[ehdotus.tyyppi] ?? ehdotus.tyyppi}
+          </a>
+          <EhdotusLuokka tyyppi={ehdotus.tyyppi} />
+          <EhdotusTila tila={ehdotus.tila} />
+        </div>
+        <p className="mt-1 text-sm text-muted">
+          {muotoilePvm(ehdotus.luotu_pvm)}
+          {ehdotus.hanke_id && hankeNimella.get(ehdotus.hanke_id)
+            ? ` · ${hankeNimella.get(ehdotus.hanke_id)}`
+            : ""}
+          {` · ${ehdotus.ehdottaja_tunniste}`}
+        </p>
+      </li>
+    );
+  }
 
   return (
     <main id="sisalto" className="mx-auto w-full max-w-5xl flex-1 px-4 py-10">
@@ -77,11 +103,11 @@ export default async function YllapitoSivu({
       {params.hylatty ? <p className="mt-4">Ehdotus hylättiin.</p> : null}
       {params.virhe ? <p className="mt-4">{params.virhe}</p> : null}
       {(ajot ?? []).length > 0 ? (
-        <section className="mt-8" aria-labelledby="ajot-otsikko">
-          <h2 id="ajot-otsikko" className="text-xl font-semibold">
-            Lähdeajot
-          </h2>
-          <ul className="mt-4 divide-y divide-border border-y border-border">
+        <details className="mt-6 rounded border border-border bg-surface">
+          <summary className="cursor-pointer px-4 py-3 font-medium focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-link">
+            Lähdeajot ({ajot?.length ?? 0})
+          </summary>
+          <ul className="divide-y divide-border border-t border-border px-4">
             {(ajot ?? []).map((ajo) => (
               <li key={ajo.id} className="py-3">
                 <p>
@@ -96,7 +122,7 @@ export default async function YllapitoSivu({
               </li>
             ))}
           </ul>
-        </section>
+        </details>
       ) : null}
       {odottavia > 0 && massahyvaksynta ? (
         <form action={hyvaksyKaikkiOdottavatToiminto} className="mt-6 space-y-3">
@@ -136,32 +162,22 @@ export default async function YllapitoSivu({
         </form>
       ) : null}
       <ul className="mt-8 divide-y divide-border border-y border-border">
-        {jarjestetyt.length === 0 ? (
-          <li className="py-4">Ei muutosehdotuksia.</li>
+        {odottavat.length === 0 ? (
+          <li className="py-4">Ei odottavia ehdotuksia.</li>
         ) : (
-          jarjestetyt.map((ehdotus) => (
-            <li
-              key={ehdotus.id}
-              className={`border-l-4 py-4 pl-3 ${ehdotusLuokkaRiviLuokka(ehdotus.tyyppi)}`}
-            >
-              <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
-                <a href={`/yllapito/${ehdotus.id}`} className="text-link underline">
-                  {MUUTOSEHDOTUS_TYYPPI_NIMET[ehdotus.tyyppi] ?? ehdotus.tyyppi}
-                </a>
-                <EhdotusLuokka tyyppi={ehdotus.tyyppi} />
-                <EhdotusTila tila={ehdotus.tila} />
-              </div>
-              <p className="mt-1 text-sm text-muted">
-                {muotoilePvm(ehdotus.luotu_pvm)}
-                {ehdotus.hanke_id && hankeNimella.get(ehdotus.hanke_id)
-                  ? ` · ${hankeNimella.get(ehdotus.hanke_id)}`
-                  : ""}
-                {` · ${ehdotus.ehdottaja_tunniste}`}
-              </p>
-            </li>
-          ))
+          odottavat.map((ehdotus) => ehdotusRivi(ehdotus))
         )}
       </ul>
+      {kasitellyt.length > 0 ? (
+        <details className="mt-6 rounded border border-border bg-surface">
+          <summary className="cursor-pointer px-4 py-3 font-medium focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-link">
+            Käsitellyt ({kasitellyt.length})
+          </summary>
+          <ul className="divide-y divide-border border-t border-border px-4">
+            {kasitellyt.map((ehdotus) => ehdotusRivi(ehdotus))}
+          </ul>
+        </details>
+      ) : null}
     </main>
   );
 }
