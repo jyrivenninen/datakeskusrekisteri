@@ -123,9 +123,9 @@ export default async function Etusivu({
           Hankkeet
         </h2>
         <p className="mt-2 max-w-prose text-sm text-muted">
-          Suodatin päivittää laskurit, kartan ja luettelon. Ilman JavaScriptiä
-          valitse ehdot ja paina Suodata. Kokoluokka osuu hankkeeseen, jos
-          hanketason teho tai jokin merkitty YVA-vaihtoehto osuu luokkaan.
+          Suodatin päivittää laskurit, kartan ja luettelon valinnoista.
+          Kokoluokka osuu hankkeeseen, jos hanketason teho tai jokin merkitty
+          YVA-vaihtoehto osuu luokkaan.
         </p>
         <Suodatuslomake suodatus={suodatus} kunnat={kunnat} />
         {hankeVirhe ? (
