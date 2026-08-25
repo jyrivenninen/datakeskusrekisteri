@@ -509,20 +509,10 @@ export default async function EhdotusSivu({
             <input type="hidden" name="id" value={ehdotus.id} />
             {ristiriita ? (
               <div className="space-y-3">
-                <div className="flex flex-wrap items-start gap-3">
-                  <input
-                    id="ei-uudelleen-hyvaksy"
-                    type="checkbox"
-                    name="ei_uudelleen"
-                    value="kylla"
-                    required
-                    className="mt-1"
-                  />
-                  <label htmlFor="ei-uudelleen-hyvaksy" className="max-w-prose text-sm">
-                    Havainto on käsitelty. Sama havainto ei nouse uudelleen,
-                    vaikka koordinaatit tai muut luvut pysyisivät ennallaan.
-                  </label>
-                </div>
+                <p className="max-w-prose text-sm text-muted">
+                  Käsittely merkitsee, ettei sama havainto nouse uudelleen.
+                  Kirjaa miksi.
+                </p>
                 <label htmlFor="ei-uudelleen-perustelu" className="block text-sm font-medium">
                   Miksi havainto ei nouse uudelleen
                 </label>
@@ -546,19 +536,10 @@ export default async function EhdotusSivu({
           <form action={hylkaaEhdotusToiminto} className="space-y-2">
             <input type="hidden" name="id" value={ehdotus.id} />
             {ristiriita ? (
-              <div className="flex flex-wrap items-start gap-3">
-                <input
-                  id="ei-uudelleen-hylkaa"
-                  type="checkbox"
-                  name="ei_uudelleen"
-                  value="kylla"
-                  className="mt-1"
-                />
-                <label htmlFor="ei-uudelleen-hylkaa" className="max-w-prose text-sm">
-                  Älä nosta samaa havaintoa uudelleen. Jos valitset tämän,
-                  perusteluun kirjataan miksi.
-                </label>
-              </div>
+              <p className="max-w-prose text-sm text-muted">
+                Hylkäys poistaa rivin jonosta, mutta sama havainto voi nousta
+                seuraavassa ajossa.
+              </p>
             ) : null}
             <label htmlFor="perustelu" className="text-sm font-medium">
               Hylkäyksen perustelu

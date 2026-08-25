@@ -67,7 +67,7 @@ function ristiriitaSisaltoEiUudelleen(
 export async function hyvaksyMuutosehdotus(
   ehdotusId: string,
   kasittelija: string,
-  valinnat?: { eiUudelleen?: boolean; perustelu?: string },
+  valinnat?: { perustelu?: string },
 ) {
   const supabase = luoYllapitoAsiakas();
   const { data: ehdotus, error } = await supabase
@@ -111,12 +111,7 @@ export async function hyvaksyMuutosehdotus(
     const sisalto = ehdotus.sisalto as EhdotusSisalto;
     let ristiriitaPaivitys: Record<string, unknown> = {};
     if (ehdotus.tyyppi === "ristiriita_havainto") {
-      if (!valinnat?.eiUudelleen) {
-        throw new Error(
-          "Ristiriitahavainto merkitään käsitellyksi vain, jos valitset ettei se nouse uudelleen.",
-        );
-      }
-      const perustelu = ristiriitaEiUudelleenPerustelu(valinnat.perustelu);
+      const perustelu = ristiriitaEiUudelleenPerustelu(valinnat?.perustelu);
       ristiriitaPaivitys = {
         sisalto: ristiriitaSisaltoEiUudelleen(sisalto, perustelu),
         perustelu,
@@ -250,37 +245,15 @@ export async function hylkaaMuutosehdotus(
   ehdotusId: string,
   kasittelija: string,
   perustelu: string,
-  valinnat?: { eiUudelleen?: boolean },
 ) {
   const supabase = luoYllapitoAsiakas();
-  const { data: ehdotus, error: hakuVirhe } = await supabase
-    .from("muutosehdotukset")
-    .select("tyyppi, sisalto")
-    .eq("id", ehdotusId)
-    .eq("tila", "odottaa")
-    .maybeSingle();
-  if (hakuVirhe) throw new Error(hakuVirhe.message);
-  if (!ehdotus) throw new Error("Ehdotusta ei löytynyt tai se on jo käsitelty.");
-
-  const sisalto = ehdotus.sisalto as EhdotusSisalto;
-  let ristiriitaPaivitys: Record<string, unknown> = {};
-  if (ehdotus.tyyppi === "ristiriita_havainto" && valinnat?.eiUudelleen) {
-    const eiUudelleenPerustelu = ristiriitaEiUudelleenPerustelu(perustelu);
-    ristiriitaPaivitys = {
-      sisalto: ristiriitaSisaltoEiUudelleen(sisalto, eiUudelleenPerustelu),
-      perustelu: eiUudelleenPerustelu,
-    };
-  }
   const { error } = await supabase
     .from("muutosehdotukset")
     .update({
       tila: "hylatty",
       kasitelty_pvm: new Date().toISOString(),
       kasittelija,
-      perustelu:
-        (ristiriitaPaivitys.perustelu as string | undefined) ??
-        (perustelu.trim() || "Hylätty ylläpidossa."),
-      ...(ristiriitaPaivitys.sisalto ? { sisalto: ristiriitaPaivitys.sisalto } : {}),
+      perustelu: perustelu.trim() || "Hylätty ylläpidossa.",
     })
     .eq("id", ehdotusId)
     .eq("tila", "odottaa");

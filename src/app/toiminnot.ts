@@ -313,7 +313,6 @@ export async function hyvaksyEhdotusToiminto(formData: FormData): Promise<void> 
   const id = String(formData.get("id") ?? "");
   try {
     await hyvaksyMuutosehdotus(id, user.email ?? user.id, {
-      eiUudelleen: String(formData.get("ei_uudelleen")) === "kylla",
       perustelu: String(formData.get("ei_uudelleen_perustelu") ?? ""),
     });
   } catch (syy) {
@@ -393,9 +392,7 @@ export async function hylkaaEhdotusToiminto(formData: FormData): Promise<void> {
   const id = String(formData.get("id") ?? "");
   const perustelu = String(formData.get("perustelu") ?? "");
   try {
-    await hylkaaMuutosehdotus(id, user.email ?? user.id, perustelu, {
-      eiUudelleen: String(formData.get("ei_uudelleen")) === "kylla",
-    });
+    await hylkaaMuutosehdotus(id, user.email ?? user.id, perustelu);
   } catch (syy) {
     const viesti = syy instanceof Error ? syy.message : "Hylkäys epäonnistui.";
     redirect(`/yllapito/${id}?virhe=${encodeURIComponent(viesti)}`);
