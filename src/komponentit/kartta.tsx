@@ -24,6 +24,9 @@ const SUOMI_RAJAT: [[number, number], [number, number]] = [
   [31.59, 70.09],
 ];
 
+/** Taustakartan meren sävy laattojen ulkopuolelle. */
+const KARTTA_TAYTTO = "#d2e7f0";
+
 function vaiheVari(vaihe?: HankeVaihe): string {
   return vaihe ? VAIHE_VARIT[vaihe] : OLETUSVARI;
 }
@@ -59,11 +62,6 @@ function parsiAlue(arvo: unknown): SijaintiAlue | null {
 }
 
 function taustakarttaTyyli(avain: string): StyleSpecification {
-  const tausta =
-    typeof document === "undefined"
-      ? "#1c1917"
-      : getComputedStyle(document.documentElement).getPropertyValue("--background").trim() ||
-        "#1c1917";
   return {
     version: 8,
     name: "MML taustakartta",
@@ -82,7 +80,7 @@ function taustakarttaTyyli(avain: string): StyleSpecification {
       {
         id: "pohja",
         type: "background",
-        paint: { "background-color": tausta },
+        paint: { "background-color": KARTTA_TAYTTO },
       },
       {
         id: "taustakartta",
@@ -321,7 +319,7 @@ export function Kartta({
     const rajaaKartta = () => {
       kartta.resize();
       if (sovitaSuomeen) {
-        kartta.fitBounds(SUOMI_RAJAT, { padding: 8, maxZoom: 6 });
+        kartta.fitBounds(SUOMI_RAJAT, { padding: 24, maxZoom: 6 });
         paivita();
         return;
       }
@@ -366,20 +364,10 @@ export function Kartta({
   }
 
   return (
-    <div
-      className={
-        sovitaSuomeen
-          ? "flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between"
-          : "flex flex-col gap-4 sm:flex-row sm:items-stretch"
-      }
-    >
+    <div className="flex flex-col gap-4 sm:flex-row sm:items-stretch">
       <div
         ref={kehys}
-        className={
-          sovitaSuomeen
-            ? `relative min-w-0 overflow-hidden rounded border border-border bg-background ${luokka ?? "kartta-suomi"}`
-            : `relative min-h-[18rem] w-full min-w-0 flex-1 overflow-hidden rounded border border-border ${luokka ?? "h-[28rem]"}`
-        }
+        className={`relative min-h-[18rem] w-full min-w-0 flex-1 overflow-hidden rounded border border-border ${luokka ?? "h-[28rem]"}`}
         role="region"
         aria-label="Hankkeiden sijaintikartta"
       />
