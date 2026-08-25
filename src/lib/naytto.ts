@@ -105,7 +105,7 @@ export const RISTIRIITA_SAANTO_NIMET: Record<string, string> = {
   rekisterointi_ennen_hanketta: "Määräaika ennen toimijan rekisteröintiä",
   teho_suhde: "Generaattoriteho ja ilmoitettu teho",
   koordinaatit_suomi: "Sijainti Suomen alueen ulkopuolella",
-  maaraaika_mennyt: "Päättynyt määräaika yhä julkaistu",
+  maaraaika_mennyt: "Vanhempi määräaika yhä julkaistu, uudempi voimassa",
   lahekkaiset_hankkeet: "Lähekkäiset hankkeet",
 };
 
