@@ -38,7 +38,7 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
           Siirry sisältöön
         </a>
         <header className="border-b border-border">
-          <div className="mx-auto flex w-full max-w-5xl items-center px-4 py-4">
+          <div className="sivuleveys flex items-center py-4">
             <p className="text-sm font-medium">
               <a href="/" className="text-foreground no-underline hover:underline">
                 Datakeskushankkeiden kansallinen rekisteri
@@ -72,7 +72,7 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
         {esiversioKuitattu ? null : <EsiversioIlmoitus />}
         {children}
         <footer className="mt-auto border-t border-border bg-surface">
-          <div className="mx-auto grid w-full max-w-5xl gap-8 px-4 py-10 sm:grid-cols-[1fr_auto]">
+          <div className="sivuleveys grid gap-8 py-10 sm:grid-cols-[1fr_auto]">
             <div className="max-w-prose">
               <p className="text-sm font-medium text-foreground">
                 Datakeskushankkeiden kansallinen rekisteri

@@ -217,7 +217,7 @@ export default async function HankeSivu({
 
   if (virhe) {
     return (
-      <main id="sisalto" className="mx-auto w-full max-w-6xl flex-1 px-4 py-10">
+      <main id="sisalto" className="sivuleveys flex-1 py-10">
         <h1 className="text-2xl font-semibold">Hanketta ei voitu ladata</h1>
         <p className="mt-3">{virhe}</p>
       </main>
@@ -255,7 +255,7 @@ export default async function HankeSivu({
       : [];
 
   return (
-    <main id="sisalto" className="mx-auto w-full max-w-5xl flex-1 px-4 py-10">
+    <main id="sisalto" className="sivuleveys flex-1 py-10">
       <p className="text-sm">
         <a href="/" className="text-link underline">
           Etusivu

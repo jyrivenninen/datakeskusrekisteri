@@ -96,7 +96,7 @@ export default async function YllapitoSivu({
   }
 
   return (
-    <main id="sisalto" className="mx-auto w-full max-w-5xl flex-1 px-4 py-10">
+    <main id="sisalto" className="sivuleveys flex-1 py-10">
       <div className="flex flex-wrap items-center justify-between gap-4">
         <h1 className="text-3xl font-semibold">Ylläpito</h1>
         <form action={kirjauduUlos}>

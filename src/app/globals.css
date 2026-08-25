@@ -37,6 +37,27 @@ body {
   font-family: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
 }
 
+/* Puhelin: täysi leveys + reunus. Leveä näyttö: hyödynnä tilaa ilman reunoihin liimaamista. */
+.sivuleveys {
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 64rem;
+  margin-inline: auto;
+  padding-inline: 1rem;
+}
+
+@media (min-width: 80rem) {
+  .sivuleveys {
+    max-width: 80rem;
+  }
+}
+
+@media (min-width: 100rem) {
+  .sivuleveys {
+    max-width: 92rem;
+  }
+}
+
 dialog.esiversio-ilmoitus {
   position: fixed;
   inset: auto;

@@ -20,7 +20,7 @@ export default async function HakemistoSivu({
   const { organisaatiot, virhe: orgVirhe } = await haeJulkaistutOrganisaatiot(tyyppi);
 
   return (
-    <main id="sisalto" className="mx-auto w-full max-w-5xl flex-1 px-4 py-10">
+    <main id="sisalto" className="sivuleveys flex-1 py-10">
       <h1 className="text-3xl font-semibold tracking-tight">Hakemisto</h1>
       <p className="mt-4 max-w-prose leading-relaxed text-muted">
         Julkaistut organisaatiot. Henkilönimiä tai suoria yhteystietoja ei
