@@ -6,6 +6,7 @@ import {
   muotoileAika,
 } from "@/lib/naytto";
 import { haeJulkisetLahdeajot } from "@/lib/supabase/kyselyt";
+import { ESIVERSIO_TEKSTI, OSALLISTUMINEN_TEKSTI } from "@/lib/esiversio";
 
 export const metadata: Metadata = {
   title: "Tietoa palvelusta – Datakeskushankkeiden kansallinen rekisteri",
@@ -31,10 +32,17 @@ export default async function TietoaPalvelustaSivu() {
           Mikä tämä on
         </h2>
         <div className="mt-3 max-w-prose space-y-3 leading-relaxed">
+          <p>{ESIVERSIO_TEKSTI}</p>
           <p>
-            Rekisteri on esiversio. Tietoja täydennetään ja varmennetaan. Osa
-            toiminnoista voi puuttua. Osa tiedoista voi olla puutteellista,
-            vanhentunutta tai virheellistä. Tarkista aina alkuperäinen lähde.
+            {OSALLISTUMINEN_TEKSTI}{" "}
+            <a href="/ilmoitus" className="text-link underline">
+              Ilmoita hanke tai täydennys
+            </a>
+            {" · "}
+            <a href="/yhteys" className="text-link underline">
+              Ota yhteyttä
+            </a>
+            .
           </p>
           <p>
             Datakeskushankkeiden kansallinen rekisteri on avoin hanketietokanta

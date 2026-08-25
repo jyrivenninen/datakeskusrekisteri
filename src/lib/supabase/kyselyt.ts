@@ -40,17 +40,20 @@ export type HankeSuodatus = {
   kunta?: string;
   vaihe?: HankeVaihe;
   koko?: KokoLuokka;
+  kuvalliset?: boolean;
 };
 
 export function parsiSuodatus(params: {
   kunta?: string;
   vaihe?: string;
   koko?: string;
+  kuvalliset?: string;
 }): HankeSuodatus {
   return {
     kunta: params.kunta || undefined,
     vaihe: params.vaihe && onHankeVaihe(params.vaihe) ? params.vaihe : undefined,
     koko: params.koko && onKokoLuokka(params.koko) ? params.koko : undefined,
+    kuvalliset: params.kuvalliset === "1",
   };
 }
 
@@ -110,6 +113,19 @@ export async function haeJulkaistutHankkeet(
       hankkeet = hankkeet.filter((hanke) =>
         hankeOsuvatKokoLuokkaan(hanke, hanke.vaihtoehdot, kokoLuokka),
       );
+    }
+    if (suodatus.kuvalliset && hankkeet.length > 0) {
+      const { data: kuvaRivit, error: kuvaVirhe } = await supabase
+        .from("hanke_kuvat")
+        .select("hanke_id")
+        .eq("julkaistu", true)
+        .in(
+          "hanke_id",
+          hankkeet.map((hanke) => hanke.id),
+        );
+      if (kuvaVirhe) return { hankkeet: [], johdot: [], virhe: kuvaVirhe.message };
+      const kuvalliset = new Set((kuvaRivit ?? []).map((rivi) => rivi.hanke_id));
+      hankkeet = hankkeet.filter((hanke) => kuvalliset.has(hanke.id));
     }
 
     const idt = hankkeet.map((hanke) => hanke.id);

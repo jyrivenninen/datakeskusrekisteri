@@ -10,6 +10,7 @@ const LOKITAULUT = [
   "dokumentti_tiivisteet",
   "rajapinta_tiivisteet",
   "mallikutsut",
+  "palautteet",
 ] as const;
 
 function vaadiYmparisto() {

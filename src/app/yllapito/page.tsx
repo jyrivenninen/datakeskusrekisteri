@@ -1,7 +1,7 @@
 import { haeKirjautunutKayttaja } from "@/lib/supabase/palvelin";
 import { redirect } from "next/navigation";
 import { hyvaksyKaikkiOdottavatToiminto, kirjauduUlos } from "@/app/toiminnot";
-import { jarjestaMuutosehdotukset, muotoilePvm, MUUTOSEHDOTUS_TYYPPI_NIMET } from "@/lib/naytto";
+import { jarjestaMuutosehdotukset, muotoilePvm, MUUTOSEHDOTUS_TYYPPI_NIMET, PALAUTE_AIHE_NIMET } from "@/lib/naytto";
 import {
   EhdotusLuokka,
   EhdotusTila,
@@ -28,7 +28,12 @@ async function vaadiYllapitaja() {
 export default async function YllapitoSivu({
   searchParams,
 }: {
-  searchParams: Promise<{ hyvaksytty?: string; hylatty?: string; virhe?: string }>;
+  searchParams: Promise<{
+    hyvaksytty?: string;
+    hylatty?: string;
+    virhe?: string;
+    palaute?: string;
+  }>;
 }) {
   const { supabase, massahyvaksynta } = await vaadiYllapitaja();
   const params = await searchParams;
@@ -54,6 +59,12 @@ export default async function YllapitoSivu({
     .select("id, sovitin, tila, alkoi_pvm, paattyi_pvm, http_tila, osumia, virhe")
     .order("alkoi_pvm", { ascending: false })
     .limit(20);
+  const { data: palautteet } = await supabase
+    .from("palautteet")
+    .select("id, aihe, nimi, sahkoposti, viesti, tila, luotu_pvm")
+    .order("luotu_pvm", { ascending: false });
+  const odottavatPalautteet = (palautteet ?? []).filter((rivi) => rivi.tila === "odottaa");
+  const kasitellytPalautteet = (palautteet ?? []).filter((rivi) => rivi.tila !== "odottaa");
   const jarjestetyt = jarjestaMuutosehdotukset(ehdotukset ?? []);
   const odottavat = jarjestetyt.filter((e) => e.tila === "odottaa");
   const kasitellyt = jarjestetyt.filter((e) => e.tila !== "odottaa");
@@ -100,6 +111,7 @@ export default async function YllapitoSivu({
       ) : hyvaksyttyLkm > 1 ? (
         <p className="mt-4">{hyvaksyttyLkm} ehdotusta käsiteltiin.</p>
       ) : null}
+      {params.palaute ? <p className="mt-4">Yhteydenotto merkittiin käsitellyksi.</p> : null}
       {params.hylatty ? <p className="mt-4">Ehdotus hylättiin.</p> : null}
       {params.virhe ? <p className="mt-4">{params.virhe}</p> : null}
       {(ajot ?? []).length > 0 ? (
@@ -124,6 +136,47 @@ export default async function YllapitoSivu({
           </ul>
         </details>
       ) : null}
+      <section className="mt-8" aria-labelledby="palaute-otsikko">
+        <h2 id="palaute-otsikko" className="text-xl font-semibold">
+          Yhteydenotot
+        </h2>
+        <ul className="mt-4 divide-y divide-border border-y border-border">
+          {odottavatPalautteet.length === 0 ? (
+            <li className="py-4">Ei odottavia yhteydenottoja.</li>
+          ) : (
+            odottavatPalautteet.map((palaute) => (
+              <li key={palaute.id} className="py-4">
+                <a href={`/yllapito/palaute/${palaute.id}`} className="text-link underline">
+                  {PALAUTE_AIHE_NIMET[palaute.aihe] ?? palaute.aihe}
+                </a>
+                <p className="mt-1 text-sm text-muted">
+                  {muotoilePvm(palaute.luotu_pvm)}
+                  {palaute.nimi ? ` · ${palaute.nimi}` : ""}
+                  {palaute.sahkoposti ? ` · ${palaute.sahkoposti}` : ""}
+                </p>
+                <p className="mt-1 max-w-prose text-sm">{palaute.viesti.slice(0, 160)}</p>
+              </li>
+            ))
+          )}
+        </ul>
+        {kasitellytPalautteet.length > 0 ? (
+          <details className="mt-4 rounded border border-border bg-surface">
+            <summary className="cursor-pointer px-4 py-3 font-medium focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-link">
+              Käsitellyt yhteydenotot ({kasitellytPalautteet.length})
+            </summary>
+            <ul className="divide-y divide-border border-t border-border px-4">
+              {kasitellytPalautteet.map((palaute) => (
+                <li key={palaute.id} className="py-3">
+                  <a href={`/yllapito/palaute/${palaute.id}`} className="text-link underline">
+                    {PALAUTE_AIHE_NIMET[palaute.aihe] ?? palaute.aihe}
+                  </a>
+                  <p className="mt-1 text-sm text-muted">{muotoilePvm(palaute.luotu_pvm)}</p>
+                </li>
+              ))}
+            </ul>
+          </details>
+        ) : null}
+      </section>
       {odottavia > 0 && massahyvaksynta ? (
         <form action={hyvaksyKaikkiOdottavatToiminto} className="mt-6 space-y-3">
           <div className="flex flex-wrap items-start gap-3">
@@ -161,7 +214,11 @@ export default async function YllapitoSivu({
           )}
         </form>
       ) : null}
-      <ul className="mt-8 divide-y divide-border border-y border-border">
+      <section className="mt-8" aria-labelledby="ehdotukset-otsikko">
+        <h2 id="ehdotukset-otsikko" className="text-xl font-semibold">
+          Muutosehdotukset
+        </h2>
+      <ul className="mt-4 divide-y divide-border border-y border-border">
         {odottavat.length === 0 ? (
           <li className="py-4">Ei odottavia ehdotuksia.</li>
         ) : (
@@ -177,7 +234,8 @@ export default async function YllapitoSivu({
             {kasitellyt.map((ehdotus) => ehdotusRivi(ehdotus))}
           </ul>
         </details>
-      ) : null}
+        ) : null}
+      </section>
     </main>
   );
 }

@@ -13,7 +13,7 @@ export function Suodatuslomake({
 }) {
   return (
     <form
-      key={`${suodatus.kunta ?? ""}-${suodatus.vaihe ?? ""}-${suodatus.koko ?? ""}`}
+      key={`${suodatus.kunta ?? ""}-${suodatus.vaihe ?? ""}-${suodatus.koko ?? ""}-${suodatus.kuvalliset ? "1" : "0"}`}
       method="get"
       action="/"
       className="mt-4 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-end"
@@ -74,6 +74,19 @@ export function Suodatuslomake({
             </option>
           ))}
         </select>
+      </p>
+      <p className="flex min-w-40 items-center gap-2 sm:pb-2">
+        <input
+          id="kuvalliset"
+          type="checkbox"
+          name="kuvalliset"
+          value="1"
+          defaultChecked={Boolean(suodatus.kuvalliset)}
+          className="size-4"
+        />
+        <label htmlFor="kuvalliset" className="text-sm font-medium">
+          Näytä vain kuvalliset
+        </label>
       </p>
       <button
         type="submit"

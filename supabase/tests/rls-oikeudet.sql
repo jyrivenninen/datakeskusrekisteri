@@ -45,7 +45,8 @@ BEGIN
   FOREACH t IN ARRAY ARRAY[
     'dokumentti_tiivisteet',
     'rajapinta_tiivisteet',
-    'mallikutsut'
+    'mallikutsut',
+    'palautteet'
   ]
   LOOP
     BEGIN

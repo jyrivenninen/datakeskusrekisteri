@@ -17,7 +17,7 @@ export const revalidate = 60;
 export default async function Etusivu({
   searchParams,
 }: {
-  searchParams: Promise<{ kunta?: string; vaihe?: string; koko?: string }>;
+  searchParams: Promise<{ kunta?: string; vaihe?: string; koko?: string; kuvalliset?: string }>;
 }) {
   const params = await searchParams;
   const suodatus = parsiSuodatus(params);

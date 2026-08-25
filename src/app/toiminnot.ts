@@ -12,7 +12,7 @@ import {
   tarkistaUusiHanke,
   type EhdotusSisalto,
 } from "@/lib/ehdotus";
-import { LUOTTAMUSTASOT, type Luottamus } from "@/lib/supabase/tietokanta";
+import { LUOTTAMUSTASOT, PALAUTE_AIHEET, type Luottamus } from "@/lib/supabase/tietokanta";
 import { haeKirjautunutKayttaja, haeYllapitaja, luoPalvelinAsiakas } from "@/lib/supabase/palvelin";
 import { hylkaaMuutosehdotus, hyvaksyMuutosehdotus, yhdistaHankkeetEhdotuksesta } from "@/lib/supabase/hyvaksynta";
 import { luoYllapitoAsiakas, supabasePalvelinAvainAsetettu } from "@/lib/supabase/yllapito-asiakas";
@@ -426,4 +426,68 @@ export async function kuittaaEsiversio(): Promise<void> {
     sameSite: "lax",
     httpOnly: true,
   });
+}
+
+function palauteVirhe(viesti: string): never {
+  redirect(`/yhteys?virhe=${encodeURIComponent(viesti)}`);
+}
+
+export async function lahetaPalaute(formData: FormData): Promise<void> {
+  if (String(formData.get("organisaation_www") ?? "").trim()) {
+    redirect("/yhteys?valmis=1");
+  }
+
+  const aiheRaaka = String(formData.get("aihe") ?? "palaute");
+  const aihe = PALAUTE_AIHEET.includes(aiheRaaka as (typeof PALAUTE_AIHEET)[number])
+    ? aiheRaaka
+    : palauteVirhe("Valitse aihe.");
+  const nimi = String(formData.get("nimi") ?? "").trim() || null;
+  const sahkoposti = String(formData.get("sahkoposti") ?? "").trim() || null;
+  const viesti = String(formData.get("viesti") ?? "").trim();
+
+  if (viesti.length < 12) {
+    palauteVirhe("Kirjoita viesti (vähintään 12 merkkiä).");
+  }
+  if (viesti.length > 8000) {
+    palauteVirhe("Viesti on liian pitkä.");
+  }
+  if (nimi && nimi.length > 200) {
+    palauteVirhe("Nimi on liian pitkä.");
+  }
+  if (sahkoposti && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(sahkoposti)) {
+    palauteVirhe("Tarkista sähköpostiosoite.");
+  }
+
+  const supabase = await luoPalvelinAsiakas();
+  const { error } = await supabase.from("palautteet").insert({
+    aihe,
+    nimi,
+    sahkoposti,
+    viesti,
+    tila: "odottaa",
+  });
+  if (error) palauteVirhe(error.message);
+  redirect("/yhteys?valmis=1");
+}
+
+export async function merkitsePalauteKasitellyksi(formData: FormData): Promise<void> {
+  const { user } = await vaadiYllapitaja();
+  const id = String(formData.get("id") ?? "");
+  const huomautus = String(formData.get("huomautus") ?? "").trim() || null;
+  const { supabase } = await haeKirjautunutKayttaja();
+  const { error } = await supabase
+    .from("palautteet")
+    .update({
+      tila: "kasitelty",
+      kasitelty_pvm: new Date().toISOString(),
+      kasittelija: user.email ?? user.id,
+      huomautus,
+    })
+    .eq("id", id)
+    .eq("tila", "odottaa");
+  if (error) {
+    redirect(`/yllapito/palaute/${id}?virhe=${encodeURIComponent(error.message)}`);
+  }
+  revalidatePath("/yllapito");
+  redirect("/yllapito?palaute=1");
 }

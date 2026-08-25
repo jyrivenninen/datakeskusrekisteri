@@ -60,6 +60,9 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
               <a href="/ilmoitus" className="text-link underline">
                 Ilmoita hanke
               </a>
+              <a href="/yhteys" className="text-link underline">
+                Yhteys
+              </a>
               <a href="/yllapito" className="text-link underline">
                 Ylläpito
               </a>
@@ -68,15 +71,32 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
         </header>
         {esiversioKuitattu ? null : <EsiversioIlmoitus />}
         {children}
-        <footer className="mt-auto border-t border-border">
-          <div className="mx-auto w-full max-w-5xl px-4 py-6 text-sm text-muted">
-            <p>Avoin hanketietokanta ja prosessiopas. Julkaistu tieto merkitään lähteineen.</p>
-            <p className="mt-2">Palvelun tuottaa Kansallisdata ry.</p>
-            <p className="mt-2">
+        <footer className="mt-auto border-t border-border bg-surface">
+          <div className="mx-auto grid w-full max-w-5xl gap-8 px-4 py-10 sm:grid-cols-[1fr_auto]">
+            <div className="max-w-prose">
+              <p className="text-sm font-medium text-foreground">
+                Datakeskushankkeiden kansallinen rekisteri
+              </p>
+              <p className="mt-2 text-sm leading-relaxed text-muted">
+                Avoin hanketietokanta ja prosessiopas. Julkaistu tieto merkitään
+                lähteineen. Esiversio: tietoja täydennetään ja varmennetaan.
+              </p>
+              <p className="mt-3 text-sm text-muted">Palvelun tuottaa Kansallisdata ry.</p>
+            </div>
+            <nav aria-label="Alatunniste" className="flex flex-col gap-2 text-sm sm:items-end">
               <a href="/tietoa" className="text-link underline">
                 Tietoa palvelusta
               </a>
-            </p>
+              <a href="/yhteys" className="text-link underline">
+                Ota yhteyttä
+              </a>
+              <a href="/ilmoitus" className="text-link underline">
+                Ilmoita hanke
+              </a>
+              <a href="/opas/yva-mielipide" className="text-link underline">
+                YVA-opas
+              </a>
+            </nav>
           </div>
         </footer>
       </body>

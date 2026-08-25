@@ -1,4 +1,5 @@
 import { kuittaaEsiversio } from "@/app/toiminnot";
+import { ESIVERSIO_TEKSTI, OSALLISTUMINEN_TEKSTI } from "@/lib/esiversio";
 
 export function EsiversioIlmoitus() {
   return (
@@ -10,13 +11,18 @@ export function EsiversioIlmoitus() {
       <h2 id="esiversio-otsikko" className="text-xl font-semibold">
         Esiversio
       </h2>
-      <p className="mt-3 leading-relaxed">
-        Rekisteri on esiversio. Tietoja täydennetään ja varmennetaan. Osa
-        toiminnoista voi puuttua. Osa tiedoista voi olla puutteellista,
-        vanhentunutta tai virheellistä. Tarkista aina alkuperäinen lähde.
-      </p>
+      <p className="mt-3 leading-relaxed">{ESIVERSIO_TEKSTI}</p>
+      <p className="mt-3 leading-relaxed">{OSALLISTUMINEN_TEKSTI}</p>
       <p className="mt-3 text-sm text-muted">
-        Lisätietoa on sivulla{" "}
+        Ilmoita hanke tai täydennys sivulla{" "}
+        <a href="/ilmoitus" className="text-link underline">
+          Ilmoita hanke
+        </a>
+        . Palaute ja muut viestit sivulla{" "}
+        <a href="/yhteys" className="text-link underline">
+          Ota yhteyttä
+        </a>
+        . Lisätietoa on sivulla{" "}
         <a href="/tietoa" className="text-link underline">
           Tietoa palvelusta
         </a>

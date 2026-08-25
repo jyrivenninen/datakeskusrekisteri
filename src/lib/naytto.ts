@@ -333,6 +333,17 @@ export const LAHDEAJO_TILA_NIMET: Record<string, string> = {
   epaonnistui: "Epäonnistui",
 };
 
+export const PALAUTE_AIHE_NIMET: Record<string, string> = {
+  palaute: "Palaute",
+  kysymys: "Kysymys",
+  muu: "Muu",
+};
+
+export const PALAUTE_TILA_NIMET: Record<string, string> = {
+  odottaa: "Odottaa",
+  kasitelty: "Käsitelty",
+};
+
 export function kenttaNayttonimi(taulu: string, kentta: string): string {
   if (HANKE_KENTTA_NIMET[kentta]) return HANKE_KENTTA_NIMET[kentta];
   return `${taulu}.${kentta}`;

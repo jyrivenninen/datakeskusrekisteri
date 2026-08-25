@@ -411,3 +411,24 @@ export type KuntaEsityslistaLahde = {
   luotu_pvm: string;
   paivitetty_pvm: string;
 };
+
+export const PALAUTE_AIHEET = ["palaute", "kysymys", "muu"] as const;
+
+export type PalauteAihe = (typeof PALAUTE_AIHEET)[number];
+
+export const PALAUTE_TILAT = ["odottaa", "kasitelty"] as const;
+
+export type PalauteTila = (typeof PALAUTE_TILAT)[number];
+
+export type Palaute = {
+  id: string;
+  aihe: PalauteAihe;
+  nimi: string | null;
+  sahkoposti: string | null;
+  viesti: string;
+  tila: PalauteTila;
+  luotu_pvm: string;
+  kasitelty_pvm: string | null;
+  kasittelija: string | null;
+  huomautus: string | null;
+};
