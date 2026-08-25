@@ -1,7 +1,7 @@
 import { haeKirjautunutKayttaja } from "@/lib/supabase/palvelin";
 import { redirect } from "next/navigation";
 import { hyvaksyKaikkiOdottavatToiminto, kirjauduUlos } from "@/app/toiminnot";
-import { jarjestaMuutosehdotukset, muotoilePvm, MUUTOSEHDOTUS_TYYPPI_NIMET, PALAUTE_AIHE_NIMET } from "@/lib/naytto";
+import { jarjestaMuutosehdotukset, kasittelySelite, muotoilePvm, MUUTOSEHDOTUS_TYYPPI_NIMET, PALAUTE_AIHE_NIMET } from "@/lib/naytto";
 import {
   EhdotusLuokka,
   EhdotusTila,
@@ -39,7 +39,7 @@ export default async function YllapitoSivu({
   const params = await searchParams;
   const { data: ehdotukset } = await supabase
     .from("muutosehdotukset")
-    .select("id, tyyppi, tila, luotu_pvm, ehdottaja_tunniste, hanke_id")
+    .select("id, tyyppi, tila, luotu_pvm, ehdottaja_tunniste, hanke_id, kasittelija, kasitelty_pvm")
     .order("luotu_pvm", { ascending: false });
   const hankeIdt = [
     ...new Set(
@@ -61,7 +61,7 @@ export default async function YllapitoSivu({
     .limit(20);
   const { data: palautteet } = await supabase
     .from("palautteet")
-    .select("id, aihe, nimi, sahkoposti, viesti, tila, luotu_pvm")
+    .select("id, aihe, nimi, sahkoposti, viesti, tila, luotu_pvm, kasittelija, kasitelty_pvm")
     .order("luotu_pvm", { ascending: false });
   const odottavatPalautteet = (palautteet ?? []).filter((rivi) => rivi.tila === "odottaa");
   const kasitellytPalautteet = (palautteet ?? []).filter((rivi) => rivi.tila !== "odottaa");
@@ -72,6 +72,7 @@ export default async function YllapitoSivu({
   const hyvaksyttyLkm = Number(params.hyvaksytty ?? "");
 
   function ehdotusRivi(ehdotus: (typeof jarjestetyt)[number]) {
+    const kasittely = kasittelySelite(ehdotus.kasittelija, ehdotus.kasitelty_pvm);
     return (
       <li
         key={ehdotus.id}
@@ -91,6 +92,7 @@ export default async function YllapitoSivu({
             : ""}
           {` · ${ehdotus.ehdottaja_tunniste}`}
         </p>
+        {kasittely ? <p className="mt-1 text-sm text-muted">{kasittely}</p> : null}
       </li>
     );
   }
@@ -165,14 +167,20 @@ export default async function YllapitoSivu({
               Käsitellyt yhteydenotot ({kasitellytPalautteet.length})
             </summary>
             <ul className="divide-y divide-border border-t border-border px-4">
-              {kasitellytPalautteet.map((palaute) => (
+              {kasitellytPalautteet.map((palaute) => {
+                const kasittely = kasittelySelite(palaute.kasittelija, palaute.kasitelty_pvm);
+                return (
                 <li key={palaute.id} className="py-3">
                   <a href={`/yllapito/palaute/${palaute.id}`} className="text-link underline">
                     {PALAUTE_AIHE_NIMET[palaute.aihe] ?? palaute.aihe}
                   </a>
-                  <p className="mt-1 text-sm text-muted">{muotoilePvm(palaute.luotu_pvm)}</p>
+                  <p className="mt-1 text-sm text-muted">
+                    {muotoilePvm(palaute.luotu_pvm)}
+                    {kasittely ? ` · ${kasittely}` : ""}
+                  </p>
                 </li>
-              ))}
+                );
+              })}
             </ul>
           </details>
         ) : null}

@@ -43,12 +43,12 @@ export async function haeKirjautunutKayttaja() {
 /** Palauttaa kirjautuneen ylläpitäjän tai nullin. Ei ohjaa kirjautumiseen. */
 export async function haeYllapitaja() {
   const { user, supabase } = await haeKirjautunutKayttaja();
-  if (!user) return { user: null, supabase };
+  if (!user) return { user: null, supabase, nimi: null as string | null };
   const { data } = await supabase
     .from("yllapitajat")
-    .select("kayttaja_id")
+    .select("kayttaja_id, nimi")
     .eq("kayttaja_id", user.id)
     .maybeSingle();
-  if (!data) return { user: null, supabase };
-  return { user, supabase };
+  if (!data) return { user: null, supabase, nimi: null as string | null };
+  return { user, supabase, nimi: data.nimi as string };
 }

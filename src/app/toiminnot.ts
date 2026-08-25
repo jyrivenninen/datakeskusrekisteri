@@ -12,6 +12,7 @@ import {
   tarkistaUusiHanke,
   type EhdotusSisalto,
 } from "@/lib/ehdotus";
+import { kasittelijaMerkinta } from "@/lib/naytto";
 import { LUOTTAMUSTASOT, PALAUTE_AIHEET, type Luottamus } from "@/lib/supabase/tietokanta";
 import { haeKirjautunutKayttaja, haeYllapitaja, luoPalvelinAsiakas } from "@/lib/supabase/palvelin";
 import { hylkaaMuutosehdotus, hyvaksyMuutosehdotus, yhdistaHankkeetEhdotuksesta } from "@/lib/supabase/hyvaksynta";
@@ -132,10 +133,11 @@ export async function lahetaKenttapaivitys(formData: FormData): Promise<void> {
     : pohja;
 
   const tyyppi = nykyinen ? "korjaus" : "taydennys";
-  const { user: yllapitaja } = await haeYllapitaja();
+  const { user: yllapitaja, nimi: yllapitajaNimi } = await haeYllapitaja();
   const julkaiseSuoraan = Boolean(yllapitaja && supabasePalvelinAvainAsetettu());
 
   if (julkaiseSuoraan && yllapitaja) {
+    const kasittelija = kasittelijaMerkinta(yllapitajaNimi, yllapitaja.email, yllapitaja.id);
     const yllapito = luoYllapitoAsiakas();
     const { data, error } = await yllapito
       .from("muutosehdotukset")
@@ -143,7 +145,7 @@ export async function lahetaKenttapaivitys(formData: FormData): Promise<void> {
         tyyppi,
         hanke_id: hankeId,
         ehdottaja_tyyppi: "yllapitaja",
-        ehdottaja_tunniste: yllapitaja.email ?? yllapitaja.id,
+        ehdottaja_tunniste: kasittelija,
         sisalto,
         tila: "odottaa",
         huomautus: huomautus || null,
@@ -155,7 +157,7 @@ export async function lahetaKenttapaivitys(formData: FormData): Promise<void> {
       paivitysPaluu(hankeId, kentta, vaihtoehto, error?.message ?? "Tallennus epäonnistui.");
     }
     try {
-      await hyvaksyMuutosehdotus(data.id, yllapitaja.email ?? yllapitaja.id);
+      await hyvaksyMuutosehdotus(data.id, kasittelija);
     } catch (syy) {
       const viesti = syy instanceof Error ? syy.message : "Julkaisu epäonnistui.";
       paivitysPaluu(
@@ -228,10 +230,11 @@ export async function lahetaKuva(formData: FormData): Promise<void> {
   if (luottamus) kuva.luottamus = luottamus;
 
   const sisalto: EhdotusSisalto = { kentat: {}, kuvat: [kuva] };
-  const { user: yllapitaja } = await haeYllapitaja();
+  const { user: yllapitaja, nimi: yllapitajaNimi } = await haeYllapitaja();
   const julkaiseSuoraan = Boolean(yllapitaja && supabasePalvelinAvainAsetettu());
 
   if (julkaiseSuoraan && yllapitaja) {
+    const kasittelija = kasittelijaMerkinta(yllapitajaNimi, yllapitaja.email, yllapitaja.id);
     const yllapito = luoYllapitoAsiakas();
     const { data, error } = await yllapito
       .from("muutosehdotukset")
@@ -239,7 +242,7 @@ export async function lahetaKuva(formData: FormData): Promise<void> {
         tyyppi: "kuva",
         hanke_id: hankeId,
         ehdottaja_tyyppi: "yllapitaja",
-        ehdottaja_tunniste: yllapitaja.email ?? yllapitaja.id,
+        ehdottaja_tunniste: kasittelija,
         sisalto,
         tila: "odottaa",
         huomautus: huomautus || null,
@@ -251,7 +254,7 @@ export async function lahetaKuva(formData: FormData): Promise<void> {
       kuvaPaluu(hankeId, error?.message ?? "Tallennus epäonnistui.");
     }
     try {
-      await hyvaksyMuutosehdotus(data.id, yllapitaja.email ?? yllapitaja.id);
+      await hyvaksyMuutosehdotus(data.id, kasittelija);
     } catch (syy) {
       const viesti = syy instanceof Error ? syy.message : "Julkaisu epäonnistui.";
       kuvaPaluu(hankeId, `${viesti} Ehdotus jäi tarkistusjonoon.`);
@@ -303,27 +306,31 @@ async function vaadiYllapitaja() {
   if (!user) redirect("/kirjaudu");
   const { data } = await supabase
     .from("yllapitajat")
-    .select("kayttaja_id, massahyvaksynta")
+    .select("kayttaja_id, nimi, massahyvaksynta")
     .eq("kayttaja_id", user.id)
     .maybeSingle();
   if (!data) redirect("/kirjaudu?virhe=" + encodeURIComponent("Ei ylläpito-oikeutta."));
-  return { user, massahyvaksynta: Boolean(data.massahyvaksynta) };
+  return {
+    user,
+    massahyvaksynta: Boolean(data.massahyvaksynta),
+    kasittelija: kasittelijaMerkinta(data.nimi, user.email, user.id),
+  };
 }
 
 export async function hyvaksyEhdotusToiminto(formData: FormData): Promise<void> {
-  const { user } = await vaadiYllapitaja();
+  const { kasittelija } = await vaadiYllapitaja();
   const id = String(formData.get("id") ?? "");
   const toiminto = String(formData.get("toiminto") ?? "kasittele");
   try {
     if (toiminto === "yhdista") {
       await yhdistaHankkeetEhdotuksesta(
         id,
-        user.email ?? user.id,
+        kasittelija,
         String(formData.get("sailytettava_hanke_id") ?? ""),
         String(formData.get("ei_uudelleen_perustelu") ?? ""),
       );
     } else {
-      await hyvaksyMuutosehdotus(id, user.email ?? user.id, {
+      await hyvaksyMuutosehdotus(id, kasittelija, {
         perustelu: String(formData.get("ei_uudelleen_perustelu") ?? ""),
       });
     }
@@ -338,7 +345,7 @@ export async function hyvaksyEhdotusToiminto(formData: FormData): Promise<void> 
 }
 
 export async function hyvaksyKaikkiOdottavatToiminto(formData: FormData): Promise<void> {
-  const { user, massahyvaksynta } = await vaadiYllapitaja();
+  const { kasittelija, massahyvaksynta } = await vaadiYllapitaja();
   if (!massahyvaksynta) {
     redirect(
       `/yllapito?virhe=${encodeURIComponent("Massakäsittely vaatii erillisen oikeuden.")}`,
@@ -365,7 +372,6 @@ export async function hyvaksyKaikkiOdottavatToiminto(formData: FormData): Promis
     redirect(`/yllapito?virhe=${encodeURIComponent(error.message)}`);
   }
 
-  const kasittelija = user.email ?? user.id;
   let hyvaksytty = 0;
   let ohitettuRistiriita = 0;
   const epaonnistuneet: string[] = [];
@@ -405,11 +411,11 @@ export async function hyvaksyKaikkiOdottavatToiminto(formData: FormData): Promis
 }
 
 export async function hylkaaEhdotusToiminto(formData: FormData): Promise<void> {
-  const { user } = await vaadiYllapitaja();
+  const { kasittelija } = await vaadiYllapitaja();
   const id = String(formData.get("id") ?? "");
   const perustelu = String(formData.get("perustelu") ?? "");
   try {
-    await hylkaaMuutosehdotus(id, user.email ?? user.id, perustelu);
+    await hylkaaMuutosehdotus(id, kasittelija, perustelu);
   } catch (syy) {
     const viesti = syy instanceof Error ? syy.message : "Hylkäys epäonnistui.";
     redirect(`/yllapito/${id}?virhe=${encodeURIComponent(viesti)}`);
@@ -471,7 +477,7 @@ export async function lahetaPalaute(formData: FormData): Promise<void> {
 }
 
 export async function merkitsePalauteKasitellyksi(formData: FormData): Promise<void> {
-  const { user } = await vaadiYllapitaja();
+  const { kasittelija } = await vaadiYllapitaja();
   const id = String(formData.get("id") ?? "");
   const huomautus = String(formData.get("huomautus") ?? "").trim() || null;
   const { supabase } = await haeKirjautunutKayttaja();
@@ -480,7 +486,7 @@ export async function merkitsePalauteKasitellyksi(formData: FormData): Promise<v
     .update({
       tila: "kasitelty",
       kasitelty_pvm: new Date().toISOString(),
-      kasittelija: user.email ?? user.id,
+      kasittelija,
       huomautus,
     })
     .eq("id", id)

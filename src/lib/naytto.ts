@@ -317,6 +317,31 @@ export function muotoileAika(arvo: string): string {
   }).format(pvm);
 }
 
+/** Kuka käsitteli: ylläpitäjän nimi ja sähköposti, tai käyttäjätunniste. */
+export function kasittelijaMerkinta(
+  nimi: string | null | undefined,
+  sahkoposti: string | null | undefined,
+  kayttajaId: string,
+): string {
+  const n = (nimi ?? "").trim();
+  const posti = (sahkoposti ?? "").trim();
+  if (n && posti) return `${n} · ${posti}`;
+  if (n) return n;
+  if (posti) return posti;
+  return kayttajaId;
+}
+
+export function kasittelySelite(
+  kasittelija: string | null | undefined,
+  kasitelty_pvm: string | null | undefined,
+): string | null {
+  if (!kasittelija && !kasitelty_pvm) return null;
+  const osat: string[] = [];
+  if (kasittelija) osat.push(kasittelija);
+  if (kasitelty_pvm) osat.push(muotoileAika(kasitelty_pvm));
+  return `Käsitteli ${osat.join(" · ")}`;
+}
+
 export const LAHDEAJO_SOVITIN_NIMET: Record<string, string> = {
   "ryhti-kaava": "Ryhti, kaava-aineisto",
   "ytj-prh": "YTJ (PRH avoin data)",

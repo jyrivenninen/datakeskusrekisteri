@@ -4,6 +4,7 @@ import { EhdotusLuokka, EhdotusTila } from "@/komponentit/ehdotus-tila";
 import {
   ehdotuksenHankeIdt,
   HANKE_KENTTA_NIMET,
+  kasittelySelite,
   MUUTOSEHDOTUS_TYYPPI_NIMET,
   RISTIRIITA_SAANTO_NIMET,
 } from "@/lib/naytto";
@@ -69,6 +70,7 @@ export default async function EhdotusSivu({
     hankkeet = data ?? [];
   }
   const hankeNimella = new Map(hankkeet.map((hanke) => [hanke.id, hanke]));
+  const kasittely = kasittelySelite(ehdotus.kasittelija, ehdotus.kasitelty_pvm);
 
   return (
     <main id="sisalto" className="mx-auto w-full max-w-3xl flex-1 px-4 py-10">
@@ -87,6 +89,7 @@ export default async function EhdotusSivu({
         <span aria-hidden="true">·</span>
         <span>{ehdotus.ehdottaja_tunniste}</span>
       </p>
+      {kasittely ? <p className="mt-2 text-muted">{kasittely}</p> : null}
       {query.virhe ? (
         <p className="mt-4" role="alert">
           {query.virhe}
