@@ -19,6 +19,18 @@ import type {
 import { hankeOsuvatKokoLuokkaan } from "@/lib/hanke-vaihtelvali";
 import { onHankeVaihe, onKokoLuokka, type KokoLuokka } from "@/lib/naytto";
 
+/** Vanha tunniste yhdistämisen jälkeen. Julkinen ohjaustaulu. */
+export async function haeHankeOhjaus(vanhaId: string): Promise<string | null> {
+  if (!supabaseYmparistoAsetettu()) return null;
+  const supabase = await luoPalvelinAsiakas();
+  const { data } = await supabase
+    .from("hanke_ohjaukset")
+    .select("uusi_id")
+    .eq("vanha_id", vanhaId)
+    .maybeSingle();
+  return data?.uusi_id ?? null;
+}
+
 export type HankeListalla = Hanke & {
   toimija: Pick<Organisaatio, "id" | "nimi"> | null;
   vaihtoehdot: HankeVaihtoehto[];

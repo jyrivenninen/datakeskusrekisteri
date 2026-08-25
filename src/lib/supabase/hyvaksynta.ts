@@ -1,10 +1,5 @@
-import {
-  kentanLuottamus,
-  kenttaArvoksi,
-  VAIHTOEHTO_KENTAT,
-  type EhdotettuKentta,
-  type EhdotusSisalto,
-} from "@/lib/ehdotus";
+import { kentanLuottamus, kenttaArvoksi, VAIHTOEHTO_KENTAT, type EhdotettuKentta, type EhdotusSisalto } from "@/lib/ehdotus";
+import { ehdotuksenHankeIdt } from "@/lib/naytto";
 import { LAHDE_LAJIT, type LahdeLaji } from "@/lib/supabase/tietokanta";
 import { luoYllapitoAsiakas } from "@/lib/supabase/yllapito-asiakas";
 
@@ -62,6 +57,41 @@ function ristiriitaSisaltoEiUudelleen(
       ei_uudelleen_perustelu: perustelu,
     },
   };
+}
+
+export async function yhdistaHankkeetEhdotuksesta(
+  ehdotusId: string,
+  kasittelija: string,
+  sailytettavaId: string,
+  perustelu: string,
+) {
+  const teksti = ristiriitaEiUudelleenPerustelu(perustelu);
+  const supabase = luoYllapitoAsiakas();
+  const { data: ehdotus, error } = await supabase
+    .from("muutosehdotukset")
+    .select("*")
+    .eq("id", ehdotusId)
+    .single();
+  if (error || !ehdotus) throw new Error("Ehdotusta ei löytynyt.");
+  if (ehdotus.tila !== "odottaa") throw new Error("Ehdotus on jo käsitelty.");
+  if (ehdotus.tyyppi !== "ristiriita_havainto") {
+    throw new Error("Yhdistäminen on vain ristiriitahavainnoille.");
+  }
+  const sisalto = ehdotus.sisalto as EhdotusSisalto;
+  const idt = ehdotuksenHankeIdt(ehdotus.hanke_id, sisalto.ristiriita);
+  if (idt.length !== 2 || !idt.includes(sailytettavaId)) {
+    throw new Error("Valitse toinen havainnon kahdesta hankkeesta säilytettäväksi.");
+  }
+  const siirrettavaId = idt.find((id) => id !== sailytettavaId);
+  if (!siirrettavaId) throw new Error("Siirrettävä hanke puuttuu.");
+  const { error: rpcVirhe } = await supabase.rpc("yhdista_hankkeet", {
+    p_sailytettava: sailytettavaId,
+    p_siirrettava: siirrettavaId,
+    p_ehdotus_id: ehdotusId,
+    p_kasittelija: kasittelija,
+    p_perustelu: teksti,
+  });
+  if (rpcVirhe) throw new Error(rpcVirhe.message);
 }
 
 export async function hyvaksyMuutosehdotus(

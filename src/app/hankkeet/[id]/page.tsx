@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { notFound } from "next/navigation";
+import { notFound, permanentRedirect } from "next/navigation";
 import { AvattavaKortti, Korttiruudukko } from "@/komponentit/avattava-kortti";
 import { Kartta } from "@/komponentit/kartta";
 import { HankeGalleria } from "@/komponentit/hanke-galleria";
@@ -23,7 +23,7 @@ import {
   muotoileLuku,
   muotoilePvm,
 } from "@/lib/naytto";
-import { haeHanke } from "@/lib/supabase/kyselyt";
+import { haeHanke, haeHankeOhjaus } from "@/lib/supabase/kyselyt";
 import type { Hanke, KenttaLahde } from "@/lib/supabase/tietokanta";
 
 export const revalidate = 60;
@@ -175,7 +175,8 @@ export async function generateMetadata({
   params: Promise<{ id: string }>;
 }): Promise<Metadata> {
   const { id } = await params;
-  const { hanke } = await haeHanke(id);
+  const ohjaus = await haeHankeOhjaus(id);
+  const { hanke } = await haeHanke(ohjaus && ohjaus !== id ? ohjaus : id);
   if (!hanke) {
     return { title: "Hanketta ei löytynyt" };
   }
@@ -191,6 +192,8 @@ export default async function HankeSivu({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
+  const ohjaus = await haeHankeOhjaus(id);
+  if (ohjaus && ohjaus !== id) permanentRedirect(`/hankkeet/${ohjaus}`);
   const {
     hanke,
     lahteet,

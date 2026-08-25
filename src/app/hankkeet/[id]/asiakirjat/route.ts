@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { haeHanke } from "@/lib/supabase/kyselyt";
+import { haeHanke, haeHankeOhjaus } from "@/lib/supabase/kyselyt";
 
 export const revalidate = 60;
 
@@ -8,6 +8,12 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> },
 ) {
   const { id } = await params;
+  const ohjaus = await haeHankeOhjaus(id);
+  if (ohjaus && ohjaus !== id) {
+    const kohde = new URL(_request.url);
+    kohde.pathname = `/hankkeet/${ohjaus}/asiakirjat`;
+    return NextResponse.redirect(kohde, 308);
+  }
   const { hanke, asiakirjat, virhe } = await haeHanke(id);
 
   if (virhe) {

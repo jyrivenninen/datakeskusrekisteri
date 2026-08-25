@@ -13,7 +13,7 @@ import {
 } from "@/lib/ehdotus";
 import { LUOTTAMUSTASOT, type Luottamus } from "@/lib/supabase/tietokanta";
 import { haeKirjautunutKayttaja, haeYllapitaja, luoPalvelinAsiakas } from "@/lib/supabase/palvelin";
-import { hylkaaMuutosehdotus, hyvaksyMuutosehdotus } from "@/lib/supabase/hyvaksynta";
+import { hylkaaMuutosehdotus, hyvaksyMuutosehdotus, yhdistaHankkeetEhdotuksesta } from "@/lib/supabase/hyvaksynta";
 import { luoYllapitoAsiakas, supabasePalvelinAvainAsetettu } from "@/lib/supabase/yllapito-asiakas";
 
 export async function lahetaIlmoitus(formData: FormData): Promise<void> {
@@ -311,10 +311,20 @@ async function vaadiYllapitaja() {
 export async function hyvaksyEhdotusToiminto(formData: FormData): Promise<void> {
   const user = await vaadiYllapitaja();
   const id = String(formData.get("id") ?? "");
+  const toiminto = String(formData.get("toiminto") ?? "kasittele");
   try {
-    await hyvaksyMuutosehdotus(id, user.email ?? user.id, {
-      perustelu: String(formData.get("ei_uudelleen_perustelu") ?? ""),
-    });
+    if (toiminto === "yhdista") {
+      await yhdistaHankkeetEhdotuksesta(
+        id,
+        user.email ?? user.id,
+        String(formData.get("sailytettava_hanke_id") ?? ""),
+        String(formData.get("ei_uudelleen_perustelu") ?? ""),
+      );
+    } else {
+      await hyvaksyMuutosehdotus(id, user.email ?? user.id, {
+        perustelu: String(formData.get("ei_uudelleen_perustelu") ?? ""),
+      });
+    }
   } catch (syy) {
     const viesti = syy instanceof Error ? syy.message : "Hyväksyntä epäonnistui.";
     redirect(`/yllapito/${id}?virhe=${encodeURIComponent(viesti)}`);

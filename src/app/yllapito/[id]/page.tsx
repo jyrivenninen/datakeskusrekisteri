@@ -511,8 +511,39 @@ export default async function EhdotusSivu({
               <div className="space-y-3">
                 <p className="max-w-prose text-sm text-muted">
                   Käsittely merkitsee, ettei sama havainto nouse uudelleen.
-                  Kirjaa miksi.
+                  Kirjaa miksi. Jos kyse on samasta kokonaisuudesta, valitse
+                  säilytettävä hanke ja yhdistä.
                 </p>
+                {hankeIdt.length === 2 ? (
+                  <fieldset className="space-y-2">
+                    <legend className="text-sm font-medium">
+                      Yhdistä samaan hankkeeseen (valitse säilytettävä)
+                    </legend>
+                    <p className="max-w-prose text-sm text-muted">
+                      Siirrettävän puuttuvat tiedot ja lähteet täydennetään
+                      säilytettävään. Toinen kortti poistuu julkisesta listasta;
+                      vanha osoite ohjaa uuteen. Rivejä ei poisteta.
+                    </p>
+                    {hankeIdt.map((hankeId) => {
+                      const hanke = hankeNimella.get(hankeId);
+                      return (
+                        <div key={hankeId} className="flex items-start gap-2">
+                          <input
+                            id={`sailytettava-${hankeId}`}
+                            type="radio"
+                            name="sailytettava_hanke_id"
+                            value={hankeId}
+                            className="mt-1"
+                          />
+                          <label htmlFor={`sailytettava-${hankeId}`} className="text-sm">
+                            {hanke?.nimi ?? "Hanke"}
+                            {hanke?.kunta ? ` · ${hanke.kunta}` : ""}
+                          </label>
+                        </div>
+                      );
+                    })}
+                  </fieldset>
+                ) : null}
                 <label htmlFor="ei-uudelleen-perustelu" className="block text-sm font-medium">
                   Miksi havainto ei nouse uudelleen
                 </label>
@@ -526,8 +557,20 @@ export default async function EhdotusSivu({
                 />
               </div>
             ) : null}
+            {ristiriita && hankeIdt.length === 2 ? (
+              <button
+                type="submit"
+                name="toiminto"
+                value="yhdista"
+                className="rounded border border-border px-4 py-2 text-sm"
+              >
+                Yhdistä valittuun hankkeeseen
+              </button>
+            ) : null}
             <button
               type="submit"
+              name="toiminto"
+              value="kasittele"
               className="rounded border border-foreground bg-foreground px-4 py-2 text-sm font-medium text-background"
             >
               {eiJulkaista ? "Merkitse käsitellyksi" : "Hyväksy ja julkaise"}

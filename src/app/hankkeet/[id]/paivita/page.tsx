@@ -1,4 +1,4 @@
-import { notFound } from "next/navigation";
+import { notFound, permanentRedirect } from "next/navigation";
 import { lahetaKenttapaivitys } from "@/app/toiminnot";
 import { LomakeLahetysNappi } from "@/komponentit/lomake-lahetysnappi";
 import {
@@ -7,7 +7,7 @@ import {
   type PaivitettavaHankeKentta,
 } from "@/lib/ehdotus";
 import { HANKE_KENTTA_NIMET, LUOTTAMUS_NIMET, VAIHE_NIMET } from "@/lib/naytto";
-import { haeHanke, type HankeListalla } from "@/lib/supabase/kyselyt";
+import { haeHanke, haeHankeOhjaus, type HankeListalla } from "@/lib/supabase/kyselyt";
 import { haeYllapitaja } from "@/lib/supabase/palvelin";
 import { HANKE_VAIHEET, LUOTTAMUSTASOT } from "@/lib/supabase/tietokanta";
 import { supabasePalvelinAvainAsetettu } from "@/lib/supabase/yllapito-asiakas";
@@ -32,6 +32,8 @@ export default async function KenttapaivitysSivu({
   }>;
 }) {
   const { id } = await params;
+  const ohjaus = await haeHankeOhjaus(id);
+  if (ohjaus && ohjaus !== id) permanentRedirect(`/hankkeet/${ohjaus}/paivita`);
   const query = await searchParams;
   const { hanke, vaihtoehdot, virhe: latausVirhe } = await haeHanke(id);
   if (latausVirhe || !hanke) notFound();
