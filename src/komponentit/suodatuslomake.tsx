@@ -75,7 +75,7 @@ export function Suodatuslomake({
           ))}
         </select>
       </p>
-      <p className="flex min-w-40 items-center gap-2 sm:pb-2">
+      <p className="flex shrink-0 items-center gap-2 whitespace-nowrap sm:pb-2">
         <input
           id="kuvalliset"
           type="checkbox"

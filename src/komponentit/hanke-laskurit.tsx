@@ -46,7 +46,7 @@ export function HankeLaskurit({ yhteenveto }: { yhteenveto: HankeYhteenveto }) {
   return (
     <div className="mt-6">
       <h3 className="text-base font-semibold">Valittujen hankkeiden luvut</h3>
-      <p className="mt-1 max-w-prose text-sm text-muted">
+      <p className="mt-1 text-sm leading-relaxed text-muted">
         Summat koskevat vain suodattimeen osuvia julkaistuja hankkeita. Tyhjä
         kenttä ei ole nolla. Jos hankkeella on merkittyjä YVA-vaihtoehtoja,
         laskuri käyttää niiden alinta ja ylintä lukua; vaihtoehtoja ei lasketa
@@ -123,7 +123,7 @@ export function HankeLaskurit({ yhteenveto }: { yhteenveto: HankeYhteenveto }) {
           </p>
         </li>
       </ul>
-      <p className="mt-3 max-w-prose text-sm text-muted">
+      <p className="mt-3 text-sm leading-relaxed text-muted">
         Vertailuluvut:{" "}
         <a
           href={SUOMI_SAHKON_TUOTANTO_2024.lahde_url}

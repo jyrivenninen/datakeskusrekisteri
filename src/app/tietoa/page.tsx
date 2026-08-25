@@ -31,7 +31,7 @@ export default async function TietoaPalvelustaSivu() {
         <h2 id="mika-otsikko" className="text-xl font-semibold">
           Mikä tämä on
         </h2>
-        <div className="mt-3 max-w-prose space-y-3 leading-relaxed">
+        <div className="mt-3 space-y-3 leading-relaxed">
           <p>{ESIVERSIO_TEKSTI}</p>
           <p>
             {OSALLISTUMINEN_TEKSTI}{" "}
@@ -66,12 +66,12 @@ export default async function TietoaPalvelustaSivu() {
         <h2 id="aineistot-otsikko" className="text-xl font-semibold">
           Aineistot ja rajapinnat
         </h2>
-        <p className="mt-3 max-w-prose leading-relaxed">
+        <p className="mt-3 leading-relaxed">
           Rakenteinen viranomaistieto haetaan rajapinnoista, ei kielimallilla.
           Mallia käytetään vain luonnollisen kielen dokumenttien lukemiseen.
           Ristiriidat, linkit ja dokumenttien muuttuminen tarkistetaan koodilla.
         </p>
-        <ul className="mt-3 max-w-prose list-disc space-y-2 pl-5 leading-relaxed">
+        <ul className="mt-3 list-disc space-y-2 pl-5 leading-relaxed">
           <li>Ryhti (SYKE): kaavakohteet, kun aineisto on toimitettu.</li>
           <li>PRH YTJ, avoin data, CC BY 4.0: organisaatioiden Y-tunnukset.</li>
           <li>Maanmittauslaitos, CC BY 4.0: geokoodaus ja taustakartta.</li>
@@ -84,7 +84,7 @@ export default async function TietoaPalvelustaSivu() {
         <h2 id="ajot-otsikko" className="text-xl font-semibold">
           Lähdeajot
         </h2>
-        <p className="mt-3 max-w-prose leading-relaxed text-muted">
+        <p className="mt-3 leading-relaxed text-muted">
           Ajo hakee tai tarkistaa lähteen. Se kirjoittaa ehdotuksen jonoon,
           ei julkaistuun hanketietoon. Osumien määrä on haun tulos, ei
           hyväksyttyjen tietojen määrä.

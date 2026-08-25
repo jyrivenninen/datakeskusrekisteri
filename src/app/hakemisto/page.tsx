@@ -22,7 +22,7 @@ export default async function HakemistoSivu({
   return (
     <main id="sisalto" className="sivuleveys flex-1 py-10">
       <h1 className="text-3xl font-semibold tracking-tight">Hakemisto</h1>
-      <p className="mt-4 max-w-prose leading-relaxed text-muted">
+      <p className="mt-4 leading-relaxed text-muted">
         Julkaistut organisaatiot. Henkilönimiä tai suoria yhteystietoja ei
         julkaista.
       </p>

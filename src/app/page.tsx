@@ -55,7 +55,7 @@ export default async function Etusivu({
       <h1 className="text-3xl font-semibold tracking-tight">
         Datakeskushankkeiden kansallinen rekisteri
       </h1>
-      <p className="mt-4 max-w-prose text-lg leading-relaxed text-muted">
+      <p className="mt-4 text-lg leading-relaxed text-muted">
         Avoin hanketietokanta ja prosessiopas. Julkaistu tieto merkitään
         lähteineen. Rekisteri ei ota kantaa yksittäisiin hankkeisiin.
       </p>
@@ -80,7 +80,7 @@ export default async function Etusivu({
         {maaraajaVirhe ? (
           <p className="mt-3 text-sm">{maaraajaVirhe}</p>
         ) : maaraajat.length === 0 ? (
-          <p className="mt-3 max-w-prose leading-relaxed">
+          <p className="mt-3 leading-relaxed">
             Ei tulevia määräaikoja. Päättyneet määräajat näkyvät hankkeen
             sivulla.
           </p>
@@ -122,7 +122,7 @@ export default async function Etusivu({
         <h2 id="hankkeet-otsikko" className="text-xl font-semibold">
           Hankkeet
         </h2>
-        <p className="mt-2 max-w-prose text-sm text-muted">
+        <p className="mt-2 text-sm leading-relaxed text-muted">
           Suodatin päivittää laskurit, kartan ja luettelon valinnoista.
           Kokoluokka osuu hankkeeseen, jos hanketason teho tai jokin merkitty
           YVA-vaihtoehto osuu luokkaan.
@@ -137,7 +137,7 @@ export default async function Etusivu({
         <h3 id="kartta-otsikko" className="mt-10 text-lg font-semibold">
           Kartta
         </h3>
-        <p className="mt-2 max-w-prose text-sm text-muted">
+        <p className="mt-2 text-sm leading-relaxed text-muted">
           Nuppineulan väri kertoo hankkeen vaiheen. Lähizoomissa näkyy myös
           hankealue ja sähkönsiirtoreitti, jos ne on merkitty.
         </p>

@@ -73,7 +73,7 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
         {children}
         <footer className="mt-auto border-t border-border bg-surface">
           <div className="sivuleveys grid gap-8 py-10 sm:grid-cols-[1fr_auto]">
-            <div className="max-w-prose">
+            <div>
               <p className="text-sm font-medium text-foreground">
                 Datakeskushankkeiden kansallinen rekisteri
               </p>
