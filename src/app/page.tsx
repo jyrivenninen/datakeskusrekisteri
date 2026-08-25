@@ -145,7 +145,7 @@ export default async function Etusivu({
           <Kartta
             merkit={merkit}
             sovitaSuomeen
-            luokka="min-h-[28rem] h-[min(70svh,42rem)]"
+            luokka="kartta-suomi"
             vaiheLkm={Object.fromEntries(
               HANKE_VAIHEET.map((vaihe) => [
                 vaihe,

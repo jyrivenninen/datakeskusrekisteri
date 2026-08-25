@@ -59,6 +59,11 @@ function parsiAlue(arvo: unknown): SijaintiAlue | null {
 }
 
 function taustakarttaTyyli(avain: string): StyleSpecification {
+  const tausta =
+    typeof document === "undefined"
+      ? "#1c1917"
+      : getComputedStyle(document.documentElement).getPropertyValue("--background").trim() ||
+        "#1c1917";
   return {
     version: 8,
     name: "MML taustakartta",
@@ -74,6 +79,11 @@ function taustakarttaTyyli(avain: string): StyleSpecification {
       },
     },
     layers: [
+      {
+        id: "pohja",
+        type: "background",
+        paint: { "background-color": tausta },
+      },
       {
         id: "taustakartta",
         type: "raster",
@@ -309,8 +319,9 @@ export function Kartta({
     const paivita = () => piirraGeometriat(kartta, svg, merkitNyt);
 
     const rajaaKartta = () => {
+      kartta.resize();
       if (sovitaSuomeen) {
-        kartta.fitBounds(SUOMI_RAJAT, { padding: 24, maxZoom: 6 });
+        kartta.fitBounds(SUOMI_RAJAT, { padding: 8, maxZoom: 6 });
         paivita();
         return;
       }
@@ -355,10 +366,20 @@ export function Kartta({
   }
 
   return (
-    <div className="flex flex-col gap-4 sm:flex-row sm:items-stretch">
+    <div
+      className={
+        sovitaSuomeen
+          ? "flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between"
+          : "flex flex-col gap-4 sm:flex-row sm:items-stretch"
+      }
+    >
       <div
         ref={kehys}
-        className={`relative min-h-[18rem] w-full min-w-0 flex-1 overflow-hidden rounded border border-border ${luokka ?? "h-[28rem]"}`}
+        className={
+          sovitaSuomeen
+            ? `relative min-w-0 overflow-hidden rounded border border-border bg-background ${luokka ?? "kartta-suomi"}`
+            : `relative min-h-[18rem] w-full min-w-0 flex-1 overflow-hidden rounded border border-border ${luokka ?? "h-[28rem]"}`
+        }
         role="region"
         aria-label="Hankkeiden sijaintikartta"
       />

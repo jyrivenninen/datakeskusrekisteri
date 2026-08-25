@@ -145,3 +145,18 @@ dialog.esiversio-ilmoitus::backdrop {
   outline: 2px solid var(--link);
   outline-offset: 2px;
 }
+
+.maplibregl-map,
+.maplibregl-canvas {
+  background: var(--background);
+}
+
+/*
+  Mercator-suhde Suomen rajaukselle ~0,49 (leveys/korkeus).
+  Kartta ei levennä sen yli, ettei MML-laattojen ulkopuolinen musta näy.
+*/
+.kartta-suomi {
+  width: min(100%, calc(min(70svh, 42rem) * 0.5));
+  height: min(70svh, 42rem);
+  min-height: 18rem;
+}
