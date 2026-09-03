@@ -27,6 +27,56 @@ $$;
 RESET ROLE;
 
 DO $$
+BEGIN
+  BEGIN
+    SET LOCAL ROLE agentti;
+    INSERT INTO hankkeet (nimi, kunta, vaihe, julkaistu)
+    VALUES ('RLS-testi agentti älä julkaise', 'Testikunta', 'esiselvitys', true);
+    RAISE EXCEPTION 'agentti pystyi lisäämään rivin hankkeet-tauluun';
+  EXCEPTION
+    WHEN insufficient_privilege THEN
+      NULL;
+    WHEN OTHERS THEN
+      IF SQLSTATE = '42501' THEN
+        NULL;
+      ELSE
+        RAISE;
+      END IF;
+  END;
+END;
+$$;
+
+RESET ROLE;
+
+DO $$
+BEGIN
+  BEGIN
+    SET LOCAL ROLE agentti;
+    PERFORM julkaise_ehdotetut_tiedot(
+      'taydennys',
+      gen_random_uuid(),
+      '{}'::jsonb,
+      '[]'::jsonb,
+      gen_random_uuid(),
+      'rls-testi'
+    );
+    RAISE EXCEPTION 'agentti pystyi kutsumaan julkaise_ehdotetut_tiedot';
+  EXCEPTION
+    WHEN insufficient_privilege THEN
+      NULL;
+    WHEN OTHERS THEN
+      IF SQLSTATE = '42501' THEN
+        NULL;
+      ELSE
+        RAISE;
+      END IF;
+  END;
+END;
+$$;
+
+RESET ROLE;
+
+DO $$
 DECLARE
   n integer;
 BEGIN

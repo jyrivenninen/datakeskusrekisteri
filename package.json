@@ -14,6 +14,8 @@
     "agentti:ryhti": "tsx agents/lahteet/ryhti.ts",
     "agentti:ytj": "tsx agents/lahteet/ytj.ts",
     "agentti:mml": "tsx agents/lahteet/mml.ts",
+    "agentti:jwt": "tsx scripts/luo-agentti-jwt.ts",
+    "agentti:testaa-yhteys": "tsx scripts/testaa-agentti-yhteys.ts",
     "test:rls": "npx supabase db query --linked -f supabase/tests/rls-oikeudet.sql",
     "test:rls:jwt": "tsx supabase/tests/rls-oikeudet.ts",
     "test": "tsx --test src/lib/haku.test.ts"
