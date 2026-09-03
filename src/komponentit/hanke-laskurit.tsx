@@ -55,7 +55,12 @@ export function HankeLaskurit({ yhteenveto }: { yhteenveto: HankeYhteenveto }) {
       <ul className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
         <li className="rounded border border-border bg-surface p-4">
           <p className="text-sm text-muted">Hankkeita</p>
-          <p className="mt-1 text-2xl font-semibold tabular-nums">{hankeita}</p>
+          <p
+            key={hankeita}
+            className="mt-1 text-2xl font-semibold tabular-nums motion-safe:transition-opacity motion-safe:duration-200"
+          >
+            {hankeita}
+          </p>
           <p className="mt-1 text-sm text-muted">
             {yhteenveto.kuntia} kuntaa · {yhteenveto.rakenteillaTaiToiminnassaLkm}{" "}
             rakenteilla tai toiminnassa

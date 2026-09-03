@@ -19,6 +19,7 @@ import type {
   PaatosNakyma,
 } from "@/lib/supabase/tietokanta";
 import { hankeOsuvatKokoLuokkaan } from "@/lib/hanke-vaihtelvali";
+import { hankkeSopiiHakuun, parsiHakusana } from "@/lib/haku";
 import { onHankeVaihe, onKokoLuokka, vanhinVahvistettuPvm, viimeisinPaatos, type KokoLuokka } from "@/lib/naytto";
 
 /** Vanha tunniste yhdistämisen jälkeen. Julkinen ohjaustaulu. */
@@ -41,6 +42,7 @@ export type HankeListalla = Hanke & {
 };
 
 export type HankeSuodatus = {
+  q?: string;
   kunta?: string;
   vaihe?: HankeVaihe;
   koko?: KokoLuokka;
@@ -48,12 +50,14 @@ export type HankeSuodatus = {
 };
 
 export function parsiSuodatus(params: {
+  q?: string;
   kunta?: string;
   vaihe?: string;
   koko?: string;
   kuvalliset?: string;
 }): HankeSuodatus {
   return {
+    q: parsiHakusana(params.q),
     kunta: params.kunta || undefined,
     vaihe: params.vaihe && onHankeVaihe(params.vaihe) ? params.vaihe : undefined,
     koko: params.koko && onKokoLuokka(params.koko) ? params.koko : undefined,
@@ -122,6 +126,9 @@ export async function haeJulkaistutHankkeet(
       hankkeet = hankkeet.filter((hanke) =>
         hankeOsuvatKokoLuokkaan(hanke, hanke.vaihtoehdot, kokoLuokka),
       );
+    }
+    if (suodatus.q) {
+      hankkeet = hankkeet.filter((hanke) => hankkeSopiiHakuun(hanke, suodatus.q));
     }
     if (suodatus.kuvalliset && hankkeet.length > 0) {
       const { data: kuvaRivit, error: kuvaVirhe } = await supabase

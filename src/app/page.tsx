@@ -1,9 +1,10 @@
+import { HankkeetSuodatin } from "@/komponentit/hankkeet-suodatin";
 import { HankeLaskurit } from "@/komponentit/hanke-laskurit";
 import { Kartta, type Karttamerkki } from "@/komponentit/kartta";
-import { Suodatuslomake } from "@/komponentit/suodatuslomake";
 import { VaiheMerkki } from "@/komponentit/vaihe-merkki";
 import { laskeHankeYhteenveto } from "@/lib/hanke-yhteenveto";
 import { hankeVaihtelvalit } from "@/lib/hanke-vaihtelvali";
+import { aktiivisetEhdot, hankkeetSuodatusPolku, onAktiivinenSuodatus } from "@/lib/haku";
 import { MAARAAJA_NIMET, muotoilePvm, muotoileVaihtelvali } from "@/lib/naytto";
 import { HANKE_VAIHEET } from "@/lib/supabase/tietokanta";
 import {
@@ -17,7 +18,7 @@ export const revalidate = 60;
 export default async function Etusivu({
   searchParams,
 }: {
-  searchParams: Promise<{ kunta?: string; vaihe?: string; koko?: string; kuvalliset?: string }>;
+  searchParams: Promise<{ q?: string; kunta?: string; vaihe?: string; koko?: string; kuvalliset?: string }>;
 }) {
   const params = await searchParams;
   const suodatus = parsiSuodatus(params);
@@ -127,7 +128,7 @@ export default async function Etusivu({
           Kokoluokka osuu hankkeeseen, jos hanketason teho tai jokin merkitty
           YVA-vaihtoehto osuu luokkaan.
         </p>
-        <Suodatuslomake suodatus={suodatus} kunnat={kunnat} />
+        <HankkeetSuodatin suodatus={suodatus} kunnat={kunnat} />
         {hankeVirhe ? (
           <p className="mt-4 text-sm">{hankeVirhe}</p>
         ) : (
@@ -167,7 +168,25 @@ export default async function Etusivu({
         {hankeVirhe ? (
           <p className="mt-4 text-sm">{hankeVirhe}</p>
         ) : hankkeet.length === 0 ? (
-          <p className="mt-4 leading-relaxed">Ei hankkeita valituilla suodattimilla.</p>
+          <div className="mt-4 rounded-lg border border-border bg-surface p-4">
+            <p className="leading-relaxed">Ei hankkeita valituilla ehdoilla.</p>
+            {onAktiivinenSuodatus(suodatus) ? (
+              <>
+                <ul className="mt-3 flex flex-wrap gap-2 text-sm text-muted">
+                  {aktiivisetEhdot(suodatus).map((ehto) => (
+                    <li key={ehto.avain} className="rounded-full border border-border px-2 py-0.5">
+                      {ehto.nimi}
+                    </li>
+                  ))}
+                </ul>
+                <p className="mt-4">
+                  <a href={hankkeetSuodatusPolku({})} className="text-link underline">
+                    Tyhjennä haku ja suodattimet
+                  </a>
+                </p>
+              </>
+            ) : null}
+          </div>
         ) : (
           <ul className="mt-4 divide-y divide-border border-y border-border">
             {hankkeet.map((hanke) => {

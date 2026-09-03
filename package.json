@@ -15,7 +15,8 @@
     "agentti:ytj": "tsx agents/lahteet/ytj.ts",
     "agentti:mml": "tsx agents/lahteet/mml.ts",
     "test:rls": "npx supabase db query --linked -f supabase/tests/rls-oikeudet.sql",
-    "test:rls:jwt": "tsx supabase/tests/rls-oikeudet.ts"
+    "test:rls:jwt": "tsx supabase/tests/rls-oikeudet.ts",
+    "test": "tsx --test src/lib/haku.test.ts"
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.4",
