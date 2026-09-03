@@ -55,8 +55,9 @@ export function YllapitoOhjeet({ massahyvaksynta = false }: { massahyvaksynta?: 
               epävarmaa lukua vahvistettuna.
             </li>
             <li>
-              Jos lainaus ei tue arvoa tai lähde ei avaudu, hylkää. Tyhjä kenttä
-              on parempi kuin arvattu.
+              Jos kenttä on tyhjä sen jälkeen kun se on käyty läpi, merkitse
+              päivityslomakkeella ettei julkista lähdettä ole. Hyväksyntä ei
+              täytä arvoa. Lähdepakko arvollisille kentille pysyy.
             </li>
             <li>
               Kirjautuneen ylläpitäjän ilmoitus tai täydennys{" "}

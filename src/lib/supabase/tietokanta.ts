@@ -101,6 +101,7 @@ export const MUUTOSEHDOTUS_TYYPIT = [
   "mml_havainto",
   "dokumentti_muuttunut",
   "ristiriita_havainto",
+  "kentta_tarkistus",
 ] as const;
 
 export type MuutosehdotusTyyppi = (typeof MUUTOSEHDOTUS_TYYPIT)[number];
@@ -357,6 +358,23 @@ export type KenttaLahde = {
   lainaus: string | null;
   merkitty: Merkinta;
   merkitty_pvm: string;
+  luotu_pvm: string;
+};
+
+export const KENTTA_TARKISTUS_TULOKSET = ["ei_julkista_lahdetta"] as const;
+
+export type KenttaTarkistusTulos = (typeof KENTTA_TARKISTUS_TULOKSET)[number];
+
+export type KenttaTarkistus = {
+  id: string;
+  taulu: "hankkeet" | "hanke_vaihtoehdot";
+  rivi_id: string;
+  kentta: string;
+  tulos: KenttaTarkistusTulos;
+  vahvistettu_pvm: string;
+  merkitty: Merkinta;
+  merkitty_pvm: string;
+  huomautus: string | null;
   luotu_pvm: string;
 };
 

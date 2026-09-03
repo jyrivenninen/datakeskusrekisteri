@@ -1,9 +1,10 @@
 import { notFound, permanentRedirect } from "next/navigation";
-import { lahetaKenttapaivitys } from "@/app/toiminnot";
+import { lahetaKenttapaivitys, lahetaKenttaTarkistus } from "@/app/toiminnot";
 import { LomakeLahetysNappi } from "@/komponentit/lomake-lahetysnappi";
 import {
   onPaivitettavaHankeKentta,
   onVaihtoehtoKentta,
+  tarkistusKenttaLomakkeesta,
   type PaivitettavaHankeKentta,
 } from "@/lib/ehdotus";
 import { HANKE_KENTTA_NIMET, LUOTTAMUS_NIMET, VAIHE_NIMET } from "@/lib/naytto";
@@ -221,6 +222,46 @@ export default async function KenttapaivitysSivu({
           )}
           <LomakeLahetysNappi
             valmis={julkaiseSuoraan ? "Julkaise päivitys" : "Lähetä tarkistettavaksi"}
+            odottaa="Lähetetään…"
+          />
+        </form>
+      )}
+
+      {query.valmis || vaihtoehtoTunnus || !tarkistusKenttaLomakkeesta(kentta) || nykyinen ? null : (
+        <form action={lahetaKenttaTarkistus} className="mt-10 space-y-4 border-t border-border pt-8">
+          <input type="hidden" name="hanke_id" value={hanke.id} />
+          <input type="hidden" name="kentta" value={kentta} />
+          <h2 className="text-lg font-semibold">Ei julkista lähdettä</h2>
+          <p className="text-sm leading-relaxed text-muted">
+            Jos kenttä on käyty läpi eikä julkista lähdettä ole, merkitse se
+            tähän. Arvoa ei täytetä. Sama tyhjä kenttä ei nouse uudelleen
+            tarkistusjonoon, ennen kuin tämä merkintä vanhenee.
+          </p>
+          <p className="flex flex-col gap-1">
+            <label htmlFor="tarkistus_huomautus" className="text-sm font-medium">
+              Huomautus (ei julkaista)
+            </label>
+            <textarea
+              id="tarkistus_huomautus"
+              name="huomautus"
+              rows={3}
+              className="rounded border border-border bg-surface px-2 py-2"
+            />
+          </p>
+          {julkaiseSuoraan ? null : (
+            <p className="flex flex-col gap-1">
+              <label htmlFor="tarkistus_tunniste" className="text-sm font-medium">
+                Sähköposti tai muu yhteystieto (ei julkaista)
+              </label>
+              <input
+                id="tarkistus_tunniste"
+                name="ehdottaja_tunniste"
+                className="rounded border border-border bg-surface px-2 py-2"
+              />
+            </p>
+          )}
+          <LomakeLahetysNappi
+            valmis={julkaiseSuoraan ? "Merkitse tarkistetuksi" : "Lähetä tarkistus jonoon"}
             odottaa="Lähetetään…"
           />
         </form>

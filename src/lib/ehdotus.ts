@@ -77,6 +77,13 @@ export type EhdotusSisalto = {
     muuttunut: boolean;
     ei_loydy: boolean;
   };
+  tarkistus?: {
+    taulu: "hankkeet";
+    rivi_id: string;
+    kentta: string;
+    tulos: "ei_julkista_lahdetta";
+    huomautus?: string | null;
+  };
 };
 
 const NUMEERISET = new Set([
@@ -139,7 +146,23 @@ export function onPaivitettavaHankeKentta(
 /** Kortin tunniste → lomakkeen kenttänimi. */
 export function lomakeKenttaKortista(korttiKentta: string): string | null {
   if (korttiKentta === "toimija_organisaatio_id") return "toimija_nimi";
+  if (korttiKentta === "sijainti") return "sijainti_lat";
   if (onPaivitettavaHankeKentta(korttiKentta)) return korttiKentta;
+  return null;
+}
+
+/** Tyhjän hankekentän tarkistus ilman julkista lähdettä. */
+export function tarkistusKenttaLomakkeesta(kentta: string): string | null {
+  if (kentta === "toimija_nimi") return "toimija_organisaatio_id";
+  if (
+    kentta === "sijainti_lat" ||
+    kentta === "sijainti_lon" ||
+    kentta === "sijainti_alue_tyyppi"
+  ) {
+    return "sijainti";
+  }
+  if (["nimi", "kunta", "vaihe"].includes(kentta)) return null;
+  if (onPaivitettavaHankeKentta(kentta)) return kentta;
   return null;
 }
 

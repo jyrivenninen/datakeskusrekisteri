@@ -11,6 +11,7 @@ import {
   rakennaSisalto,
   rakennaKuvaEhdotus,
   tarkistaUusiHanke,
+  tarkistusKenttaLomakkeesta,
   type EhdotusSisalto,
   type IlmoitusKentanLahde,
 } from "@/lib/ehdotus";
@@ -257,6 +258,83 @@ export async function lahetaKenttapaivitys(formData: FormData): Promise<void> {
   }
   redirect(
     `/hankkeet/${hankeId}/paivita?kentta=${encodeURIComponent(kentta)}${vaihtoehto ? `&vaihtoehto=${encodeURIComponent(vaihtoehto)}` : ""}&valmis=odottaa`,
+  );
+}
+
+export async function lahetaKenttaTarkistus(formData: FormData): Promise<void> {
+  const hankeId = String(formData.get("hanke_id") ?? "").trim();
+  const kentta = String(formData.get("kentta") ?? "").trim();
+  const huomautus = String(formData.get("huomautus") ?? "").trim();
+  const tunniste = String(formData.get("ehdottaja_tunniste") ?? "").trim() || "ilmoituslomake";
+  const tarkistusKentta = tarkistusKenttaLomakkeesta(kentta);
+
+  if (!hankeId) {
+    redirect(`/ilmoitus?virhe=${encodeURIComponent("Hanke puuttuu.")}`);
+  }
+  if (!tarkistusKentta) {
+    paivitysPaluu(hankeId, kentta, "", "Kenttää ei voi merkitä ilman lähdettä.");
+  }
+
+  const sisalto: EhdotusSisalto = {
+    kentat: {},
+    tarkistus: {
+      taulu: "hankkeet",
+      rivi_id: hankeId,
+      kentta: tarkistusKentta,
+      tulos: "ei_julkista_lahdetta",
+      huomautus: huomautus || null,
+    },
+  };
+
+  const { user: yllapitaja, nimi: yllapitajaNimi } = await haeYllapitaja();
+  const julkaiseSuoraan = Boolean(yllapitaja && supabasePalvelinAvainAsetettu());
+
+  if (julkaiseSuoraan && yllapitaja) {
+    const kasittelija = kasittelijaMerkinta(yllapitajaNimi, yllapitaja.email, yllapitaja.id);
+    const yllapito = luoYllapitoAsiakas();
+    const { data, error } = await yllapito
+      .from("muutosehdotukset")
+      .insert({
+        tyyppi: "kentta_tarkistus",
+        hanke_id: hankeId,
+        ehdottaja_tyyppi: "yllapitaja",
+        ehdottaja_tunniste: kasittelija,
+        sisalto,
+        tila: "odottaa",
+        huomautus: huomautus || null,
+      })
+      .select("id")
+      .single();
+    if (error || !data) {
+      paivitysPaluu(hankeId, kentta, "", error?.message ?? "Tallennus epäonnistui.");
+    }
+    try {
+      await hyvaksyMuutosehdotus(data.id, kasittelija);
+    } catch (syy) {
+      const viesti = syy instanceof Error ? syy.message : "Julkaisu epäonnistui.";
+      paivitysPaluu(hankeId, kentta, "", `${viesti} Ehdotus jäi tarkistusjonoon.`);
+    }
+    revalidatePath("/");
+    revalidatePath(`/hankkeet/${hankeId}`);
+    revalidatePath("/yllapito");
+    redirect(
+      `/hankkeet/${hankeId}/paivita?kentta=${encodeURIComponent(kentta)}&valmis=julkaistu`,
+    );
+  }
+
+  const supabase = await luoPalvelinAsiakas();
+  const { error } = await supabase.from("muutosehdotukset").insert({
+    tyyppi: "kentta_tarkistus",
+    hanke_id: hankeId,
+    ehdottaja_tyyppi: "lomake",
+    ehdottaja_tunniste: tunniste,
+    sisalto,
+    tila: "odottaa",
+    huomautus: huomautus || null,
+  });
+  if (error) paivitysPaluu(hankeId, kentta, "", error.message);
+  redirect(
+    `/hankkeet/${hankeId}/paivita?kentta=${encodeURIComponent(kentta)}&valmis=odottaa`,
   );
 }
 

@@ -24,7 +24,7 @@ import {
   muotoilePvm,
 } from "@/lib/naytto";
 import { haeHanke, haeHankeOhjaus } from "@/lib/supabase/kyselyt";
-import type { Hanke, KenttaLahde } from "@/lib/supabase/tietokanta";
+import type { Hanke, KenttaLahde, KenttaTarkistus } from "@/lib/supabase/tietokanta";
 
 export const revalidate = 60;
 
@@ -61,19 +61,27 @@ function Faktakortti({
   hankeId,
   rivi,
   lahteet,
+  tarkistus,
 }: {
   hankeId: string;
   rivi: KenttaRivi;
   lahteet: KenttaLahde[];
+  tarkistus?: KenttaTarkistus | null;
 }) {
   const naytettavat = kentanLahteet(lahteet, rivi.lahdeKentta ?? rivi.kentta);
   const lomakeKentta = lomakeKenttaKortista(rivi.kentta);
+  const tyhja = rivi.arvo == null || rivi.arvo === "";
   return (
     <AvattavaKortti
       nimi={HANKE_KENTTA_NIMET[rivi.kentta] ?? rivi.kentta}
       arvo={kenttaArvoksi(rivi)}
-      tila={kentanTila(rivi.arvo != null && rivi.arvo !== "", naytettavat)}
+      tila={kentanTila(!tyhja, naytettavat)}
       lahteet={naytettavat}
+      tarkistus={
+        tyhja && tarkistus?.tulos === "ei_julkista_lahdetta"
+          ? `Tarkistettu ${muotoilePvm(tarkistus.vahvistettu_pvm)}: julkista lähdettä ei ole.`
+          : null
+      }
       toiminnot={
         lomakeKentta ? (
           <a href={paivitaLinkki(hankeId, lomakeKentta)} className="text-link underline">
@@ -212,6 +220,7 @@ export default async function HankeSivu({
     vaihtoehtoLahteet,
     kuvat,
     kuvaLahteet,
+    tarkistukset,
     virhe,
   } = await haeHanke(id);
 
@@ -333,6 +342,10 @@ export default async function HankeSivu({
                     hankeId={hanke.id}
                     rivi={rivi}
                     lahteet={lahteet}
+                    tarkistus={tarkistukset.find(
+                      (riviTarkistus) =>
+                        riviTarkistus.kentta === (rivi.lahdeKentta ?? rivi.kentta),
+                    )}
                   />
                 ))}
               </Korttiruudukko>

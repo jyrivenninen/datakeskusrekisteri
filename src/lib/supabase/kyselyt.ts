@@ -15,6 +15,7 @@ import type {
   Maaraaja,
   Organisaatio,
   OrganisaatioTyyppi,
+  KenttaTarkistus,
 } from "@/lib/supabase/tietokanta";
 import { hankeOsuvatKokoLuokkaan } from "@/lib/hanke-vaihtelvali";
 import { onHankeVaihe, onKokoLuokka, vanhinVahvistettuPvm, type KokoLuokka } from "@/lib/naytto";
@@ -225,6 +226,7 @@ export async function haeHanke(id: string): Promise<{
   vaihtoehtoLahteet: KenttaLahde[];
   kuvat: HankeKuva[];
   kuvaLahteet: KenttaLahde[];
+  tarkistukset: KenttaTarkistus[];
   virhe: string | null;
 }> {
   const tyhja = {
@@ -246,6 +248,7 @@ export async function haeHanke(id: string): Promise<{
     vaihtoehtoLahteet: [],
     kuvat: [],
     kuvaLahteet: [],
+    tarkistukset: [],
     virhe: null as string | null,
   };
 
@@ -275,6 +278,7 @@ export async function haeHanke(id: string): Promise<{
       { data: johdot },
       { data: vaihtoehdot },
       { data: kuvat },
+      { data: tarkistukset },
     ] = await Promise.all([
       supabase
         .from("kentta_lahteet")
@@ -330,6 +334,12 @@ export async function haeHanke(id: string): Promise<{
         .eq("hanke_id", id)
         .eq("julkaistu", true)
         .order("jarjestys"),
+      supabase
+        .from("kentta_tarkistukset")
+        .select("*")
+        .eq("taulu", "hankkeet")
+        .eq("rivi_id", id)
+        .order("kentta"),
     ]);
 
     async function haeRiviLahteet(
@@ -414,6 +424,7 @@ export async function haeHanke(id: string): Promise<{
       vaihtoehtoLahteet,
       kuvat: (kuvat ?? []) as HankeKuva[],
       kuvaLahteet,
+      tarkistukset: (tarkistukset ?? []) as KenttaTarkistus[],
       virhe: null,
     };
   } catch (syy) {

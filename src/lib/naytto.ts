@@ -97,6 +97,7 @@ export const MUUTOSEHDOTUS_TYYPPI_NIMET: Record<string, string> = {
   mml_havainto: "MML-havainto",
   dokumentti_muuttunut: "Dokumentti muuttunut",
   ristiriita_havainto: "Ristiriitahavainto",
+  kentta_tarkistus: "Kenttä tarkistettu ilman lähdettä",
 };
 
 /** Agentin tai tarkistuksen havainto: hyväksyntä ei yleensä julkaise hanketietoa. */

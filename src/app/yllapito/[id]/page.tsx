@@ -443,6 +443,23 @@ export default async function EhdotusSivu({
         </dl>
       ) : null}
 
+      {sisalto.tarkistus ? (
+        <section className="mt-6" aria-labelledby="tarkistus-otsikko">
+          <h2 id="tarkistus-otsikko" className="text-xl font-semibold">
+            Kenttä tarkistettu ilman lähdettä
+          </h2>
+          <p className="mt-2 leading-relaxed">
+            {HANKE_KENTTA_NIMET[sisalto.tarkistus.kentta] ?? sisalto.tarkistus.kentta}
+            {sisalto.tarkistus.tulos === "ei_julkista_lahdetta"
+              ? ": julkista lähdettä ei ole."
+              : ""}
+          </p>
+          {sisalto.tarkistus.huomautus ? (
+            <p className="mt-2 text-sm text-muted">{sisalto.tarkistus.huomautus}</p>
+          ) : null}
+        </section>
+      ) : null}
+
       {sisalto.kuvat && sisalto.kuvat.length > 0 ? (
         <section className="mt-8" aria-labelledby="kuvat-otsikko">
           <h2 id="kuvat-otsikko" className="text-xl font-semibold">
