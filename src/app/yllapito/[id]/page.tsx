@@ -73,6 +73,9 @@ export default async function EhdotusSivu({
   }
   const hankeNimella = new Map(hankkeet.map((hanke) => [hanke.id, hanke]));
   const kasittely = kasittelySelite(ehdotus.kasittelija, ehdotus.kasitelty_pvm);
+  const paatosLahteet = sisalto.paatos?.lahteet ?? [];
+  const paatosLahteetPuuttuu =
+    sisalto.paatos != null && !Array.isArray(sisalto.paatos.lahteet);
 
   return (
     <main id="sisalto" className="mx-auto w-full max-w-3xl flex-1 px-4 py-10">
@@ -484,9 +487,14 @@ export default async function EhdotusSivu({
               </dd>
             </div>
           </dl>
-          {sisalto.paatos.lahteet.length > 0 ? (
+          {paatosLahteetPuuttuu ? (
+            <p className="mt-3 text-sm text-muted" role="alert">
+              Ehdotuksessa puuttuu lähderivit (lahteet). Täydennä JSON ennen hyväksyntää tai hylkää.
+            </p>
+          ) : null}
+          {paatosLahteet.length > 0 ? (
             <ul className="mt-4 space-y-2 text-sm">
-              {sisalto.paatos.lahteet.map((lahde) => (
+              {paatosLahteet.map((lahde) => (
                 <li key={lahde.kentta} className="rounded border border-border px-3 py-2">
                   <p className="font-medium">
                     {PAATOS_KENTTA_NIMET[lahde.kentta] ?? lahde.kentta}
