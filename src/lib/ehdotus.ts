@@ -84,6 +84,24 @@ export type EhdotusSisalto = {
     tulos: "ei_julkista_lahdetta";
     huomautus?: string | null;
   };
+  paatos?: {
+    kuvaus: string;
+    pvm: string;
+    paattava_organisaatio_id?: string | null;
+    paattava_organisaatio_nimi?: string | null;
+    dokumentti_id?: string | null;
+    menettely_id?: string | null;
+    lahteet: Array<{
+      kentta: string;
+      lahde_url: string;
+      lahde_sivu: number | null;
+      lahde_laji?: LahdeLaji;
+      vahvistettu_pvm: string;
+      luottamus: Luottamus;
+      lainaus: string | null;
+      merkitty: "koneen_ehdottama" | "ihmisen_vahvistama";
+    }>;
+  };
 };
 
 const NUMEERISET = new Set([
@@ -420,6 +438,81 @@ export function rakennaKuvaEhdotus(
       lahde_url: lahde,
       lahde_sivu: sivu,
       lainaus: lainaus.trim() || null,
+    },
+    virhe: null,
+  };
+}
+
+const PAATOS_KENTAT = ["kuvaus", "pvm", "paattava_organisaatio_id"] as const;
+
+type PaatosLahdeRivi = NonNullable<EhdotusSisalto["paatos"]>["lahteet"][number];
+
+function paatosLahdeRivi(
+  kentta: string,
+  lahdeUrl: string,
+  lahdeSivu: string,
+  lainaus: string,
+  luottamus: Luottamus,
+): PaatosLahdeRivi | null {
+  const url = lahdeUrl.trim();
+  if (!/^https?:\/\//.test(url)) return null;
+  const sivu = lahdeSivu.trim() === "" ? null : Number(lahdeSivu);
+  if (sivu != null && (!Number.isInteger(sivu) || sivu < 1)) return null;
+  return {
+    kentta,
+    lahde_url: url,
+    lahde_sivu: sivu,
+    vahvistettu_pvm: new Date().toISOString().slice(0, 10),
+    luottamus,
+    lainaus: lainaus.trim() || null,
+    merkitty: "ihmisen_vahvistama",
+  };
+}
+
+export function rakennaPaatosSisalto(
+  kuvaus: string,
+  pvm: string,
+  organisaatioNimi: string,
+  lahdeUrl: string,
+  lahdeSivu: string,
+  lainaus: string,
+  luottamus: Luottamus = "vahvistettu",
+): { paatos: NonNullable<EhdotusSisalto["paatos"]>; virhe: string | null } {
+  const kuvausTrim = kuvaus.trim();
+  const pvmTrim = pvm.trim();
+  const orgTrim = organisaatioNimi.trim();
+  if (!kuvausTrim) {
+    return { paatos: { kuvaus: "", pvm: "", lahteet: [] }, virhe: "Kuvaus puuttuu." };
+  }
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(pvmTrim)) {
+    return { paatos: { kuvaus: "", pvm: "", lahteet: [] }, virhe: "Päivämäärän muoto on YYYY-MM-DD." };
+  }
+  if (!orgTrim) {
+    return { paatos: { kuvaus: "", pvm: "", lahteet: [] }, virhe: "Päättävä elin puuttuu." };
+  }
+  if (!/^https?:\/\//.test(lahdeUrl.trim())) {
+    return {
+      paatos: { kuvaus: "", pvm: "", lahteet: [] },
+      virhe: "Lähteen osoitteen pitää alkaa http:// tai https://.",
+    };
+  }
+  const lahteet = [];
+  for (const kentta of PAATOS_KENTAT) {
+    const rivi = paatosLahdeRivi(kentta, lahdeUrl, lahdeSivu, lainaus, luottamus);
+    if (!rivi) {
+      return {
+        paatos: { kuvaus: "", pvm: "", lahteet: [] },
+        virhe: "Lähde tai sivunumero ei ole kelvollinen.",
+      };
+    }
+    lahteet.push(rivi);
+  }
+  return {
+    paatos: {
+      kuvaus: kuvausTrim,
+      pvm: pvmTrim,
+      paattava_organisaatio_nimi: orgTrim,
+      lahteet,
     },
     virhe: null,
   };

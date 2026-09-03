@@ -189,6 +189,9 @@ export default async function Etusivu({
                     {hanke.vanhin_vahvistettu_pvm
                       ? ` · vanhin tarkistettu ${muotoilePvm(hanke.vanhin_vahvistettu_pvm)}`
                       : ""}
+                    {hanke.viimeisin_paatos
+                      ? ` · ${hanke.viimeisin_paatos.kuvaus} · ${muotoilePvm(hanke.viimeisin_paatos.pvm)}`
+                      : ""}
                   </p>
                 </li>
               );

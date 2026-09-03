@@ -16,9 +16,10 @@ import type {
   Organisaatio,
   OrganisaatioTyyppi,
   KenttaTarkistus,
+  PaatosNakyma,
 } from "@/lib/supabase/tietokanta";
 import { hankeOsuvatKokoLuokkaan } from "@/lib/hanke-vaihtelvali";
-import { onHankeVaihe, onKokoLuokka, vanhinVahvistettuPvm, type KokoLuokka } from "@/lib/naytto";
+import { onHankeVaihe, onKokoLuokka, vanhinVahvistettuPvm, viimeisinPaatos, type KokoLuokka } from "@/lib/naytto";
 
 /** Vanha tunniste yhdistämisen jälkeen. Julkinen ohjaustaulu. */
 export async function haeHankeOhjaus(vanhaId: string): Promise<string | null> {
@@ -36,6 +37,7 @@ export type HankeListalla = Hanke & {
   toimija: Pick<Organisaatio, "id" | "nimi"> | null;
   vaihtoehdot: HankeVaihtoehto[];
   vanhin_vahvistettu_pvm: string | null;
+  viimeisin_paatos: PaatosNakyma | null;
 };
 
 export type HankeSuodatus = {
@@ -93,7 +95,10 @@ export async function haeJulkaistutHankkeet(
     const { data, error } = await kysely;
     if (error) return { hankkeet: [], johdot: [], virhe: error.message };
 
-    const pohjat = (data ?? []) as Omit<HankeListalla, "vaihtoehdot" | "vanhin_vahvistettu_pvm">[];
+    const pohjat = (data ?? []) as Omit<
+      HankeListalla,
+      "vaihtoehdot" | "vanhin_vahvistettu_pvm" | "viimeisin_paatos"
+    >[];
     const suodatetutIdt = pohjat.map((hanke) => hanke.id);
     let vaihtoehdot: HankeVaihtoehto[] = [];
     if (suodatetutIdt.length > 0) {
@@ -110,6 +115,7 @@ export async function haeJulkaistutHankkeet(
       ...hanke,
       vaihtoehdot: vaihtoehdot.filter((rivi) => rivi.hanke_id === hanke.id),
       vanhin_vahvistettu_pvm: null,
+      viimeisin_paatos: null,
     }));
     const kokoLuokka = suodatus.koko;
     if (kokoLuokka) {
@@ -155,6 +161,21 @@ export async function haeJulkaistutHankkeet(
       hankkeet = hankkeet.map((hanke) => ({
         ...hanke,
         vanhin_vahvistettu_pvm: vanhimmat.get(hanke.id) ?? null,
+      }));
+      const { data: paatosRivit } = await supabase
+        .from("paatokset")
+        .select("*, paattava_organisaatio:paattava_organisaatio_id(id, nimi)")
+        .in("hanke_id", idt)
+        .eq("julkaistu", true);
+      const paatoksetHankeittain = new Map<string, PaatosNakyma[]>();
+      for (const rivi of (paatosRivit ?? []) as PaatosNakyma[]) {
+        const lista = paatoksetHankeittain.get(rivi.hanke_id) ?? [];
+        lista.push(rivi);
+        paatoksetHankeittain.set(rivi.hanke_id, lista);
+      }
+      hankkeet = hankkeet.map((hanke) => ({
+        ...hanke,
+        viimeisin_paatos: viimeisinPaatos(paatoksetHankeittain.get(hanke.id) ?? []),
       }));
     }
 
@@ -227,6 +248,8 @@ export async function haeHanke(id: string): Promise<{
   kuvat: HankeKuva[];
   kuvaLahteet: KenttaLahde[];
   tarkistukset: KenttaTarkistus[];
+  paatokset: PaatosNakyma[];
+  paatosLahteet: KenttaLahde[];
   virhe: string | null;
 }> {
   const tyhja = {
@@ -249,6 +272,8 @@ export async function haeHanke(id: string): Promise<{
     kuvat: [],
     kuvaLahteet: [],
     tarkistukset: [],
+    paatokset: [],
+    paatosLahteet: [],
     virhe: null as string | null,
   };
 
@@ -279,6 +304,7 @@ export async function haeHanke(id: string): Promise<{
       { data: vaihtoehdot },
       { data: kuvat },
       { data: tarkistukset },
+      { data: paatokset },
     ] = await Promise.all([
       supabase
         .from("kentta_lahteet")
@@ -340,6 +366,12 @@ export async function haeHanke(id: string): Promise<{
         .eq("taulu", "hankkeet")
         .eq("rivi_id", id)
         .order("kentta"),
+      supabase
+        .from("paatokset")
+        .select("*, paattava_organisaatio:paattava_organisaatio_id(id, nimi)")
+        .eq("hanke_id", id)
+        .eq("julkaistu", true)
+        .order("pvm", { ascending: false }),
     ]);
 
     async function haeRiviLahteet(
@@ -364,6 +396,7 @@ export async function haeHanke(id: string): Promise<{
     const johtoIdt = (johdot ?? []).map((rivi) => rivi.id);
     const vaihtoehtoIdt = (vaihtoehdot ?? []).map((rivi) => rivi.id);
     const kuvaIdt = (kuvat ?? []).map((rivi) => rivi.id);
+    const paatosIdt = (paatokset ?? []).map((rivi) => rivi.id);
 
     const [
       maaraajaLahteet,
@@ -374,6 +407,7 @@ export async function haeHanke(id: string): Promise<{
       johtoLahteet,
       vaihtoehtoLahteet,
       kuvaLahteet,
+      paatosLahteet,
     ] = await Promise.all([
         haeRiviLahteet("maaraajat", maaraajaIdt),
         haeRiviLahteet("hanke_kunnat", kuntaIdt),
@@ -383,6 +417,7 @@ export async function haeHanke(id: string): Promise<{
         haeRiviLahteet("hanke_johdot", johtoIdt),
         haeRiviLahteet("hanke_vaihtoehdot", vaihtoehtoIdt),
         haeRiviLahteet("hanke_kuvat", kuvaIdt),
+        haeRiviLahteet("paatokset", paatosIdt),
       ]);
 
     const kaikkiLahteet: KenttaLahde[] = [
@@ -394,7 +429,9 @@ export async function haeHanke(id: string): Promise<{
       ...johtoLahteet,
       ...vaihtoehtoLahteet,
       ...kuvaLahteet,
+      ...paatosLahteet,
     ];
+    const paatosNakyma = (paatokset ?? []) as PaatosNakyma[];
 
     const asiakirjat: HankeAsiakirja[] = ((dokumentit ?? []) as Dokumentti[]).map((dokumentti) => ({
       ...dokumentti,
@@ -403,9 +440,13 @@ export async function haeHanke(id: string): Promise<{
 
     return {
       hanke: {
-        ...(hanke as Omit<HankeListalla, "vaihtoehdot" | "vanhin_vahvistettu_pvm">),
+        ...(hanke as Omit<
+          HankeListalla,
+          "vaihtoehdot" | "vanhin_vahvistettu_pvm" | "viimeisin_paatos"
+        >),
         vaihtoehdot: (vaihtoehdot ?? []) as HankeVaihtoehto[],
         vanhin_vahvistettu_pvm: vanhinVahvistettuPvm(kaikkiLahteet),
+        viimeisin_paatos: viimeisinPaatos(paatosNakyma),
       },
       lahteet: (lahteet ?? []) as KenttaLahde[],
       kunnat: (kunnat ?? []) as HankeKunta[],
@@ -425,6 +466,8 @@ export async function haeHanke(id: string): Promise<{
       kuvat: (kuvat ?? []) as HankeKuva[],
       kuvaLahteet,
       tarkistukset: (tarkistukset ?? []) as KenttaTarkistus[],
+      paatokset: paatosNakyma,
+      paatosLahteet,
       virhe: null,
     };
   } catch (syy) {
@@ -525,18 +568,22 @@ export async function haeOrganisaatio(id: string): Promise<{
     ]);
 
     const hankkeetKartta = new Map<string, OrganisaationHanke>();
-    for (const hanke of (vastaavana ?? []) as Omit<HankeListalla, "vaihtoehdot" | "vanhin_vahvistettu_pvm">[]) {
+    for (const hanke of (vastaavana ?? []) as Omit<
+      HankeListalla,
+      "vaihtoehdot" | "vanhin_vahvistettu_pvm" | "viimeisin_paatos"
+    >[]) {
       hankkeetKartta.set(hanke.id, {
         ...hanke,
         vaihtoehdot: [],
         vanhin_vahvistettu_pvm: null,
+        viimeisin_paatos: null,
         roolit: ["toimija"],
       });
     }
     for (const rivi of roolirivit ?? []) {
       const raaka = rivi as unknown as {
         rooli: HankeOrganisaatioRooli;
-        hanke: Omit<HankeListalla, "vaihtoehdot" | "vanhin_vahvistettu_pvm"> | Omit<HankeListalla, "vaihtoehdot" | "vanhin_vahvistettu_pvm">[] | null;
+        hanke: Omit<HankeListalla, "vaihtoehdot" | "vanhin_vahvistettu_pvm" | "viimeisin_paatos"> | Omit<HankeListalla, "vaihtoehdot" | "vanhin_vahvistettu_pvm" | "viimeisin_paatos">[] | null;
       };
       const hankePohja = Array.isArray(raaka.hanke) ? (raaka.hanke[0] ?? null) : raaka.hanke;
       const rooli = raaka.rooli;
@@ -545,6 +592,7 @@ export async function haeOrganisaatio(id: string): Promise<{
         ...hankePohja,
         vaihtoehdot: [],
         vanhin_vahvistettu_pvm: null,
+        viimeisin_paatos: null,
       };
       const aiempi = hankkeetKartta.get(hanke.id);
       if (aiempi) {

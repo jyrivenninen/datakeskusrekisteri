@@ -5,6 +5,7 @@ import {
   ehdotuksenHankeIdt,
   HANKE_KENTTA_NIMET,
   LUOTTAMUS_NIMET,
+  PAATOS_KENTTA_NIMET,
   kasittelySelite,
   MUUTOSEHDOTUS_TYYPPI_NIMET,
   RISTIRIITA_SAANTO_NIMET,
@@ -456,6 +457,53 @@ export default async function EhdotusSivu({
           </p>
           {sisalto.tarkistus.huomautus ? (
             <p className="mt-2 text-sm text-muted">{sisalto.tarkistus.huomautus}</p>
+          ) : null}
+        </section>
+      ) : null}
+
+      {sisalto.paatos ? (
+        <section className="mt-6" aria-labelledby="paatos-otsikko">
+          <h2 id="paatos-otsikko" className="text-xl font-semibold">
+            Viranomaispäätös
+          </h2>
+          <dl className="mt-4 divide-y divide-border border-y border-border">
+            <div className="py-3">
+              <dt className="font-medium">{PAATOS_KENTTA_NIMET.kuvaus}</dt>
+              <dd className="mt-1">{sisalto.paatos.kuvaus}</dd>
+            </div>
+            <div className="py-3">
+              <dt className="font-medium">{PAATOS_KENTTA_NIMET.pvm}</dt>
+              <dd className="mt-1">{sisalto.paatos.pvm}</dd>
+            </div>
+            <div className="py-3">
+              <dt className="font-medium">{PAATOS_KENTTA_NIMET.paattava_organisaatio_id}</dt>
+              <dd className="mt-1">
+                {sisalto.paatos.paattava_organisaatio_nimi ??
+                  sisalto.paatos.paattava_organisaatio_id ??
+                  "—"}
+              </dd>
+            </div>
+          </dl>
+          {sisalto.paatos.lahteet.length > 0 ? (
+            <ul className="mt-4 space-y-2 text-sm">
+              {sisalto.paatos.lahteet.map((lahde) => (
+                <li key={lahde.kentta} className="rounded border border-border px-3 py-2">
+                  <p className="font-medium">
+                    {PAATOS_KENTTA_NIMET[lahde.kentta] ?? lahde.kentta}
+                  </p>
+                  <p className="mt-1">
+                    <a href={lahde.lahde_url} className="text-link underline" rel="noopener noreferrer">
+                      {lahde.lahde_url}
+                    </a>
+                    {lahde.lahde_sivu ? ` (s. ${lahde.lahde_sivu})` : ""}
+                  </p>
+                  <p className="mt-1 text-muted">{LUOTTAMUS_NIMET[lahde.luottamus]}</p>
+                  {lahde.lainaus ? (
+                    <blockquote className="mt-1 border-l-2 pl-3">{lahde.lainaus}</blockquote>
+                  ) : null}
+                </li>
+              ))}
+            </ul>
           ) : null}
         </section>
       ) : null}

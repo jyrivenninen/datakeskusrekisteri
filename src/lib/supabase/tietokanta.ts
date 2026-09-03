@@ -102,6 +102,7 @@ export const MUUTOSEHDOTUS_TYYPIT = [
   "dokumentti_muuttunut",
   "ristiriita_havainto",
   "kentta_tarkistus",
+  "paatos",
 ] as const;
 
 export type MuutosehdotusTyyppi = (typeof MUUTOSEHDOTUS_TYYPIT)[number];
@@ -315,6 +316,23 @@ export const DOKUMENTTI_KIELET = ["fi", "sv", "en"] as const;
 
 export type DokumenttiKieli = (typeof DOKUMENTTI_KIELET)[number];
 
+export type Paatos = {
+  id: string;
+  hanke_id: string;
+  kuvaus: string;
+  pvm: string;
+  paattava_organisaatio_id: string;
+  dokumentti_id: string | null;
+  menettely_id: string | null;
+  julkaistu: boolean;
+  luotu_pvm: string;
+  paivitetty_pvm: string;
+};
+
+export type PaatosNakyma = Paatos & {
+  paattava_organisaatio: Pick<Organisaatio, "id" | "nimi">;
+};
+
 export type Dokumentti = {
   id: string;
   hanke_id: string | null;
@@ -346,7 +364,8 @@ export type KenttaLahde = {
     | "dokumentit"
     | "hanke_johdot"
     | "hanke_vaihtoehdot"
-    | "hanke_kuvat";
+    | "hanke_kuvat"
+    | "paatokset";
   rivi_id: string;
   kentta: string;
   lahde_url: string;

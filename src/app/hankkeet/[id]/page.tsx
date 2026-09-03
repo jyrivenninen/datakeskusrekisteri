@@ -221,6 +221,8 @@ export default async function HankeSivu({
     kuvat,
     kuvaLahteet,
     tarkistukset,
+    paatokset,
+    paatosLahteet,
     virhe,
   } = await haeHanke(id);
 
@@ -287,6 +289,18 @@ export default async function HankeSivu({
           Kenttäkohtaisia tarkistuspäiviä ei ole merkitty.
         </p>
       )}
+      {hanke.viimeisin_paatos ? (
+        <p className="mt-3 max-w-prose text-sm leading-relaxed">
+          Viimeisin merkitty päätös: {hanke.viimeisin_paatos.kuvaus} ·{" "}
+          {muotoilePvm(hanke.viimeisin_paatos.pvm)} ·{" "}
+          {hanke.viimeisin_paatos.paattava_organisaatio?.nimi ?? "—"}
+        </p>
+      ) : null}
+      <p className="mt-3 text-sm">
+        <a href={`/hankkeet/${hanke.id}/paatos`} className="text-link underline">
+          Ilmoita viranomaispäätös
+        </a>
+      </p>
 
       <section className="mt-6" aria-labelledby="kartta-otsikko">
         <h2 id="kartta-otsikko" className="sr-only">
@@ -392,6 +406,28 @@ export default async function HankeSivu({
                   menettelyLahteet.filter((lahde) => lahde.rivi_id === rivi.id),
                 )}
                 lahteet={menettelyLahteet.filter((lahde) => lahde.rivi_id === rivi.id)}
+              />
+            ))}
+          </Korttiruudukko>
+        </section>
+      ) : null}
+
+      {paatokset.length > 0 ? (
+        <section className="mt-10" aria-labelledby="paatokset-otsikko">
+          <h2 id="paatokset-otsikko" className="text-xl font-semibold">
+            Päätökset
+          </h2>
+          <Korttiruudukko>
+            {paatokset.map((rivi) => (
+              <AvattavaKortti
+                key={rivi.id}
+                nimi={rivi.kuvaus}
+                arvo={`${muotoilePvm(rivi.pvm)} · ${rivi.paattava_organisaatio?.nimi ?? "—"}`}
+                tila={kentanTila(
+                  true,
+                  paatosLahteet.filter((lahde) => lahde.rivi_id === rivi.id),
+                )}
+                lahteet={paatosLahteet.filter((lahde) => lahde.rivi_id === rivi.id)}
               />
             ))}
           </Korttiruudukko>

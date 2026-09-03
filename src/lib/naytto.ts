@@ -98,6 +98,13 @@ export const MUUTOSEHDOTUS_TYYPPI_NIMET: Record<string, string> = {
   dokumentti_muuttunut: "Dokumentti muuttunut",
   ristiriita_havainto: "Ristiriitahavainto",
   kentta_tarkistus: "Kenttä tarkistettu ilman lähdettä",
+  paatos: "Viranomaispäätös",
+};
+
+export const PAATOS_KENTTA_NIMET: Record<string, string> = {
+  kuvaus: "Kuvaus",
+  pvm: "Päivä",
+  paattava_organisaatio_id: "Päättävä elin",
 };
 
 /** Agentin tai tarkistuksen havainto: hyväksyntä ei yleensä julkaise hanketietoa. */
@@ -310,6 +317,23 @@ export function muotoilePvm(arvo: string): string {
 }
 
 /** Heikoin lenkki: vanhin kenttäkohtainen tarkistus. */
+/** Uusin päätös: suurin pvm, tasatilanteessa uusin luotu_pvm. */
+export function viimeisinPaatos<T extends { pvm: string; luotu_pvm: string }>(
+  rivit: ReadonlyArray<T>,
+): T | null {
+  let paras: T | null = null;
+  for (const rivi of rivit) {
+    if (
+      !paras ||
+      rivi.pvm > paras.pvm ||
+      (rivi.pvm === paras.pvm && rivi.luotu_pvm > paras.luotu_pvm)
+    ) {
+      paras = rivi;
+    }
+  }
+  return paras;
+}
+
 export function vanhinVahvistettuPvm(
   lahteet: ReadonlyArray<{ vahvistettu_pvm: string }>,
 ): string | null {

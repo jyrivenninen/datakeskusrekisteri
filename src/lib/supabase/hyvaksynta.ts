@@ -138,6 +138,15 @@ export async function hyvaksyMuutosehdotus(
     return;
   }
 
+  if (ehdotus.tyyppi === "paatos") {
+    const { error: rpcVirhe } = await supabase.rpc("julkaise_paatos", {
+      p_ehdotus_id: ehdotusId,
+      p_kasittelija: kasittelija,
+    });
+    if (rpcVirhe) throw new Error(rpcVirhe.message);
+    return;
+  }
+
   if (
     ehdotus.tyyppi === "linkki_rikki" ||
     ehdotus.tyyppi === "ryhti_havainto" ||
