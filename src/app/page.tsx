@@ -128,7 +128,11 @@ export default async function Etusivu({
           Kokoluokka osuu hankkeeseen, jos hanketason teho tai jokin merkitty
           YVA-vaihtoehto osuu luokkaan.
         </p>
-        <HankkeetSuodatin suodatus={suodatus} kunnat={kunnat} />
+        <HankkeetSuodatin
+          key={hankkeetSuodatusPolku(suodatus)}
+          suodatus={suodatus}
+          kunnat={kunnat}
+        />
         {hankeVirhe ? (
           <p className="mt-4 text-sm">{hankeVirhe}</p>
         ) : (

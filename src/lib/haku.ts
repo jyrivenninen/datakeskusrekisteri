@@ -1,4 +1,4 @@
-import type { HankeSuodatus } from "@/lib/supabase/kyselyt";
+import type { HankeSuodatus } from "@/lib/suodatus";
 import { KOKO_LUOKAT, VAIHE_NIMET } from "@/lib/naytto";
 import type { HankeVaihe } from "@/lib/supabase/tietokanta";
 

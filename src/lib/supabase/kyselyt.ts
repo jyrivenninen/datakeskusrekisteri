@@ -19,8 +19,9 @@ import type {
   PaatosNakyma,
 } from "@/lib/supabase/tietokanta";
 import { hankeOsuvatKokoLuokkaan } from "@/lib/hanke-vaihtelvali";
-import { hankkeSopiiHakuun, parsiHakusana } from "@/lib/haku";
-import { onHankeVaihe, onKokoLuokka, vanhinVahvistettuPvm, viimeisinPaatos, type KokoLuokka } from "@/lib/naytto";
+import { hankkeSopiiHakuun } from "@/lib/haku";
+import type { HankeSuodatus } from "@/lib/suodatus";
+import { vanhinVahvistettuPvm, viimeisinPaatos } from "@/lib/naytto";
 
 /** Vanha tunniste yhdistämisen jälkeen. Julkinen ohjaustaulu. */
 export async function haeHankeOhjaus(vanhaId: string): Promise<string | null> {
@@ -41,29 +42,8 @@ export type HankeListalla = Hanke & {
   viimeisin_paatos: PaatosNakyma | null;
 };
 
-export type HankeSuodatus = {
-  q?: string;
-  kunta?: string;
-  vaihe?: HankeVaihe;
-  koko?: KokoLuokka;
-  kuvalliset?: boolean;
-};
-
-export function parsiSuodatus(params: {
-  q?: string;
-  kunta?: string;
-  vaihe?: string;
-  koko?: string;
-  kuvalliset?: string;
-}): HankeSuodatus {
-  return {
-    q: parsiHakusana(params.q),
-    kunta: params.kunta || undefined,
-    vaihe: params.vaihe && onHankeVaihe(params.vaihe) ? params.vaihe : undefined,
-    koko: params.koko && onKokoLuokka(params.koko) ? params.koko : undefined,
-    kuvalliset: params.kuvalliset === "1",
-  };
-}
+export type { HankeSuodatus } from "@/lib/suodatus";
+export { parsiSuodatus } from "@/lib/suodatus";
 
 export type TulevaMaaraaika = Maaraaja & {
   hanke: Pick<Hanke, "id" | "nimi" | "kunta">;

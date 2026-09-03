@@ -2,10 +2,9 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useCallback, useEffect, useRef, useState, useTransition } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { HANKE_VAIHEET } from "@/lib/supabase/tietokanta";
-import type { HankeSuodatus } from "@/lib/supabase/kyselyt";
-import { parsiSuodatus } from "@/lib/supabase/kyselyt";
+import type { HankeSuodatus } from "@/lib/suodatus";
 import {
   aktiivisetEhdot,
   HAKU_DEBOUNCE_MS,
@@ -39,7 +38,6 @@ export function HankkeetSuodatin({
   kunnat: string[];
 }) {
   const router = useRouter();
-  const [onSiirtymassa, aloitaSiirtyma] = useTransition();
   const [hakuPaikallinen, setHakuPaikallinen] = useState(suodatus.q ?? "");
   const viiveRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const pyyntoRef = useRef(0);
@@ -48,11 +46,15 @@ export function HankkeetSuodatin({
     setHakuPaikallinen(suodatus.q ?? "");
   }, [suodatus.q]);
 
+  useEffect(() => {
+    return () => {
+      if (viiveRef.current) clearTimeout(viiveRef.current);
+    };
+  }, []);
+
   const paivitaUrl = useCallback(
     (uusi: HankeSuodatus) => {
-      aloitaSiirtyma(() => {
-        router.replace(hankkeetSuodatusPolku(uusi), { scroll: false });
-      });
+      router.replace(hankkeetSuodatusPolku(uusi), { scroll: false });
     },
     [router],
   );
@@ -76,13 +78,9 @@ export function HankkeetSuodatin({
 
   const ehdot = aktiivisetEhdot(suodatus);
   const aktiivinen = onAktiivinenSuodatus(suodatus);
-  const lomakeAvain = hankkeetSuodatusPolku(suodatus);
 
   return (
-    <div
-      className="mt-4 rounded-xl border border-border bg-surface p-4 shadow-sm sm:p-5"
-      aria-busy={onSiirtymassa}
-    >
+    <div className="mt-4 rounded-xl border border-border bg-surface p-4 shadow-sm sm:p-5">
       <div className="relative">
         <label htmlFor="haku" className="sr-only">
           Hae hankkeen nimellä tai kunnalla
@@ -131,22 +129,9 @@ export function HankkeetSuodatin({
       ) : null}
 
       <form
-        key={lomakeAvain}
         method="get"
         action="/"
         className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4"
-        onChange={(tapahtuma) => {
-          const fd = new FormData(tapahtuma.currentTarget);
-          paivitaUrl(
-            parsiSuodatus({
-              q: String(fd.get("q") ?? ""),
-              kunta: String(fd.get("kunta") ?? ""),
-              vaihe: String(fd.get("vaihe") ?? ""),
-              koko: String(fd.get("koko") ?? ""),
-              kuvalliset: fd.get("kuvalliset") === "1" ? "1" : undefined,
-            }),
-          );
-        }}
       >
         <input type="hidden" name="q" value={hakuPaikallinen} />
 
@@ -157,8 +142,11 @@ export function HankkeetSuodatin({
           <select
             id="kunta"
             name="kunta"
-            defaultValue={suodatus.kunta ?? ""}
+            value={suodatus.kunta ?? ""}
             className="min-h-11 rounded-lg border border-border bg-background px-3 py-2 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-link"
+            onChange={(tapahtuma) => {
+              paivitaUrl({ ...suodatus, kunta: tapahtuma.target.value || undefined });
+            }}
           >
             <option value="">Kaikki kunnat</option>
             {kunnat.map((kunta) => (
@@ -176,8 +164,17 @@ export function HankkeetSuodatin({
           <select
             id="vaihe"
             name="vaihe"
-            defaultValue={suodatus.vaihe ?? ""}
+            value={suodatus.vaihe ?? ""}
             className="min-h-11 rounded-lg border border-border bg-background px-3 py-2 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-link"
+            onChange={(tapahtuma) => {
+              const arvo = tapahtuma.target.value;
+              paivitaUrl({
+                ...suodatus,
+                vaihe: arvo && HANKE_VAIHEET.includes(arvo as (typeof HANKE_VAIHEET)[number])
+                  ? (arvo as (typeof HANKE_VAIHEET)[number])
+                  : undefined,
+              });
+            }}
           >
             <option value="">Kaikki vaiheet</option>
             {HANKE_VAIHEET.map((vaihe) => (
@@ -195,8 +192,11 @@ export function HankkeetSuodatin({
           <select
             id="koko"
             name="koko"
-            defaultValue={suodatus.koko ?? ""}
+            value={suodatus.koko ?? ""}
             className="min-h-11 rounded-lg border border-border bg-background px-3 py-2 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-link"
+            onChange={(tapahtuma) => {
+              paivitaUrl({ ...suodatus, koko: (tapahtuma.target.value || undefined) as HankeSuodatus["koko"] });
+            }}
           >
             <option value="">Kaikki koot</option>
             {KOKO_LUOKAT.map((luokka) => (
@@ -213,8 +213,11 @@ export function HankkeetSuodatin({
             type="checkbox"
             name="kuvalliset"
             value="1"
-            defaultChecked={Boolean(suodatus.kuvalliset)}
+            checked={Boolean(suodatus.kuvalliset)}
             className="size-4"
+            onChange={(tapahtuma) => {
+              paivitaUrl({ ...suodatus, kuvalliset: tapahtuma.target.checked || undefined });
+            }}
           />
           <label htmlFor="kuvalliset" className="text-sm font-medium">
             Näytä vain kuvalliset
@@ -254,12 +257,6 @@ export function HankkeetSuodatin({
           >
             Tyhjennä suodattimet
           </Link>
-        </p>
-      ) : null}
-
-      {onSiirtymassa ? (
-        <p className="mt-3 text-sm text-muted" aria-live="polite">
-          Päivitetään…
         </p>
       ) : null}
     </div>
