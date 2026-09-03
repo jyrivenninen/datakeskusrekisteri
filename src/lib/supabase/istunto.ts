@@ -15,7 +15,10 @@ export function paivitaIstunto(request: NextRequest) {
   ) {
     const osoite = request.nextUrl.clone();
     osoite.pathname = "/kirjaudu";
-    osoite.searchParams.set("seuraava", request.nextUrl.pathname);
+    osoite.searchParams.set(
+      "seuraava",
+      `${request.nextUrl.pathname}${request.nextUrl.search}`,
+    );
     return NextResponse.redirect(osoite);
   }
   return NextResponse.next({ request });

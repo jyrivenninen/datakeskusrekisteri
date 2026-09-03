@@ -22,14 +22,18 @@ function lahdeRivi(
   tieto: EhdotettuKentta,
   oletusLuottamus: "vahvistettu" | "epavarma" | "ristiriitainen",
 ) {
+  const lainaus =
+    tieto.lainaus == null || tieto.lainaus === ""
+      ? ""
+      : String(tieto.lainaus);
   return {
     kentta,
-    lahde_url: tieto.lahde_url,
+    lahde_url: String(tieto.lahde_url),
     lahde_sivu: tieto.lahde_sivu == null ? "" : String(tieto.lahde_sivu),
     lahde_laji: lahdeLajiRiville(tieto),
     vahvistettu_pvm: tanaan(),
     luottamus: kentanLuottamus(tieto, oletusLuottamus),
-    lainaus: tieto.lainaus ?? "",
+    lainaus,
     merkitty: "ihmisen_vahvistama" as const,
   };
 }
@@ -139,6 +143,13 @@ export async function hyvaksyMuutosehdotus(
   }
 
   if (ehdotus.tyyppi === "paatos") {
+    const paatos = (ehdotus.sisalto as EhdotusSisalto).paatos;
+    if (!paatos?.kuvaus?.trim() || !paatos?.pvm?.trim()) {
+      throw new Error("Paatos-ehdotuksesta puuttuvat kuvaus tai pvm.");
+    }
+    if (!Array.isArray(paatos.lahteet) || paatos.lahteet.length === 0) {
+      throw new Error("Paatos-ehdotuksesta puuttuvat lähderivit (lahteet).");
+    }
     const { error: rpcVirhe } = await supabase.rpc("julkaise_paatos", {
       p_ehdotus_id: ehdotusId,
       p_kasittelija: kasittelija,

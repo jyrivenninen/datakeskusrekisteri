@@ -312,18 +312,20 @@ export function tarkistaUusiHanke(sisalto: EhdotusSisalto): string | null {
   return null;
 }
 
-function luku(arvo: string): number | null {
-  const korjattu = arvo.replace(",", ".");
+function luku(arvo: unknown): number | null {
+  if (arvo == null || arvo === "") return null;
+  const korjattu = String(arvo).trim().replace(",", ".");
   const n = Number(korjattu);
   return Number.isFinite(n) ? n : null;
 }
 
 export function kenttaArvoksi(
   kentta: string,
-  arvo: string,
+  arvo: unknown,
 ): string | number | HankeVaihe | null {
+  if (arvo == null || arvo === "") return null;
   if (NUMEERISET.has(kentta)) return luku(arvo);
-  return arvo;
+  return String(arvo);
 }
 
 const LUOTTAMUKSET = new Set<Luottamus>(["vahvistettu", "epavarma", "ristiriitainen"]);

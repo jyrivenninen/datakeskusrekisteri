@@ -55,9 +55,8 @@ export default async function TietoaPalvelustaSivu() {
             merkitään lähteineen. Tyhjä kenttä on parempi kuin arvattu.
           </p>
           <p>
-            Palvelun tuottaa Kansallisdata ry. Ilmoitus lomakkeella tai agentin
-            ehdottama havainto ei siirry rekisteriin ennen kuin ylläpitäjä on
-            tarkistanut lähteen.
+            Ilmoitus lomakkeella tai agentin ehdottama havainto ei siirry
+            rekisteriin ennen kuin ylläpitäjä on tarkistanut lähteen.
           </p>
           <p>
             <a href="/yhteistyokumppanit" className="text-link underline">

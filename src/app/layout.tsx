@@ -81,7 +81,6 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
                 Avoin hanketietokanta ja prosessiopas. Julkaistu tieto merkitään
                 lähteineen. Esiversio: tietoja täydennetään ja varmennetaan.
               </p>
-              <p className="mt-3 text-sm text-muted">Palvelun tuottaa Kansallisdata ry.</p>
             </div>
             <nav aria-label="Alatunniste" className="flex flex-col gap-2 text-sm sm:items-end">
               <a href="/tietoa" className="text-link underline">
