@@ -267,6 +267,17 @@ export default async function HankeSivu({
         {hanke.maakunta ? `, ${hanke.maakunta}` : ""} ·{" "}
         <VaiheMerkki vaihe={hanke.vaihe} />
       </p>
+      {hanke.vanhin_vahvistettu_pvm ? (
+        <p className="mt-3 max-w-prose text-sm leading-relaxed text-muted">
+          Vanhin kenttäkohtainen tarkistus {muotoilePvm(hanke.vanhin_vahvistettu_pvm)}.
+          Päivä on sen lähteen tarkistus, joka on vanhin. Yhden kentän uusi
+          tarkistus ei siirrä tätä päivää. Se ei ole viranomaispäätöksen päivä.
+        </p>
+      ) : (
+        <p className="mt-3 max-w-prose text-sm leading-relaxed text-muted">
+          Kenttäkohtaisia tarkistuspäiviä ei ole merkitty.
+        </p>
+      )}
 
       <section className="mt-6" aria-labelledby="kartta-otsikko">
         <h2 id="kartta-otsikko" className="sr-only">

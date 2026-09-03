@@ -17,8 +17,8 @@ export function Lahdeluettelo({ lahteet }: { lahteet: KenttaLahde[] }) {
             {lahde.lahde_sivu != null ? ` (s. ${lahde.lahde_sivu})` : ""}
           </p>
           <p className="mt-1 text-muted">
-            {LUOTTAMUS_NIMET[lahde.luottamus]} · {MERKINTA_NIMET[lahde.merkitty]} · vahvistettu{" "}
-            {muotoilePvm(lahde.vahvistettu_pvm)}
+            {LUOTTAMUS_NIMET[lahde.luottamus]} · {MERKINTA_NIMET[lahde.merkitty]} ·
+            tarkistettu {muotoilePvm(lahde.vahvistettu_pvm)}
           </p>
           {lahde.lainaus ? (
             <blockquote className="mt-1 border-l-2 border-border pl-3 text-foreground">

@@ -308,6 +308,19 @@ export function muotoilePvm(arvo: string): string {
   return `${Number(paiva)}.${Number(kuukausi)}.${vuosi}`;
 }
 
+/** Heikoin lenkki: vanhin kenttäkohtainen tarkistus. */
+export function vanhinVahvistettuPvm(
+  lahteet: ReadonlyArray<{ vahvistettu_pvm: string }>,
+): string | null {
+  let vanhin: string | null = null;
+  for (const lahde of lahteet) {
+    const pvm = lahde.vahvistettu_pvm.slice(0, 10);
+    if (!pvm) continue;
+    if (!vanhin || pvm < vanhin) vanhin = pvm;
+  }
+  return vanhin;
+}
+
 export function muotoileAika(arvo: string): string {
   const pvm = new Date(arvo);
   if (Number.isNaN(pvm.getTime())) return arvo;

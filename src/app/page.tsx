@@ -186,6 +186,9 @@ export default async function Etusivu({
                     {teho
                       ? ` · ${muotoileVaihtelvali(teho.min, teho.max, "MW")}`
                       : ""}
+                    {hanke.vanhin_vahvistettu_pvm
+                      ? ` · vanhin tarkistettu ${muotoilePvm(hanke.vanhin_vahvistettu_pvm)}`
+                      : ""}
                   </p>
                 </li>
               );

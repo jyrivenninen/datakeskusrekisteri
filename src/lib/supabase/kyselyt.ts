@@ -17,7 +17,7 @@ import type {
   OrganisaatioTyyppi,
 } from "@/lib/supabase/tietokanta";
 import { hankeOsuvatKokoLuokkaan } from "@/lib/hanke-vaihtelvali";
-import { onHankeVaihe, onKokoLuokka, type KokoLuokka } from "@/lib/naytto";
+import { onHankeVaihe, onKokoLuokka, vanhinVahvistettuPvm, type KokoLuokka } from "@/lib/naytto";
 
 /** Vanha tunniste yhdistämisen jälkeen. Julkinen ohjaustaulu. */
 export async function haeHankeOhjaus(vanhaId: string): Promise<string | null> {
@@ -34,6 +34,7 @@ export async function haeHankeOhjaus(vanhaId: string): Promise<string | null> {
 export type HankeListalla = Hanke & {
   toimija: Pick<Organisaatio, "id" | "nimi"> | null;
   vaihtoehdot: HankeVaihtoehto[];
+  vanhin_vahvistettu_pvm: string | null;
 };
 
 export type HankeSuodatus = {
@@ -91,7 +92,7 @@ export async function haeJulkaistutHankkeet(
     const { data, error } = await kysely;
     if (error) return { hankkeet: [], johdot: [], virhe: error.message };
 
-    const pohjat = (data ?? []) as Omit<HankeListalla, "vaihtoehdot">[];
+    const pohjat = (data ?? []) as Omit<HankeListalla, "vaihtoehdot" | "vanhin_vahvistettu_pvm">[];
     const suodatetutIdt = pohjat.map((hanke) => hanke.id);
     let vaihtoehdot: HankeVaihtoehto[] = [];
     if (suodatetutIdt.length > 0) {
@@ -107,6 +108,7 @@ export async function haeJulkaistutHankkeet(
     let hankkeet: HankeListalla[] = pohjat.map((hanke) => ({
       ...hanke,
       vaihtoehdot: vaihtoehdot.filter((rivi) => rivi.hanke_id === hanke.id),
+      vanhin_vahvistettu_pvm: null,
     }));
     const kokoLuokka = suodatus.koko;
     if (kokoLuokka) {
@@ -137,6 +139,22 @@ export async function haeJulkaistutHankkeet(
         .in("hanke_id", idt)
         .eq("julkaistu", true);
       johdot = (johtoData ?? []) as HankeJohto[];
+      const { data: vahvistukset } = await supabase
+        .from("kentta_lahteet")
+        .select("rivi_id, vahvistettu_pvm")
+        .eq("taulu", "hankkeet")
+        .in("rivi_id", idt);
+      const vanhimmat = new Map<string, string>();
+      for (const rivi of vahvistukset ?? []) {
+        const pvm = vanhinVahvistettuPvm([rivi]);
+        if (!pvm) continue;
+        const aiempi = vanhimmat.get(rivi.rivi_id);
+        if (!aiempi || pvm < aiempi) vanhimmat.set(rivi.rivi_id, pvm);
+      }
+      hankkeet = hankkeet.map((hanke) => ({
+        ...hanke,
+        vanhin_vahvistettu_pvm: vanhimmat.get(hanke.id) ?? null,
+      }));
     }
 
     return { hankkeet, johdot, virhe: null };
@@ -375,8 +393,9 @@ export async function haeHanke(id: string): Promise<{
 
     return {
       hanke: {
-        ...(hanke as Omit<HankeListalla, "vaihtoehdot">),
+        ...(hanke as Omit<HankeListalla, "vaihtoehdot" | "vanhin_vahvistettu_pvm">),
         vaihtoehdot: (vaihtoehdot ?? []) as HankeVaihtoehto[],
+        vanhin_vahvistettu_pvm: vanhinVahvistettuPvm(kaikkiLahteet),
       },
       lahteet: (lahteet ?? []) as KenttaLahde[],
       kunnat: (kunnat ?? []) as HankeKunta[],
@@ -495,18 +514,27 @@ export async function haeOrganisaatio(id: string): Promise<{
     ]);
 
     const hankkeetKartta = new Map<string, OrganisaationHanke>();
-    for (const hanke of (vastaavana ?? []) as Omit<HankeListalla, "vaihtoehdot">[]) {
-      hankkeetKartta.set(hanke.id, { ...hanke, vaihtoehdot: [], roolit: ["toimija"] });
+    for (const hanke of (vastaavana ?? []) as Omit<HankeListalla, "vaihtoehdot" | "vanhin_vahvistettu_pvm">[]) {
+      hankkeetKartta.set(hanke.id, {
+        ...hanke,
+        vaihtoehdot: [],
+        vanhin_vahvistettu_pvm: null,
+        roolit: ["toimija"],
+      });
     }
     for (const rivi of roolirivit ?? []) {
       const raaka = rivi as unknown as {
         rooli: HankeOrganisaatioRooli;
-        hanke: Omit<HankeListalla, "vaihtoehdot"> | Omit<HankeListalla, "vaihtoehdot">[] | null;
+        hanke: Omit<HankeListalla, "vaihtoehdot" | "vanhin_vahvistettu_pvm"> | Omit<HankeListalla, "vaihtoehdot" | "vanhin_vahvistettu_pvm">[] | null;
       };
       const hankePohja = Array.isArray(raaka.hanke) ? (raaka.hanke[0] ?? null) : raaka.hanke;
       const rooli = raaka.rooli;
       if (!hankePohja || !hankePohja.julkaistu) continue;
-      const hanke: HankeListalla = { ...hankePohja, vaihtoehdot: [] };
+      const hanke: HankeListalla = {
+        ...hankePohja,
+        vaihtoehdot: [],
+        vanhin_vahvistettu_pvm: null,
+      };
       const aiempi = hankkeetKartta.get(hanke.id);
       if (aiempi) {
         if (!aiempi.roolit.includes(rooli)) aiempi.roolit.push(rooli);
