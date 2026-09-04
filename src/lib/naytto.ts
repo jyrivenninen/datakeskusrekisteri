@@ -62,22 +62,25 @@ export const KENTAN_TILAT = ["vahvistettu", "vahvistamaton", "puuttuu"] as const
 export type KentanTila = (typeof KENTAN_TILAT)[number];
 
 export const KENTAN_TILA_NIMET: Record<KentanTila, string> = {
-  vahvistettu: "Vahvistettu",
-  vahvistamaton: "Vahvistamaton",
+  vahvistettu: "Varmennettu",
+  vahvistamaton: "Julkaistu, ei varmennettu",
   puuttuu: "Puuttuu",
 };
 
-/** Kentän tila: arvo ja lähteiden luottamus. Ristiriita tai epävarma → vahvistamaton. */
+/** Kentän tila: varmennettu vaatii ihmisen kuittauksen (merkitty). */
 export function kentanTila(
   arvoOn: boolean,
-  lahteet: ReadonlyArray<{ luottamus: Luottamus }>,
+  lahteet: ReadonlyArray<{ luottamus: Luottamus; merkitty: Merkinta }>,
 ): KentanTila {
   if (!arvoOn) return "puuttuu";
   if (lahteet.length === 0) return "vahvistamaton";
-  if (lahteet.some((lahde) => lahde.luottamus !== "vahvistettu")) {
+  if (lahteet.some((lahde) => lahde.luottamus === "ristiriitainen")) {
     return "vahvistamaton";
   }
-  return "vahvistettu";
+  if (lahteet.some((lahde) => lahde.merkitty === "ihmisen_vahvistama")) {
+    return "vahvistettu";
+  }
+  return "vahvistamaton";
 }
 
 export const MERKINTA_NIMET: Record<Merkinta, string> = {
@@ -98,6 +101,7 @@ export const MUUTOSEHDOTUS_TYYPPI_NIMET: Record<string, string> = {
   dokumentti_muuttunut: "Dokumentti muuttunut",
   ristiriita_havainto: "Ristiriitahavainto",
   kentta_tarkistus: "Kenttä tarkistettu ilman lähdettä",
+  kentta_tyhjennys: "Kentän tyhjennys",
   paatos: "Viranomaispäätös",
 };
 
@@ -118,8 +122,55 @@ export const HAVAINTO_TYYPIT = new Set([
   "ristiriita_havainto",
 ]);
 
+/** Kenttäkohtainen merkintä tai tyhjennys — ei uutta arvoa eikä pelkkää havaintoa. */
+export const KENTTA_LUOKKA_TYYPIT = new Set(["kentta_tarkistus", "kentta_tyhjennys"]);
+
+export type EhdotusLuokkaAvain = "havainto" | "taydennys" | "kentta";
+
+export const EHDOTUS_LUOKKA_NIMET: Record<EhdotusLuokkaAvain, string> = {
+  havainto: "Havainto",
+  taydennys: "Täydennys",
+  kentta: "Kenttämuutos",
+};
+
 export function onHavaintoTyyppi(tyyppi: string): boolean {
   return HAVAINTO_TYYPIT.has(tyyppi);
+}
+
+export function ehdotusLuokkaAvain(tyyppi: string): EhdotusLuokkaAvain {
+  if (onHavaintoTyyppi(tyyppi)) return "havainto";
+  if (KENTTA_LUOKKA_TYYPIT.has(tyyppi)) return "kentta";
+  return "taydennys";
+}
+
+/** Havainto merkitään nähdyksi; kenttätyypit ja julkaisut vaativat eri painikkeen. */
+export function ehdotusMerkitaanKasitellyksi(
+  tyyppi: string,
+  opts?: { ytjEhdotaTunnus?: boolean },
+): boolean {
+  if (tyyppi === "ytj_havainto" && opts?.ytjEhdotaTunnus) return false;
+  return onHavaintoTyyppi(tyyppi);
+}
+
+export function hyvaksyPainikeTeksti(
+  tyyppi: string,
+  opts?: { ytjEhdotaTunnus?: boolean },
+): string {
+  if (ehdotusMerkitaanKasitellyksi(tyyppi, opts)) {
+    return "Merkitse käsitellyksi";
+  }
+  if (tyyppi === "kentta_tarkistus") return "Hyväksy merkintä";
+  if (tyyppi === "kentta_tyhjennys") return "Hyväksy tyhjennys";
+  return "Hyväksy ja julkaise";
+}
+
+/** Massakäsittely ohittaa: vaatii yksittäisen tarkistuksen tai erillisen perustelun. */
+export function massaHyvaksyntaOhitettava(tyyppi: string): boolean {
+  return (
+    tyyppi === "ristiriita_havainto" ||
+    tyyppi === "paatos" ||
+    KENTTA_LUOKKA_TYYPIT.has(tyyppi)
+  );
 }
 
 export const RISTIRIITA_SAANTO_NIMET: Record<string, string> = {

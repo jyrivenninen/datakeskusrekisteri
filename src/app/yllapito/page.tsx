@@ -1,7 +1,7 @@
 import { haeKirjautunutKayttaja } from "@/lib/supabase/palvelin";
 import { redirect } from "next/navigation";
-import { hyvaksyKaikkiOdottavatToiminto, kirjauduUlos } from "@/app/toiminnot";
-import { jarjestaMuutosehdotukset, kasittelySelite, muotoilePvm, MUUTOSEHDOTUS_TYYPPI_NIMET, PALAUTE_AIHE_NIMET } from "@/lib/naytto";
+import { hyvaksyKaikkiOdottavatToiminto, kuitaaKentatToiminto, kirjauduUlos } from "@/app/toiminnot";
+import { jarjestaMuutosehdotukset, kasittelySelite, muotoilePvm, HANKE_KENTTA_NIMET, MUUTOSEHDOTUS_TYYPPI_NIMET, PALAUTE_AIHE_NIMET } from "@/lib/naytto";
 import {
   EhdotusLuokka,
   EhdotusTila,
@@ -10,6 +10,7 @@ import {
 import { YllapitoOhjeet } from "@/komponentit/yllapito-ohjeet";
 import {
   haeHankkeetYllapitoon,
+  luoYllapitoAsiakas,
   supabasePalvelinAvainAsetettu,
 } from "@/lib/supabase/yllapito-asiakas";
 
@@ -31,6 +32,7 @@ export default async function YllapitoSivu({
   searchParams: Promise<{
     hyvaksytty?: string;
     hylatty?: string;
+    kuitattu?: string;
     virhe?: string;
     palaute?: string;
   }>;
@@ -70,6 +72,35 @@ export default async function YllapitoSivu({
   const kasitellyt = jarjestetyt.filter((e) => e.tila !== "odottaa");
   const odottavia = odottavat.length;
   const hyvaksyttyLkm = Number(params.hyvaksytty ?? "");
+
+  type KuittausRivi = { hanke_id: string; kentta: string };
+  let kuittattavat: KuittausRivi[] = [];
+  if (supabasePalvelinAvainAsetettu()) {
+    const palvelin = luoYllapitoAsiakas();
+    const { data: lahteet } = await palvelin
+      .from("kentta_lahteet")
+      .select("rivi_id, kentta")
+      .eq("taulu", "hankkeet")
+      .eq("merkitty", "koneen_ehdottama");
+    const nakyvat = new Map<string, KuittausRivi>();
+    for (const lahde of lahteet ?? []) {
+      const avain = `${lahde.rivi_id}:${lahde.kentta}`;
+      if (!nakyvat.has(avain)) {
+        nakyvat.set(avain, { hanke_id: lahde.rivi_id, kentta: lahde.kentta });
+      }
+    }
+    kuittattavat = [...nakyvat.values()];
+  }
+  const kuittausHankeIdt = [...new Set(kuittattavat.map((r) => r.hanke_id))];
+  let kuittausHankkeet = await haeHankkeetYllapitoon(kuittausHankeIdt);
+  if (kuittausHankkeet.length === 0 && kuittausHankeIdt.length > 0) {
+    const { data } = await supabase
+      .from("hankkeet")
+      .select("id, nimi, kunta")
+      .in("id", kuittausHankeIdt);
+    kuittausHankkeet = data ?? [];
+  }
+  const kuittausHankeNimi = new Map(kuittausHankkeet.map((h) => [h.id, h.nimi]));
 
   function ehdotusRivi(ehdotus: (typeof jarjestetyt)[number]) {
     const kasittely = kasittelySelite(ehdotus.kasittelija, ehdotus.kasitelty_pvm);
@@ -115,6 +146,9 @@ export default async function YllapitoSivu({
       ) : null}
       {params.palaute ? <p className="mt-4">Yhteydenotto merkittiin käsitellyksi.</p> : null}
       {params.hylatty ? <p className="mt-4">Ehdotus hylättiin.</p> : null}
+      {params.kuitattu ? (
+        <p className="mt-4">Automaattijulkaistu tieto merkittiin varmennetuksi.</p>
+      ) : null}
       {params.virhe ? <p className="mt-4">{params.virhe}</p> : null}
       {(ajot ?? []).length > 0 ? (
         <details className="mt-6 rounded border border-border bg-surface">
@@ -197,12 +231,13 @@ export default async function YllapitoSivu({
               className="mt-1"
             />
             <label htmlFor="vahvista-kaikki" className="max-w-prose text-sm">
-              Käsittele kaikki odottavat ehdotukset paitsi ristiriitahavainnot.
-              Hanketiedot julkaistaan; rikkinäiset linkit, muuttuneet dokumentit
-              sekä Ryhti-, YTJ-, MML- ja kuntahavainnot merkitään vain
+              Käsittele kaikki odottavat ehdotukset paitsi ristiriitahavainnot,
+              kenttämerkinnät, tyhjennykset ja päätökset. Hanketiedot
+              julkaistaan; rikkinäiset linkit, muuttuneet dokumentit sekä
+              Ryhti-, YTJ-, MML- ja kuntahavainnot merkitään vain
               käsitellyiksi (YTJ-Y-tunnusehdotus julkaisee tunnuksen).
-              Ristiriitahavainto vaatii oman kommentin, miksi se ei nouse
-              uudelleen. Merkintä on ihmisen vahvistama.
+              Ristiriitahavainto, kenttämuutos ja päätös vaativat oman
+              tarkistuksen. Merkintä on ihmisen vahvistama.
             </label>
           </div>
           {supabasePalvelinAvainAsetettu() ? (
@@ -221,6 +256,51 @@ export default async function YllapitoSivu({
             </p>
           )}
         </form>
+      ) : null}
+      {kuittattavat.length > 0 ? (
+        <section className="mt-8" aria-labelledby="kuittaus-otsikko">
+          <h2 id="kuittaus-otsikko" className="text-xl font-semibold">
+            Odottaa kuittausta
+          </h2>
+          <p className="mt-2 max-w-prose text-sm text-muted">
+            Agentti on julkaissut nämä kentät automaattisesti (koneen ehdottama).
+            Kuittaus merkitsee tiedon varmennetuksi ilman arvon uudelleentarkistusta.
+            Jos arvo on epäilyttävä, avaa hanke ja korjaa päivityslomakkeella.
+          </p>
+          <ul className="mt-4 divide-y divide-border border-y border-border">
+            {kuittattavat.map((rivi) => {
+              const nimi =
+                HANKE_KENTTA_NIMET[rivi.kentta] ??
+                HANKE_KENTTA_NIMET[
+                  rivi.kentta === "toimija_organisaatio_id" ? "toimija_nimi" : rivi.kentta
+                ] ??
+                rivi.kentta;
+              return (
+                <li key={`${rivi.hanke_id}:${rivi.kentta}`} className="py-4">
+                  <p>
+                    <a href={`/hankkeet/${rivi.hanke_id}`} className="text-link underline">
+                      {kuittausHankeNimi.get(rivi.hanke_id) ?? "Hanke"}
+                    </a>
+                    {" · "}
+                    {nimi}
+                  </p>
+                  {supabasePalvelinAvainAsetettu() ? (
+                    <form action={kuitaaKentatToiminto} className="mt-2">
+                      <input type="hidden" name="hanke_id" value={rivi.hanke_id} />
+                      <input type="hidden" name="kentat" value={rivi.kentta} />
+                      <button
+                        type="submit"
+                        className="rounded border border-foreground px-3 py-1.5 text-sm"
+                      >
+                        Kuittaa varmennetuksi
+                      </button>
+                    </form>
+                  ) : null}
+                </li>
+              );
+            })}
+          </ul>
+        </section>
       ) : null}
       <section className="mt-8" aria-labelledby="ehdotukset-otsikko">
         <h2 id="ehdotukset-otsikko" className="text-xl font-semibold">

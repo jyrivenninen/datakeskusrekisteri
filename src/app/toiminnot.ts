@@ -13,13 +13,14 @@ import {
   rakennaKuvaEhdotus,
   tarkistaUusiHanke,
   tarkistusKenttaLomakkeesta,
+  tyhjennysKenttaLomakkeesta,
   type EhdotusSisalto,
   type IlmoitusKentanLahde,
 } from "@/lib/ehdotus";
-import { kasittelijaMerkinta } from "@/lib/naytto";
+import { kasittelijaMerkinta, massaHyvaksyntaOhitettava } from "@/lib/naytto";
 import { LUOTTAMUSTASOT, PALAUTE_AIHEET, type Luottamus } from "@/lib/supabase/tietokanta";
 import { haeKirjautunutKayttaja, haeYllapitaja, luoPalvelinAsiakas } from "@/lib/supabase/palvelin";
-import { hylkaaMuutosehdotus, hyvaksyMuutosehdotus, yhdistaHankkeetEhdotuksesta } from "@/lib/supabase/hyvaksynta";
+import { hylkaaMuutosehdotus, hyvaksyMuutosehdotus, kuitaaHankeKentat, yhdistaHankkeetEhdotuksesta } from "@/lib/supabase/hyvaksynta";
 import { luoYllapitoAsiakas, supabasePalvelinAvainAsetettu } from "@/lib/supabase/yllapito-asiakas";
 import { ESIVERSIO_EVASTE } from "@/lib/esiversio";
 
@@ -339,6 +340,91 @@ export async function lahetaKenttaTarkistus(formData: FormData): Promise<void> {
   );
 }
 
+export async function lahetaKenttaTyhjennys(formData: FormData): Promise<void> {
+  const hankeId = String(formData.get("hanke_id") ?? "").trim();
+  const kentta = String(formData.get("kentta") ?? "").trim();
+  const perustelu = String(formData.get("perustelu") ?? "").trim();
+  const lahdeUrl = String(formData.get("lahde_url") ?? "").trim();
+  const merkitse = String(formData.get("merkitse_ei_lahdetta") ?? "") === "kylla";
+  const tunniste = String(formData.get("ehdottaja_tunniste") ?? "").trim() || "ilmoituslomake";
+
+  if (!hankeId) {
+    redirect(`/ilmoitus?virhe=${encodeURIComponent("Hanke puuttuu.")}`);
+  }
+  const tyhjennysKentta = tyhjennysKenttaLomakkeesta(kentta);
+  if (!tyhjennysKentta) {
+    paivitysPaluu(hankeId, kentta, "", "Kenttää ei voi tyhjentää.");
+  }
+  if (perustelu.length < 12) {
+    paivitysPaluu(hankeId, kentta, "", "Perustelu vaaditaan (vähintään 12 merkkiä).");
+  }
+
+  const sisalto: EhdotusSisalto = {
+    kentat: {},
+    tyhjennys: {
+      taulu: "hankkeet",
+      rivi_id: hankeId,
+      kentta: tyhjennysKentta,
+      perustelu,
+      lahde_url: lahdeUrl || null,
+      merkitse_ei_lahdetta: merkitse,
+    },
+  };
+
+  const { user: yllapitaja, nimi: yllapitajaNimi } = await haeYllapitaja();
+  const julkaiseSuoraan = Boolean(yllapitaja && supabasePalvelinAvainAsetettu());
+
+  if (julkaiseSuoraan && yllapitaja) {
+    const kasittelija = kasittelijaMerkinta(yllapitajaNimi, yllapitaja.email, yllapitaja.id);
+    const yllapito = luoYllapitoAsiakas();
+    const { data, error } = await yllapito
+      .from("muutosehdotukset")
+      .insert({
+        tyyppi: "kentta_tyhjennys",
+        hanke_id: hankeId,
+        ehdottaja_tyyppi: "yllapitaja",
+        ehdottaja_tunniste: kasittelija,
+        sisalto,
+        tila: "odottaa",
+        lahde_url: lahdeUrl || null,
+        huomautus: perustelu,
+      })
+      .select("id")
+      .single();
+    if (error || !data) {
+      paivitysPaluu(hankeId, kentta, "", error?.message ?? "Tallennus epäonnistui.");
+    }
+    try {
+      await hyvaksyMuutosehdotus(data.id, kasittelija);
+    } catch (syy) {
+      const viesti = syy instanceof Error ? syy.message : "Tyhjennys epäonnistui.";
+      paivitysPaluu(hankeId, kentta, "", `${viesti} Ehdotus jäi jonoon.`);
+    }
+    revalidatePath("/");
+    revalidatePath(`/hankkeet/${hankeId}`);
+    revalidatePath("/yllapito");
+    redirect(
+      `/hankkeet/${hankeId}/paivita?kentta=${encodeURIComponent(kentta)}&valmis=julkaistu`,
+    );
+  }
+
+  const supabase = await luoPalvelinAsiakas();
+  const { error } = await supabase.from("muutosehdotukset").insert({
+    tyyppi: "kentta_tyhjennys",
+    hanke_id: hankeId,
+    ehdottaja_tyyppi: "lomake",
+    ehdottaja_tunniste: tunniste,
+    sisalto,
+    tila: "odottaa",
+    lahde_url: lahdeUrl || null,
+    huomautus: perustelu,
+  });
+  if (error) paivitysPaluu(hankeId, kentta, "", error.message);
+  redirect(
+    `/hankkeet/${hankeId}/paivita?kentta=${encodeURIComponent(kentta)}&valmis=odottaa`,
+  );
+}
+
 function paatosPaluu(hankeId: string, virhe: string): never {
   redirect(`/hankkeet/${hankeId}/paatos?virhe=${encodeURIComponent(virhe)}`);
 }
@@ -577,6 +663,39 @@ export async function hyvaksyEhdotusToiminto(formData: FormData): Promise<void> 
   redirect("/yllapito?hyvaksytty=1");
 }
 
+export async function kuitaaKentatToiminto(formData: FormData): Promise<void> {
+  const { kasittelija } = await vaadiYllapitaja();
+  if (!supabasePalvelinAvainAsetettu()) {
+    redirect(
+      `/yllapito?virhe=${encodeURIComponent("Kuittaus vaatii palvelinavaimen.")}`,
+    );
+  }
+  const hankeId = String(formData.get("hanke_id") ?? "").trim();
+  const kentatRaaka = String(formData.get("kentat") ?? "").trim();
+  const kentat = kentatRaaka.split(",").map((k) => k.trim()).filter(Boolean);
+  if (!hankeId || kentat.length === 0) {
+    redirect(
+      `/yllapito?virhe=${encodeURIComponent("Valitse vähintään yksi kenttä kuittattavaksi.")}`,
+    );
+  }
+  try {
+    const lkm = await kuitaaHankeKentat(hankeId, kentat, kasittelija);
+    if (lkm === 0) {
+      redirect(
+        `/yllapito?virhe=${encodeURIComponent("Kentillä ei ollut koneen ehdottamaa lähdettä.")}`,
+      );
+    }
+  } catch (syy) {
+    const viesti = syy instanceof Error ? syy.message : "Kuittaus epäonnistui.";
+    redirect(`/yllapito?virhe=${encodeURIComponent(viesti)}`);
+  }
+  revalidatePath("/");
+  revalidatePath("/yllapito");
+  revalidatePath(`/hankkeet/${hankeId}`);
+  revalidatePath("/hankkeet", "layout");
+  redirect("/yllapito?kuitattu=1");
+}
+
 export async function hyvaksyKaikkiOdottavatToiminto(formData: FormData): Promise<void> {
   const { kasittelija, massahyvaksynta } = await vaadiYllapitaja();
   if (!massahyvaksynta) {
@@ -606,11 +725,11 @@ export async function hyvaksyKaikkiOdottavatToiminto(formData: FormData): Promis
   }
 
   let hyvaksytty = 0;
-  let ohitettuRistiriita = 0;
+  let ohitettu = 0;
   const epaonnistuneet: string[] = [];
   for (const rivi of odottavat ?? []) {
-    if (rivi.tyyppi === "ristiriita_havainto") {
-      ohitettuRistiriita += 1;
+    if (massaHyvaksyntaOhitettava(rivi.tyyppi)) {
+      ohitettu += 1;
       continue;
     }
     try {
@@ -629,9 +748,9 @@ export async function hyvaksyKaikkiOdottavatToiminto(formData: FormData): Promis
   const q = new URLSearchParams();
   if (hyvaksytty > 0) q.set("hyvaksytty", String(hyvaksytty));
   const jonoon: string[] = [...epaonnistuneet];
-  if (ohitettuRistiriita > 0) {
+  if (ohitettu > 0) {
     jonoon.unshift(
-      `${ohitettuRistiriita} ristiriitahavaintoa jäi jonoon: merkitse ne yksitellen ja kirjaa miksi eivät nouse uudelleen.`,
+      `${ohitettu} riviä jäi jonoon (ristiriitahavainto, kenttämuutos tai päätös): käsittele yksitellen.`,
     );
   }
   if (jonoon.length > 0) {

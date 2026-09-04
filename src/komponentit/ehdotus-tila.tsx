@@ -1,4 +1,9 @@
-import { MUUTOSEHDOTUS_TILA_NIMET, onHavaintoTyyppi } from "@/lib/naytto";
+import {
+  EHDOTUS_LUOKKA_NIMET,
+  MUUTOSEHDOTUS_TILA_NIMET,
+  ehdotusLuokkaAvain,
+  type EhdotusLuokkaAvain,
+} from "@/lib/naytto";
 import type { MuutosehdotusTila } from "@/lib/supabase/tietokanta";
 
 const LUOKAT: Record<MuutosehdotusTila, string> = {
@@ -21,29 +26,32 @@ export function ehdotusTilaRiviLuokka(tila: string): string {
   return RIVI_LUOKAT[avain] ?? "";
 }
 
-const LUOKKA_RIVI = {
+const LUOKKA_RIVI: Record<EhdotusLuokkaAvain, string> = {
   havainto: "border-l-violet-700 bg-violet-50/90 dark:bg-violet-950/40",
   taydennys: "border-l-teal-700 bg-teal-50/90 dark:bg-teal-950/40",
+  kentta: "border-l-sky-700 bg-sky-50/90 dark:bg-sky-950/40",
 };
 
-const LUOKKA_MERKKI = {
+const LUOKKA_MERKKI: Record<EhdotusLuokkaAvain, string> = {
   havainto:
     "border-violet-800 bg-violet-100 text-violet-950 dark:border-violet-300 dark:bg-violet-950 dark:text-violet-50",
   taydennys:
     "border-teal-800 bg-teal-100 text-teal-950 dark:border-teal-300 dark:bg-teal-950 dark:text-teal-50",
+  kentta:
+    "border-sky-800 bg-sky-100 text-sky-950 dark:border-sky-300 dark:bg-sky-950 dark:text-sky-50",
 };
 
 export function ehdotusLuokkaRiviLuokka(tyyppi: string): string {
-  return onHavaintoTyyppi(tyyppi) ? LUOKKA_RIVI.havainto : LUOKKA_RIVI.taydennys;
+  return LUOKKA_RIVI[ehdotusLuokkaAvain(tyyppi)];
 }
 
 export function EhdotusLuokka({ tyyppi }: { tyyppi: string }) {
-  const havainto = onHavaintoTyyppi(tyyppi);
+  const avain = ehdotusLuokkaAvain(tyyppi);
   return (
     <span
-      className={`inline-block rounded-sm border px-2 py-0.5 text-sm font-medium ${havainto ? LUOKKA_MERKKI.havainto : LUOKKA_MERKKI.taydennys}`}
+      className={`inline-block rounded-sm border px-2 py-0.5 text-sm font-medium ${LUOKKA_MERKKI[avain]}`}
     >
-      {havainto ? "Havainto" : "Täydennys"}
+      {EHDOTUS_LUOKKA_NIMET[avain]}
     </span>
   );
 }

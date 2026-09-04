@@ -120,6 +120,16 @@ async function main() {
       );
     }
 
+    const { error: agenttiJulkaisuVirhe } = await agenttiAsiakas.rpc(
+      "julkaise_agentti_ehdotus",
+      { p_ehdotus_id: "00000000-0000-0000-0000-000000000099" },
+    );
+    if (!agenttiJulkaisuVirhe) {
+      throw new Error(
+        "agentti-JWT pystyi kutsumaan julkaise_agentti_ehdotus olemattomalla ehdotuksella ilman virhettä.",
+      );
+    }
+
     const { error: lokiVirhe } = await agenttiAsiakas.from("mallikutsut").select("id").limit(1);
     if (!lokiVirhe) {
       throw new Error("agentti-JWT sai lukea mallikutsut-taulun.");
@@ -152,7 +162,7 @@ async function main() {
   }
 
   console.log(
-    "PostgREST-RLS ok: service_role/agentti eivät julkaise suoraan; anon ei lue lokitauluja.",
+    "PostgREST-RLS ok: service_role/agentti eivät julkaise suoraan; agentti saa julkaise_agentti_ehdotus; anon ei lue lokitauluja.",
   );
 }
 

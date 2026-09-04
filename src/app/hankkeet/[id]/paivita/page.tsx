@@ -1,10 +1,11 @@
 import { notFound, permanentRedirect } from "next/navigation";
-import { lahetaKenttapaivitys, lahetaKenttaTarkistus } from "@/app/toiminnot";
+import { lahetaKenttapaivitys, lahetaKenttaTarkistus, lahetaKenttaTyhjennys } from "@/app/toiminnot";
 import { LomakeLahetysNappi } from "@/komponentit/lomake-lahetysnappi";
 import {
   onPaivitettavaHankeKentta,
   onVaihtoehtoKentta,
   tarkistusKenttaLomakkeesta,
+  tyhjennysKenttaLomakkeesta,
   type PaivitettavaHankeKentta,
 } from "@/lib/ehdotus";
 import { HANKE_KENTTA_NIMET, LUOTTAMUS_NIMET, VAIHE_NIMET } from "@/lib/naytto";
@@ -262,6 +263,72 @@ export default async function KenttapaivitysSivu({
           )}
           <LomakeLahetysNappi
             valmis={julkaiseSuoraan ? "Merkitse tarkistetuksi" : "Lähetä tarkistus jonoon"}
+            odottaa="Lähetetään…"
+          />
+        </form>
+      )}
+
+      {query.valmis || vaihtoehtoTunnus || !tyhjennysKenttaLomakkeesta(kentta) || !nykyinen ? null : (
+        <form action={lahetaKenttaTyhjennys} className="mt-10 space-y-4 border-t border-border pt-8">
+          <input type="hidden" name="hanke_id" value={hanke.id} />
+          <input type="hidden" name="kentta" value={kentta} />
+          <h2 className="text-lg font-semibold">Poista virheellinen arvo</h2>
+          <p className="text-sm leading-relaxed text-muted">
+            Jos julkaistu arvo on virheellinen eikä sitä voi korvata uudella lähteellä,
+            tyhjennä kenttä. Lähteet poistetaan. Voit merkitä samalla, ettei julkista
+            lähdettä ole.
+          </p>
+          <p className="flex flex-col gap-1">
+            <label htmlFor="tyhjennys_perustelu" className="text-sm font-medium">
+              Perustelu (pakollinen, vähintään 12 merkkiä)
+            </label>
+            <textarea
+              id="tyhjennys_perustelu"
+              name="perustelu"
+              required
+              minLength={12}
+              rows={3}
+              className="rounded border border-border bg-surface px-2 py-2"
+            />
+          </p>
+          <p className="flex flex-col gap-1">
+            <label htmlFor="tyhjennys_lahde_url" className="text-sm font-medium">
+              Lähde virheen todentamiseen (suositus)
+            </label>
+            <input
+              id="tyhjennys_lahde_url"
+              name="lahde_url"
+              type="url"
+              placeholder="https://"
+              className="rounded border border-border bg-surface px-2 py-2"
+            />
+          </p>
+          <p className="flex items-start gap-2">
+            <input
+              id="merkitse_ei_lahdetta"
+              name="merkitse_ei_lahdetta"
+              type="checkbox"
+              value="kylla"
+              className="mt-1"
+            />
+            <label htmlFor="merkitse_ei_lahdetta" className="text-sm">
+              Merkitse tyhjän kentän tarkistetuksi: julkista lähdettä ei ole
+            </label>
+          </p>
+          {julkaiseSuoraan ? null : (
+            <p className="flex flex-col gap-1">
+              <label htmlFor="tyhjennys_tunniste" className="text-sm font-medium">
+                Sähköposti tai muu yhteystieto (ei julkaista)
+              </label>
+              <input
+                id="tyhjennys_tunniste"
+                name="ehdottaja_tunniste"
+                className="rounded border border-border bg-surface px-2 py-2"
+              />
+            </p>
+          )}
+          <LomakeLahetysNappi
+            valmis={julkaiseSuoraan ? "Tyhjennä ja julkaise" : "Lähetä tyhjennys jonoon"}
             odottaa="Lähetetään…"
           />
         </form>

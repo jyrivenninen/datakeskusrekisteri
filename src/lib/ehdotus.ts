@@ -84,6 +84,15 @@ export type EhdotusSisalto = {
     tulos: "ei_julkista_lahdetta";
     huomautus?: string | null;
   };
+  tyhjennys?: {
+    taulu: "hankkeet";
+    rivi_id: string;
+    kentta: string;
+    perustelu: string;
+    lahde_url?: string | null;
+    lainaus?: string | null;
+    merkitse_ei_lahdetta?: boolean;
+  };
   paatos?: {
     kuvaus: string;
     pvm: string;
@@ -182,6 +191,11 @@ export function tarkistusKenttaLomakkeesta(kentta: string): string | null {
   if (["nimi", "kunta", "vaihe"].includes(kentta)) return null;
   if (onPaivitettavaHankeKentta(kentta)) return kentta;
   return null;
+}
+
+/** Sama kuin tarkistusKenttaLomakkeesta: kentät joita voi tyhjentää. */
+export function tyhjennysKenttaLomakkeesta(kentta: string): string | null {
+  return tarkistusKenttaLomakkeesta(kentta);
 }
 
 function onHttpsUrl(arvo: string): boolean {
@@ -449,6 +463,12 @@ const PAATOS_KENTAT = ["kuvaus", "pvm", "paattava_organisaatio_id"] as const;
 
 type PaatosLahdeRivi = NonNullable<EhdotusSisalto["paatos"]>["lahteet"][number];
 
+function lahdeLajiPaatoksesta(url: string, lahdeSivu: number | null): LahdeLaji {
+  if (lahdeSivu != null) return "dokumentti";
+  if (/\.pdf(\?|$)/i.test(url)) return "dokumentti";
+  return "html";
+}
+
 function paatosLahdeRivi(
   kentta: string,
   lahdeUrl: string,
@@ -464,6 +484,7 @@ function paatosLahdeRivi(
     kentta,
     lahde_url: url,
     lahde_sivu: sivu,
+    lahde_laji: lahdeLajiPaatoksesta(url, sivu),
     vahvistettu_pvm: new Date().toISOString().slice(0, 10),
     luottamus,
     lainaus: lainaus.trim() || null,

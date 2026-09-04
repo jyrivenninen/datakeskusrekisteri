@@ -142,6 +142,15 @@ export async function hyvaksyMuutosehdotus(
     return;
   }
 
+  if (ehdotus.tyyppi === "kentta_tyhjennys") {
+    const { error: rpcVirhe } = await supabase.rpc("julkaise_kentta_tyhjennys", {
+      p_ehdotus_id: ehdotusId,
+      p_kasittelija: kasittelija,
+    });
+    if (rpcVirhe) throw new Error(rpcVirhe.message);
+    return;
+  }
+
   if (ehdotus.tyyppi === "paatos") {
     const paatos = (ehdotus.sisalto as EhdotusSisalto).paatos;
     if (!paatos?.kuvaus?.trim() || !paatos?.pvm?.trim()) {
@@ -298,6 +307,23 @@ export async function hyvaksyMuutosehdotus(
   if (rpcVirhe) {
     throw new Error(rpcVirhe.message);
   }
+}
+
+export async function kuitaaHankeKentat(
+  hankeId: string,
+  kentat: string[],
+  kasittelija: string,
+  luottamus: "vahvistettu" | "epavarma" = "vahvistettu",
+) {
+  const supabase = luoYllapitoAsiakas();
+  const { data, error } = await supabase.rpc("kuitaa_hanke_kentat", {
+    p_hanke_id: hankeId,
+    p_kentat: kentat,
+    p_kasittelija: kasittelija,
+    p_luottamus: luottamus,
+  });
+  if (error) throw new Error(error.message);
+  return typeof data === "number" ? data : 0;
 }
 
 export async function hylkaaMuutosehdotus(

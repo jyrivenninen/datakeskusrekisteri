@@ -32,11 +32,18 @@ export function YllapitoOhjeet({ massahyvaksynta = false }: { massahyvaksynta?: 
       </summary>
       <div className="space-y-4 border-t border-border px-4 py-4 text-sm leading-relaxed">
         <p>
-          Jonossa on kahdenlaisia rivejä.{" "}
+          Jonossa on kolmenlaisia rivejä.{" "}
           <span className="rounded-sm border border-teal-800 bg-teal-100 px-1.5 py-0.5 font-medium text-teal-950 dark:border-teal-300 dark:bg-teal-950 dark:text-teal-50">
             Täydennys
           </span>{" "}
-          (sinivihreä) julkaisee tietoja rekisteriin.{" "}
+          (sinivihreä) julkaisee tietoja rekisteriin. Agentti voi julkaista uutta
+          tietoa automaattisesti; se näkyy «Odottaa kuittausta» -listassa, kunnes
+          merkitset sen varmennetuksi.{" "}
+          <span className="rounded-sm border border-sky-800 bg-sky-100 px-1.5 py-0.5 font-medium text-sky-950 dark:border-sky-300 dark:bg-sky-950 dark:text-sky-50">
+            Kenttämuutos
+          </span>{" "}
+          (sininen) merkitsee tyhjän kentän tarkistetuksi tai poistaa virheellisen
+          arvon — ei uutta lukua.{" "}
           <span className="rounded-sm border border-violet-800 bg-violet-100 px-1.5 py-0.5 font-medium text-violet-950 dark:border-violet-300 dark:bg-violet-950 dark:text-violet-50">
             Havainto
           </span>{" "}
@@ -46,6 +53,23 @@ export function YllapitoOhjeet({ massahyvaksynta = false }: { massahyvaksynta?: 
         </p>
 
         <div className="space-y-2">
+          <OhjeKohta otsikko="Kentän merkintä ja tyhjennys" id="ohje-kentta">
+            <li>
+              <strong className="font-medium">Kenttä tarkistettu ilman lähdettä</strong>{" "}
+              merkitsee tyhjän kentän tarkistetuksi. Hyväksyntä ei täytä arvoa.
+              Toimii vain, jos kenttä on jo tyhjä rekisterissä.
+            </li>
+            <li>
+              <strong className="font-medium">Kentän tyhjennys</strong> poistaa
+              virheellisen julkaistun arvon ja lähteet. Käytä, jos arvoa ei voi
+              korvata uudella lähteellä.
+            </li>
+            <li>
+              Jos kentässä on jo arvo, älä hyväksy «ei julkista lähdettä» -tarkistusta —
+              hylkää ja tee tyhjennys tai korjaus.
+            </li>
+          </OhjeKohta>
+
           <OhjeKohta otsikko="Täydennys, korjaus, uusi hanke ja valokuva" id="ohje-taydennys">
             <li>
               Avaa ehdotus. Vertaa jokaista kenttää sen omaan lähdeosoitteeseen
@@ -68,14 +92,25 @@ export function YllapitoOhjeet({ massahyvaksynta = false }: { massahyvaksynta?: 
             <li>
               <strong className="font-medium">Hyväksy ja julkaise</strong>{" "}
               kirjoittaa jonossa odottavat tiedot hankkeeseen ja merkitsee ne
-              ihmisen vahvistamiksi.
+              ihmisen vahvistamiksi. Muutos samalla luottamustasolla vaatii tämän.
+            </li>
+            <li>
+              Automaattijulkaistu tieto (agentti) odottaa erikseen{" "}
+              <strong className="font-medium">kuittausta</strong> ylläpidon
+              listalla. Kuittaus ei tarkista arvoa uudelleen — tee se vain, jos
+              lähde on kunnossa.
+            </li>
+            <li>
+              Kenttä, jossa jo on arvo, ei merkitä «ei julkista lähdettä» -tarkistukseksi.
+              Käytä «Poista virheellinen arvo» hankesivun päivityslomakkeella tai odota
+              kentta_tyhjennys-ehdotusta.
             </li>
             <li>Hylkäys jättää julkaisematta. Perustelu jää lokiin.</li>
             {massahyvaksynta ? (
               <li>
                 <strong className="font-medium">Hyväksy kaikki odottavat</strong>{" "}
-                julkaisee nämä rivit (ristiriitahavaintoja lukuun ottamatta).
-                Käytä vain, kun olet käynyt sisällön läpi.
+                julkaisee nämä rivit (ristiriitahavainto, kenttämuutos ja päätös
+                jäävät jonoon). Käytä vain, kun olet käynyt sisällön läpi.
               </li>
             ) : null}
           </OhjeKohta>

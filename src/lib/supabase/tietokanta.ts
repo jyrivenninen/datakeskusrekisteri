@@ -102,6 +102,7 @@ export const MUUTOSEHDOTUS_TYYPIT = [
   "dokumentti_muuttunut",
   "ristiriita_havainto",
   "kentta_tarkistus",
+  "kentta_tyhjennys",
   "paatos",
 ] as const;
 

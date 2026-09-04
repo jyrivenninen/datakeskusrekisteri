@@ -73,9 +73,12 @@ Nämä ovat projektin tärkein osa. Jälkikäteen korjaaminen on kallista.
    käyttöliittymässä.
 
 3. **Julkaistu tieto ja ehdotettu tieto ovat eri tauluissa.**
-   `hankkeet` = julkaistu, vahvistettu tieto.
-   `muutosehdotukset` = kaikki sisääntuleva (lomake, agentti, ylläpitäjä).
-   Ihminen hyväksyy, ennen kuin mikään siirtyy julkaistuun.
+   `hankkeet` = julkaistu tieto (näkyy sivustolla).
+   `muutosehdotukset` = sisääntuleva (lomake, agentti, ylläpitäjä).
+   **Varmennettu** tieto (`kentta_lahteet.merkitty = ihmisen_vahvistama`) on erillinen
+   käsite julkaistusta. Agentti saa julkaista uutta tietoa automaattisesti tietyin
+   ehdoin; varmennettu merkintä ja `luottamus = vahvistettu` ovat aina ihmisen
+   kädessä. Tarkat säännöt: `PROJEKTI-lisays-agentti-julkaisu.md`.
 
 4. **Kaikki muutokset ovat jäljitettäviä.** Kuka/mikä ehdotti, milloin,
    millä lähteellä, kuka hyväksyi.
@@ -84,13 +87,15 @@ Nämä ovat projektin tärkein osa. Jälkikäteen korjaaminen on kallista.
 
 ## 4. Agenttiperiaate
 
-Tarkennettu: `PROJEKTI-lisays-vaihe7.md`.
+Tarkennettu: `PROJEKTI-lisays-vaihe7.md` ja `PROJEKTI-lisays-agentti-julkaisu.md`.
 
-**Agentti ei koskaan julkaise. Agentti valmistelee ihmiselle päätöksen.**
+**Agentti julkaisee uutta tietoa automaattisesti vain sääntöjen mukaan. Muutokset
+samalla luottamustasolla ja varmennetun tiedon ylikirjoitus vaativat ihmisen.**
 
-Agenteilla on kirjoitusoikeus vain `muutosehdotukset`-tauluun. Ei
-julkaisuoikeutta, ei poisto-oikeutta, ei oikeutta lähettää sähköpostia tai
-tehdä ulkoisia kutsuja käyttäjän puolesta.
+Agentti kirjoittaa `muutosehdotukset`-tauluun ja kutsuu `julkaise_agentti_ehdotus`.
+Automaattijulkaisu merkitsee aina `koneen_ehdottama`; varmennettu tieto on vain
+ihmiseltä. Ei suoraa kirjoitusta julkaistuihin tauluihin, ei poistoa, ei sähköpostia
+eikä ulkoisia kutsuja sivuvaikutuksilla.
 
 **Älä käytä mallia siihen mikä hoituu koodilla.** Jos tarkistuksen voi
 ilmaista SQL:llä, HTTP-pyyntönä tai merkkijonovertailuna, se ei saa

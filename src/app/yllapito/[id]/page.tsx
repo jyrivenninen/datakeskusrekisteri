@@ -6,6 +6,7 @@ import {
   HANKE_KENTTA_NIMET,
   LUOTTAMUS_NIMET,
   PAATOS_KENTTA_NIMET,
+  hyvaksyPainikeTeksti,
   kasittelySelite,
   MUUTOSEHDOTUS_TYYPPI_NIMET,
   RISTIRIITA_SAANTO_NIMET,
@@ -48,14 +49,9 @@ export default async function EhdotusSivu({
   if (!ehdotus) notFound();
   const sisalto = ehdotus.sisalto as EhdotusSisalto;
   const odottaa = ehdotus.tila === "odottaa";
-  const eiJulkaista =
-    ehdotus.tyyppi === "linkki_rikki" ||
-    ehdotus.tyyppi === "ryhti_havainto" ||
-    ehdotus.tyyppi === "kunta_havainto" ||
-    (ehdotus.tyyppi === "ytj_havainto" && !sisalto.ytj?.ehdota_tunnus) ||
-    ehdotus.tyyppi === "mml_havainto" ||
-    ehdotus.tyyppi === "dokumentti_muuttunut" ||
-    ehdotus.tyyppi === "ristiriita_havainto";
+  const hyvaksyTeksti = hyvaksyPainikeTeksti(ehdotus.tyyppi, {
+    ytjEhdotaTunnus: Boolean(sisalto.ytj?.ehdota_tunnus),
+  });
   const linkki = sisalto.linkki;
   const ryhti = sisalto.ryhti;
   const ytj = sisalto.ytj;
@@ -461,6 +457,49 @@ export default async function EhdotusSivu({
           {sisalto.tarkistus.huomautus ? (
             <p className="mt-2 text-sm text-muted">{sisalto.tarkistus.huomautus}</p>
           ) : null}
+          {odottaa && ehdotus.tyyppi === "kentta_tarkistus" ? (
+            <p className="mt-3 text-sm text-muted" role="note">
+              Hyväksyntä onnistuu vain, jos kenttä on jo tyhjä rekisterissä. Jos kentässä
+              on virheellinen arvo, hylkää tämä ehdotus ja käytä{" "}
+              <strong className="font-medium">kentta_tyhjennys</strong> -tyyppiä (Grok) tai
+              hankesivun «Poista virheellinen arvo» -lomaketta.
+            </p>
+          ) : null}
+        </section>
+      ) : null}
+
+      {sisalto.tyhjennys ? (
+        <section className="mt-6" aria-labelledby="tyhjennys-otsikko">
+          <h2 id="tyhjennys-otsikko" className="text-xl font-semibold">
+            Kentän tyhjennys
+          </h2>
+          <p className="mt-2 leading-relaxed">
+            {HANKE_KENTTA_NIMET[sisalto.tyhjennys.kentta] ?? sisalto.tyhjennys.kentta}
+            {" — "}
+            poistetaan julkaistu arvo ja lähteet.
+          </p>
+          <p className="mt-2 text-sm">
+            <strong className="font-medium">Perustelu:</strong> {sisalto.tyhjennys.perustelu}
+          </p>
+          {sisalto.tyhjennys.lahde_url ? (
+            <p className="mt-2 text-sm">
+              <a
+                href={sisalto.tyhjennys.lahde_url}
+                className="text-link underline"
+                rel="noopener noreferrer"
+              >
+                {sisalto.tyhjennys.lahde_url}
+              </a>
+            </p>
+          ) : null}
+          {sisalto.tyhjennys.lainaus ? (
+            <blockquote className="mt-2 border-l-2 pl-3 text-sm">{sisalto.tyhjennys.lainaus}</blockquote>
+          ) : null}
+          {sisalto.tyhjennys.merkitse_ei_lahdetta ? (
+            <p className="mt-2 text-sm text-muted">
+              Hyväksynnän jälkeen merkitään: julkista lähdettä ei ole.
+            </p>
+          ) : null}
         </section>
       ) : null}
 
@@ -670,7 +709,7 @@ export default async function EhdotusSivu({
               value="kasittele"
               className="rounded border border-foreground bg-foreground px-4 py-2 text-sm font-medium text-background"
             >
-              {eiJulkaista ? "Merkitse käsitellyksi" : "Hyväksy ja julkaise"}
+              {hyvaksyTeksti}
             </button>
           </form>
           <form action={hylkaaEhdotusToiminto} className="space-y-2">
