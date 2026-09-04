@@ -381,12 +381,6 @@ export function Kartta({
         <h3 id="kartta-selite-otsikko" className="text-sm font-semibold">
           Vaihe
         </h3>
-        {kartallaLkm != null ? (
-          <p className="mt-1 text-sm text-muted">
-            {kartallaLkm}{" "}
-            {kartallaLkm === 1 ? "hanke kartalla" : "hanketta kartalla"}
-          </p>
-        ) : null}
         <ul className="mt-2 space-y-1.5 text-sm">
           {HANKE_VAIHEET.map((vaihe) => {
             const lkm = vaiheLkm?.[vaihe];
@@ -407,6 +401,15 @@ export function Kartta({
             );
           })}
         </ul>
+        {kartallaLkm != null ? (
+          <p className="mt-2 flex items-center gap-2 border-t border-border pt-2 text-sm">
+            <span className="inline-block size-3 shrink-0" aria-hidden="true" />
+            <span className="min-w-0 flex-1">Yhteensä</span>
+            <span className="tabular-nums font-semibold" aria-label={`${kartallaLkm} hanketta kartalla`}>
+              {kartallaLkm}
+            </span>
+          </p>
+        ) : null}
       </aside>
     </div>
   );
