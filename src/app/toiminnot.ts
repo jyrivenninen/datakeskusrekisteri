@@ -20,9 +20,14 @@ import {
 import { kasittelijaMerkinta, massaHyvaksyntaOhitettava } from "@/lib/naytto";
 import { LUOTTAMUSTASOT, PALAUTE_AIHEET, type Luottamus } from "@/lib/supabase/tietokanta";
 import { haeKirjautunutKayttaja, haeYllapitaja, luoPalvelinAsiakas, vaadiYllapitaja as vaadiYllapitajaSivu } from "@/lib/supabase/palvelin";
-import { hylkaaMuutosehdotus, hyvaksyMuutosehdotus, kuitaaHankeKentat, piilotaHankeKuva, yhdistaHankkeetEhdotuksesta } from "@/lib/supabase/hyvaksynta";
+import { hylkaaMuutosehdotus, hyvaksyMuutosehdotus, kuitaaHankeKentat, paivitaKuittausLuottamus, piilotaHankeKuva, yhdistaHankkeetEhdotuksesta } from "@/lib/supabase/hyvaksynta";
 import { haeKuittausNakyma } from "@/lib/supabase/kuittaus-kysely";
 import { onKuittausTaydennys, ryhmitteleKuittausKentat } from "@/lib/kuittaus";
+import {
+  onKuittausSuodatusAktiivinen,
+  parsiKuittausSuodatus,
+  suodataKuittausRivit,
+} from "@/lib/kuittaus-suodatus";
 import { luoYllapitoAsiakas, supabasePalvelinAvainAsetettu } from "@/lib/supabase/yllapito-asiakas";
 import { ESIVERSIO_EVASTE } from "@/lib/esiversio";
 
@@ -785,6 +790,152 @@ export async function kuitaaKaikkiTaydennyksetToiminto(formData: FormData): Prom
   }
 
   redirect(`/yllapito?kuitattu=${kuitattu}`);
+}
+
+type KuittausMuutosRivi = {
+  avain: string;
+  hanke_id: string;
+  lahde_kentta: string;
+  kuitaa: boolean;
+  luottamus: Luottamus;
+};
+
+function kuittausPaluuPolku(params: Record<string, string>): string {
+  const q = new URLSearchParams(params);
+  const qs = q.toString();
+  return qs ? `/yllapito/kuittaus?${qs}` : "/yllapito/kuittaus";
+}
+
+export async function kuitaaValitutToiminto(formData: FormData): Promise<void> {
+  const { kasittelija } = await vaadiYllapitaja();
+  const suodatus = parsiKuittausSuodatus({
+    q: String(formData.get("q") ?? ""),
+    kunta: String(formData.get("kunta") ?? ""),
+    toimija: String(formData.get("toimija") ?? ""),
+    vaihe: String(formData.get("vaihe") ?? ""),
+    kentta: String(formData.get("kentta") ?? ""),
+    taydennys: String(formData.get("taydennys") ?? ""),
+    ennen: String(formData.get("ennen") ?? ""),
+  });
+
+  if (!supabasePalvelinAvainAsetettu()) {
+    redirect(
+      kuittausPaluuPolku({
+        virhe: "Kuittaus vaatii palvelinavaimen.",
+      }),
+    );
+  }
+
+  let muutokset: KuittausMuutosRivi[];
+  try {
+    muutokset = JSON.parse(String(formData.get("muutokset") ?? "[]")) as KuittausMuutosRivi[];
+  } catch {
+    redirect(
+      kuittausPaluuPolku({
+        virhe: "Muutostiedot olivat virheelliset.",
+      }),
+    );
+  }
+
+  if (muutokset.length === 0) {
+    redirect(
+      kuittausPaluuPolku({
+        virhe: "Ei tallennettavia muutoksia.",
+      }),
+    );
+  }
+
+  const tulos = await haeKuittausNakyma();
+  const kaikkiRivit = tulos?.rivit ?? [];
+  const riviAvaimella = new Map(kaikkiRivit.map((r) => [r.avain, r]));
+  const suodatetut = suodataKuittausRivit(kaikkiRivit, suodatus);
+  const sallitutAvaimet = new Set(suodatetut.map((r) => r.avain));
+
+  const kuitattavia = muutokset.filter((m) => m.kuitaa);
+  if (kuitattavia.length > 0 && !onKuittausSuodatusAktiivinen(suodatus)) {
+    redirect(
+      kuittausPaluuPolku({
+        virhe: "Kuittaus vaatii vähintään yhden suodattimen.",
+      }),
+    );
+  }
+
+  let kuitattu = 0;
+  let paivitetty = 0;
+  const hankeIdt = new Set<string>();
+  const epaonnistuneet: string[] = [];
+
+  for (const muutos of muutokset) {
+    const rivi = riviAvaimella.get(muutos.avain);
+    if (!rivi) {
+      epaonnistuneet.push(`${muutos.avain}: riviä ei löydy`);
+      continue;
+    }
+    if (muutos.hanke_id !== rivi.hanke_id || muutos.lahde_kentta !== rivi.lahde_kentta) {
+      epaonnistuneet.push(`${muutos.avain}: tunniste ei täsmää`);
+      continue;
+    }
+    if (!(LUOTTAMUSTASOT as readonly string[]).includes(muutos.luottamus)) {
+      epaonnistuneet.push(`${muutos.avain}: luottamus ei ole sallittu`);
+      continue;
+    }
+
+    try {
+      if (muutos.kuitaa) {
+        if (!sallitutAvaimet.has(muutos.avain)) {
+          epaonnistuneet.push(`${muutos.avain}: ei suodatetussa joukossa`);
+          continue;
+        }
+        if (muutos.luottamus === "ristiriitainen") {
+          epaonnistuneet.push(`${muutos.avain}: kuittauksessa ei voi olla ristiriitainen`);
+          continue;
+        }
+        const lkm = await kuitaaHankeKentat(
+          muutos.hanke_id,
+          [muutos.lahde_kentta],
+          kasittelija,
+          muutos.luottamus,
+        );
+        if (lkm > 0) {
+          kuitattu += lkm;
+          hankeIdt.add(muutos.hanke_id);
+        }
+      } else if (muutos.luottamus !== rivi.luottamus) {
+        const lkm = await paivitaKuittausLuottamus(
+          muutos.hanke_id,
+          muutos.lahde_kentta,
+          muutos.luottamus,
+        );
+        if (lkm > 0) {
+          paivitetty += lkm;
+          hankeIdt.add(muutos.hanke_id);
+        }
+      }
+    } catch (syy) {
+      const viesti = syy instanceof Error ? syy.message : "Tallennus epäonnistui.";
+      epaonnistuneet.push(`${muutos.avain}: ${viesti}`);
+    }
+  }
+
+  revalidatePath("/");
+  revalidatePath("/yllapito");
+  revalidatePath("/yllapito/kuittaus");
+  revalidatePath("/hankkeet", "layout");
+  for (const hankeId of hankeIdt) {
+    revalidatePath(`/hankkeet/${hankeId}`);
+  }
+
+  const paluu: Record<string, string> = {};
+  if (kuitattu > 0) paluu.kuitattu = String(kuitattu);
+  if (paivitetty > 0) paluu.paivitetty = String(paivitetty);
+  if (epaonnistuneet.length > 0) {
+    paluu.virhe = epaonnistuneet.slice(0, 3).join(" · ");
+  }
+  if (kuitattu === 0 && paivitetty === 0 && epaonnistuneet.length === 0) {
+    paluu.virhe = "Yhtään muutosta ei tallennettu.";
+  }
+
+  redirect(kuittausPaluuPolku(paluu));
 }
 
 export async function hyvaksyKaikkiOdottavatToiminto(formData: FormData): Promise<void> {

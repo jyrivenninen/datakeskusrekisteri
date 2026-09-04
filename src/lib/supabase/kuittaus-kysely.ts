@@ -9,6 +9,9 @@ import { luoYllapitoAsiakas, supabasePalvelinAvainAsetettu } from "@/lib/supabas
 export type KuittausNakymaTulos = {
   rivit: KuittausNakymaRivi[];
   hankeNimet: Map<string, string>;
+  kunnat: string[];
+  toimijat: string[];
+  kentat: string[];
 };
 
 export async function haeKuittausNakyma(): Promise<KuittausNakymaTulos | null> {
@@ -26,7 +29,7 @@ export async function haeKuittausNakyma(): Promise<KuittausNakymaTulos | null> {
   ] as string[];
 
   if (kuittausHankeIdt.length === 0) {
-    return { rivit: [], hankeNimet: new Map() };
+    return { rivit: [], hankeNimet: new Map(), kunnat: [], toimijat: [], kentat: [] };
   }
 
   const { data: kuittausHankkeetData } = await palvelin
@@ -65,5 +68,13 @@ export async function haeKuittausNakyma(): Promise<KuittausNakymaTulos | null> {
     agenttiEhdotukset ?? [],
   );
 
-  return { rivit, hankeNimet };
+  const kunnat = [...new Set(rivit.map((r) => r.kunta))].sort((a, b) => a.localeCompare(b, "fi"));
+  const toimijat = [
+    ...new Set(rivit.map((r) => r.toimija_nimi).filter((n): n is string => Boolean(n))),
+  ].sort((a, b) => a.localeCompare(b, "fi"));
+  const kentat = [...new Set(rivit.map((r) => r.lahde_kentta))].sort((a, b) =>
+    a.localeCompare(b, "fi"),
+  );
+
+  return { rivit, hankeNimet, kunnat, toimijat, kentat };
 }

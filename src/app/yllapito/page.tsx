@@ -1,9 +1,8 @@
+import Link from "next/link";
 import { haeKirjautunutKayttaja } from "@/lib/supabase/palvelin";
 import { redirect } from "next/navigation";
-import { hyvaksyKaikkiOdottavatToiminto, kuitaaKaikkiTaydennyksetToiminto, kuitaaKentatToiminto, kirjauduUlos } from "@/app/toiminnot";
+import { hyvaksyKaikkiOdottavatToiminto, kirjauduUlos } from "@/app/toiminnot";
 import { jarjestaMuutosehdotukset, kasittelySelite, muotoilePvm, MUUTOSEHDOTUS_TYYPPI_NIMET, PALAUTE_AIHE_NIMET } from "@/lib/naytto";
-import { onKuittausTaydennys } from "@/lib/kuittaus";
-import { KuittausVertailu } from "@/komponentit/kuittaus-vertailu";
 import {
   EhdotusLuokka,
   EhdotusTila,
@@ -77,9 +76,7 @@ export default async function YllapitoSivu({
   const kuitattuLkm = Number(params.kuitattu ?? "");
 
   const kuittausTulos = supabasePalvelinAvainAsetettu() ? await haeKuittausNakyma() : null;
-  const kuittausNakyma = kuittausTulos?.rivit ?? [];
-  const kuittausHankeNimi = kuittausTulos?.hankeNimet ?? new Map<string, string>();
-  const taydennysKuittaukset = kuittausNakyma.filter(onKuittausTaydennys);
+  const kuittausLkm = kuittausTulos?.rivit.length ?? 0;
 
   function ehdotusRivi(ehdotus: (typeof jarjestetyt)[number]) {
     const kasittely = kasittelySelite(ehdotus.kasittelija, ehdotus.kasitelty_pvm);
@@ -240,82 +237,20 @@ export default async function YllapitoSivu({
           )}
         </form>
       ) : null}
-      {kuittausNakyma.length > 0 ? (
+      {kuittausLkm > 0 ? (
         <section className="mt-8" aria-labelledby="kuittaus-otsikko">
           <h2 id="kuittaus-otsikko" className="text-xl font-semibold">
             Odottaa kuittausta
           </h2>
           <p className="mt-2 max-w-prose text-sm text-muted">
-            Agentti on julkaissut nämä kentät automaattisesti (koneen ehdottama).
-            Kuittaus merkitsee tiedon varmennetuksi ilman arvon uudelleentarkistusta.
-            Jos arvo on epäilyttävä, avaa hanke ja korjaa päivityslomakkeella.
+            {kuittausLkm} kenttää odottaa kuittausta tai luottamuksen tarkistusta.
           </p>
-          {taydennysKuittaukset.length > 0 && supabasePalvelinAvainAsetettu() ? (
-            <form action={kuitaaKaikkiTaydennyksetToiminto} className="mt-4 space-y-3">
-              <div className="flex flex-wrap items-start gap-3">
-                <input
-                  id="vahvista-taydennykset"
-                  type="checkbox"
-                  name="vahvista"
-                  value="kylla"
-                  required
-                  className="mt-1"
-                />
-                <label htmlFor="vahvista-taydennykset" className="max-w-prose text-sm">
-                  Kuittaa {taydennysKuittaukset.length} täydennystä, joissa kenttä oli
-                  tyhjä ennen agenttia. Korjaukset ja epävarmat lähteet jäävät yksittäiseen
-                  tarkistukseen. Merkintä muuttuu ihmisen vahvistamaksi ja luottamus
-                  vahvistetuksi.
-                </label>
-              </div>
-              <button
-                type="submit"
-                className="rounded border border-foreground bg-foreground px-4 py-2 text-sm font-medium text-background"
-              >
-                Kuittaa kaikki täydennykset ({taydennysKuittaukset.length})
-              </button>
-            </form>
-          ) : null}
-          <ul className="mt-4 divide-y divide-border border-y border-border">
-            {kuittausNakyma.map((rivi) => (
-              <li key={`${rivi.hanke_id}:${rivi.lahde_kentta}`} className="py-4">
-                <p>
-                  <a href={`/hankkeet/${rivi.hanke_id}`} className="text-link underline">
-                    {kuittausHankeNimi.get(rivi.hanke_id) ?? "Hanke"}
-                  </a>
-                  {" · "}
-                  {rivi.nimi}
-                </p>
-                <KuittausVertailu
-                  vanha={rivi.vanha}
-                  uusi={rivi.uusi}
-                  ennenAgenttia={rivi.ennenAgenttia}
-                />
-                {rivi.lainaus ? (
-                  <blockquote className="mt-2 border-l-2 pl-3 text-sm">{rivi.lainaus}</blockquote>
-                ) : null}
-                {rivi.lahde_url ? (
-                  <p className="mt-1 text-sm">
-                    <a href={rivi.lahde_url} className="text-link underline" rel="noopener noreferrer">
-                      {rivi.lahde_url}
-                    </a>
-                  </p>
-                ) : null}
-                {supabasePalvelinAvainAsetettu() ? (
-                  <form action={kuitaaKentatToiminto} className="mt-3">
-                    <input type="hidden" name="hanke_id" value={rivi.hanke_id} />
-                    <input type="hidden" name="kentat" value={rivi.lahde_kentta} />
-                    <button
-                      type="submit"
-                      className="rounded border border-foreground px-3 py-1.5 text-sm"
-                    >
-                      Kuittaa varmennetuksi
-                    </button>
-                  </form>
-                ) : null}
-              </li>
-            ))}
-          </ul>
+          <Link
+            href="/yllapito/kuittaus"
+            className="mt-3 inline-block rounded border border-foreground px-4 py-2 text-sm font-medium"
+          >
+            Avaa kuittausnäkymä ({kuittausLkm})
+          </Link>
         </section>
       ) : null}
       <section className="mt-8" aria-labelledby="ehdotukset-otsikko">

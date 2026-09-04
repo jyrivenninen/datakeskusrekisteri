@@ -342,6 +342,25 @@ export async function kuitaaHankeKentat(
   return typeof data === "number" ? data : 0;
 }
 
+/** Luottamus ilman kuittausta — merkintä pysyy koneen ehdottamana. */
+export async function paivitaKuittausLuottamus(
+  hankeId: string,
+  kentta: string,
+  luottamus: "vahvistettu" | "epavarma" | "ristiriitainen",
+) {
+  const supabase = luoYllapitoAsiakas();
+  const { data, error } = await supabase
+    .from("kentta_lahteet")
+    .update({ luottamus })
+    .eq("taulu", "hankkeet")
+    .eq("rivi_id", hankeId)
+    .eq("kentta", kentta)
+    .eq("merkitty", "koneen_ehdottama")
+    .select("kentta");
+  if (error) throw new Error(error.message);
+  return (data ?? []).length;
+}
+
 export async function piilotaHankeKuva(kuvaId: string, kasittelija: string) {
   const supabase = luoYllapitoAsiakas();
   const { error } = await supabase.rpc("piilota_hanke_kuva", {

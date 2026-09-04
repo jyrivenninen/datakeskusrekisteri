@@ -24,11 +24,18 @@ export type KuittausTila = {
 };
 
 export type KuittausNakymaRivi = {
+  avain: string;
   hanke_id: string;
+  hanke_nimi: string;
+  kunta: string;
+  vaihe: string;
+  toimija_nimi: string | null;
   lahde_kentta: string;
   nimi: string;
+  arvo: string;
+  luottamus: Luottamus;
+  merkitty: Merkinta;
   vanha: KuittausTila;
-  uusi: KuittausTila;
   ennenAgenttia: string | null;
   lainaus: string | null;
   lahde_url: string | null;
@@ -184,18 +191,22 @@ export function rakennaKuittausNakyma(
       luottamus: LUOTTAMUS_NIMET[lahde.luottamus],
       merkitty: MERKINTA_NIMET[lahde.merkitty],
     };
-    const uusi: KuittausTila = {
-      arvo,
-      luottamus: LUOTTAMUS_NIMET.vahvistettu,
-      merkitty: MERKINTA_NIMET.ihmisen_vahvistama,
-    };
 
     rivit.push({
+      avain: `${lahde.rivi_id}:${lahde.kentta}`,
       hanke_id: lahde.rivi_id,
+      hanke_nimi: hanke.nimi,
+      kunta: hanke.kunta,
+      vaihe: VAIHE_NIMET[hanke.vaihe] ?? hanke.vaihe,
+      toimija_nimi: hanke.toimija_organisaatio_id
+        ? (orgNimet.get(hanke.toimija_organisaatio_id) ?? null)
+        : null,
       lahde_kentta: lahde.kentta,
       nimi: kuittausKenttaNimi(lahde.kentta),
+      arvo,
+      luottamus: lahde.luottamus,
+      merkitty: lahde.merkitty,
       vanha,
-      uusi,
       ennenAgenttia: ennenAgenttiaTeksti(lahde.rivi_id, lahde.kentta, agenttiKentat),
       lainaus: lahde.lainaus?.trim() ? lahde.lainaus.trim() : null,
       lahde_url: lahde.lahde_url?.trim() ? lahde.lahde_url.trim() : null,

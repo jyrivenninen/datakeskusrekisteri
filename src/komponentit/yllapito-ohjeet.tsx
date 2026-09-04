@@ -101,14 +101,17 @@ export function YllapitoOhjeet({ massahyvaksynta = false }: { massahyvaksynta?: 
             </li>
             <li>
               Automaattijulkaistu tieto (agentti) odottaa erikseen{" "}
-              <strong className="font-medium">kuittausta</strong> ylläpidon
-              listalla. Kuittaus ei tarkista arvoa uudelleen — tee se vain, jos
-              lähde on kunnossa.
+              <strong className="font-medium">kuittausta</strong>{" "}
+              <a href="/yllapito/kuittaus" className="text-link underline">
+                kuittausnäkymässä
+              </a>
+              . Kuittaus ei tarkista arvoa uudelleen — valitse ensin suodatin, merkitse
+              kuittattavat rivit ja tallenna. Luottamus voi muuttua erikseen ilman kuittausta.
             </li>
             <li>
-              <strong className="font-medium">Kuittaa kaikki täydennykset</strong>{" "}
-              merkitsee varmennetuksi rivit, joissa kenttä oli tyhjä ennen agenttia.
-              Korjaukset jäävät listalle yksittäiseen tarkistukseen.
+              <strong className="font-medium">Massakuittaus</strong> vaatii vähintään yhden
+              suodattimen. Käytä esimerkiksi «Vain täydennykset» + «Valitse kaikki näkyvät
+              kuittaukseen» tyhjien kenttien eräkuittaukseen.
             </li>
             <li>
               Kenttä, jossa jo on arvo, ei merkitä «ei julkista lähdettä» -tarkistukseksi.
