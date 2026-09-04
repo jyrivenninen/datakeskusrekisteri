@@ -20,6 +20,7 @@ import {
   VAIHE_NIMET,
   kentanTila,
   kenttaNayttonimi,
+  hankeTehoMw,
   muotoileLuku,
   muotoilePvm,
 } from "@/lib/naytto";
@@ -266,6 +267,7 @@ export default async function HankeSivu({
             vaihe: hanke.vaihe,
             lat: hanke.sijainti_lat != null ? Number(hanke.sijainti_lat) : undefined,
             lon: hanke.sijainti_lon != null ? Number(hanke.sijainti_lon) : undefined,
+            tehoMw: hankeTehoMw(hanke),
             alue,
             johdot: karttajohdot,
           },

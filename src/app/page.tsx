@@ -5,7 +5,7 @@ import { VaiheMerkki } from "@/komponentit/vaihe-merkki";
 import { laskeHankeYhteenveto } from "@/lib/hanke-yhteenveto";
 import { hankeVaihtelvalit } from "@/lib/hanke-vaihtelvali";
 import { aktiivisetEhdot, hankkeetSuodatusPolku, onAktiivinenSuodatus } from "@/lib/haku";
-import { MAARAAJA_NIMET, muotoilePvm, muotoileVaihtelvali } from "@/lib/naytto";
+import { MAARAAJA_NIMET, hankeTehoMw, muotoilePvm, muotoileVaihtelvali } from "@/lib/naytto";
 import { HANKE_VAIHEET } from "@/lib/supabase/tietokanta";
 import {
   haeJulkaistutHankkeet,
@@ -47,6 +47,7 @@ export default async function Etusivu({
         vaihe: hanke.vaihe,
         lat: hanke.sijainti_lat != null ? Number(hanke.sijainti_lat) : undefined,
         lon: hanke.sijainti_lon != null ? Number(hanke.sijainti_lon) : undefined,
+        tehoMw: hankeTehoMw(hanke),
         alue,
         johdot: hankeJohdot,
       },
@@ -149,8 +150,9 @@ export default async function Etusivu({
           Kartta
         </h3>
         <p className="mt-2 text-sm leading-relaxed text-muted">
-          Nuppineulan väri kertoo hankkeen vaiheen. Lähizoomissa näkyy myös
-          hankealue ja sähkönsiirtoreitti, jos ne on merkitty.
+          Nuppineulan väri kertoo hankkeen vaiheen. Keltainen halo kuvaa
+          IT-tehoa (tai kokonaistehoa). Lähizoomissa näkyy myös hankealue ja
+          sähkönsiirtoreitti, jos ne on merkitty.
         </p>
         <div className="mt-4">
           <Kartta

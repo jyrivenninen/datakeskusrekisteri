@@ -1,7 +1,14 @@
 "use client";
 
-import { useEffect, useRef } from "react";
-import { LngLatBounds, Map, Marker, NavigationControl, type StyleSpecification } from "maplibre-gl";
+import { useEffect, useRef, useState } from "react";
+import {
+  LngLatBounds,
+  Map as MapLibre,
+  Marker,
+  NavigationControl,
+  type GeoJSONSource,
+  type StyleSpecification,
+} from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
 import { VAIHE_NIMET, VAIHE_VARIT } from "@/lib/naytto";
 import { HANKE_VAIHEET, type HankeVaihe, type SijaintiAlue, type SijaintiViiva } from "@/lib/supabase/tietokanta";
@@ -12,9 +19,53 @@ export type Karttamerkki = {
   vaihe?: HankeVaihe;
   lat?: number;
   lon?: number;
+  /** IT-teho tai fallback kokonaisteho (MW); halo piirretään vain jos > 0. */
+  tehoMw?: number | null;
   alue?: SijaintiAlue | null;
   johdot?: { id: string; reitti: SijaintiViiva }[];
 };
+
+const TEHO_KERROS_ID = "teho-halot";
+const TEHO_LAHDE_ID = "teho-halot-lahde";
+
+/** Keltainen → amber → oranssi: suurempi teho tummempi, päällekkäisyys tummenee. */
+const TEHO_VARI_ILMAISIN = [
+  "interpolate",
+  ["linear"],
+  ["get", "teho_mw"],
+  1,
+  "#fef9c3",
+  30,
+  "#fde047",
+  100,
+  "#fbbf24",
+  300,
+  "#f59e0b",
+  1000,
+  "#ea580c",
+] as const;
+
+const TEHO_SADE_ILMAISIN = [
+  "*",
+  ["interpolate", ["exponential", 2], ["zoom"], 4, 0.45, 8, 0.9, 12, 1.55, 16, 2.4],
+  ["interpolate", ["linear"], ["get", "teho_mw"], 1, 6, 10, 10, 50, 18, 100, 26, 500, 42, 1000, 58],
+] as const;
+
+const TEHO_LAPIKUULUVUUS_ILMAISIN = [
+  "interpolate",
+  ["linear"],
+  ["get", "teho_mw"],
+  1,
+  0.14,
+  50,
+  0.2,
+  100,
+  0.24,
+  500,
+  0.3,
+  1000,
+  0.34,
+] as const;
 
 const OLETUSVARI = "#1d4ed8";
 
@@ -123,7 +174,7 @@ function laajennaViivalla(rajat: LngLatBounds, viiva: SijaintiViiva) {
   }
 }
 
-function piirraViiva(kartta: Map, svg: SVGSVGElement, viiva: SijaintiViiva) {
+function piirraViiva(kartta: MapLibre, svg: SVGSVGElement, viiva: SijaintiViiva) {
   const osat: number[][][] =
     viiva.type === "LineString"
       ? [viiva.coordinates as number[][]]
@@ -149,6 +200,74 @@ function laajennaAlueella(rajat: LngLatBounds, alue: SijaintiAlue) {
       if (piste.length >= 2) rajat.extend([piste[0], piste[1]]);
     }
   }
+}
+
+function merkinKeskipiste(merkki: Karttamerkki): { lon: number; lat: number } | null {
+  if (merkki.lat != null && merkki.lon != null) {
+    return { lat: merkki.lat, lon: merkki.lon };
+  }
+  const alue = parsiAlue(merkki.alue);
+  return alue ? alueenKeskipiste(alue) : null;
+}
+
+type TehoGeoJson = {
+  type: "FeatureCollection";
+  features: Array<{
+    type: "Feature";
+    geometry: { type: "Point"; coordinates: [number, number] };
+    properties: { id: string; teho_mw: number };
+  }>;
+};
+
+function tehoGeoJson(merkit: Karttamerkki[]): TehoGeoJson {
+  const features: TehoGeoJson["features"] = [];
+  for (const merkki of merkit) {
+    if (merkki.tehoMw == null || merkki.tehoMw <= 0) continue;
+    const keskipiste = merkinKeskipiste(merkki);
+    if (!keskipiste) continue;
+    features.push({
+      type: "Feature",
+      geometry: {
+        type: "Point",
+        coordinates: [keskipiste.lon, keskipiste.lat],
+      },
+      properties: { id: merkki.id, teho_mw: merkki.tehoMw },
+    });
+  }
+  return { type: "FeatureCollection", features };
+}
+
+function lisaaTehoKerros(kartta: MapLibre, merkit: Karttamerkki[]) {
+  const data = tehoGeoJson(merkit);
+  if (kartta.getSource(TEHO_LAHDE_ID)) {
+    (kartta.getSource(TEHO_LAHDE_ID) as GeoJSONSource).setData(data);
+    return;
+  }
+  kartta.addSource(TEHO_LAHDE_ID, { type: "geojson", data });
+  kartta.addLayer({
+    id: TEHO_KERROS_ID,
+    type: "circle",
+    source: TEHO_LAHDE_ID,
+    paint: {
+      "circle-color": TEHO_VARI_ILMAISIN as unknown as string,
+      "circle-radius": TEHO_SADE_ILMAISIN as unknown as number,
+      "circle-opacity": TEHO_LAPIKUULUVUUS_ILMAISIN as unknown as number,
+      "circle-blur": 0.55,
+    },
+  });
+}
+
+function merkkiNakyvissa(merkki: Pick<Karttamerkki, "vaihe">, aktiviset: Set<HankeVaihe>): boolean {
+  if (!merkki.vaihe) return aktiviset.size > 0;
+  return aktiviset.has(merkki.vaihe);
+}
+
+function suodataMerkit(merkit: Karttamerkki[], aktiviset: Set<HankeVaihe>): Karttamerkki[] {
+  return merkit.filter((merkki) => merkkiNakyvissa(merkki, aktiviset));
+}
+
+function kaikkiVaiheetAktiviset(): Set<HankeVaihe> {
+  return new Set(HANKE_VAIHEET);
 }
 
 function alueenKeskipiste(alue: SijaintiAlue): { lon: number; lat: number } | null {
@@ -201,7 +320,7 @@ function luoNuppineula(merkki: Karttamerkki) {
   return el;
 }
 
-function piirraGeometriat(kartta: Map, svg: SVGSVGElement, merkit: Karttamerkki[]) {
+function piirraGeometriat(kartta: MapLibre, svg: SVGSVGElement, merkit: Karttamerkki[]) {
   const kehys = kartta.getContainer();
   const leveys = kehys.clientWidth;
   const korkeus = kehys.clientHeight;
@@ -251,8 +370,52 @@ export function Kartta({
   sovitaSuomeen?: boolean;
 }) {
   const kehys = useRef<HTMLDivElement>(null);
+  const karttaRef = useRef<MapLibre | null>(null);
+  const svgRef = useRef<SVGSVGElement | null>(null);
+  const merkitNytRef = useRef<Karttamerkki[]>([]);
+  const merkkiluokatRef = useRef<Map<string, { marker: Marker; vaihe?: HankeVaihe }>>(new Map());
+  const aktivisetVaiheetRef = useRef<Set<HankeVaihe>>(kaikkiVaiheetAktiviset());
   const avain = process.env.NEXT_PUBLIC_MML_API_AVAIN;
   const merkitAvain = JSON.stringify(merkit);
+  const [aktivisetVaiheet, setAktivisetVaiheet] = useState<Set<HankeVaihe>>(kaikkiVaiheetAktiviset);
+
+  aktivisetVaiheetRef.current = aktivisetVaiheet;
+
+  useEffect(() => {
+    setAktivisetVaiheet(kaikkiVaiheetAktiviset());
+  }, [merkitAvain]);
+
+  const paivitaNakyvyys = (aktiviset: Set<HankeVaihe>) => {
+    const kartta = karttaRef.current;
+    const svg = svgRef.current;
+    const merkitNyt = merkitNytRef.current;
+    if (!kartta || !svg) return;
+
+    for (const [, { marker, vaihe }] of merkkiluokatRef.current) {
+      const nayta = merkkiNakyvissa({ vaihe }, aktiviset);
+      marker.getElement().style.display = nayta ? "" : "none";
+    }
+
+    const suodatetut = suodataMerkit(merkitNyt, aktiviset);
+    lisaaTehoKerros(kartta, suodatetut);
+    piirraGeometriat(kartta, svg, suodatetut);
+  };
+
+  const vaihdaVaihe = (vaihe: HankeVaihe) => {
+    setAktivisetVaiheet((edelliset) => {
+      const seuraavat = new Set(edelliset);
+      if (seuraavat.has(vaihe)) {
+        seuraavat.delete(vaihe);
+      } else {
+        seuraavat.add(vaihe);
+      }
+      return seuraavat;
+    });
+  };
+
+  useEffect(() => {
+    paivitaNakyvyys(aktivisetVaiheet);
+  }, [aktivisetVaiheet]);
 
   useEffect(() => {
     if (!kehys.current || !avain) return;
@@ -267,7 +430,9 @@ export function Kartta({
         .filter((johto): johto is { id: string; reitti: SijaintiViiva } => johto != null),
     }));
 
-    const kartta = new Map({
+    merkitNytRef.current = merkitNyt;
+
+    const kartta = new MapLibre({
       container: kehys.current,
       style: taustakarttaTyyli(avain),
       center: [26.0, 64.5],
@@ -282,7 +447,10 @@ export function Kartta({
       "position:absolute;inset:0;z-index:1;pointer-events:none;overflow:visible;";
     kartta.getCanvasContainer().appendChild(svg);
 
-    const merkkiluokat: Marker[] = [];
+    karttaRef.current = kartta;
+    svgRef.current = svg;
+
+    merkkiluokatRef.current = new Map();
     for (const merkki of merkitNyt) {
       const keskipiste =
         merkki.lat != null && merkki.lon != null
@@ -291,12 +459,13 @@ export function Kartta({
             ? alueenKeskipiste(merkki.alue)
             : null;
       if (!keskipiste) continue;
-      merkkiluokat.push(
-        new Marker({ element: luoNuppineula(merkki), anchor: "bottom" })
-          .setLngLat([keskipiste.lon, keskipiste.lat])
-          .addTo(kartta),
-      );
+      const marker = new Marker({ element: luoNuppineula(merkki), anchor: "bottom" })
+        .setLngLat([keskipiste.lon, keskipiste.lat])
+        .addTo(kartta);
+      merkkiluokatRef.current.set(merkki.id, { marker, vaihe: merkki.vaihe });
     }
+
+    const merkkiluokat = [...merkkiluokatRef.current.values()].map(({ marker }) => marker);
 
     const rajat = new LngLatBounds();
     let onRajoja = false;
@@ -317,9 +486,10 @@ export function Kartta({
       }
     }
 
-    const paivita = () => piirraGeometriat(kartta, svg, merkitNyt);
+    const paivita = () => paivitaNakyvyys(aktivisetVaiheetRef.current);
 
     const rajaaKartta = () => {
+      paivitaNakyvyys(aktivisetVaiheetRef.current);
       kartta.resize();
       if (sovitaSuomeen) {
         kartta.fitBounds(SUOMI_RAJAT, { padding: 24, maxZoom: 6 });
@@ -352,8 +522,11 @@ export function Kartta({
       kartta.off("move", paivita);
       kartta.off("resize", paivita);
       merkkiluokat.forEach((merkki) => merkki.remove());
+      merkkiluokatRef.current.clear();
       svg.remove();
+      svgRef.current = null;
       kartta.remove();
+      karttaRef.current = null;
     };
   }, [avain, merkitAvain, sovitaSuomeen]);
 
@@ -365,6 +538,8 @@ export function Kartta({
       </p>
     );
   }
+
+  const nakyvatLkm = suodataMerkit(merkit, aktivisetVaiheet).length;
 
   return (
     <div className="flex flex-col gap-4 sm:flex-row sm:items-stretch">
@@ -381,22 +556,35 @@ export function Kartta({
         <h3 id="kartta-selite-otsikko" className="text-sm font-semibold">
           Vaihe
         </h3>
-        <ul className="mt-2 space-y-1.5 text-sm">
+        <p className="mt-1 text-xs text-muted">Valitse näytettävät vaiheet.</p>
+        <ul className="mt-2 space-y-1 text-sm" role="group" aria-label="Vaihesuodatin">
           {HANKE_VAIHEET.map((vaihe) => {
             const lkm = vaiheLkm?.[vaihe];
+            const aktivoitu = aktivisetVaiheet.has(vaihe);
             return (
-              <li key={vaihe} className="flex items-center gap-2">
-                <span
-                  className="inline-block size-3 shrink-0 rounded-full border border-white shadow-[0_0_0_1px_rgba(0,0,0,0.25)]"
-                  style={{ backgroundColor: VAIHE_VARIT[vaihe] }}
-                  aria-hidden="true"
-                />
-                <span className="min-w-0 flex-1">{VAIHE_NIMET[vaihe]}</span>
-                {lkm != null ? (
-                  <span className="tabular-nums text-muted" aria-label={`${lkm} hanketta`}>
-                    {lkm}
-                  </span>
-                ) : null}
+              <li key={vaihe}>
+                <button
+                  type="button"
+                  className={`flex w-full items-center gap-2 rounded px-1 py-0.5 text-left transition-colors hover:bg-muted/30 ${aktivoitu ? "" : "text-muted"}`}
+                  aria-pressed={aktivoitu}
+                  onClick={() => vaihdaVaihe(vaihe)}
+                >
+                  <span
+                    className="inline-block size-3 shrink-0 rounded-full border-2 shadow-[0_0_0_1px_rgba(0,0,0,0.15)]"
+                    style={{
+                      backgroundColor: aktivoitu ? VAIHE_VARIT[vaihe] : "transparent",
+                      borderColor: aktivoitu ? "#fff" : VAIHE_VARIT[vaihe],
+                      boxShadow: aktivoitu ? "0 0 0 1px rgba(0,0,0,0.25)" : undefined,
+                    }}
+                    aria-hidden="true"
+                  />
+                  <span className="min-w-0 flex-1">{VAIHE_NIMET[vaihe]}</span>
+                  {lkm != null ? (
+                    <span className="tabular-nums text-muted" aria-label={`${lkm} hanketta`}>
+                      {lkm}
+                    </span>
+                  ) : null}
+                </button>
               </li>
             );
           })}
@@ -404,12 +592,35 @@ export function Kartta({
         {kartallaLkm != null ? (
           <p className="mt-2 flex items-center gap-2 border-t border-border pt-2 text-sm">
             <span className="inline-block size-3 shrink-0" aria-hidden="true" />
-            <span className="min-w-0 flex-1">Yhteensä</span>
-            <span className="tabular-nums font-semibold" aria-label={`${kartallaLkm} hanketta kartalla`}>
-              {kartallaLkm}
+            <span className="min-w-0 flex-1">Näkyvissä</span>
+            <span
+              className="tabular-nums font-semibold"
+              aria-label={`${nakyvatLkm} hanketta näkyvissä kartalla`}
+            >
+              {nakyvatLkm}
             </span>
           </p>
         ) : null}
+        <div className="mt-4 border-t border-border pt-3">
+          <h3 className="text-sm font-semibold">IT-teho</h3>
+          <p className="mt-1 text-xs leading-relaxed text-muted">
+            Keltainen halo kuvaa IT-tehoa tai kokonaistehoa (MW). Päällekkäiset
+            alueet tummuvat.
+          </p>
+          <div
+            className="mt-2 h-3 w-full rounded border border-border"
+            style={{
+              background:
+                "linear-gradient(to right, #fef9c3, #fde047, #fbbf24, #f59e0b, #ea580c)",
+            }}
+            role="img"
+            aria-label="Tehoasteikko: vaaleankeltainen pienestä tehosta syvään oranssiin suureen tehoon"
+          />
+          <div className="mt-1 flex justify-between text-xs tabular-nums text-muted">
+            <span>1 MW</span>
+            <span>1000+ MW</span>
+          </div>
+        </div>
       </aside>
     </div>
   );
