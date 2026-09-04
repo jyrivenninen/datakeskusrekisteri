@@ -1,8 +1,8 @@
 import Link from "next/link";
 import { haeKirjautunutKayttaja } from "@/lib/supabase/palvelin";
 import { redirect } from "next/navigation";
-import { hyvaksyKaikkiOdottavatToiminto, kirjauduUlos } from "@/app/toiminnot";
-import { jarjestaMuutosehdotukset, kasittelySelite, muotoilePvm, MUUTOSEHDOTUS_TYYPPI_NIMET, PALAUTE_AIHE_NIMET } from "@/lib/naytto";
+import { hyvaksyKaikkiOdottavatToiminto, julkaiseHankeToiminto, kirjauduUlos } from "@/app/toiminnot";
+import { jarjestaMuutosehdotukset, kasittelySelite, muotoilePvm, MUUTOSEHDOTUS_TYYPPI_NIMET, PALAUTE_AIHE_NIMET, VAIHE_NIMET } from "@/lib/naytto";
 import {
   EhdotusLuokka,
   EhdotusTila,
@@ -11,6 +11,7 @@ import {
 import { YllapitoOhjeet } from "@/komponentit/yllapito-ohjeet";
 import {
   haeHankkeetYllapitoon,
+  haeJulkaisemattomatHankkeet,
   supabasePalvelinAvainAsetettu,
 } from "@/lib/supabase/yllapito-asiakas";
 import { haeKuittausNakyma } from "@/lib/supabase/kuittaus-kysely";
@@ -34,6 +35,7 @@ export default async function YllapitoSivu({
     hyvaksytty?: string;
     hylatty?: string;
     kuitattu?: string;
+    julkaistu?: string;
     virhe?: string;
     palaute?: string;
   }>;
@@ -77,6 +79,9 @@ export default async function YllapitoSivu({
 
   const kuittausTulos = supabasePalvelinAvainAsetettu() ? await haeKuittausNakyma() : null;
   const kuittausLkm = kuittausTulos?.rivit.length ?? 0;
+  const julkaisemattomat = supabasePalvelinAvainAsetettu()
+    ? await haeJulkaisemattomatHankkeet()
+    : [];
 
   function ehdotusRivi(ehdotus: (typeof jarjestetyt)[number]) {
     const kasittely = kasittelySelite(ehdotus.kasittelija, ehdotus.kasitelty_pvm);
@@ -129,7 +134,8 @@ export default async function YllapitoSivu({
             : "Automaattijulkaistu tieto merkittiin varmennetuksi."}
         </p>
       ) : null}
-      {params.virhe ? <p className="mt-4">{params.virhe}</p> : null}
+      {params.julkaistu ? <p className="mt-4">Hanke julkaistiin julkiselle sivustolle.</p> : null}
+      {params.virhe ? <p className="mt-4" role="alert">{params.virhe}</p> : null}
       {(ajot ?? []).length > 0 ? (
         <details className="mt-6 rounded border border-border bg-surface">
           <summary className="cursor-pointer px-4 py-3 font-medium focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-link">
@@ -199,6 +205,48 @@ export default async function YllapitoSivu({
           </details>
         ) : null}
       </section>
+      {julkaisemattomat.length > 0 ? (
+        <section className="mt-8" aria-labelledby="julkaisemattomat-otsikko">
+          <h2 id="julkaisemattomat-otsikko" className="text-xl font-semibold">
+            Julkaisemattomat hankkeet
+          </h2>
+          <p className="mt-2 max-w-prose text-sm text-muted">
+            Nämä hankkeet ovat tietokannassa, mutta eivät näy julkisella listauksella eikä
+            haussa. Tarkista tiedot ennen julkaisua.
+          </p>
+          <ul className="mt-4 divide-y divide-border border-y border-border">
+            {julkaisemattomat.map((hanke) => (
+              <li key={hanke.id} className="py-4">
+                <p className="font-medium">
+                  <a href={`/hankkeet/${hanke.id}`} className="text-link underline">
+                    {hanke.nimi}
+                  </a>
+                  {hanke.kunta ? ` · ${hanke.kunta}` : ""}
+                </p>
+                <p className="mt-1 text-sm text-muted">
+                  {hanke.vaihe
+                    ? VAIHE_NIMET[hanke.vaihe as keyof typeof VAIHE_NIMET] ?? hanke.vaihe
+                    : "—"}
+                  {" · "}
+                  ei julkaistu
+                </p>
+                {supabasePalvelinAvainAsetettu() ? (
+                  <form action={julkaiseHankeToiminto} className="mt-3">
+                    <input type="hidden" name="hanke_id" value={hanke.id} />
+                    <input type="hidden" name="paluu" value="/yllapito" />
+                    <button
+                      type="submit"
+                      className="rounded border border-foreground px-3 py-1.5 text-sm font-medium"
+                    >
+                      Julkaise hanke
+                    </button>
+                  </form>
+                ) : null}
+              </li>
+            ))}
+          </ul>
+        </section>
+      ) : null}
       {odottavia > 0 && massahyvaksynta ? (
         <form action={hyvaksyKaikkiOdottavatToiminto} className="mt-6 space-y-3">
           <div className="flex flex-wrap items-start gap-3">

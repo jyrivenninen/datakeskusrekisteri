@@ -5,7 +5,13 @@ export function supabasePalvelinAvainAsetettu(): boolean {
   return Boolean(process.env.SUPABASE_SERVICE_ROLE_KEY);
 }
 
-export type YllapitoHanke = { id: string; nimi: string; kunta: string | null };
+export type YllapitoHanke = {
+  id: string;
+  nimi: string;
+  kunta: string | null;
+  vaihe?: string;
+  julkaistu?: boolean;
+};
 
 /** Ylläpidon lukuhaku: palvelinavain ohittaa julkaistu-RLS:n. */
 export async function haeHankkeetYllapitoon(
@@ -14,8 +20,19 @@ export async function haeHankkeetYllapitoon(
   if (idt.length === 0 || !supabasePalvelinAvainAsetettu()) return [];
   const { data } = await luoYllapitoAsiakas()
     .from("hankkeet")
-    .select("id, nimi, kunta")
+    .select("id, nimi, kunta, vaihe, julkaistu")
     .in("id", idt);
+  return data ?? [];
+}
+
+/** Piilotetut hankkeet (julkaistu = false), uusimmat ensin. */
+export async function haeJulkaisemattomatHankkeet(): Promise<YllapitoHanke[]> {
+  if (!supabasePalvelinAvainAsetettu()) return [];
+  const { data } = await luoYllapitoAsiakas()
+    .from("hankkeet")
+    .select("id, nimi, kunta, vaihe, julkaistu")
+    .eq("julkaistu", false)
+    .order("paivitetty_pvm", { ascending: false });
   return data ?? [];
 }
 

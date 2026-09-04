@@ -1,5 +1,5 @@
 import { notFound, redirect } from "next/navigation";
-import { hyvaksyEhdotusToiminto, hylkaaEhdotusToiminto, korjaaLinkkiLahdeToiminto } from "@/app/toiminnot";
+import { hyvaksyEhdotusToiminto, hylkaaEhdotusToiminto, julkaiseHankeToiminto, korjaaLinkkiLahdeToiminto } from "@/app/toiminnot";
 import { EhdotusLuokka, EhdotusTila } from "@/komponentit/ehdotus-tila";
 import {
   ehdotuksenHankeIdt,
@@ -45,7 +45,7 @@ export default async function EhdotusSivu({
   searchParams,
 }: {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ virhe?: string }>;
+  searchParams: Promise<{ virhe?: string; julkaistu?: string }>;
 }) {
   const { id } = await params;
   const query = await searchParams;
@@ -73,7 +73,7 @@ export default async function EhdotusSivu({
   if (hankkeet.length === 0 && hankeIdt.length > 0) {
     const { data } = await supabase
       .from("hankkeet")
-      .select("id, nimi, kunta")
+      .select("id, nimi, kunta, vaihe, julkaistu")
       .in("id", hankeIdt);
     hankkeet = data ?? [];
   }
@@ -211,6 +211,9 @@ export default async function EhdotusSivu({
         <span>{ehdotus.ehdottaja_tunniste}</span>
       </p>
       {kasittely ? <p className="mt-2 text-muted">{kasittely}</p> : null}
+      {query.julkaistu ? (
+        <p className="mt-4">Hanke julkaistiin julkiselle sivustolle.</p>
+      ) : null}
       {query.virhe ? (
         <p className="mt-4" role="alert">
           {query.virhe}
@@ -221,15 +224,37 @@ export default async function EhdotusSivu({
           <h2 id="koskee-otsikko" className="text-lg font-semibold">
             {hankeIdt.length === 1 ? "Hanke" : "Hankkeet"}
           </h2>
-          <ul className="mt-2">
+          <ul className="mt-2 space-y-3">
             {hankeIdt.map((hankeId) => {
               const hanke = hankeNimella.get(hankeId);
+              const piilossa = hanke?.julkaistu === false;
               return (
                 <li key={hankeId}>
                   <a href={`/hankkeet/${hankeId}`} className="text-link underline">
                     {hanke?.nimi ?? "Avaa hanke"}
                   </a>
                   {hanke?.kunta ? ` · ${hanke.kunta}` : ""}
+                  {hanke?.vaihe ? (
+                    <span className="text-muted">
+                      {" · "}
+                      {VAIHE_NIMET[hanke.vaihe as keyof typeof VAIHE_NIMET] ?? hanke.vaihe}
+                    </span>
+                  ) : null}
+                  {piilossa ? (
+                    <span className="text-muted"> · ei julkaistu julkisesti</span>
+                  ) : null}
+                  {piilossa && supabasePalvelinAvainAsetettu() ? (
+                    <form action={julkaiseHankeToiminto} className="mt-2">
+                      <input type="hidden" name="hanke_id" value={hankeId} />
+                      <input type="hidden" name="paluu" value={`/yllapito/${id}`} />
+                      <button
+                        type="submit"
+                        className="rounded border border-foreground px-3 py-1.5 text-sm font-medium"
+                      >
+                        Julkaise hanke
+                      </button>
+                    </form>
+                  ) : null}
                 </li>
               );
             })}

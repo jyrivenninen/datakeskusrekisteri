@@ -425,6 +425,15 @@ export async function piilotaHankeKuva(kuvaId: string, kasittelija: string) {
   if (error) throw new Error(error.message);
 }
 
+export async function julkaiseHanke(hankeId: string, kasittelija: string) {
+  const supabase = luoYllapitoAsiakas();
+  const { error } = await supabase.rpc("julkaise_hanke", {
+    p_hanke_id: hankeId,
+    p_kasittelija: kasittelija,
+  });
+  if (error) throw new Error(error.message);
+}
+
 export async function hylkaaMuutosehdotus(
   ehdotusId: string,
   kasittelija: string,

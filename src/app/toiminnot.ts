@@ -20,7 +20,7 @@ import {
 import { kasittelijaMerkinta, massaHyvaksyntaOhitettava } from "@/lib/naytto";
 import { LUOTTAMUSTASOT, PALAUTE_AIHEET, type Luottamus } from "@/lib/supabase/tietokanta";
 import { haeKirjautunutKayttaja, haeYllapitaja, luoPalvelinAsiakas, vaadiYllapitaja as vaadiYllapitajaSivu } from "@/lib/supabase/palvelin";
-import { hylkaaMuutosehdotus, hyvaksyMuutosehdotus, kuitaaHankeKentat, paivitaKenttaLahdeUrl, paivitaKuittausLuottamus, piilotaHankeKuva, yhdistaHankkeetEhdotuksesta } from "@/lib/supabase/hyvaksynta";
+import { hylkaaMuutosehdotus, hyvaksyMuutosehdotus, julkaiseHanke, kuitaaHankeKentat, paivitaKenttaLahdeUrl, paivitaKuittausLuottamus, piilotaHankeKuva, yhdistaHankkeetEhdotuksesta } from "@/lib/supabase/hyvaksynta";
 import { haeKuittausNakyma } from "@/lib/supabase/kuittaus-kysely";
 import { onKuittausTaydennys, ryhmitteleKuittausKentat } from "@/lib/kuittaus";
 import {
@@ -697,6 +697,32 @@ export async function hyvaksyEhdotusToiminto(formData: FormData): Promise<void> 
   revalidatePath("/yllapito");
   revalidatePath("/hankkeet", "layout");
   redirect("/yllapito?hyvaksytty=1");
+}
+
+export async function julkaiseHankeToiminto(formData: FormData): Promise<void> {
+  const { kasittelija } = await vaadiYllapitaja();
+  const hankeId = String(formData.get("hanke_id") ?? "").trim();
+  const paluu = String(formData.get("paluu") ?? "/yllapito").trim() || "/yllapito";
+  if (!hankeId) {
+    redirect(`${paluu}?virhe=${encodeURIComponent("Hanke puuttuu.")}`);
+  }
+  if (!supabasePalvelinAvainAsetettu()) {
+    redirect(
+      `${paluu}?virhe=${encodeURIComponent("Julkaisu vaatii palvelinavaimen.")}`,
+    );
+  }
+  try {
+    await julkaiseHanke(hankeId, kasittelija);
+  } catch (syy) {
+    const viesti = syy instanceof Error ? syy.message : "Julkaisu epäonnistui.";
+    redirect(`${paluu}?virhe=${encodeURIComponent(viesti)}`);
+  }
+  revalidatePath("/");
+  revalidatePath("/yllapito");
+  revalidatePath("/hakemisto");
+  revalidatePath(`/hankkeet/${hankeId}`);
+  const erotin = paluu.includes("?") ? "&" : "?";
+  redirect(`${paluu}${erotin}julkaistu=1`);
 }
 
 export async function korjaaLinkkiLahdeToiminto(formData: FormData): Promise<void> {

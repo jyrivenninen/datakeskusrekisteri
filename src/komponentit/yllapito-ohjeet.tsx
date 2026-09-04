@@ -119,6 +119,11 @@ export function YllapitoOhjeet({ massahyvaksynta = false }: { massahyvaksynta?: 
               kentta_tyhjennys-ehdotusta.
             </li>
             <li>Hylkäys jättää julkaisematta. Perustelu jää lokiin.</li>
+            <li>
+              <strong className="font-medium">Julkaisematon hanke</strong> on tietokannassa
+              mutta piilotettu julkiselta sivustolta. Julkaise se ylläpidon listalta tai
+              ehdotuksen Hanke-osiossa, kun perustiedot on tarkistettu.
+            </li>
             {massahyvaksynta ? (
               <li>
                 <strong className="font-medium">Hyväksy kaikki odottavat</strong>{" "}
