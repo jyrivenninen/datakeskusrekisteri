@@ -100,13 +100,11 @@ export function YllapitoOhjeet({ massahyvaksynta = false }: { massahyvaksynta?: 
               listalla. Kuittaus ei tarkista arvoa uudelleen — tee se vain, jos
               lähde on kunnossa.
             </li>
-            {massahyvaksynta ? (
-              <li>
-                <strong className="font-medium">Kuittaa kaikki täydennykset</strong>{" "}
-                merkitsee varmennetuksi vain rivit, joissa kenttä oli tyhjä ennen
-                agenttia. Korjaukset ja epäselvät rivit jäävät listalle.
-              </li>
-            ) : null}
+            <li>
+              <strong className="font-medium">Kuittaa kaikki täydennykset</strong>{" "}
+              merkitsee varmennetuksi rivit, joissa kenttä oli tyhjä ennen agenttia.
+              Korjaukset jäävät listalle yksittäiseen tarkistukseen.
+            </li>
             <li>
               Kenttä, jossa jo on arvo, ei merkitä «ei julkista lähdettä» -tarkistukseksi.
               Käytä «Poista virheellinen arvo» hankesivun päivityslomakkeella tai odota

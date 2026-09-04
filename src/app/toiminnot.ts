@@ -728,12 +728,7 @@ export async function kuitaaKentatToiminto(formData: FormData): Promise<void> {
 }
 
 export async function kuitaaKaikkiTaydennyksetToiminto(formData: FormData): Promise<void> {
-  const { kasittelija, massahyvaksynta } = await vaadiYllapitaja();
-  if (!massahyvaksynta) {
-    redirect(
-      `/yllapito?virhe=${encodeURIComponent("Massakuittaus vaatii erillisen oikeuden.")}`,
-    );
-  }
+  const { kasittelija } = await vaadiYllapitaja();
   if (String(formData.get("vahvista")) !== "kylla") {
     redirect(
       `/yllapito?virhe=${encodeURIComponent("Vahvista täydennysten kuittaus.")}`,

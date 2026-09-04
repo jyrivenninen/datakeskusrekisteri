@@ -250,7 +250,7 @@ export default async function YllapitoSivu({
             Kuittaus merkitsee tiedon varmennetuksi ilman arvon uudelleentarkistusta.
             Jos arvo on epäilyttävä, avaa hanke ja korjaa päivityslomakkeella.
           </p>
-          {taydennysKuittaukset.length > 0 && massahyvaksynta ? (
+          {taydennysKuittaukset.length > 0 && supabasePalvelinAvainAsetettu() ? (
             <form action={kuitaaKaikkiTaydennyksetToiminto} className="mt-4 space-y-3">
               <div className="flex flex-wrap items-start gap-3">
                 <input
@@ -263,19 +263,17 @@ export default async function YllapitoSivu({
                 />
                 <label htmlFor="vahvista-taydennykset" className="max-w-prose text-sm">
                   Kuittaa {taydennysKuittaukset.length} täydennystä, joissa kenttä oli
-                  tyhjä ennen agenttia. Korjaukset, rivit ilman «Ennen agenttia» -tekstiä
-                  ja epävarmat lähteet jäävät yksittäiseen tarkistukseen. Merkintä
-                  muuttuu ihmisen vahvistamaksi ja luottamus vahvistetuksi.
+                  tyhjä ennen agenttia. Korjaukset ja epävarmat lähteet jäävät yksittäiseen
+                  tarkistukseen. Merkintä muuttuu ihmisen vahvistamaksi ja luottamus
+                  vahvistetuksi.
                 </label>
               </div>
-              {supabasePalvelinAvainAsetettu() ? (
-                <button
-                  type="submit"
-                  className="rounded border border-foreground bg-foreground px-4 py-2 text-sm font-medium text-background"
-                >
-                  Kuittaa kaikki täydennykset ({taydennysKuittaukset.length})
-                </button>
-              ) : null}
+              <button
+                type="submit"
+                className="rounded border border-foreground bg-foreground px-4 py-2 text-sm font-medium text-background"
+              >
+                Kuittaa kaikki täydennykset ({taydennysKuittaukset.length})
+              </button>
             </form>
           ) : null}
           <ul className="mt-4 divide-y divide-border border-y border-border">

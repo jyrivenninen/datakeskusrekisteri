@@ -55,8 +55,8 @@ export async function haeKuittausNakyma(): Promise<KuittausNakymaTulos | null> {
     .from("muutosehdotukset")
     .select("hanke_id, tyyppi, sisalto")
     .in("hanke_id", kuittausHankeIdt)
-    .eq("kasittelija", "agentti:automaattinen")
-    .eq("tila", "hyvaksytty");
+    .eq("ehdottaja_tyyppi", "agentti")
+    .in("tyyppi", ["taydennys", "uusi_hanke", "korjaus"]);
 
   const rivit = rakennaKuittausNakyma(
     (lahteet ?? []) as KuittausLahde[],

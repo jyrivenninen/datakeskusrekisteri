@@ -87,6 +87,58 @@ type AgenttiEhdotus = {
   sisalto: unknown;
 };
 
+type AgenttiKenttaKartta = {
+  kentat: Map<string, { tyyppi: string }>;
+  taydennysHankkeet: Set<string>;
+  korjausKentat: Set<string>;
+};
+
+function rakennaAgenttiKenttaKartta(ehdotukset: AgenttiEhdotus[]): AgenttiKenttaKartta {
+  const kentat = new Map<string, { tyyppi: string }>();
+  const taydennysHankkeet = new Set<string>();
+  const korjausKentat = new Set<string>();
+
+  for (const ehdotus of ehdotukset) {
+    if (!ehdotus.hanke_id) continue;
+    const kentatObj = (ehdotus.sisalto as EhdotusSisalto).kentat ?? {};
+
+    if (ehdotus.tyyppi === "korjaus") {
+      for (const kentta of Object.keys(kentatObj)) {
+        const avain = `${ehdotus.hanke_id}:${agenttiLahdeKentta(kentta)}`;
+        korjausKentat.add(avain);
+        if (!kentat.has(avain)) kentat.set(avain, { tyyppi: "korjaus" });
+      }
+    } else if (ehdotus.tyyppi === "taydennys" || ehdotus.tyyppi === "uusi_hanke") {
+      taydennysHankkeet.add(ehdotus.hanke_id);
+      for (const kentta of Object.keys(kentatObj)) {
+        const avain = `${ehdotus.hanke_id}:${agenttiLahdeKentta(kentta)}`;
+        if (!kentat.has(avain)) kentat.set(avain, { tyyppi: ehdotus.tyyppi });
+      }
+    }
+  }
+
+  return { kentat, taydennysHankkeet, korjausKentat };
+}
+
+/** Ennen agenttia: tyhjennys/täydennys → puuttui; korjaus → ei tallennettu. */
+function ennenAgenttiaTeksti(
+  hankeId: string,
+  lahdeKentta: string,
+  meta: AgenttiKenttaKartta,
+): string | null {
+  const avain = `${hankeId}:${lahdeKentta}`;
+  const kenttaMeta = meta.kentat.get(avain);
+  if (kenttaMeta?.tyyppi === "korjaus") return "Ei tallennettu (agentti korjasi arvoa)";
+  if (kenttaMeta && (kenttaMeta.tyyppi === "taydennys" || kenttaMeta.tyyppi === "uusi_hanke")) {
+    return KUITTAUS_TAYDENNYS_TEKSTI;
+  }
+  // Osittainen automaattijulkaisu poistaa julkaistut kentät sisalto.kentat-listasta.
+  if (meta.taydennysHankkeet.has(hankeId) && !meta.korjausKentat.has(avain)) {
+    return KUITTAUS_TAYDENNYS_TEKSTI;
+  }
+  return null;
+}
+
 export const KUITTAUS_TAYDENNYS_TEKSTI = "Puuttui (agentti täytti kentän)" as const;
 
 export function onKuittausTaydennys(rivi: KuittausNakymaRivi): boolean {
@@ -101,39 +153,6 @@ export function ryhmitteleKuittausKentat(
     const lista = map.get(rivi.hanke_id) ?? [];
     lista.push(rivi.lahde_kentta);
     map.set(rivi.hanke_id, lista);
-  }
-  return map;
-}
-
-/** Ennen agenttia: tyhjennys/täydennys → puuttui; korjaus → ei tallennettu. */
-function ennenAgenttiaTeksti(
-  hankeId: string,
-  lahdeKentta: string,
-  agenttiKentat: ReadonlyMap<string, { tyyppi: string }>,
-): string | null {
-  const meta = agenttiKentat.get(`${hankeId}:${lahdeKentta}`);
-  if (!meta) return null;
-  if (meta.tyyppi === "korjaus") return "Ei tallennettu (agentti korjasi arvoa)";
-  if (meta.tyyppi === "taydennys" || meta.tyyppi === "uusi_hanke") {
-    return KUITTAUS_TAYDENNYS_TEKSTI;
-  }
-  return null;
-}
-
-function rakennaAgenttiKenttaKartta(
-  ehdotukset: AgenttiEhdotus[],
-): Map<string, { tyyppi: string }> {
-  const map = new Map<string, { tyyppi: string }>();
-  for (const ehdotus of ehdotukset) {
-    if (!ehdotus.hanke_id) continue;
-    const kentat = (ehdotus.sisalto as EhdotusSisalto).kentat ?? {};
-    for (const kentta of Object.keys(kentat)) {
-      const lahdeKentta = agenttiLahdeKentta(kentta);
-      const avain = `${ehdotus.hanke_id}:${lahdeKentta}`;
-      if (!map.has(avain)) {
-        map.set(avain, { tyyppi: ehdotus.tyyppi });
-      }
-    }
   }
   return map;
 }
