@@ -6,7 +6,6 @@ import {
   Map as MapLibre,
   Marker,
   NavigationControl,
-  type GeoJSONSource,
   type StyleSpecification,
 } from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
@@ -25,47 +24,38 @@ export type Karttamerkki = {
   johdot?: { id: string; reitti: SijaintiViiva }[];
 };
 
-const TEHO_KERROS_ID = "teho-halot";
-const TEHO_LAHDE_ID = "teho-halot-lahde";
+/** Keltainen → amber → oranssi tehoasteikko. */
+const TEHO_VARI_PYSAKIT: [number, string][] = [
+  [1, "#fef9c3"],
+  [30, "#fde047"],
+  [100, "#fbbf24"],
+  [300, "#f59e0b"],
+  [1000, "#ea580c"],
+];
 
-/** Keltainen → amber → oranssi: suurempi teho tummempi, päällekkäisyys tummenee. */
-const TEHO_VARI_ILMAISIN = [
-  "interpolate",
-  ["linear"],
-  ["get", "teho_mw"],
-  1,
-  "#fef9c3",
-  30,
-  "#fde047",
-  100,
-  "#fbbf24",
-  300,
-  "#f59e0b",
-  1000,
-  "#ea580c",
-] as const;
+const TEHO_SADE_PYSAKIT: [number, number][] = [
+  [1, 8],
+  [10, 14],
+  [50, 22],
+  [100, 32],
+  [500, 50],
+  [1000, 68],
+];
 
-const TEHO_SADE_ILMAISIN = [
-  "*",
-  ["interpolate", ["exponential", 2], ["zoom"], 4, 0.45, 8, 0.9, 12, 1.55, 16, 2.4],
-  ["interpolate", ["linear"], ["get", "teho_mw"], 1, 8, 10, 14, 50, 22, 100, 32, 500, 50, 1000, 68],
-] as const;
+const TEHO_ZOOM_PYSAKIT: [number, number][] = [
+  [4, 0.45],
+  [8, 0.9],
+  [12, 1.55],
+  [16, 2.4],
+];
 
-const TEHO_LAPIKUULUVUUS_ILMAISIN = [
-  "interpolate",
-  ["linear"],
-  ["get", "teho_mw"],
-  1,
-  0.28,
-  50,
-  0.36,
-  100,
-  0.42,
-  500,
-  0.48,
-  1000,
-  0.52,
-] as const;
+const TEHO_PEITTO_PYSAKIT: [number, number][] = [
+  [1, 0.32],
+  [50, 0.4],
+  [100, 0.46],
+  [500, 0.52],
+  [1000, 0.56],
+];
 
 const OLETUSVARI = "#1d4ed8";
 
@@ -210,56 +200,82 @@ function merkinKeskipiste(merkki: Karttamerkki): { lon: number; lat: number } | 
   return alue ? alueenKeskipiste(alue) : null;
 }
 
-type TehoGeoJson = {
-  type: "FeatureCollection";
-  features: Array<{
-    type: "Feature";
-    geometry: { type: "Point"; coordinates: [number, number] };
-    properties: { id: string; teho_mw: number };
-  }>;
-};
+function interpoloiLuku(pysakit: [number, number][], arvo: number): number {
+  if (pysakit.length === 0) return 0;
+  if (arvo <= pysakit[0][0]) return pysakit[0][1];
+  for (let i = 1; i < pysakit.length; i++) {
+    const [x0, y0] = pysakit[i - 1];
+    const [x1, y1] = pysakit[i];
+    if (arvo <= x1) {
+      const t = (arvo - x0) / (x1 - x0);
+      return y0 + t * (y1 - y0);
+    }
+  }
+  return pysakit[pysakit.length - 1][1];
+}
 
-function tehoGeoJson(merkit: Karttamerkki[]): TehoGeoJson {
-  const features: TehoGeoJson["features"] = [];
+function hexRgb(hex: string): [number, number, number] {
+  const n = Number.parseInt(hex.slice(1), 16);
+  return [(n >> 16) & 255, (n >> 8) & 255, n & 255];
+}
+
+function rgbHex(r: number, g: number, b: number): string {
+  return `#${[r, g, b]
+    .map((v) => Math.round(v).toString(16).padStart(2, "0"))
+    .join("")}`;
+}
+
+function interpoloiVari(pysakit: [number, string][], arvo: number): string {
+  if (pysakit.length === 0) return "#fde047";
+  if (arvo <= pysakit[0][0]) return pysakit[0][1];
+  for (let i = 1; i < pysakit.length; i++) {
+    const [x0, c0] = pysakit[i - 1];
+    const [x1, c1] = pysakit[i];
+    if (arvo <= x1) {
+      const t = (arvo - x0) / (x1 - x0);
+      const [r0, g0, b0] = hexRgb(c0);
+      const [r1, g1, b1] = hexRgb(c1);
+      return rgbHex(r0 + t * (r1 - r0), g0 + t * (g1 - g0), b0 + t * (b1 - b0));
+    }
+  }
+  return pysakit[pysakit.length - 1][1];
+}
+
+function tehoSadePx(tehoMw: number, zoom: number): number {
+  return interpoloiLuku(TEHO_SADE_PYSAKIT, tehoMw) * interpoloiLuku(TEHO_ZOOM_PYSAKIT, zoom);
+}
+
+function lisaaTehoSuodatin(svg: SVGSVGElement) {
+  const defs = document.createElementNS("http://www.w3.org/2000/svg", "defs");
+  const suodatin = document.createElementNS("http://www.w3.org/2000/svg", "filter");
+  suodatin.setAttribute("id", "teho-sumu");
+  suodatin.setAttribute("x", "-50%");
+  suodatin.setAttribute("y", "-50%");
+  suodatin.setAttribute("width", "200%");
+  suodatin.setAttribute("height", "200%");
+  const sumu = document.createElementNS("http://www.w3.org/2000/svg", "feGaussianBlur");
+  sumu.setAttribute("stdDeviation", "6");
+  suodatin.appendChild(sumu);
+  defs.appendChild(suodatin);
+  svg.appendChild(defs);
+}
+
+function piirraTehoHalot(kartta: MapLibre, svg: SVGSVGElement, merkit: Karttamerkki[]) {
+  const zoom = kartta.getZoom();
   for (const merkki of merkit) {
     if (merkki.tehoMw == null || merkki.tehoMw <= 0) continue;
     const keskipiste = merkinKeskipiste(merkki);
     if (!keskipiste) continue;
-    features.push({
-      type: "Feature",
-      geometry: {
-        type: "Point",
-        coordinates: [keskipiste.lon, keskipiste.lat],
-      },
-      properties: { id: merkki.id, teho_mw: merkki.tehoMw },
-    });
-  }
-  return { type: "FeatureCollection", features };
-}
-
-function lisaaTehoKerros(kartta: MapLibre, merkit: Karttamerkki[]) {
-  if (!kartta.isStyleLoaded()) return;
-
-  const data = tehoGeoJson(merkit);
-  const lahde = kartta.getSource(TEHO_LAHDE_ID) as GeoJSONSource | undefined;
-  if (lahde) {
-    lahde.setData(data);
-  } else {
-    kartta.addSource(TEHO_LAHDE_ID, { type: "geojson", data });
-  }
-
-  if (!kartta.getLayer(TEHO_KERROS_ID)) {
-    kartta.addLayer({
-      id: TEHO_KERROS_ID,
-      type: "circle",
-      source: TEHO_LAHDE_ID,
-      paint: {
-        "circle-color": TEHO_VARI_ILMAISIN as unknown as string,
-        "circle-radius": TEHO_SADE_ILMAISIN as unknown as number,
-        "circle-opacity": TEHO_LAPIKUULUVUUS_ILMAISIN as unknown as number,
-        "circle-blur": 0.45,
-      },
-    });
+    const xy = kartta.project([keskipiste.lon, keskipiste.lat]);
+    const sade = tehoSadePx(merkki.tehoMw, zoom);
+    const ympyra = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+    ympyra.setAttribute("cx", xy.x.toFixed(1));
+    ympyra.setAttribute("cy", xy.y.toFixed(1));
+    ympyra.setAttribute("r", sade.toFixed(1));
+    ympyra.setAttribute("fill", interpoloiVari(TEHO_VARI_PYSAKIT, merkki.tehoMw));
+    ympyra.setAttribute("fill-opacity", interpoloiLuku(TEHO_PEITTO_PYSAKIT, merkki.tehoMw).toFixed(2));
+    ympyra.setAttribute("filter", "url(#teho-sumu)");
+    svg.appendChild(ympyra);
   }
 }
 
@@ -335,6 +351,9 @@ function piirraGeometriat(kartta: MapLibre, svg: SVGSVGElement, merkit: Karttame
   svg.setAttribute("viewBox", `0 0 ${leveys} ${korkeus}`);
   while (svg.firstChild) svg.removeChild(svg.firstChild);
 
+  lisaaTehoSuodatin(svg);
+  piirraTehoHalot(kartta, svg, merkit);
+
   const naytaAlueet = kartta.getZoom() >= 9;
 
   for (const merkki of merkit) {
@@ -403,7 +422,6 @@ export function Kartta({
     }
 
     const suodatetut = suodataMerkit(merkitNyt, aktiviset);
-    lisaaTehoKerros(kartta, suodatetut);
     piirraGeometriat(kartta, svg, suodatetut);
   };
 
