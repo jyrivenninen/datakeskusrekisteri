@@ -541,7 +541,10 @@ ylläpidolle» -osio.
 | `kentta_tarkistus` / `kentta_tyhjennys` **ja** RPC | Näihin **ei** RPC:tä |
 | `kentta_tyhjennys` + data vain `kentat`-lohkossa | Aina `sisalto.tyhjennys` (`kentat: {}`) |
 | Tarkka luku lähteestä «noin X» | `epavarma` + lainaus tai tyhjennys |
-| Duplikaattihanke | Täydennä olemassa olevaa |
+| Duplikaattihanke | Täydennä olemassa olevaa (`taydennys`), älä `uusi_hanke` |
+| Duplikaatti jo rekisterissä — huomio ylläpidolle | **Ajoraportti** «Epäselvät duplikaatit»; **ei** `taydennys`/`korjaus`/`ristiriita_havainto` |
+| `taydennys` samalle arvolle joka jo julkaistu | **Älä luo ehdotusta** — ei uutta tietoa |
+| `ristiriita_havainto` Grokilta (väärä JSON) | **Älä luo** — koodi hoitaa; duplikaatit → ajraportti |
 | Määräaika `paatos`-tyypillä | `maaraaja` |
 | Päivämäärä `taydennys`-kenttänä | `maaraaja` |
 
@@ -569,6 +572,51 @@ Tai luku säilyy mutta epävarmana → jätä kenttä tai `korjaus` vain jos arv
 Ennen `uusi_hanke`: vertaa rekisterin `nimi`, `kunta`, `yva_diaarinumero`,
 `toimija_organisaatio_id` / toimijanimi. Jos epäilet duplikaattia, **älä luo
 uutta** — täydennä olemassa olevaa (`taydennys`).
+
+**Huom:** API-luku näkee vain `julkaistu = true` -hankkeet. Sama hanke voi silti
+olla piilotettuna (`julkaistu = false`). Vertaa myös lähes samaa nimeä (esim.
+«Solano Pyhäjärvi» vs «Solano Pyhäjärvi, Uusi-Olkkola») ja samaa kuntaa + toimijaa.
+
+#### Kun huomaat duplikaatin **ennen** uutta riviä
+
+1. **Älä** luo `uusi_hanke`.
+2. Täydennä **vanhempaa / täydempää** riviä (`taydennys` + RPC) puuttuvilla kentillä.
+3. Kirjaa ajraporttiin: «Duplikaatti vältetty — täydennetty [hanke_id]».
+
+#### Kun duplikaatti **on jo** rekisterissä (kaksi hankesivua)
+
+**Grok ei ratkaise tätä muutosehdotuksella.** Ylläpito yhdistää hankkeet erikseen.
+
+| ❌ Älä tee | Miksi |
+|----------|--------|
+| `taydennys` / `korjaus` jossa sama arvo kuin jo rekisterissä | Ei uutta tietoa; sotkee jonon |
+| `taydennys` vain duplikaattihuomion viestimiseen | Väärä kanava |
+| `ristiriita_havainto` itse | Grok **ei saa** luoda — koodi (`ristiriidat.ts`) hoitaa |
+| Vanha muoto: `havainto`, `ehdotettu_toimenpide` juuressa | Ei näy ylläpidossa; hylätään |
+| Ilmoituslomake-tyyppinen rivi (`ehdottaja_tunniste: ilmoituslomake`) | Grok on `agentti`, ei lomake |
+
+**✅ Tee näin:**
+
+1. **Älä INSERT** uutta muutosehdotusta duplikaattiasiasta.
+2. Kirjaa **ajoraportin** osioon «Suositukset ylläpidolle» → «Epäselvät duplikaatit»:
+
+```markdown
+### Epäselvät duplikaatit
+| Hanke A (säilytettävä?) | Hanke B | Peruste | Suositus |
+| [nimi](https://…/hankkeet/UUID-A) | [nimi](https://…/hankkeet/UUID-B) | Sama nimi/kunta/toimija/teho; lähteet kuvaavat samaa kampusta | Yhdistä B → A (tai toisin päin jos B täydempi) |
+```
+
+3. Suosittele **säilytettävää** riviä: enemmän kenttiä, lähteitä, sijaintia, vanhempi vahvistettu tieto.
+4. **Jatka** muiden hankkeiden täydennystä — älä jää duplikaatin ympärille kiertämään.
+
+**Yhdistäminen ylläpidossa:** `ristiriita_havainto` + sääntö «Lähekkäiset hankkeet»
+(nousee automaattisesti, jos molemmilla on koordinaatit &lt; 500 m). Pelkkä sama nimi
+**ei** aina nosta havaintoa — siksi ajraportti on tärkeä.
+
+**Esimerkki (väärin — Solano):** Duplikaattihuomio → `taydennys` jossa `nimi` on jo
+sama kuin rekisterissä + huomautus «yhdistä toinen rivi».
+
+**Esimerkki (oikein):** Duplikaattihuomio → vain ajraportti + UUID:t; ei INSERTiä.
 
 ### Uuden hankkeen minimi
 
@@ -892,6 +940,7 @@ ja odottavat vain kuittausta — älä ehdota niiden uudelleenhyväksyntää muu
 - [ ] RPC kutsuttu jokaisen `uusi_hanke` / `taydennys` / `korjaus` jälkeen
 - [ ] **Ei** RPC:tä `kentta_tarkistus` / `kentta_tyhjennys` / `paatos` / `maaraaja` jälkeen
 - [ ] Duplikaattihanketta ei luotu epäilemättä
+- [ ] Duplikaattihuomio meni ajraporttiin, ei turhaan `taydennys`/`ristiriita_havainto`-riviin
 - [ ] Varmennettuja kenttiä ei ylikirjoitettu
 - [ ] «Noin»-lähteestä ei julkaistu tarkkaa lukua ilman perustetta
 - [ ] Raportissa erotettu «julkaistu / odottaa kuittausta» ja «jonossa»

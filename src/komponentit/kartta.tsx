@@ -240,11 +240,14 @@ export function Kartta({
   merkit,
   luokka,
   vaiheLkm,
+  kartallaLkm,
   sovitaSuomeen = false,
 }: {
   merkit: Karttamerkki[];
   luokka?: string;
   vaiheLkm?: Partial<Record<HankeVaihe, number>>;
+  /** Kartalla näkyvien hankkeiden kokonaismäärä (legendin otsikko). */
+  kartallaLkm?: number;
   sovitaSuomeen?: boolean;
 }) {
   const kehys = useRef<HTMLDivElement>(null);
@@ -378,6 +381,12 @@ export function Kartta({
         <h3 id="kartta-selite-otsikko" className="text-sm font-semibold">
           Vaihe
         </h3>
+        {kartallaLkm != null ? (
+          <p className="mt-1 text-sm text-muted">
+            {kartallaLkm}{" "}
+            {kartallaLkm === 1 ? "hanke kartalla" : "hanketta kartalla"}
+          </p>
+        ) : null}
         <ul className="mt-2 space-y-1.5 text-sm">
           {HANKE_VAIHEET.map((vaihe) => {
             const lkm = vaiheLkm?.[vaihe];

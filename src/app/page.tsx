@@ -157,10 +157,11 @@ export default async function Etusivu({
             merkit={merkit}
             sovitaSuomeen
             luokka="min-h-[28rem] h-[min(70svh,42rem)]"
+            kartallaLkm={merkit.length}
             vaiheLkm={Object.fromEntries(
               HANKE_VAIHEET.map((vaihe) => [
                 vaihe,
-                hankkeet.filter((hanke) => hanke.vaihe === vaihe).length,
+                merkit.filter((merkki) => merkki.vaihe === vaihe).length,
               ]),
             )}
           />
