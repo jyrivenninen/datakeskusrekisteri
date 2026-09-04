@@ -87,6 +87,24 @@ type AgenttiEhdotus = {
   sisalto: unknown;
 };
 
+export const KUITTAUS_TAYDENNYS_TEKSTI = "Puuttui (agentti täytti kentän)" as const;
+
+export function onKuittausTaydennys(rivi: KuittausNakymaRivi): boolean {
+  return rivi.ennenAgenttia === KUITTAUS_TAYDENNYS_TEKSTI;
+}
+
+export function ryhmitteleKuittausKentat(
+  rivit: KuittausNakymaRivi[],
+): Map<string, string[]> {
+  const map = new Map<string, string[]>();
+  for (const rivi of rivit) {
+    const lista = map.get(rivi.hanke_id) ?? [];
+    lista.push(rivi.lahde_kentta);
+    map.set(rivi.hanke_id, lista);
+  }
+  return map;
+}
+
 /** Ennen agenttia: tyhjennys/täydennys → puuttui; korjaus → ei tallennettu. */
 function ennenAgenttiaTeksti(
   hankeId: string,
@@ -97,7 +115,7 @@ function ennenAgenttiaTeksti(
   if (!meta) return null;
   if (meta.tyyppi === "korjaus") return "Ei tallennettu (agentti korjasi arvoa)";
   if (meta.tyyppi === "taydennys" || meta.tyyppi === "uusi_hanke") {
-    return "Puuttui (agentti täytti kentän)";
+    return KUITTAUS_TAYDENNYS_TEKSTI;
   }
   return null;
 }

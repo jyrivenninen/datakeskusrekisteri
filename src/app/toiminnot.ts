@@ -21,6 +21,8 @@ import { kasittelijaMerkinta, massaHyvaksyntaOhitettava } from "@/lib/naytto";
 import { LUOTTAMUSTASOT, PALAUTE_AIHEET, type Luottamus } from "@/lib/supabase/tietokanta";
 import { haeKirjautunutKayttaja, haeYllapitaja, luoPalvelinAsiakas, vaadiYllapitaja as vaadiYllapitajaSivu } from "@/lib/supabase/palvelin";
 import { hylkaaMuutosehdotus, hyvaksyMuutosehdotus, kuitaaHankeKentat, piilotaHankeKuva, yhdistaHankkeetEhdotuksesta } from "@/lib/supabase/hyvaksynta";
+import { haeKuittausNakyma } from "@/lib/supabase/kuittaus-kysely";
+import { onKuittausTaydennys, ryhmitteleKuittausKentat } from "@/lib/kuittaus";
 import { luoYllapitoAsiakas, supabasePalvelinAvainAsetettu } from "@/lib/supabase/yllapito-asiakas";
 import { ESIVERSIO_EVASTE } from "@/lib/esiversio";
 
@@ -723,6 +725,71 @@ export async function kuitaaKentatToiminto(formData: FormData): Promise<void> {
   revalidatePath(`/hankkeet/${hankeId}`);
   revalidatePath("/hankkeet", "layout");
   redirect("/yllapito?kuitattu=1");
+}
+
+export async function kuitaaKaikkiTaydennyksetToiminto(formData: FormData): Promise<void> {
+  const { kasittelija, massahyvaksynta } = await vaadiYllapitaja();
+  if (!massahyvaksynta) {
+    redirect(
+      `/yllapito?virhe=${encodeURIComponent("Massakuittaus vaatii erillisen oikeuden.")}`,
+    );
+  }
+  if (String(formData.get("vahvista")) !== "kylla") {
+    redirect(
+      `/yllapito?virhe=${encodeURIComponent("Vahvista täydennysten kuittaus.")}`,
+    );
+  }
+  if (!supabasePalvelinAvainAsetettu()) {
+    redirect(
+      `/yllapito?virhe=${encodeURIComponent("Kuittaus vaatii palvelinavaimen.")}`,
+    );
+  }
+
+  const tulos = await haeKuittausNakyma();
+  const taydennykset = (tulos?.rivit ?? []).filter(onKuittausTaydennys);
+  if (taydennykset.length === 0) {
+    redirect(
+      `/yllapito?virhe=${encodeURIComponent("Ei kuittattavia täydennyksiä.")}`,
+    );
+  }
+
+  const hankeittain = ryhmitteleKuittausKentat(taydennykset);
+  let kuitattu = 0;
+  const epaonnistuneet: string[] = [];
+
+  for (const [hankeId, kentat] of hankeittain) {
+    try {
+      kuitattu += await kuitaaHankeKentat(hankeId, kentat, kasittelija);
+    } catch (syy) {
+      const viesti = syy instanceof Error ? syy.message : "Kuittaus epäonnistui.";
+      epaonnistuneet.push(`${hankeId}: ${viesti}`);
+    }
+  }
+
+  revalidatePath("/");
+  revalidatePath("/yllapito");
+  revalidatePath("/hankkeet", "layout");
+  for (const hankeId of hankeittain.keys()) {
+    revalidatePath(`/hankkeet/${hankeId}`);
+  }
+
+  if (kuitattu === 0) {
+    const viesti =
+      epaonnistuneet.length > 0
+        ? epaonnistuneet.slice(0, 3).join(" · ")
+        : "Yhtään kenttää ei kuittattu.";
+    redirect(`/yllapito?virhe=${encodeURIComponent(viesti)}`);
+  }
+
+  if (epaonnistuneet.length > 0) {
+    redirect(
+      `/yllapito?kuitattu=${kuitattu}&virhe=${encodeURIComponent(
+        `${kuitattu} kuittattu, ${epaonnistuneet.length} epäonnistui.`,
+      )}`,
+    );
+  }
+
+  redirect(`/yllapito?kuitattu=${kuitattu}`);
 }
 
 export async function hyvaksyKaikkiOdottavatToiminto(formData: FormData): Promise<void> {

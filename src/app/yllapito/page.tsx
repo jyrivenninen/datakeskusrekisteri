@@ -1,10 +1,9 @@
 import { haeKirjautunutKayttaja } from "@/lib/supabase/palvelin";
 import { redirect } from "next/navigation";
-import { hyvaksyKaikkiOdottavatToiminto, kuitaaKentatToiminto, kirjauduUlos } from "@/app/toiminnot";
+import { hyvaksyKaikkiOdottavatToiminto, kuitaaKaikkiTaydennyksetToiminto, kuitaaKentatToiminto, kirjauduUlos } from "@/app/toiminnot";
 import { jarjestaMuutosehdotukset, kasittelySelite, muotoilePvm, MUUTOSEHDOTUS_TYYPPI_NIMET, PALAUTE_AIHE_NIMET } from "@/lib/naytto";
-import { rakennaKuittausNakyma, type KuittausLahde } from "@/lib/kuittaus";
+import { onKuittausTaydennys } from "@/lib/kuittaus";
 import { KuittausVertailu } from "@/komponentit/kuittaus-vertailu";
-import type { Hanke } from "@/lib/supabase/tietokanta";
 import {
   EhdotusLuokka,
   EhdotusTila,
@@ -13,9 +12,9 @@ import {
 import { YllapitoOhjeet } from "@/komponentit/yllapito-ohjeet";
 import {
   haeHankkeetYllapitoon,
-  luoYllapitoAsiakas,
   supabasePalvelinAvainAsetettu,
 } from "@/lib/supabase/yllapito-asiakas";
+import { haeKuittausNakyma } from "@/lib/supabase/kuittaus-kysely";
 
 async function vaadiYllapitaja() {
   const { user, supabase } = await haeKirjautunutKayttaja();
@@ -75,58 +74,12 @@ export default async function YllapitoSivu({
   const kasitellyt = jarjestetyt.filter((e) => e.tila !== "odottaa");
   const odottavia = odottavat.length;
   const hyvaksyttyLkm = Number(params.hyvaksytty ?? "");
+  const kuitattuLkm = Number(params.kuitattu ?? "");
 
-  let kuittausNakyma: ReturnType<typeof rakennaKuittausNakyma> = [];
-  const kuittausHankeNimi = new Map<string, string>();
-  if (supabasePalvelinAvainAsetettu()) {
-    const palvelin = luoYllapitoAsiakas();
-    const { data: lahteet } = await palvelin
-      .from("kentta_lahteet")
-      .select("rivi_id, kentta, luottamus, merkitty, lainaus, lahde_url")
-      .eq("taulu", "hankkeet")
-      .eq("merkitty", "koneen_ehdottama");
-
-    const kuittausHankeIdt = [
-      ...new Set((lahteet ?? []).map((l) => l.rivi_id).filter(Boolean)),
-    ] as string[];
-
-    let kuittausHankkeet: Hanke[] = [];
-    if (kuittausHankeIdt.length > 0) {
-      const { data } = await palvelin.from("hankkeet").select("*").in("id", kuittausHankeIdt);
-      kuittausHankkeet = (data ?? []) as Hanke[];
-      for (const h of kuittausHankkeet) kuittausHankeNimi.set(h.id, h.nimi);
-    }
-
-    const orgIdt = [
-      ...new Set(
-        kuittausHankkeet
-          .map((h) => h.toimija_organisaatio_id)
-          .filter((id): id is string => Boolean(id)),
-      ),
-    ];
-    const orgNimet = new Map<string, string>();
-    if (orgIdt.length > 0) {
-      const { data: orgs } = await palvelin.from("organisaatiot").select("id, nimi").in("id", orgIdt);
-      for (const org of orgs ?? []) orgNimet.set(org.id, org.nimi);
-    }
-
-    const { data: agenttiEhdotukset } =
-      kuittausHankeIdt.length > 0
-        ? await palvelin
-            .from("muutosehdotukset")
-            .select("hanke_id, tyyppi, sisalto")
-            .in("hanke_id", kuittausHankeIdt)
-            .eq("kasittelija", "agentti:automaattinen")
-            .eq("tila", "hyvaksytty")
-        : { data: [] };
-
-    kuittausNakyma = rakennaKuittausNakyma(
-      (lahteet ?? []) as KuittausLahde[],
-      kuittausHankkeet,
-      orgNimet,
-      agenttiEhdotukset ?? [],
-    );
-  }
+  const kuittausTulos = supabasePalvelinAvainAsetettu() ? await haeKuittausNakyma() : null;
+  const kuittausNakyma = kuittausTulos?.rivit ?? [];
+  const kuittausHankeNimi = kuittausTulos?.hankeNimet ?? new Map<string, string>();
+  const taydennysKuittaukset = kuittausNakyma.filter(onKuittausTaydennys);
 
   function ehdotusRivi(ehdotus: (typeof jarjestetyt)[number]) {
     const kasittely = kasittelySelite(ehdotus.kasittelija, ehdotus.kasitelty_pvm);
@@ -173,7 +126,11 @@ export default async function YllapitoSivu({
       {params.palaute ? <p className="mt-4">Yhteydenotto merkittiin käsitellyksi.</p> : null}
       {params.hylatty ? <p className="mt-4">Ehdotus hylättiin.</p> : null}
       {params.kuitattu ? (
-        <p className="mt-4">Automaattijulkaistu tieto merkittiin varmennetuksi.</p>
+        <p className="mt-4">
+          {kuitattuLkm > 1
+            ? `${kuitattuLkm} kenttää merkittiin varmennetuksi.`
+            : "Automaattijulkaistu tieto merkittiin varmennetuksi."}
+        </p>
       ) : null}
       {params.virhe ? <p className="mt-4">{params.virhe}</p> : null}
       {(ajot ?? []).length > 0 ? (
@@ -293,6 +250,34 @@ export default async function YllapitoSivu({
             Kuittaus merkitsee tiedon varmennetuksi ilman arvon uudelleentarkistusta.
             Jos arvo on epäilyttävä, avaa hanke ja korjaa päivityslomakkeella.
           </p>
+          {taydennysKuittaukset.length > 0 && massahyvaksynta ? (
+            <form action={kuitaaKaikkiTaydennyksetToiminto} className="mt-4 space-y-3">
+              <div className="flex flex-wrap items-start gap-3">
+                <input
+                  id="vahvista-taydennykset"
+                  type="checkbox"
+                  name="vahvista"
+                  value="kylla"
+                  required
+                  className="mt-1"
+                />
+                <label htmlFor="vahvista-taydennykset" className="max-w-prose text-sm">
+                  Kuittaa {taydennysKuittaukset.length} täydennystä, joissa kenttä oli
+                  tyhjä ennen agenttia. Korjaukset, rivit ilman «Ennen agenttia» -tekstiä
+                  ja epävarmat lähteet jäävät yksittäiseen tarkistukseen. Merkintä
+                  muuttuu ihmisen vahvistamaksi ja luottamus vahvistetuksi.
+                </label>
+              </div>
+              {supabasePalvelinAvainAsetettu() ? (
+                <button
+                  type="submit"
+                  className="rounded border border-foreground bg-foreground px-4 py-2 text-sm font-medium text-background"
+                >
+                  Kuittaa kaikki täydennykset ({taydennysKuittaukset.length})
+                </button>
+              ) : null}
+            </form>
+          ) : null}
           <ul className="mt-4 divide-y divide-border border-y border-border">
             {kuittausNakyma.map((rivi) => (
               <li key={`${rivi.hanke_id}:${rivi.lahde_kentta}`} className="py-4">
