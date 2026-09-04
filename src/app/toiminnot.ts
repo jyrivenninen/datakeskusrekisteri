@@ -20,7 +20,7 @@ import {
 import { kasittelijaMerkinta, massaHyvaksyntaOhitettava } from "@/lib/naytto";
 import { LUOTTAMUSTASOT, PALAUTE_AIHEET, type Luottamus } from "@/lib/supabase/tietokanta";
 import { haeKirjautunutKayttaja, haeYllapitaja, luoPalvelinAsiakas, vaadiYllapitaja as vaadiYllapitajaSivu } from "@/lib/supabase/palvelin";
-import { hylkaaMuutosehdotus, hyvaksyMuutosehdotus, kuitaaHankeKentat, paivitaKuittausLuottamus, piilotaHankeKuva, yhdistaHankkeetEhdotuksesta } from "@/lib/supabase/hyvaksynta";
+import { hylkaaMuutosehdotus, hyvaksyMuutosehdotus, kuitaaHankeKentat, paivitaKenttaLahdeUrl, paivitaKuittausLuottamus, piilotaHankeKuva, yhdistaHankkeetEhdotuksesta } from "@/lib/supabase/hyvaksynta";
 import { haeKuittausNakyma } from "@/lib/supabase/kuittaus-kysely";
 import { onKuittausTaydennys, ryhmitteleKuittausKentat } from "@/lib/kuittaus";
 import {
@@ -697,6 +697,81 @@ export async function hyvaksyEhdotusToiminto(formData: FormData): Promise<void> 
   revalidatePath("/yllapito");
   revalidatePath("/hankkeet", "layout");
   redirect("/yllapito?hyvaksytty=1");
+}
+
+export async function korjaaLinkkiLahdeToiminto(formData: FormData): Promise<void> {
+  const { kasittelija } = await vaadiYllapitaja();
+  const id = String(formData.get("id") ?? "").trim();
+  const uusiUrl = String(formData.get("uusi_lahde_url") ?? "").trim();
+  if (!id || !uusiUrl) {
+    redirect(`/yllapito/${id}?virhe=${encodeURIComponent("Anna uusi lähde-URL.")}`);
+  }
+  if (!supabasePalvelinAvainAsetettu()) {
+    redirect(
+      `/yllapito/${id}?virhe=${encodeURIComponent("Korjaus vaatii palvelinavaimen.")}`,
+    );
+  }
+
+  const yllapito = luoYllapitoAsiakas();
+  const { data: ehdotus, error } = await yllapito
+    .from("muutosehdotukset")
+    .select("id, tyyppi, tila, sisalto, hanke_id")
+    .eq("id", id)
+    .single();
+  if (error || !ehdotus) {
+    redirect(`/yllapito/${id}?virhe=${encodeURIComponent("Ehdotusta ei löytynyt.")}`);
+  }
+  if (ehdotus.tyyppi !== "linkki_rikki") {
+    redirect(`/yllapito/${id}?virhe=${encodeURIComponent("Toiminto on vain linkkihavainnoille.")}`);
+  }
+  if (ehdotus.tila !== "odottaa") {
+    redirect(`/yllapito/${id}?virhe=${encodeURIComponent("Ehdotus on jo käsitelty.")}`);
+  }
+
+  const linkki = (ehdotus.sisalto as EhdotusSisalto).linkki;
+  if (!linkki?.url || !linkki.rivi_id || !linkki.kentta || !linkki.taulu) {
+    redirect(`/yllapito/${id}?virhe=${encodeURIComponent("Linkkihavainnon tiedot puuttuvat.")}`);
+  }
+  if (linkki.taulu !== "hankkeet" && linkki.taulu !== "dokumentit") {
+    redirect(
+      `/yllapito/${id}?virhe=${encodeURIComponent("Tätä lähdetyyppiä ei voi korjata tästä.")}`,
+    );
+  }
+
+  try {
+    if (linkki.taulu === "hankkeet") {
+      await paivitaKenttaLahdeUrl(
+        linkki.taulu,
+        linkki.rivi_id,
+        linkki.kentta,
+        linkki.url,
+        uusiUrl,
+      );
+    } else {
+      const { data, error: dokVirhe } = await yllapito
+        .from("dokumentit")
+        .update({ url: uusiUrl })
+        .eq("id", linkki.rivi_id)
+        .eq("url", linkki.url)
+        .select("id");
+      if (dokVirhe) throw new Error(dokVirhe.message);
+      if (!data?.length) throw new Error("Dokumentin URL:ää ei löytynyt päivitettäväksi.");
+    }
+    await hyvaksyMuutosehdotus(id, kasittelija);
+  } catch (syy) {
+    const viesti = syy instanceof Error ? syy.message : "Korjaus epäonnistui.";
+    redirect(`/yllapito/${id}?virhe=${encodeURIComponent(viesti)}`);
+  }
+
+  revalidatePath("/");
+  revalidatePath("/yllapito");
+  revalidatePath("/hankkeet", "layout");
+  const hankeId =
+    ehdotus.hanke_id ?? (linkki.taulu === "hankkeet" ? linkki.rivi_id : null);
+  if (hankeId) {
+    revalidatePath(`/hankkeet/${hankeId}`);
+  }
+  redirect(`/yllapito?hyvaksytty=1`);
 }
 
 export async function kuitaaKentatToiminto(formData: FormData): Promise<void> {

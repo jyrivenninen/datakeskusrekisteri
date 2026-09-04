@@ -361,6 +361,36 @@ export async function paivitaKuittausLuottamus(
   return (data ?? []).length;
 }
 
+/** Korjaa julkaistun kentän lähde-URL (esim. siirtynyt PDF). Arvoa ei muuteta. */
+export async function paivitaKenttaLahdeUrl(
+  taulu: string,
+  riviId: string,
+  kentta: string,
+  vanhaUrl: string,
+  uusiUrl: string,
+) {
+  const uusi = uusiUrl.trim();
+  if (!/^https?:\/\//i.test(uusi)) {
+    throw new Error("Uusi lähde-URL puuttuu tai on virheellinen.");
+  }
+  const supabase = luoYllapitoAsiakas();
+  const { data, error } = await supabase
+    .from("kentta_lahteet")
+    .update({
+      lahde_url: uusi,
+      vahvistettu_pvm: tanaan(),
+    })
+    .eq("taulu", taulu)
+    .eq("rivi_id", riviId)
+    .eq("kentta", kentta)
+    .eq("lahde_url", vanhaUrl.trim())
+    .select("id");
+  if (error) throw new Error(error.message);
+  if (!data?.length) {
+    throw new Error("Lähdettä ei löytynyt. Tarkista, ettei URL:ää ole jo korjattu.");
+  }
+}
+
 export async function piilotaHankeKuva(kuvaId: string, kasittelija: string) {
   const supabase = luoYllapitoAsiakas();
   const { error } = await supabase.rpc("piilota_hanke_kuva", {

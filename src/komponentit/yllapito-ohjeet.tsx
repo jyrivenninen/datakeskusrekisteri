@@ -216,9 +216,10 @@ export function YllapitoOhjeet({ massahyvaksynta = false }: { massahyvaksynta?: 
               hyväksyntä tallentaa tunnuksen organisaatiolle.
             </li>
             <li>
-              Ryhti: puuttuva kaavakohde ei ole todiste siitä, ettei hanketta
-              ole. Jos aineistossa on uusi kohde, lisää tiedot täydennyksenä
-              lähteineen.
+              Ryhti: vertaa hankkeen kaavatunnusta ja kuntaa Ryhti-tietueeseen. Jos ne eivät
+              täsmää, hylkää «ei liity hankkeeseen». Puuttuva kaava Ryhdissä ei ole todiste
+              siitä, ettei hanketta ole. Jos aineisto tuo uutta tietoa, täydennä kentät
+              erikseen lähteineen ja merkitse havainto käsitellyksi.
             </li>
             <li>
               YTJ: vertaa rekisterin nimeä ja YTJ:n toiminimeä. Tallenna

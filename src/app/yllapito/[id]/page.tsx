@@ -1,10 +1,11 @@
 import { notFound, redirect } from "next/navigation";
-import { hyvaksyEhdotusToiminto, hylkaaEhdotusToiminto } from "@/app/toiminnot";
+import { hyvaksyEhdotusToiminto, hylkaaEhdotusToiminto, korjaaLinkkiLahdeToiminto } from "@/app/toiminnot";
 import { EhdotusLuokka, EhdotusTila } from "@/komponentit/ehdotus-tila";
 import {
   ehdotuksenHankeIdt,
   HANKE_KENTTA_NIMET,
   LUOTTAMUS_NIMET,
+  MERKINTA_NIMET,
   PAATOS_KENTTA_NIMET,
   hyvaksyPainikeTeksti,
   kasittelySelite,
@@ -12,7 +13,14 @@ import {
   MAARAAJA_NIMET,
   MUUTOSEHDOTUS_TYYPPI_NIMET,
   RISTIRIITA_SAANTO_NIMET,
+  VAIHE_NIMET,
 } from "@/lib/naytto";
+import {
+  kuntaNimetKoodeista,
+  RYHTI_HAKUEHTO_NIMET,
+  ryhtiHylkaysPerusteluEhdotus,
+  ryhtiVaroitukset,
+} from "@/lib/ryhti-vertailu";
 import { haeKirjautunutKayttaja } from "@/lib/supabase/palvelin";
 import type { EhdotusSisalto } from "@/lib/ehdotus";
 import {
@@ -77,6 +85,92 @@ export default async function EhdotusSivu({
   const maaraajaLahteet = sisalto.maaraaja?.lahteet ?? [];
   const maaraajaLahteetPuuttuu =
     sisalto.maaraaja != null && !Array.isArray(sisalto.maaraaja.lahteet);
+
+  let linkkiKenttaArvo: string | null = null;
+  let linkkiLahde: {
+    luottamus: string;
+    merkitty: string;
+    lainaus: string | null;
+  } | null = null;
+  if (linkki?.taulu === "hankkeet" && linkki.rivi_id && linkki.kentta) {
+    const { data: hankeRivi } = await supabase
+      .from("hankkeet")
+      .select("*")
+      .eq("id", linkki.rivi_id)
+      .maybeSingle();
+    if (hankeRivi) {
+      const avain = linkki.kentta as keyof typeof hankeRivi;
+      const raw = hankeRivi[avain];
+      linkkiKenttaArvo = raw == null || raw === "" ? "—" : String(raw);
+    }
+    const { data: lahdeRivi } = await supabase
+      .from("kentta_lahteet")
+      .select("luottamus, merkitty, lainaus")
+      .eq("taulu", "hankkeet")
+      .eq("rivi_id", linkki.rivi_id)
+      .eq("kentta", linkki.kentta)
+      .eq("lahde_url", linkki.url)
+      .maybeSingle();
+    if (lahdeRivi) {
+      linkkiLahde = {
+        luottamus: LUOTTAMUS_NIMET[lahdeRivi.luottamus as keyof typeof LUOTTAMUS_NIMET] ?? lahdeRivi.luottamus,
+        merkitty: MERKINTA_NIMET[lahdeRivi.merkitty as keyof typeof MERKINTA_NIMET] ?? lahdeRivi.merkitty,
+        lainaus: lahdeRivi.lainaus,
+      };
+    }
+  }
+
+  let ryhtiHanke: {
+    id: string;
+    nimi: string;
+    kunta: string;
+    vaihe: string;
+    kaavatunnus: string | null;
+    kortteli: string | null;
+  } | null = null;
+  let ryhtiKuntaNimet: string[] = [];
+  let ryhtiVaroitusLista: string[] = [];
+  let ryhtiHylkaysEhdotus: string | null = null;
+
+  if (ryhti && ehdotus.hanke_id) {
+    const { data: hankeRivi } = await supabase
+      .from("hankkeet")
+      .select("id, nimi, kunta, vaihe, kaavatunnus, kortteli")
+      .eq("id", ehdotus.hanke_id)
+      .maybeSingle();
+    if (hankeRivi) {
+      ryhtiHanke = {
+        id: hankeRivi.id,
+        nimi: hankeRivi.nimi,
+        kunta: hankeRivi.kunta,
+        vaihe: VAIHE_NIMET[hankeRivi.vaihe as keyof typeof VAIHE_NIMET] ?? hankeRivi.vaihe,
+        kaavatunnus: hankeRivi.kaavatunnus,
+        kortteli: hankeRivi.kortteli,
+      };
+    }
+    if (ryhti.kunta_tunnukset.length > 0) {
+      const { data: kunnat } = await supabase
+        .from("kunnat")
+        .select("koodi, nimi")
+        .eq("voimassa", true);
+      ryhtiKuntaNimet = kuntaNimetKoodeista(kunnat ?? [], ryhti.kunta_tunnukset);
+    }
+    if (ryhtiHanke) {
+      ryhtiVaroitusLista = ryhtiVaroitukset({
+        hankeKaavatunnus: ryhtiHanke.kaavatunnus,
+        ryhtiKaavatunnus: ryhti.kaavatunnus,
+        hankeKunta: ryhtiHanke.kunta,
+        ryhtiKuntaNimet,
+      });
+      if (ryhtiVaroitusLista.length > 0) {
+        ryhtiHylkaysEhdotus = ryhtiHylkaysPerusteluEhdotus({
+          hankeNimi: ryhtiHanke.nimi,
+          ryhtiKaavatunnus: ryhti.kaavatunnus,
+          ryhtiNimi: ryhti.nimi,
+        });
+      }
+    }
+  }
 
   return (
     <main id="sisalto" className="mx-auto w-full max-w-3xl flex-1 px-4 py-10">
@@ -162,13 +256,25 @@ export default async function EhdotusSivu({
             {ryhti.kunta_tunnukset.length > 0 ? (
               <div className="py-3">
                 <dt className="font-medium">Kuntatunnukset</dt>
-                <dd className="mt-1">{ryhti.kunta_tunnukset.join(", ")}</dd>
+                <dd className="mt-1">
+                  {ryhtiKuntaNimet.length > 0
+                    ? ryhtiKuntaNimet.join(", ")
+                    : ryhti.kunta_tunnukset.join(", ")}
+                </dd>
               </div>
             ) : null}
             <div className="py-3">
               <dt className="font-medium">Hakuehto</dt>
-              <dd className="mt-1">{ryhti.hakuehto}</dd>
+              <dd className="mt-1">
+                {RYHTI_HAKUEHTO_NIMET[ryhti.hakuehto] ?? ryhti.hakuehto}
+              </dd>
             </div>
+            {ryhti.muuttunut ? (
+              <div className="py-3">
+                <dt className="font-medium">Muutos</dt>
+                <dd className="mt-1">Kaavakohteen tiedot muuttuivat edellisestä tarkistuksesta.</dd>
+              </div>
+            ) : null}
             <div className="py-3">
               <dt className="font-medium">Tietue</dt>
               <dd className="mt-1">
@@ -188,6 +294,111 @@ export default async function EhdotusSivu({
               </div>
             ) : null}
           </dl>
+          {ryhtiHanke ? (
+            <div className="mt-6 space-y-4 rounded border border-border bg-surface p-4">
+              <h3 className="font-medium">Vertailu hankkeeseen</h3>
+              <dl className="grid gap-3 text-sm sm:grid-cols-2">
+                <div>
+                  <dt className="text-muted">Hankkeen kaavatunnus</dt>
+                  <dd className="mt-0.5 font-medium">{ryhtiHanke.kaavatunnus ?? "—"}</dd>
+                </div>
+                <div>
+                  <dt className="text-muted">Ryhti kaavatunnus</dt>
+                  <dd className="mt-0.5 font-medium">{ryhti.kaavatunnus ?? "—"}</dd>
+                </div>
+                <div>
+                  <dt className="text-muted">Hankkeen kunta</dt>
+                  <dd className="mt-0.5 font-medium">{ryhtiHanke.kunta}</dd>
+                </div>
+                <div>
+                  <dt className="text-muted">Ryhti kunta</dt>
+                  <dd className="mt-0.5 font-medium">
+                    {ryhtiKuntaNimet.length > 0
+                      ? ryhtiKuntaNimet.join(", ")
+                      : "—"}
+                  </dd>
+                </div>
+                <div>
+                  <dt className="text-muted">Hankkeen vaihe</dt>
+                  <dd className="mt-0.5 font-medium">{ryhtiHanke.vaihe}</dd>
+                </div>
+                <div>
+                  <dt className="text-muted">Kortteli</dt>
+                  <dd className="mt-0.5 font-medium">{ryhtiHanke.kortteli ?? "—"}</dd>
+                </div>
+              </dl>
+              {ryhtiVaroitusLista.length > 0 ? (
+                <ul className="space-y-1 text-sm" role="alert">
+                  {ryhtiVaroitusLista.map((viesti) => (
+                    <li key={viesti} className="text-muted">
+                      {viesti}
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <p className="text-sm text-muted">
+                  Kaavatunnus ja kunta täsmäävät. Tarkista silti Ryhti-tietue ennen hyväksyntää.
+                </p>
+              )}
+            </div>
+          ) : null}
+          {odottaa && ehdotus.tyyppi === "ryhti_havainto" ? (
+            <div className="mt-6 space-y-4 rounded border border-border bg-surface p-4">
+              <h3 className="font-medium">Toimenpiteet</h3>
+              <p className="max-w-prose text-sm text-muted">
+                Hyväksyntä merkitsee havainnon nähdyksi. Se ei päivitä hanketta. Jos Ryhti
+                tuo uutta tietoa, täydennä kentät erikseen lähteineen.
+              </p>
+              {ryhtiHanke ? (
+                <ul className="list-disc space-y-1 pl-5 text-sm">
+                  <li>
+                    <a
+                      href={`/hankkeet/${ryhtiHanke.id}/paivita?kentta=kaavatunnus`}
+                      className="text-link underline"
+                    >
+                      Päivitä kaavatunnus
+                    </a>
+                  </li>
+                  <li>
+                    <a
+                      href={`/hankkeet/${ryhtiHanke.id}/paivita?kentta=kortteli`}
+                      className="text-link underline"
+                    >
+                      Päivitä kortteli
+                    </a>
+                  </li>
+                  <li>
+                    <a
+                      href={`/hankkeet/${ryhtiHanke.id}/paivita?kentta=vaihe`}
+                      className="text-link underline"
+                    >
+                      Päivitä vaihe
+                    </a>
+                  </li>
+                </ul>
+              ) : null}
+              {ryhtiHylkaysEhdotus ? (
+                <form action={hylkaaEhdotusToiminto} className="space-y-2 border-t border-border pt-4">
+                  <input type="hidden" name="id" value={ehdotus.id} />
+                  <p className="text-sm font-medium">Ei liity hankkeeseen</p>
+                  <label htmlFor="ryhti-hylkays-perustelu" className="sr-only">
+                    Hylkäyksen perustelu
+                  </label>
+                  <textarea
+                    id="ryhti-hylkays-perustelu"
+                    name="perustelu"
+                    rows={2}
+                    required
+                    defaultValue={ryhtiHylkaysEhdotus}
+                    className="w-full rounded border border-border bg-background px-2 py-2 text-sm"
+                  />
+                  <button type="submit" className="rounded border border-border px-4 py-2 text-sm">
+                    Hylkää (ei liity hankkeeseen)
+                  </button>
+                </form>
+              ) : null}
+            </div>
+          ) : null}
         </section>
       ) : null}
 
@@ -373,11 +584,36 @@ export default async function EhdotusSivu({
           <h2 id="linkki-otsikko" className="text-xl font-semibold">
             Linkkitarkistus
           </h2>
+          <p className="mt-2 max-w-prose text-sm text-muted">
+            Havainto ei poista julkaistua arvoa. Korjaa lähde-URL, jos tiedosto on siirtynyt.
+            Merkitse käsitellyksi vain, jos linkki toimii selaimessa tai arvo on jo korjattu
+            muualla.
+          </p>
           <dl className="mt-4 divide-y divide-border border-y border-border">
+            <div className="py-3">
+              <dt className="font-medium">Kenttä</dt>
+              <dd className="mt-1">
+                {HANKE_KENTTA_NIMET[linkki.kentta] ?? linkki.kentta}
+                {linkkiKenttaArvo != null ? (
+                  <span className="text-muted"> · julkaistu arvo: {linkkiKenttaArvo}</span>
+                ) : null}
+              </dd>
+            </div>
+            {linkkiLahde ? (
+              <div className="py-3">
+                <dt className="font-medium">Lähteen tila</dt>
+                <dd className="mt-1 text-sm text-muted">
+                  {linkkiLahde.luottamus} · {linkkiLahde.merkitty}
+                </dd>
+                {linkkiLahde.lainaus ? (
+                  <dd className="mt-1 text-sm">{linkkiLahde.lainaus}</dd>
+                ) : null}
+              </div>
+            ) : null}
             <div className="py-3">
               <dt className="font-medium">Osoite</dt>
               <dd className="mt-1">
-                <a href={linkki.url} className="text-link underline" rel="noopener noreferrer">
+                <a href={linkki.url} className="text-link underline break-all" rel="noopener noreferrer">
                   {linkki.url}
                 </a>
               </dd>
@@ -396,12 +632,6 @@ export default async function EhdotusSivu({
                 <dd className="mt-1">{linkki.virhe}</dd>
               </div>
             ) : null}
-            <div className="py-3">
-              <dt className="font-medium">Kenttä</dt>
-              <dd className="mt-1">
-                {linkki.taulu}.{linkki.kentta}
-              </dd>
-            </div>
           </dl>
           {linkki.http_tila === 401 ||
           linkki.http_tila === 403 ||
@@ -414,6 +644,64 @@ export default async function EhdotusSivu({
               siitä että osoite olisi kadonnut. Jos osoite avautuu selaimessa,
               merkitse havainto käsitellyksi.
             </p>
+          ) : null}
+          {odottaa && ehdotus.tyyppi === "linkki_rikki" ? (
+            <div className="mt-6 space-y-6 rounded border border-border bg-surface p-4">
+              <div>
+                <h3 className="font-medium">Korjaa lähde-URL</h3>
+                <p className="mt-1 max-w-prose text-sm text-muted">
+                  Etsi tiedoston uusi osoite (esim. kunnan sivuilta) ja tallenna. Julkaistu arvo
+                  pysyy ennallaan; vain lähde päivittyy.
+                </p>
+                {supabasePalvelinAvainAsetettu() ? (
+                  <form action={korjaaLinkkiLahdeToiminto} className="mt-3 space-y-2">
+                    <input type="hidden" name="id" value={ehdotus.id} />
+                    <label htmlFor="uusi_lahde_url" className="block text-sm font-medium">
+                      Uusi lähde-URL
+                    </label>
+                    <input
+                      id="uusi_lahde_url"
+                      name="uusi_lahde_url"
+                      type="url"
+                      required
+                      placeholder="https://…"
+                      className="w-full rounded border border-border bg-background px-2 py-2 text-sm"
+                    />
+                    <button
+                      type="submit"
+                      className="rounded border border-foreground bg-foreground px-4 py-2 text-sm font-medium text-background"
+                    >
+                      Korjaa URL ja merkitse käsitellyksi
+                    </button>
+                  </form>
+                ) : null}
+              </div>
+              {linkki.taulu === "hankkeet" && hankeIdt[0] ? (
+                <div className="space-y-2 text-sm">
+                  <p className="font-medium">Muut toimenpiteet</p>
+                  <ul className="list-disc space-y-1 pl-5 text-muted">
+                    <li>
+                      <a
+                        href={`/hankkeet/${hankeIdt[0]}/paivita?kentta=${encodeURIComponent(linkki.kentta)}`}
+                        className="text-link underline"
+                      >
+                        Päivitä kentän arvo ja lähde
+                      </a>
+                    </li>
+                    <li>
+                      <a
+                        href={`/hankkeet/${hankeIdt[0]}/paivita?kentta=${encodeURIComponent(linkki.kentta)}`}
+                        className="text-link underline"
+                      >
+                        Poista virheellinen arvo
+                      </a>
+                      {" "}
+                      (sivun alaosassa «Poista virheellinen arvo»)
+                    </li>
+                  </ul>
+                </div>
+              ) : null}
+            </div>
           ) : null}
         </section>
       ) : null}
