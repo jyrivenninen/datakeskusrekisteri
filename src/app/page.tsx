@@ -12,6 +12,7 @@ import {
   haeTulevatMaaraajat,
   parsiSuodatus,
 } from "@/lib/supabase/kyselyt";
+import { haeYllapitaja } from "@/lib/supabase/palvelin";
 
 export const revalidate = 60;
 
@@ -22,6 +23,7 @@ export default async function Etusivu({
 }) {
   const params = await searchParams;
   const suodatus = parsiSuodatus(params);
+  const { user: yllapitaja } = await haeYllapitaja();
   const [{ hankkeet, johdot, virhe: hankeVirhe }, { maaraajat, virhe: maaraajaVirhe }] =
     await Promise.all([haeJulkaistutHankkeet(suodatus), haeTulevatMaaraajat()]);
 
@@ -68,10 +70,14 @@ export default async function Etusivu({
         <a href="/opas/yva-mielipide" className="text-link underline">
           Näin teet YVA-mielipiteen
         </a>
-        {" · "}
-        <a href="/hakemisto" className="text-link underline">
-          Organisaatio- ja yhteystietohakemisto
-        </a>
+        {yllapitaja ? (
+          <>
+            {" · "}
+            <a href="/hakemisto" className="text-link underline">
+              Organisaatio- ja yhteystietohakemisto
+            </a>
+          </>
+        ) : null}
       </p>
 
       <section className="mt-10" aria-labelledby="maaraajat-otsikko">

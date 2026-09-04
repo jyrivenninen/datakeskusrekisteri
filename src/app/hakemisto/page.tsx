@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
 import { ORGANISAATIO_TYYPPI_NIMET, onOrganisaatioTyyppi } from "@/lib/naytto";
-import { ORGANISAATIO_TYYPIT } from "@/lib/supabase/tietokanta";
 import { haeJulkaistutOrganisaatiot } from "@/lib/supabase/kyselyt";
+import { vaadiYllapitaja } from "@/lib/supabase/palvelin";
+import { ORGANISAATIO_TYYPIT } from "@/lib/supabase/tietokanta";
 
 export const metadata: Metadata = {
   title: "Hakemisto – Datakeskushankkeiden kansallinen rekisteri",
@@ -15,6 +16,7 @@ export default async function HakemistoSivu({
 }: {
   searchParams: Promise<{ tyyppi?: string }>;
 }) {
+  await vaadiYllapitaja("/hakemisto");
   const params = await searchParams;
   const tyyppi = params.tyyppi && onOrganisaatioTyyppi(params.tyyppi) ? params.tyyppi : undefined;
   const { organisaatiot, virhe: orgVirhe } = await haeJulkaistutOrganisaatiot(tyyppi);
@@ -24,7 +26,7 @@ export default async function HakemistoSivu({
       <h1 className="text-3xl font-semibold tracking-tight">Hakemisto</h1>
       <p className="mt-4 leading-relaxed text-muted">
         Julkaistut organisaatiot. Henkilönimiä tai suoria yhteystietoja ei
-        julkaista.
+        julkaista. Hakemisto on toistaiseksi vain ylläpitäjille.
       </p>
 
       <form method="get" className="mt-6 flex flex-col gap-2 sm:max-w-xs">

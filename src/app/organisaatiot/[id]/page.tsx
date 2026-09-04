@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { HANKE_ORGANISAATIO_ROOLI_NIMET, ORGANISAATIO_TYYPPI_NIMET } from "@/lib/naytto";
 import { VaiheMerkki } from "@/komponentit/vaihe-merkki";
 import { haeOrganisaatio } from "@/lib/supabase/kyselyt";
+import { haeYllapitaja } from "@/lib/supabase/palvelin";
 
 export const revalidate = 60;
 
@@ -29,6 +30,7 @@ export default async function OrganisaatioSivu({
 }) {
   const { id } = await params;
   const { organisaatio, hankkeet, virhe } = await haeOrganisaatio(id);
+  const { user: yllapitaja } = await haeYllapitaja();
 
   if (virhe) {
     return (
@@ -45,11 +47,13 @@ export default async function OrganisaatioSivu({
 
   return (
     <main id="sisalto" className="mx-auto w-full max-w-3xl flex-1 px-4 py-10">
-      <p className="text-sm">
-        <a href="/hakemisto" className="text-link underline">
-          Hakemisto
-        </a>
-      </p>
+      {yllapitaja ? (
+        <p className="text-sm">
+          <a href="/hakemisto" className="text-link underline">
+            Hakemisto
+          </a>
+        </p>
+      ) : null}
       <h1 className="mt-4 text-3xl font-semibold tracking-tight">{organisaatio.nimi}</h1>
       <p className="mt-2 text-muted">{ORGANISAATIO_TYYPPI_NIMET[organisaatio.tyyppi]}</p>
 

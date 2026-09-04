@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { VAIHE_NIMET } from "@/lib/naytto";
+import { haeYllapitaja } from "@/lib/supabase/palvelin";
 
 export const metadata: Metadata = {
   title: "Näin teet YVA-mielipiteen – Datakeskushankkeiden kansallinen rekisteri",
@@ -11,7 +12,8 @@ const YM_YVA_OSALLISTU =
   "https://www.ymparisto.fi/fi/osallistu-ja-vaikuta/ymparistovaikutusten-arviointi/hankkeiden-ymparistovaikutusten-arviointimenettely-yva";
 const FINLEX_YVA = "https://finlex.fi/fi/lainsaadanto/2017/252";
 
-export default function YvaOpasSivu() {
+export default async function YvaOpasSivu() {
+  const { user: yllapitaja } = await haeYllapitaja();
   return (
     <main id="sisalto" className="mx-auto w-full max-w-3xl flex-1 px-4 py-10">
       <p className="text-sm">
@@ -208,10 +210,14 @@ Allekirjoitus`}
         <a href="/" className="text-link underline">
           Rekisterin hankkeet ja määräajat
         </a>
-        {" · "}
-        <a href="/hakemisto" className="text-link underline">
-          Yhteystiedot
-        </a>
+        {yllapitaja ? (
+          <>
+            {" · "}
+            <a href="/hakemisto" className="text-link underline">
+              Yhteystiedot
+            </a>
+          </>
+        ) : null}
       </p>
     </main>
   );

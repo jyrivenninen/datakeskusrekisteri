@@ -1,5 +1,6 @@
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
+import { redirect } from "next/navigation";
 import { haeAjalla } from "@/lib/hae-ajalla";
 import { supabaseJulkinenAvain, supabaseUrl } from "@/lib/supabase/ymparisto";
 
@@ -50,5 +51,22 @@ export async function haeYllapitaja() {
     .eq("kayttaja_id", user.id)
     .maybeSingle();
   if (!data) return { user: null, supabase, nimi: null as string | null };
+  return { user, supabase, nimi: data.nimi as string };
+}
+
+/** Ohjaa kirjautumiseen tai estää, jos ei ylläpito-oikeutta. */
+export async function vaadiYllapitaja(seuraava = "/yllapito") {
+  const { user, supabase } = await haeKirjautunutKayttaja();
+  if (!user) {
+    redirect(`/kirjaudu?seuraava=${encodeURIComponent(seuraava)}`);
+  }
+  const { data } = await supabase
+    .from("yllapitajat")
+    .select("kayttaja_id, nimi")
+    .eq("kayttaja_id", user.id)
+    .maybeSingle();
+  if (!data) {
+    redirect(`/kirjaudu?virhe=${encodeURIComponent("Ei ylläpito-oikeutta.")}`);
+  }
   return { user, supabase, nimi: data.nimi as string };
 }

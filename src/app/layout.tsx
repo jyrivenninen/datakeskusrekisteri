@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import { cookies } from "next/headers";
 import { ESIVERSIO_EVASTE } from "@/lib/esiversio";
 import { EsiversioIlmoitus } from "@/komponentit/esiversio-ilmoitus";
+import { haeYllapitaja } from "@/lib/supabase/palvelin";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -24,6 +25,7 @@ export const metadata: Metadata = {
 export default async function RootLayout({ children }: LayoutProps<"/">) {
   const evasteet = await cookies();
   const esiversioKuitattu = evasteet.get(ESIVERSIO_EVASTE)?.value === "kylla";
+  const { user: yllapitaja } = await haeYllapitaja();
 
   return (
     <html
@@ -54,9 +56,11 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
               <a href="/tietoa" className="text-link underline">
                 Tietoa
               </a>
-              <a href="/hakemisto" className="text-link underline">
-                Hakemisto
-              </a>
+              {yllapitaja ? (
+                <a href="/hakemisto" className="text-link underline">
+                  Hakemisto
+                </a>
+              ) : null}
               <a href="/ilmoitus" className="text-link underline">
                 Ilmoita hanke
               </a>
