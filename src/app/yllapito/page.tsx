@@ -1,7 +1,10 @@
 import { haeKirjautunutKayttaja } from "@/lib/supabase/palvelin";
 import { redirect } from "next/navigation";
 import { hyvaksyKaikkiOdottavatToiminto, kuitaaKentatToiminto, kirjauduUlos } from "@/app/toiminnot";
-import { jarjestaMuutosehdotukset, kasittelySelite, muotoilePvm, HANKE_KENTTA_NIMET, MUUTOSEHDOTUS_TYYPPI_NIMET, PALAUTE_AIHE_NIMET } from "@/lib/naytto";
+import { jarjestaMuutosehdotukset, kasittelySelite, muotoilePvm, MUUTOSEHDOTUS_TYYPPI_NIMET, PALAUTE_AIHE_NIMET } from "@/lib/naytto";
+import { rakennaKuittausNakyma, type KuittausLahde } from "@/lib/kuittaus";
+import { KuittausVertailu } from "@/komponentit/kuittaus-vertailu";
+import type { Hanke } from "@/lib/supabase/tietokanta";
 import {
   EhdotusLuokka,
   EhdotusTila,
@@ -73,34 +76,57 @@ export default async function YllapitoSivu({
   const odottavia = odottavat.length;
   const hyvaksyttyLkm = Number(params.hyvaksytty ?? "");
 
-  type KuittausRivi = { hanke_id: string; kentta: string };
-  let kuittattavat: KuittausRivi[] = [];
+  let kuittausNakyma: ReturnType<typeof rakennaKuittausNakyma> = [];
+  const kuittausHankeNimi = new Map<string, string>();
   if (supabasePalvelinAvainAsetettu()) {
     const palvelin = luoYllapitoAsiakas();
     const { data: lahteet } = await palvelin
       .from("kentta_lahteet")
-      .select("rivi_id, kentta")
+      .select("rivi_id, kentta, luottamus, merkitty, lainaus, lahde_url")
       .eq("taulu", "hankkeet")
       .eq("merkitty", "koneen_ehdottama");
-    const nakyvat = new Map<string, KuittausRivi>();
-    for (const lahde of lahteet ?? []) {
-      const avain = `${lahde.rivi_id}:${lahde.kentta}`;
-      if (!nakyvat.has(avain)) {
-        nakyvat.set(avain, { hanke_id: lahde.rivi_id, kentta: lahde.kentta });
-      }
+
+    const kuittausHankeIdt = [
+      ...new Set((lahteet ?? []).map((l) => l.rivi_id).filter(Boolean)),
+    ] as string[];
+
+    let kuittausHankkeet: Hanke[] = [];
+    if (kuittausHankeIdt.length > 0) {
+      const { data } = await palvelin.from("hankkeet").select("*").in("id", kuittausHankeIdt);
+      kuittausHankkeet = (data ?? []) as Hanke[];
+      for (const h of kuittausHankkeet) kuittausHankeNimi.set(h.id, h.nimi);
     }
-    kuittattavat = [...nakyvat.values()];
+
+    const orgIdt = [
+      ...new Set(
+        kuittausHankkeet
+          .map((h) => h.toimija_organisaatio_id)
+          .filter((id): id is string => Boolean(id)),
+      ),
+    ];
+    const orgNimet = new Map<string, string>();
+    if (orgIdt.length > 0) {
+      const { data: orgs } = await palvelin.from("organisaatiot").select("id, nimi").in("id", orgIdt);
+      for (const org of orgs ?? []) orgNimet.set(org.id, org.nimi);
+    }
+
+    const { data: agenttiEhdotukset } =
+      kuittausHankeIdt.length > 0
+        ? await palvelin
+            .from("muutosehdotukset")
+            .select("hanke_id, tyyppi, sisalto")
+            .in("hanke_id", kuittausHankeIdt)
+            .eq("kasittelija", "agentti:automaattinen")
+            .eq("tila", "hyvaksytty")
+        : { data: [] };
+
+    kuittausNakyma = rakennaKuittausNakyma(
+      (lahteet ?? []) as KuittausLahde[],
+      kuittausHankkeet,
+      orgNimet,
+      agenttiEhdotukset ?? [],
+    );
   }
-  const kuittausHankeIdt = [...new Set(kuittattavat.map((r) => r.hanke_id))];
-  let kuittausHankkeet = await haeHankkeetYllapitoon(kuittausHankeIdt);
-  if (kuittausHankkeet.length === 0 && kuittausHankeIdt.length > 0) {
-    const { data } = await supabase
-      .from("hankkeet")
-      .select("id, nimi, kunta")
-      .in("id", kuittausHankeIdt);
-    kuittausHankkeet = data ?? [];
-  }
-  const kuittausHankeNimi = new Map(kuittausHankkeet.map((h) => [h.id, h.nimi]));
 
   function ehdotusRivi(ehdotus: (typeof jarjestetyt)[number]) {
     const kasittely = kasittelySelite(ehdotus.kasittelija, ehdotus.kasitelty_pvm);
@@ -257,7 +283,7 @@ export default async function YllapitoSivu({
           )}
         </form>
       ) : null}
-      {kuittattavat.length > 0 ? (
+      {kuittausNakyma.length > 0 ? (
         <section className="mt-8" aria-labelledby="kuittaus-otsikko">
           <h2 id="kuittaus-otsikko" className="text-xl font-semibold">
             Odottaa kuittausta
@@ -268,37 +294,44 @@ export default async function YllapitoSivu({
             Jos arvo on epäilyttävä, avaa hanke ja korjaa päivityslomakkeella.
           </p>
           <ul className="mt-4 divide-y divide-border border-y border-border">
-            {kuittattavat.map((rivi) => {
-              const nimi =
-                HANKE_KENTTA_NIMET[rivi.kentta] ??
-                HANKE_KENTTA_NIMET[
-                  rivi.kentta === "toimija_organisaatio_id" ? "toimija_nimi" : rivi.kentta
-                ] ??
-                rivi.kentta;
-              return (
-                <li key={`${rivi.hanke_id}:${rivi.kentta}`} className="py-4">
-                  <p>
-                    <a href={`/hankkeet/${rivi.hanke_id}`} className="text-link underline">
-                      {kuittausHankeNimi.get(rivi.hanke_id) ?? "Hanke"}
+            {kuittausNakyma.map((rivi) => (
+              <li key={`${rivi.hanke_id}:${rivi.lahde_kentta}`} className="py-4">
+                <p>
+                  <a href={`/hankkeet/${rivi.hanke_id}`} className="text-link underline">
+                    {kuittausHankeNimi.get(rivi.hanke_id) ?? "Hanke"}
+                  </a>
+                  {" · "}
+                  {rivi.nimi}
+                </p>
+                <KuittausVertailu
+                  vanha={rivi.vanha}
+                  uusi={rivi.uusi}
+                  ennenAgenttia={rivi.ennenAgenttia}
+                />
+                {rivi.lainaus ? (
+                  <blockquote className="mt-2 border-l-2 pl-3 text-sm">{rivi.lainaus}</blockquote>
+                ) : null}
+                {rivi.lahde_url ? (
+                  <p className="mt-1 text-sm">
+                    <a href={rivi.lahde_url} className="text-link underline" rel="noopener noreferrer">
+                      {rivi.lahde_url}
                     </a>
-                    {" · "}
-                    {nimi}
                   </p>
-                  {supabasePalvelinAvainAsetettu() ? (
-                    <form action={kuitaaKentatToiminto} className="mt-2">
-                      <input type="hidden" name="hanke_id" value={rivi.hanke_id} />
-                      <input type="hidden" name="kentat" value={rivi.kentta} />
-                      <button
-                        type="submit"
-                        className="rounded border border-foreground px-3 py-1.5 text-sm"
-                      >
-                        Kuittaa varmennetuksi
-                      </button>
-                    </form>
-                  ) : null}
-                </li>
-              );
-            })}
+                ) : null}
+                {supabasePalvelinAvainAsetettu() ? (
+                  <form action={kuitaaKentatToiminto} className="mt-3">
+                    <input type="hidden" name="hanke_id" value={rivi.hanke_id} />
+                    <input type="hidden" name="kentat" value={rivi.lahde_kentta} />
+                    <button
+                      type="submit"
+                      className="rounded border border-foreground px-3 py-1.5 text-sm"
+                    >
+                      Kuittaa varmennetuksi
+                    </button>
+                  </form>
+                ) : null}
+              </li>
+            ))}
           </ul>
         </section>
       ) : null}
