@@ -90,6 +90,23 @@ export default async function EhdotusSivu({
       ? haeKenttaTyhjennysNakyma(sisalto, ehdotus.hanke_id, ehdotus.huomautus, ehdotus.lahde_url)
       : null;
 
+  let tyhjennysHanke: { julkaistu: boolean; kenttaArvo: string | null } | null = null;
+  if (tyhjennysNakyma && ehdotus.hanke_id) {
+    const { data: hankeRivi } = await supabase
+      .from("hankkeet")
+      .select("*")
+      .eq("id", ehdotus.hanke_id)
+      .maybeSingle();
+    if (hankeRivi) {
+      const avain = tyhjennysNakyma.tyhjennys.kentta as keyof typeof hankeRivi;
+      const raw = hankeRivi[avain];
+      tyhjennysHanke = {
+        julkaistu: Boolean(hankeRivi.julkaistu),
+        kenttaArvo: raw == null || raw === "" ? null : String(raw),
+      };
+    }
+  }
+
   let linkkiKenttaArvo: string | null = null;
   let linkkiLahde: {
     luottamus: string;
@@ -774,6 +791,17 @@ export default async function EhdotusSivu({
             <p className="mt-2 text-sm text-muted" role="status">
               Ehdotus on virheellisessä muodossa (kentät ilman tyhjennys-lohkoa). Hyväksyntä
               korjaa muodon automaattisesti.
+            </p>
+          ) : null}
+          {tyhjennysHanke && !tyhjennysHanke.julkaistu ? (
+            <p className="mt-2 text-sm text-muted" role="status">
+              Hanke ei ole vielä julkaistu julkisesti. Tyhjennys poistaa arvon tietokannasta ennen
+              julkaisua.
+            </p>
+          ) : null}
+          {tyhjennysHanke?.kenttaArvo ? (
+            <p className="mt-2 text-sm">
+              <strong className="font-medium">Nykyinen arvo:</strong> {tyhjennysHanke.kenttaArvo}
             </p>
           ) : null}
           <p className="mt-2 leading-relaxed">
