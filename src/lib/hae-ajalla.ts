@@ -6,5 +6,9 @@ export function haeAjalla(
   syote: RequestInfo | URL,
   asetukset?: RequestInit,
 ): Promise<Response> {
-  return fetch(syote, { ...asetukset, signal: AbortSignal.timeout(AIKA_MS) });
+  return fetch(syote, {
+    ...asetukset,
+    cache: "no-store",
+    signal: AbortSignal.timeout(AIKA_MS),
+  });
 }

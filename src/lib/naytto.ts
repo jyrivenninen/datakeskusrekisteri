@@ -370,6 +370,11 @@ export function hankeKokoLuokka(hanke: Pick<Hanke, "it_teho_mw" | "teho_mw">): K
   return "suuri";
 }
 
+/** Kalenteripäivä Suomen aikavyöhykkeellä (YYYY-MM-DD). */
+export function tanaanSuomessa(): string {
+  return new Intl.DateTimeFormat("sv-SE", { timeZone: "Europe/Helsinki" }).format(new Date());
+}
+
 export function muotoilePvm(arvo: string): string {
   const pvm = arvo.slice(0, 10);
   const [vuosi, kuukausi, paiva] = pvm.split("-");

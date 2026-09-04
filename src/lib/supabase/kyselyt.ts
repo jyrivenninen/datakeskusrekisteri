@@ -1,5 +1,6 @@
 import { luoPalvelinAsiakas } from "@/lib/supabase/palvelin";
 import { supabaseYmparistoAsetettu } from "@/lib/supabase/ymparisto";
+import { unstable_noStore as noStore } from "next/cache";
 import type {
   Hanke,
   HankeJohto,
@@ -21,7 +22,7 @@ import type {
 import { hankeOsuvatKokoLuokkaan } from "@/lib/hanke-vaihtelvali";
 import { hankkeSopiiHakuun } from "@/lib/haku";
 import type { HankeSuodatus } from "@/lib/suodatus";
-import { vanhinVahvistettuPvm, viimeisinPaatos } from "@/lib/naytto";
+import { vanhinVahvistettuPvm, viimeisinPaatos, tanaanSuomessa } from "@/lib/naytto";
 
 /** Vanha tunniste yhdistämisen jälkeen. Julkinen ohjaustaulu. */
 export async function haeHankeOhjaus(vanhaId: string): Promise<string | null> {
@@ -466,19 +467,20 @@ export async function haeTulevatMaaraajat(): Promise<{
   maaraajat: TulevaMaaraaika[];
   virhe: string | null;
 }> {
+  noStore();
   if (!supabaseYmparistoAsetettu()) {
     return { maaraajat: [], virhe: "Määräaikoja ei juuri nyt voitu hakea." };
   }
 
   try {
     const supabase = await luoPalvelinAsiakas();
-    const tanaan = new Date().toISOString().slice(0, 10);
+    const tanaan = tanaanSuomessa();
     const { data, error } = await supabase
       .from("maaraajat")
       .select("*, hanke:hankkeet!inner(id, nimi, kunta)")
       .eq("julkaistu", true)
-      .eq("hanke.julkaistu", true)
       .gte("paattyy_pvm", tanaan)
+      .or(`alkaa_pvm.is.null,alkaa_pvm.lte.${tanaan}`)
       .order("paattyy_pvm", { ascending: true })
       .limit(20);
 
