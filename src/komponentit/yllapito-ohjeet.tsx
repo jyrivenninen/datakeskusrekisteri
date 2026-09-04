@@ -95,6 +95,11 @@ export function YllapitoOhjeet({ massahyvaksynta = false }: { massahyvaksynta?: 
               ihmisen vahvistamiksi. Muutos samalla luottamustasolla vaatii tämän.
             </li>
             <li>
+              <strong className="font-medium">Määräaika</strong> julkaisee
+              vaikuttamisen määräajan etusivulle ja hankesivulle. Tarkista päivämäärät
+              ja lainaus lähteestä ennen hyväksyntää.
+            </li>
+            <li>
               Automaattijulkaistu tieto (agentti) odottaa erikseen{" "}
               <strong className="font-medium">kuittausta</strong> ylläpidon
               listalla. Kuittaus ei tarkista arvoa uudelleen — tee se vain, jos
@@ -114,8 +119,8 @@ export function YllapitoOhjeet({ massahyvaksynta = false }: { massahyvaksynta?: 
             {massahyvaksynta ? (
               <li>
                 <strong className="font-medium">Hyväksy kaikki odottavat</strong>{" "}
-                julkaisee nämä rivit (ristiriitahavainto, kenttämuutos ja päätös
-                jäävät jonoon). Käytä vain, kun olet käynyt sisällön läpi.
+                julkaisee nämä rivit (ristiriitahavainto, kenttämuutos, päätös ja
+                määräaika jäävät jonoon). Käytä vain, kun olet käynyt sisällön läpi.
               </li>
             ) : null}
           </OhjeKohta>

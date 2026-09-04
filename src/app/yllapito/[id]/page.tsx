@@ -8,6 +8,8 @@ import {
   PAATOS_KENTTA_NIMET,
   hyvaksyPainikeTeksti,
   kasittelySelite,
+  MAARAAJA_KENTTA_NIMET,
+  MAARAAJA_NIMET,
   MUUTOSEHDOTUS_TYYPPI_NIMET,
   RISTIRIITA_SAANTO_NIMET,
 } from "@/lib/naytto";
@@ -72,6 +74,9 @@ export default async function EhdotusSivu({
   const paatosLahteet = sisalto.paatos?.lahteet ?? [];
   const paatosLahteetPuuttuu =
     sisalto.paatos != null && !Array.isArray(sisalto.paatos.lahteet);
+  const maaraajaLahteet = sisalto.maaraaja?.lahteet ?? [];
+  const maaraajaLahteetPuuttuu =
+    sisalto.maaraaja != null && !Array.isArray(sisalto.maaraaja.lahteet);
 
   return (
     <main id="sisalto" className="mx-auto w-full max-w-3xl flex-1 px-4 py-10">
@@ -537,6 +542,66 @@ export default async function EhdotusSivu({
                 <li key={lahde.kentta} className="rounded border border-border px-3 py-2">
                   <p className="font-medium">
                     {PAATOS_KENTTA_NIMET[lahde.kentta] ?? lahde.kentta}
+                  </p>
+                  <p className="mt-1">
+                    <a href={lahde.lahde_url} className="text-link underline" rel="noopener noreferrer">
+                      {lahde.lahde_url}
+                    </a>
+                    {lahde.lahde_sivu ? ` (s. ${lahde.lahde_sivu})` : ""}
+                  </p>
+                  <p className="mt-1 text-muted">{LUOTTAMUS_NIMET[lahde.luottamus]}</p>
+                  {lahde.lainaus ? (
+                    <blockquote className="mt-1 border-l-2 pl-3">{lahde.lainaus}</blockquote>
+                  ) : null}
+                </li>
+              ))}
+            </ul>
+          ) : null}
+        </section>
+      ) : null}
+
+      {sisalto.maaraaja ? (
+        <section className="mt-6" aria-labelledby="maaraaja-otsikko">
+          <h2 id="maaraaja-otsikko" className="text-xl font-semibold">
+            Määräaika
+          </h2>
+          <dl className="mt-4 divide-y divide-border border-y border-border">
+            <div className="py-3">
+              <dt className="font-medium">{MAARAAJA_KENTTA_NIMET.tyyppi}</dt>
+              <dd className="mt-1">
+                {MAARAAJA_NIMET[
+                  sisalto.maaraaja.tyyppi as keyof typeof MAARAAJA_NIMET
+                ] ?? sisalto.maaraaja.tyyppi}
+              </dd>
+            </div>
+            {sisalto.maaraaja.alkaa_pvm ? (
+              <div className="py-3">
+                <dt className="font-medium">{MAARAAJA_KENTTA_NIMET.alkaa_pvm}</dt>
+                <dd className="mt-1">{sisalto.maaraaja.alkaa_pvm}</dd>
+              </div>
+            ) : null}
+            <div className="py-3">
+              <dt className="font-medium">{MAARAAJA_KENTTA_NIMET.paattyy_pvm}</dt>
+              <dd className="mt-1">{sisalto.maaraaja.paattyy_pvm}</dd>
+            </div>
+            {sisalto.maaraaja.menettely_id ? (
+              <div className="py-3">
+                <dt className="font-medium">Menettely</dt>
+                <dd className="mt-1 font-mono text-sm">{sisalto.maaraaja.menettely_id}</dd>
+              </div>
+            ) : null}
+          </dl>
+          {maaraajaLahteetPuuttuu ? (
+            <p className="mt-3 text-sm text-muted" role="alert">
+              Ehdotuksessa puuttuu lähderivit (lahteet). Täydennä JSON ennen hyväksyntää tai hylkää.
+            </p>
+          ) : null}
+          {maaraajaLahteet.length > 0 ? (
+            <ul className="mt-4 space-y-2 text-sm">
+              {maaraajaLahteet.map((lahde) => (
+                <li key={lahde.kentta} className="rounded border border-border px-3 py-2">
+                  <p className="font-medium">
+                    {MAARAAJA_KENTTA_NIMET[lahde.kentta] ?? lahde.kentta}
                   </p>
                   <p className="mt-1">
                     <a href={lahde.lahde_url} className="text-link underline" rel="noopener noreferrer">

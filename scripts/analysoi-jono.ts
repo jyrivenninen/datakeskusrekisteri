@@ -62,6 +62,17 @@ async function main() {
       rivi.paatos_kuvaus = p?.kuvaus;
       rivi.paatos_pvm = p?.pvm;
       rivi.lahteet_ok = Array.isArray(p?.lahteet) && p.lahteet.length > 0;
+    } else if (r.tyyppi === "maaraaja") {
+      const m = s.maaraaja as {
+        tyyppi?: string;
+        alkaa_pvm?: string;
+        paattyy_pvm?: string;
+        lahteet?: unknown[];
+      } | undefined;
+      rivi.maaraaja_tyyppi = m?.tyyppi;
+      rivi.maaraaja_alkaa = m?.alkaa_pvm;
+      rivi.maaraaja_paattyy = m?.paattyy_pvm;
+      rivi.lahteet_ok = Array.isArray(m?.lahteet) && m.lahteet.length > 0;
     } else if (r.tyyppi === "linkki_rikki") {
       rivi.linkki = (s.linkki as { url?: string; http_tila?: number })?.url;
       rivi.http = (s.linkki as { http_tila?: number })?.http_tila;

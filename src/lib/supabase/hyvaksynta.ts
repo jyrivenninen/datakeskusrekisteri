@@ -167,6 +167,22 @@ export async function hyvaksyMuutosehdotus(
     return;
   }
 
+  if (ehdotus.tyyppi === "maaraaja") {
+    const maaraaja = (ehdotus.sisalto as EhdotusSisalto).maaraaja;
+    if (!maaraaja?.tyyppi?.trim() || !maaraaja?.paattyy_pvm?.trim()) {
+      throw new Error("Määräaikaehdotuksesta puuttuvat tyyppi tai päättymispäivä.");
+    }
+    if (!Array.isArray(maaraaja.lahteet) || maaraaja.lahteet.length === 0) {
+      throw new Error("Määräaikaehdotuksesta puuttuvat lähderivit (lahteet).");
+    }
+    const { error: rpcVirhe } = await supabase.rpc("julkaise_maaraaja", {
+      p_ehdotus_id: ehdotusId,
+      p_kasittelija: kasittelija,
+    });
+    if (rpcVirhe) throw new Error(rpcVirhe.message);
+    return;
+  }
+
   if (
     ehdotus.tyyppi === "linkki_rikki" ||
     ehdotus.tyyppi === "ryhti_havainto" ||

@@ -103,6 +103,13 @@ export const MUUTOSEHDOTUS_TYYPPI_NIMET: Record<string, string> = {
   kentta_tarkistus: "Kenttä tarkistettu ilman lähdettä",
   kentta_tyhjennys: "Kentän tyhjennys",
   paatos: "Viranomaispäätös",
+  maaraaja: "Määräaika",
+};
+
+export const MAARAAJA_KENTTA_NIMET: Record<string, string> = {
+  tyyppi: "Tyyppi",
+  alkaa_pvm: "Alkaa",
+  paattyy_pvm: "Päättyy",
 };
 
 export const PAATOS_KENTTA_NIMET: Record<string, string> = {
@@ -169,6 +176,7 @@ export function massaHyvaksyntaOhitettava(tyyppi: string): boolean {
   return (
     tyyppi === "ristiriita_havainto" ||
     tyyppi === "paatos" ||
+    tyyppi === "maaraaja" ||
     KENTTA_LUOKKA_TYYPIT.has(tyyppi)
   );
 }

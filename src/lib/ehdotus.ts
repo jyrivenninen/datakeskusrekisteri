@@ -111,6 +111,22 @@ export type EhdotusSisalto = {
       merkitty: "koneen_ehdottama" | "ihmisen_vahvistama";
     }>;
   };
+  maaraaja?: {
+    tyyppi: string;
+    alkaa_pvm?: string | null;
+    paattyy_pvm: string;
+    menettely_id?: string | null;
+    lahteet: Array<{
+      kentta: string;
+      lahde_url: string;
+      lahde_sivu: number | null;
+      lahde_laji?: LahdeLaji;
+      vahvistettu_pvm: string;
+      luottamus: Luottamus;
+      lainaus: string | null;
+      merkitty: "koneen_ehdottama" | "ihmisen_vahvistama";
+    }>;
+  };
 };
 
 const NUMEERISET = new Set([

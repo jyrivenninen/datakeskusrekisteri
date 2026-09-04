@@ -71,6 +71,21 @@ async function main() {
         });
       }
     }
+
+    if (r.tyyppi === "maaraaja") {
+      const m = s.maaraaja as { tyyppi?: string; paattyy_pvm?: string; lahteet?: unknown[] } | undefined;
+      if (!m?.tyyppi?.trim() || !m?.paattyy_pvm?.trim()) {
+        hylattavat.push({
+          id: r.id,
+          syy: "Maaraaja-ehdotuksesta puuttuu tyyppi tai paattyy_pvm.",
+        });
+      } else if (!Array.isArray(m.lahteet) || m.lahteet.length === 0) {
+        hylattavat.push({
+          id: r.id,
+          syy: "Maaraaja-ehdotuksesta puuttuu sisalto.maaraaja.lahteet-taulukko.",
+        });
+      }
+    }
   }
 
   // Duplikaatti taydennys: sama hanke + sama kenttä + sama arvo

@@ -215,11 +215,11 @@ export default async function YllapitoSivu({
             />
             <label htmlFor="vahvista-kaikki" className="max-w-prose text-sm">
               Käsittele kaikki odottavat ehdotukset paitsi ristiriitahavainnot,
-              kenttämerkinnät, tyhjennykset ja päätökset. Hanketiedot
+              kenttämerkinnät, tyhjennykset, päätökset ja määräajat. Hanketiedot
               julkaistaan; rikkinäiset linkit, muuttuneet dokumentit sekä
               Ryhti-, YTJ-, MML- ja kuntahavainnot merkitään vain
               käsitellyiksi (YTJ-Y-tunnusehdotus julkaisee tunnuksen).
-              Ristiriitahavainto, kenttämuutos ja päätös vaativat oman
+              Ristiriitahavainto, kenttämuutos, päätös ja määräaika vaativat oman
               tarkistuksen. Merkintä on ihmisen vahvistama.
             </label>
           </div>

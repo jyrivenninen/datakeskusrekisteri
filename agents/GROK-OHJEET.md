@@ -99,8 +99,8 @@ Kun käyttäjä on vahvistanut:
 
 - Työskentele **enintään 60 minuuttia** per ajokerta.
 - Kirjaa aloitus- ja lopetusaika raporttiin.
-- Priorisoi: (1) uudet hankkeet, (2) tyhjät kentät, (3) viranomaispäätökset,
-  (4) korjausehdotukset jonoon.
+- Priorisoi: (1) uudet hankkeet, (2) tulevat määräajat, (3) tyhjät kentät,
+  (4) viranomaispäätökset, (5) korjausehdotukset jonoon.
 - Lopuksi lähetä **ajoraportti** ( alla oleva malli ).
 - Jos 60 min täyttyy kesken, lopeta siististi ja kerro mitä jäi kesken.
 
@@ -139,6 +139,7 @@ Authorization: Bearer <SUPABASE_AGENTTI_KEY>
 | Tyhjä kenttä, ei julkista lähdettä | `kentta_tarkistus` (ei RPC) | **Ei** → ylläpito merkitsee |
 | Virheellisen arvon poisto | `kentta_tyhjennys` (ei RPC) | **Ei** → ylläpito hyväksyy tyhjennys |
 | Viranomaispäätös | `paatos` (ei RPC) | **Ei** → aina jono |
+| Vaikuttamisen määräaika | `maaraaja` (ei RPC) | **Ei** → aina jono |
 | Ristiriita kahdessa lähteessä | `korjaus` + huomautus | **Ei** — älä arvaa |
 
 Et voi: poistaa rivejä, kirjoittaa suoraan `hankkeet`-tauluun, lähettää sähköpostia,
@@ -156,6 +157,9 @@ kaatuu hyväksynnässä tai näyttää ylläpidossa tyhjältä.
                     ┌─ Uusi hanke rekisterissä? ──► uusi_hanke + RPC
                     │
                     ├─ Viranomaispäätös (lupa, YVA-ratkaisu)? ──► paatos (EI RPC)
+                    │
+                    ├─ Vaikuttamisen määräaika (YVA-mielipide, kaavamuistutus, valitusaika)?
+                    │     └─ Selkeä päättymispäivä lähteessä ──► maaraaja (EI RPC)
                     │
                     ├─ Kenttä TYHJÄ rekisterissä?
                     │     ├─ Löytyi arvo lähteestä ──► taydennys + RPC
@@ -180,6 +184,7 @@ kaatuu hyväksynnässä tai näyttää ylläpidossa tyhjältä.
 | `kentta_tarkistus` | Ei — merkitsee tyhjän kentän tarkistetuksi | **Ei** | Hyväksy merkintä |
 | `kentta_tyhjennys` | Poistaa arvon (NULL) + lähteet | **Ei** | Hyväksy tyhjennys |
 | `paatos` | Lisää päätösrivin | **Ei** | Hyväksy ja julkaise |
+| `maaraaja` | Lisää määräaikarivin (etusivu jos tuleva) | **Ei** | Hyväksy ja julkaise |
 | `ristiriita_havainto` jne. | **Älä luo** | **Ei** | Merkitse käsitellyksi |
 
 ---
@@ -341,6 +346,100 @@ Jokaisessa `sisalto.paatos.lahteet[]`-rivissä pakolliset kentät:
 
 ---
 
+### `maaraaja` — vaikuttamisen määräaika
+
+**Milloin:** Lähde ilmoittaa **tulevan** vaikuttamisen määräajan: YVA-mielipide,
+YVA-ohjelma/-selostus, kaavamuistutus, valitusaika, kuulutus.
+
+**Työnkulku:** INSERT **ilman RPC:tä**. Aina ylläpidon hyväksyntä. Hyväksynnän jälkeen
+rivi näkyy hankesivulla; **etusivulla** vain, jos `paattyy_pvm` on tänään tai myöhemmin.
+
+**Ennen INSERT:** vertaa olemassa oleviin:
+
+`GET maaraajat?hanke_id=eq.<uuid>&select=id,tyyppi,alkaa_pvm,paattyy_pvm,julkaistu`
+
+**Älä luo**, jos sama tyyppi ja sama `paattyy_pvm` on jo julkaistu.
+
+**Sallitut `tyyppi`-arvot:**
+
+| Arvo | Käyttö |
+|------|--------|
+| `yva_mielipide` | YVA-mielipiteen jättöaika |
+| `yva_ohjelma` | YVA-ohjelman lausuntokierros |
+| `yva_selostus` | YVA-selostuksen lausuntokierros |
+| `kaavamuistutus` | Kaavamuistutuksen jättöaika |
+| `valitusaika` | Valitus-/oikaisuaika |
+| `kuulutus` | Muu virallinen kuulutus |
+| `muu` | Muu selkeästi nimetty määräaika |
+
+**Pakolliset kentät:** `tyyppi`, `paattyy_pvm` (`YYYY-MM-DD`). Valinnainen: `alkaa_pvm`,
+`menettely_id` (vain jos tunnet hankkeen `hanke_menettelyt`-rivin uuid).
+
+**Lähderivit** (`sisalto.maaraaja.lahteet[]`):
+
+- Pakollinen jokaiselle julkaistulle kentälle: `tyyppi`, `paattyy_pvm`
+- Jos `alkaa_pvm` asetettu → myös `alkaa_pvm`-lähde
+- Jokaisessa: `kentta`, `lahde_url`, `lainaus`, `luottamus`, `lahde_laji`, `vahvistettu_pvm`, `merkitty: koneen_ehdottama`
+
+**Älä:**
+
+- Arvaa päivämäärää ilman lainausta («noin huhtikuussa» → jätä tekemättä)
+- Käytä `paatos`-tyyppiä määräajalle (päätös = mitä on **päätetty**, määräaika = milloin voi **vaikuttaa**)
+- Käytä `taydennys`-tyyppiä päivämäärälle (`hankkeet`-taulussa ei ole määräaikakenttiä)
+- Luo uutta, jos vanhentunut määräaika on yhä julkaistu — mainitse raportissa; ylläpito piilottaa vanhan
+
+```json
+{
+  "tyyppi": "maaraaja",
+  "hanke_id": "<uuid>",
+  "ehdottaja_tyyppi": "agentti",
+  "ehdottaja_tunniste": "grok-taydennys-2026-09-04",
+  "lahde_url": "https://…",
+  "huomautus": "YVA-kuulutus hankkeen sivulla.",
+  "tila": "odottaa",
+  "sisalto": {
+    "kentat": {},
+    "maaraaja": {
+      "tyyppi": "yva_mielipide",
+      "alkaa_pvm": "2026-03-01",
+      "paattyy_pvm": "2026-04-15",
+      "menettely_id": null,
+      "lahteet": [
+        {
+          "kentta": "tyyppi",
+          "lahde_url": "https://…",
+          "lahde_laji": "html",
+          "vahvistettu_pvm": "2026-09-04",
+          "luottamus": "epavarma",
+          "lainaus": "YVA-mielipiteet voi jättää 1.3.–15.4.2026.",
+          "merkitty": "koneen_ehdottama"
+        },
+        {
+          "kentta": "alkaa_pvm",
+          "lahde_url": "https://…",
+          "lahde_laji": "html",
+          "vahvistettu_pvm": "2026-09-04",
+          "luottamus": "epavarma",
+          "lainaus": "YVA-mielipiteet voi jättää 1.3.–15.4.2026.",
+          "merkitty": "koneen_ehdottama"
+        },
+        {
+          "kentta": "paattyy_pvm",
+          "lahde_url": "https://…",
+          "lahde_laji": "html",
+          "vahvistettu_pvm": "2026-09-04",
+          "luottamus": "epavarma",
+          "lainaus": "YVA-mielipiteet voi jättää 1.3.–15.4.2026.",
+          "merkitty": "koneen_ehdottama"
+        }
+      ]
+    }
+  }
+}
+```
+
+---
+
 ### Havainnot — älä luo itse
 
 Seuraavat tyypit tuottaa **koodi** (`agents/tarkistukset/`, `agents/lahteet/`), ei Grok:
@@ -381,6 +480,8 @@ ylläpidolle» -osio.
 | `kentta_tarkistus` / `kentta_tyhjennys` **ja** RPC | Näihin **ei** RPC:tä |
 | Tarkka luku lähteestä «noin X» | `epavarma` + lainaus tai tyhjennys |
 | Duplikaattihanke | Täydennä olemassa olevaa |
+| Määräaika `paatos`-tyypillä | `maaraaja` |
+| Päivämäärä `taydennys`-kenttänä | `maaraaja` |
 
 **Esimerkki (väärin):** Pinta-ala 75, lähde «approximately 75 ha» →
 `ristiriita_havainto` + `ehdotettu_toimenpide: tyhjenna_kentta`.
@@ -453,6 +554,8 @@ sinne suoraan. Sen sijaan:
 - Käytä asiakirjan URL:ia **kentän lähteenä** (`lahde_url`, `lahde_sivu`, `lainaus`).
 - Merkittävä viranomaispäätös (lupa, YVA-ratkaisu, kaavahyväksyntä) → erillinen
   `paatos`-ehdotus **aina ilman RPC:tä**.
+- Tuleva vaikuttamisen määräaika (YVA-mielipide, kaavamuistutus, valitusaika) →
+  `maaraaja`-ehdotus **aina ilman RPC:tä**.
 - Jos asiakirja on tärkeä mutta ei liity yhteen kenttään, mainitse raportin
   «Suositukset ylläpidolle» -osiossa: URL + miksi kannattaa lisätä asiakirjaluetteloon.
 
@@ -701,7 +804,7 @@ Jokaisessa `sisalto.kentat`-kentässä:
 ### Jonossa (vaatii ihmisen)
 | Hanke | Tyyppi | Kenttä / asia | Syy |
 
-Tyypit jonossa: `korjaus`, `paatos`, `kentta_tarkistus`, `kentta_tyhjennys`.
+Tyypit jonossa: `korjaus`, `paatos`, `maaraaja`, `kentta_tarkistus`, `kentta_tyhjennys`.
 **Älä** listaa `ristiriita_havaintoa`, jos loit sen vahingossa.
 
 ### Suositukset ylläpidolle
@@ -719,7 +822,7 @@ Tyypit jonossa: `korjaus`, `paatos`, `kentta_tarkistus`, `kentta_tyhjennys`.
 - [ ] Jokaisella faktalla on `lahde_url` ja lainaus tai perusteltu tyhjä
 - [ ] Oikea tyyppi valittu (ks. valintapuu — ei `ristiriita_havaintoa` Grokilta)
 - [ ] RPC kutsuttu jokaisen `uusi_hanke` / `taydennys` / `korjaus` jälkeen
-- [ ] **Ei** RPC:tä `kentta_tarkistus` / `kentta_tyhjennys` / `paatos` jälkeen
+- [ ] **Ei** RPC:tä `kentta_tarkistus` / `kentta_tyhjennys` / `paatos` / `maaraaja` jälkeen
 - [ ] Duplikaattihanketta ei luotu epäilemättä
 - [ ] Varmennettuja kenttiä ei ylikirjoitettu
 - [ ] «Noin»-lähteestä ei julkaistu tarkkaa lukua ilman perustetta
