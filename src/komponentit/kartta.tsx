@@ -48,7 +48,7 @@ const TEHO_VARI_ILMAISIN = [
 const TEHO_SADE_ILMAISIN = [
   "*",
   ["interpolate", ["exponential", 2], ["zoom"], 4, 0.45, 8, 0.9, 12, 1.55, 16, 2.4],
-  ["interpolate", ["linear"], ["get", "teho_mw"], 1, 6, 10, 10, 50, 18, 100, 26, 500, 42, 1000, 58],
+  ["interpolate", ["linear"], ["get", "teho_mw"], 1, 8, 10, 14, 50, 22, 100, 32, 500, 50, 1000, 68],
 ] as const;
 
 const TEHO_LAPIKUULUVUUS_ILMAISIN = [
@@ -56,15 +56,15 @@ const TEHO_LAPIKUULUVUUS_ILMAISIN = [
   ["linear"],
   ["get", "teho_mw"],
   1,
-  0.14,
+  0.28,
   50,
-  0.2,
+  0.36,
   100,
-  0.24,
+  0.42,
   500,
-  0.3,
+  0.48,
   1000,
-  0.34,
+  0.52,
 ] as const;
 
 const OLETUSVARI = "#1d4ed8";
@@ -238,23 +238,29 @@ function tehoGeoJson(merkit: Karttamerkki[]): TehoGeoJson {
 }
 
 function lisaaTehoKerros(kartta: MapLibre, merkit: Karttamerkki[]) {
+  if (!kartta.isStyleLoaded()) return;
+
   const data = tehoGeoJson(merkit);
-  if (kartta.getSource(TEHO_LAHDE_ID)) {
-    (kartta.getSource(TEHO_LAHDE_ID) as GeoJSONSource).setData(data);
-    return;
+  const lahde = kartta.getSource(TEHO_LAHDE_ID) as GeoJSONSource | undefined;
+  if (lahde) {
+    lahde.setData(data);
+  } else {
+    kartta.addSource(TEHO_LAHDE_ID, { type: "geojson", data });
   }
-  kartta.addSource(TEHO_LAHDE_ID, { type: "geojson", data });
-  kartta.addLayer({
-    id: TEHO_KERROS_ID,
-    type: "circle",
-    source: TEHO_LAHDE_ID,
-    paint: {
-      "circle-color": TEHO_VARI_ILMAISIN as unknown as string,
-      "circle-radius": TEHO_SADE_ILMAISIN as unknown as number,
-      "circle-opacity": TEHO_LAPIKUULUVUUS_ILMAISIN as unknown as number,
-      "circle-blur": 0.55,
-    },
-  });
+
+  if (!kartta.getLayer(TEHO_KERROS_ID)) {
+    kartta.addLayer({
+      id: TEHO_KERROS_ID,
+      type: "circle",
+      source: TEHO_LAHDE_ID,
+      paint: {
+        "circle-color": TEHO_VARI_ILMAISIN as unknown as string,
+        "circle-radius": TEHO_SADE_ILMAISIN as unknown as number,
+        "circle-opacity": TEHO_LAPIKUULUVUUS_ILMAISIN as unknown as number,
+        "circle-blur": 0.45,
+      },
+    });
+  }
 }
 
 function merkkiNakyvissa(merkki: Pick<Karttamerkki, "vaihe">, aktiviset: Set<HankeVaihe>): boolean {
