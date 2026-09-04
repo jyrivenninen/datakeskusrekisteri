@@ -24,6 +24,8 @@ import {
   muotoilePvm,
 } from "@/lib/naytto";
 import { haeHanke, haeHankeOhjaus } from "@/lib/supabase/kyselyt";
+import { haeYllapitaja } from "@/lib/supabase/palvelin";
+import { supabasePalvelinAvainAsetettu } from "@/lib/supabase/yllapito-asiakas";
 import type { Hanke, KenttaLahde, KenttaTarkistus } from "@/lib/supabase/tietokanta";
 
 export const revalidate = 60;
@@ -196,12 +198,17 @@ export async function generateMetadata({
 
 export default async function HankeSivu({
   params,
+  searchParams,
 }: {
   params: Promise<{ id: string }>;
+  searchParams: Promise<{ virhe?: string; kuva_poistettu?: string }>;
 }) {
   const { id } = await params;
+  const query = await searchParams;
   const ohjaus = await haeHankeOhjaus(id);
   if (ohjaus && ohjaus !== id) permanentRedirect(`/hankkeet/${ohjaus}`);
+  const { user: yllapitaja } = await haeYllapitaja();
+  const voiPoistaaKuvia = Boolean(yllapitaja && supabasePalvelinAvainAsetettu());
   const {
     hanke,
     lahteet,
@@ -327,12 +334,27 @@ export default async function HankeSivu({
         <h2 id="kuvat-otsikko" className="text-xl font-semibold">
           Valokuvat
         </h2>
+        {query.kuva_poistettu ? (
+          <p className="mt-2 text-sm" role="status">
+            Kuva poistettiin julkiselta sivulta.
+          </p>
+        ) : null}
+        {query.virhe ? (
+          <p className="mt-2 text-sm" role="alert">
+            {query.virhe}
+          </p>
+        ) : null}
         <p className="mt-2 text-sm">
           <a href={`/hankkeet/${hanke.id}/kuva`} className="text-link underline">
             Lisää valokuva
           </a>
         </p>
-        <HankeGalleria kuvat={kuvat} lahteet={kuvaLahteet} />
+        <HankeGalleria
+          kuvat={kuvat}
+          lahteet={kuvaLahteet}
+          hankeId={hanke.id}
+          yllapito={voiPoistaaKuvia}
+        />
       </section>
 
       <section className="mt-8" aria-labelledby="tiedot-otsikko">

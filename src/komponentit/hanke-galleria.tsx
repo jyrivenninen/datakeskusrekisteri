@@ -1,11 +1,16 @@
 import type { HankeKuva, KenttaLahde } from "@/lib/supabase/tietokanta";
+import { poistaKuvaToiminto } from "@/app/toiminnot";
 
 export function HankeGalleria({
   kuvat,
   lahteet,
+  hankeId,
+  yllapito = false,
 }: {
   kuvat: HankeKuva[];
   lahteet: KenttaLahde[];
+  hankeId?: string;
+  yllapito?: boolean;
 }) {
   if (kuvat.length === 0) {
     return <p className="mt-3 text-muted">Ei merkittyjä valokuvia.</p>;
@@ -39,6 +44,21 @@ export function HankeGalleria({
                       Lähde
                     </a>
                   </p>
+                ) : null}
+                {yllapito && hankeId ? (
+                  <form action={poistaKuvaToiminto} className="pt-2">
+                    <input type="hidden" name="hanke_id" value={hankeId} />
+                    <input type="hidden" name="kuva_id" value={kuva.id} />
+                    <button
+                      type="submit"
+                      className="rounded border border-border px-2 py-1 text-xs text-muted hover:text-foreground"
+                    >
+                      Poista kuva
+                    </button>
+                    <p className="mt-1 text-xs text-muted">
+                      Piilottaa kuvan julkiselta sivulta. Tieto säilyy kannassa.
+                    </p>
+                  </form>
                 ) : null}
               </figcaption>
             </figure>

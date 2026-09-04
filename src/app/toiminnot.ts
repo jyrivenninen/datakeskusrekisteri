@@ -19,8 +19,8 @@ import {
 } from "@/lib/ehdotus";
 import { kasittelijaMerkinta, massaHyvaksyntaOhitettava } from "@/lib/naytto";
 import { LUOTTAMUSTASOT, PALAUTE_AIHEET, type Luottamus } from "@/lib/supabase/tietokanta";
-import { haeKirjautunutKayttaja, haeYllapitaja, luoPalvelinAsiakas } from "@/lib/supabase/palvelin";
-import { hylkaaMuutosehdotus, hyvaksyMuutosehdotus, kuitaaHankeKentat, yhdistaHankkeetEhdotuksesta } from "@/lib/supabase/hyvaksynta";
+import { haeKirjautunutKayttaja, haeYllapitaja, luoPalvelinAsiakas, vaadiYllapitaja as vaadiYllapitajaSivu } from "@/lib/supabase/palvelin";
+import { hylkaaMuutosehdotus, hyvaksyMuutosehdotus, kuitaaHankeKentat, piilotaHankeKuva, yhdistaHankkeetEhdotuksesta } from "@/lib/supabase/hyvaksynta";
 import { luoYllapitoAsiakas, supabasePalvelinAvainAsetettu } from "@/lib/supabase/yllapito-asiakas";
 import { ESIVERSIO_EVASTE } from "@/lib/esiversio";
 
@@ -597,6 +597,35 @@ export async function lahetaKuva(formData: FormData): Promise<void> {
   });
   if (error) kuvaPaluu(hankeId, error.message);
   redirect(`/hankkeet/${hankeId}/kuva?valmis=odottaa`);
+}
+
+export async function poistaKuvaToiminto(formData: FormData): Promise<void> {
+  const hankeId = String(formData.get("hanke_id") ?? "").trim();
+  const kuvaId = String(formData.get("kuva_id") ?? "").trim();
+  const paluu = hankeId ? `/hankkeet/${hankeId}` : "/";
+
+  if (!hankeId || !kuvaId) {
+    redirect(`${paluu}?virhe=${encodeURIComponent("Kuva tai hanke puuttuu.")}`);
+  }
+  if (!supabasePalvelinAvainAsetettu()) {
+    redirect(
+      `${paluu}?virhe=${encodeURIComponent("Kuvan poisto vaatii palvelinavaimen.")}`,
+    );
+  }
+
+  const { user, nimi } = await vaadiYllapitajaSivu(paluu);
+  const kasittelija = kasittelijaMerkinta(nimi, user.email ?? "", user.id);
+  try {
+    await piilotaHankeKuva(kuvaId, kasittelija);
+  } catch (syy) {
+    const viesti = syy instanceof Error ? syy.message : "Kuvan poisto epäonnistui.";
+    redirect(`${paluu}?virhe=${encodeURIComponent(viesti)}`);
+  }
+
+  revalidatePath("/");
+  revalidatePath(`/hankkeet/${hankeId}`);
+  revalidatePath("/yllapito");
+  redirect(`${paluu}?kuva_poistettu=1`);
 }
 
 export async function kirjauduSisaan(formData: FormData): Promise<void> {

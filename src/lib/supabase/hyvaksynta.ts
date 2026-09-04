@@ -326,6 +326,15 @@ export async function kuitaaHankeKentat(
   return typeof data === "number" ? data : 0;
 }
 
+export async function piilotaHankeKuva(kuvaId: string, kasittelija: string) {
+  const supabase = luoYllapitoAsiakas();
+  const { error } = await supabase.rpc("piilota_hanke_kuva", {
+    p_kuva_id: kuvaId,
+    p_kasittelija: kasittelija,
+  });
+  if (error) throw new Error(error.message);
+}
+
 export async function hylkaaMuutosehdotus(
   ehdotusId: string,
   kasittelija: string,
