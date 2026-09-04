@@ -342,7 +342,12 @@ function luoNuppineula(merkki: Karttamerkki) {
   return el;
 }
 
-function piirraGeometriat(kartta: MapLibre, svg: SVGSVGElement, merkit: Karttamerkki[]) {
+function piirraTehoHalotKerros(
+  kartta: MapLibre,
+  svg: SVGSVGElement,
+  merkit: Karttamerkki[],
+  nayta: boolean,
+) {
   const kehys = kartta.getContainer();
   const leveys = kehys.clientWidth;
   const korkeus = kehys.clientHeight;
@@ -350,9 +355,19 @@ function piirraGeometriat(kartta: MapLibre, svg: SVGSVGElement, merkit: Karttame
   svg.setAttribute("height", String(korkeus));
   svg.setAttribute("viewBox", `0 0 ${leveys} ${korkeus}`);
   while (svg.firstChild) svg.removeChild(svg.firstChild);
-
+  if (!nayta) return;
   lisaaTehoSuodatin(svg);
   piirraTehoHalot(kartta, svg, merkit);
+}
+
+function piirraAlueetJaJohdot(kartta: MapLibre, svg: SVGSVGElement, merkit: Karttamerkki[]) {
+  const kehys = kartta.getContainer();
+  const leveys = kehys.clientWidth;
+  const korkeus = kehys.clientHeight;
+  svg.setAttribute("width", String(leveys));
+  svg.setAttribute("height", String(korkeus));
+  svg.setAttribute("viewBox", `0 0 ${leveys} ${korkeus}`);
+  while (svg.firstChild) svg.removeChild(svg.firstChild);
 
   const naytaAlueet = kartta.getZoom() >= 9;
 
@@ -396,25 +411,32 @@ export function Kartta({
 }) {
   const kehys = useRef<HTMLDivElement>(null);
   const karttaRef = useRef<MapLibre | null>(null);
-  const svgRef = useRef<SVGSVGElement | null>(null);
+  const svgTehoRef = useRef<SVGSVGElement | null>(null);
+  const svgGeometriaRef = useRef<SVGSVGElement | null>(null);
   const merkitNytRef = useRef<Karttamerkki[]>([]);
   const merkkiluokatRef = useRef<Map<string, { marker: Marker; vaihe?: HankeVaihe }>>(new Map());
   const aktivisetVaiheetRef = useRef<Set<HankeVaihe>>(kaikkiVaiheetAktiviset());
+  const naytaTehoHalotRef = useRef(true);
   const avain = process.env.NEXT_PUBLIC_MML_API_AVAIN;
   const merkitAvain = JSON.stringify(merkit);
   const [aktivisetVaiheet, setAktivisetVaiheet] = useState<Set<HankeVaihe>>(kaikkiVaiheetAktiviset);
+  const [naytaTehoHalot, setNaytaTehoHalot] = useState(true);
 
   aktivisetVaiheetRef.current = aktivisetVaiheet;
+  naytaTehoHalotRef.current = naytaTehoHalot;
 
   useEffect(() => {
     setAktivisetVaiheet(kaikkiVaiheetAktiviset());
   }, [merkitAvain]);
 
-  const paivitaNakyvyys = (aktiviset: Set<HankeVaihe>) => {
+  const paivitaNakyvyys = () => {
     const kartta = karttaRef.current;
-    const svg = svgRef.current;
+    const svgTeho = svgTehoRef.current;
+    const svgGeometria = svgGeometriaRef.current;
     const merkitNyt = merkitNytRef.current;
-    if (!kartta || !svg) return;
+    const aktiviset = aktivisetVaiheetRef.current;
+    const naytaTeho = naytaTehoHalotRef.current;
+    if (!kartta || !svgTeho || !svgGeometria) return;
 
     for (const [, { marker, vaihe }] of merkkiluokatRef.current) {
       const nayta = merkkiNakyvissa({ vaihe }, aktiviset);
@@ -422,7 +444,8 @@ export function Kartta({
     }
 
     const suodatetut = suodataMerkit(merkitNyt, aktiviset);
-    piirraGeometriat(kartta, svg, suodatetut);
+    piirraTehoHalotKerros(kartta, svgTeho, suodatetut, naytaTeho);
+    piirraAlueetJaJohdot(kartta, svgGeometria, suodatetut);
   };
 
   const vaihdaVaihe = (vaihe: HankeVaihe) => {
@@ -438,8 +461,8 @@ export function Kartta({
   };
 
   useEffect(() => {
-    paivitaNakyvyys(aktivisetVaiheet);
-  }, [aktivisetVaiheet]);
+    paivitaNakyvyys();
+  }, [aktivisetVaiheet, naytaTehoHalot]);
 
   useEffect(() => {
     if (!kehys.current || !avain) return;
@@ -465,14 +488,24 @@ export function Kartta({
     });
     kartta.addControl(new NavigationControl({ showCompass: false }), "top-right");
 
-    const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
-    svg.setAttribute("aria-hidden", "true");
-    svg.style.cssText =
+    const svgTeho = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+    svgTeho.setAttribute("aria-hidden", "true");
+    svgTeho.setAttribute("class", "kartta-teho-kerros");
+    svgTeho.style.cssText =
+      "position:absolute;inset:0;z-index:0;pointer-events:none;overflow:visible;";
+
+    const svgGeometria = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+    svgGeometria.setAttribute("aria-hidden", "true");
+    svgGeometria.setAttribute("class", "kartta-geometria-kerros");
+    svgGeometria.style.cssText =
       "position:absolute;inset:0;z-index:1;pointer-events:none;overflow:visible;";
-    kartta.getCanvasContainer().appendChild(svg);
+
+    kartta.getCanvasContainer().appendChild(svgTeho);
+    kartta.getCanvasContainer().appendChild(svgGeometria);
 
     karttaRef.current = kartta;
-    svgRef.current = svg;
+    svgTehoRef.current = svgTeho;
+    svgGeometriaRef.current = svgGeometria;
 
     merkkiluokatRef.current = new Map();
     for (const merkki of merkitNyt) {
@@ -510,10 +543,10 @@ export function Kartta({
       }
     }
 
-    const paivita = () => paivitaNakyvyys(aktivisetVaiheetRef.current);
+    const paivita = () => paivitaNakyvyys();
 
     const rajaaKartta = () => {
-      paivitaNakyvyys(aktivisetVaiheetRef.current);
+      paivitaNakyvyys();
       kartta.resize();
       if (sovitaSuomeen) {
         kartta.fitBounds(SUOMI_RAJAT, { padding: 24, maxZoom: 6 });
@@ -547,8 +580,10 @@ export function Kartta({
       kartta.off("resize", paivita);
       merkkiluokat.forEach((merkki) => merkki.remove());
       merkkiluokatRef.current.clear();
-      svg.remove();
-      svgRef.current = null;
+      svgTeho.remove();
+      svgGeometria.remove();
+      svgTehoRef.current = null;
+      svgGeometriaRef.current = null;
       kartta.remove();
       karttaRef.current = null;
     };
@@ -626,19 +661,37 @@ export function Kartta({
           </p>
         ) : null}
         <div className="mt-4 border-t border-border pt-3">
-          <h3 className="text-sm font-semibold">IT-teho</h3>
-          <p className="mt-1 text-xs leading-relaxed text-muted">
-            Keltainen halo kuvaa IT-tehoa tai kokonaistehoa (MW). Päällekkäiset
-            alueet tummuvat.
-          </p>
+          <button
+            type="button"
+            className={`flex w-full items-start gap-2 rounded px-1 py-0.5 text-left transition-colors hover:bg-muted/30 ${naytaTehoHalot ? "" : "text-muted"}`}
+            aria-pressed={naytaTehoHalot}
+            onClick={() => setNaytaTehoHalot((edellinen) => !edellinen)}
+          >
+            <span
+              className="mt-0.5 inline-block h-3 w-3 shrink-0 rounded-full border-2"
+              style={{
+                background: naytaTehoHalot
+                  ? "linear-gradient(to right, #fef9c3, #fde047, #fbbf24, #f59e0b, #ea580c)"
+                  : "transparent",
+                borderColor: naytaTehoHalot ? "#fbbf24" : "#d97706",
+              }}
+              aria-hidden="true"
+            />
+            <span className="min-w-0 flex-1">
+              <span className="block text-sm font-semibold">IT-teho</span>
+              <span className="mt-1 block text-xs leading-relaxed">
+                Keltainen halo kuvaa IT-tehoa tai kokonaistehoa (MW).
+              </span>
+            </span>
+          </button>
           <div
-            className="mt-2 h-3 w-full rounded border border-border"
+            className={`mt-2 h-3 w-full rounded border border-border transition-opacity ${naytaTehoHalot ? "" : "opacity-40"}`}
             style={{
               background:
                 "linear-gradient(to right, #fef9c3, #fde047, #fbbf24, #f59e0b, #ea580c)",
             }}
             role="img"
-            aria-label="Tehoasteikko: vaaleankeltainen pienestä tehosta syvään oranssiin suureen tehoon"
+            aria-hidden="true"
           />
           <div className="mt-1 flex justify-between text-xs tabular-nums text-muted">
             <span>1 MW</span>

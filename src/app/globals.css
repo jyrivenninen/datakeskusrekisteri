@@ -152,6 +152,10 @@ dialog.esiversio-ilmoitus::backdrop {
   background: #d2e7f0;
 }
 
+.maplibregl-marker-container {
+  z-index: 2;
+}
+
 button {
   touch-action: manipulation;
 }
