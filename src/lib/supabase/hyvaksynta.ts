@@ -1,4 +1,11 @@
-import { kentanLuottamus, kenttaArvoksi, VAIHTOEHTO_KENTAT, type EhdotettuKentta, type EhdotusSisalto } from "@/lib/ehdotus";
+import {
+  kentanLuottamus,
+  kenttaArvoksi,
+  normalisoiKenttaTyhjennysSisalto,
+  VAIHTOEHTO_KENTAT,
+  type EhdotettuKentta,
+  type EhdotusSisalto,
+} from "@/lib/ehdotus";
 import { ehdotuksenHankeIdt } from "@/lib/naytto";
 import { LAHDE_LAJIT, type LahdeLaji } from "@/lib/supabase/tietokanta";
 import { luoYllapitoAsiakas } from "@/lib/supabase/yllapito-asiakas";
@@ -143,6 +150,24 @@ export async function hyvaksyMuutosehdotus(
   }
 
   if (ehdotus.tyyppi === "kentta_tyhjennys") {
+    const alkuperainen = ehdotus.sisalto as EhdotusSisalto;
+    const korjattu = normalisoiKenttaTyhjennysSisalto(
+      alkuperainen,
+      ehdotus.hanke_id!,
+      ehdotus.huomautus,
+      ehdotus.lahde_url,
+    );
+    if (!korjattu.tyhjennys?.kentta) {
+      throw new Error("Tyhjennys: kentta puuttuu");
+    }
+    if (!alkuperainen.tyhjennys?.kentta?.trim()) {
+      const { error: paivitysVirhe } = await supabase
+        .from("muutosehdotukset")
+        .update({ sisalto: korjattu })
+        .eq("id", ehdotusId)
+        .eq("tila", "odottaa");
+      if (paivitysVirhe) throw new Error(paivitysVirhe.message);
+    }
     const { error: rpcVirhe } = await supabase.rpc("julkaise_kentta_tyhjennys", {
       p_ehdotus_id: ehdotusId,
       p_kasittelija: kasittelija,

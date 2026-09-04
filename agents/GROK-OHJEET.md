@@ -380,6 +380,10 @@ lähteellä (tai tarkka luku ilman tarkkaa lähdettä pitää poistaa).
 
 `merkitse_ei_lahdetta: true` estää saman tyhjän kentän nousemisen uudelleen jonoon.
 
+**⚠️ Älä tallenna tyhjennystä `kentat`-lohkoon.** Kentän nimi kuuluu aina
+`sisalto.tyhjennys.kentta` -kenttään; `kentat` jää tyhjäksi `{}`. Väärä muoto
+(`kentat.teho_mw` ilman `tyhjennys`-lohkoa) estää hyväksynnän.
+
 Tyhjennettävät kentät: valinnaiset faktakentät (`it_teho_mw`, `pinta_ala_ha`, …).
 **Ei** `nimi`, `kunta`, `vaihe`.
 
@@ -535,6 +539,7 @@ ylläpidolle» -osio.
 | `taydennys` kun kentässä jo eri arvo | `korjaus` |
 | `taydennys` ilman RPC-kutsua | Aina RPC `uusi_hanke` / `taydennys` / `korjaus` jälkeen |
 | `kentta_tarkistus` / `kentta_tyhjennys` **ja** RPC | Näihin **ei** RPC:tä |
+| `kentta_tyhjennys` + data vain `kentat`-lohkossa | Aina `sisalto.tyhjennys` (`kentat: {}`) |
 | Tarkka luku lähteestä «noin X» | `epavarma` + lainaus tai tyhjennys |
 | Duplikaattihanke | Täydennä olemassa olevaa |
 | Määräaika `paatos`-tyypillä | `maaraaja` |

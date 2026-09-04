@@ -214,6 +214,72 @@ export function tyhjennysKenttaLomakkeesta(kentta: string): string | null {
   return tarkistusKenttaLomakkeesta(kentta);
 }
 
+export type KenttaTyhjennysNakyma = {
+  tyhjennys: NonNullable<EhdotusSisalto["tyhjennys"]>;
+  /** Sisältö oli virheellisessä muodossa (kentat ilman tyhjennys-lohkoa). */
+  korjattuMuodosta: boolean;
+};
+
+/**
+ * Korjaa vanha Grok-virhe: kentta_tyhjennys tallennettu kentat-lohkoon ilman tyhjennys-rakennetta.
+ * Palauttaa alkuperäisen sisällön jos tyhjennys on jo kunnossa tai sitä ei voi päätellä.
+ */
+export function normalisoiKenttaTyhjennysSisalto(
+  sisalto: EhdotusSisalto,
+  hankeId: string,
+  huomautus: string | null,
+  lahdeUrl: string | null,
+): EhdotusSisalto {
+  if (sisalto.tyhjennys?.kentta?.trim()) {
+    return sisalto;
+  }
+
+  const kentatAvaimet = Object.keys(sisalto.kentat ?? {}).filter(
+    (kentta) => tyhjennysKenttaLomakkeesta(kentta) !== null,
+  );
+  if (kentatAvaimet.length !== 1) {
+    return sisalto;
+  }
+
+  const kentta = kentatAvaimet[0];
+  const entry = sisalto.kentat[kentta];
+  const perustelu = (huomautus ?? "").trim();
+  if (perustelu.length < 12) {
+    return sisalto;
+  }
+
+  return {
+    ...sisalto,
+    kentat: {},
+    tyhjennys: {
+      taulu: "hankkeet",
+      rivi_id: hankeId,
+      kentta,
+      perustelu,
+      lahde_url: entry?.lahde_url ?? lahdeUrl ?? null,
+      lainaus: entry?.lainaus ?? null,
+      merkitse_ei_lahdetta: sisalto.tyhjennys?.merkitse_ei_lahdetta ?? false,
+    },
+  };
+}
+
+/** Näytettävä tyhjennys (oikea tai päätelty virheellisestä muodosta). */
+export function haeKenttaTyhjennysNakyma(
+  sisalto: EhdotusSisalto,
+  hankeId: string,
+  huomautus: string | null,
+  lahdeUrl: string | null,
+): KenttaTyhjennysNakyma | null {
+  const korjattu = normalisoiKenttaTyhjennysSisalto(sisalto, hankeId, huomautus, lahdeUrl);
+  if (!korjattu.tyhjennys?.kentta) {
+    return null;
+  }
+  return {
+    tyhjennys: korjattu.tyhjennys,
+    korjattuMuodosta: !sisalto.tyhjennys?.kentta?.trim(),
+  };
+}
+
 function onHttpsUrl(arvo: string): boolean {
   return /^https?:\/\//.test(arvo);
 }

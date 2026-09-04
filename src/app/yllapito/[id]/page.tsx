@@ -22,7 +22,7 @@ import {
   ryhtiVaroitukset,
 } from "@/lib/ryhti-vertailu";
 import { haeKirjautunutKayttaja } from "@/lib/supabase/palvelin";
-import type { EhdotusSisalto } from "@/lib/ehdotus";
+import { haeKenttaTyhjennysNakyma, type EhdotusSisalto } from "@/lib/ehdotus";
 import {
   haeHankkeetYllapitoon,
   supabasePalvelinAvainAsetettu,
@@ -85,6 +85,10 @@ export default async function EhdotusSivu({
   const maaraajaLahteet = sisalto.maaraaja?.lahteet ?? [];
   const maaraajaLahteetPuuttuu =
     sisalto.maaraaja != null && !Array.isArray(sisalto.maaraaja.lahteet);
+  const tyhjennysNakyma =
+    ehdotus.tyyppi === "kentta_tyhjennys" && ehdotus.hanke_id
+      ? haeKenttaTyhjennysNakyma(sisalto, ehdotus.hanke_id, ehdotus.huomautus, ehdotus.lahde_url)
+      : null;
 
   let linkkiKenttaArvo: string | null = null;
   let linkkiLahde: {
@@ -761,34 +765,42 @@ export default async function EhdotusSivu({
         </section>
       ) : null}
 
-      {sisalto.tyhjennys ? (
+      {tyhjennysNakyma ? (
         <section className="mt-6" aria-labelledby="tyhjennys-otsikko">
           <h2 id="tyhjennys-otsikko" className="text-xl font-semibold">
             Kentän tyhjennys
           </h2>
+          {tyhjennysNakyma.korjattuMuodosta ? (
+            <p className="mt-2 text-sm text-muted" role="status">
+              Ehdotus on virheellisessä muodossa (kentät ilman tyhjennys-lohkoa). Hyväksyntä
+              korjaa muodon automaattisesti.
+            </p>
+          ) : null}
           <p className="mt-2 leading-relaxed">
-            {HANKE_KENTTA_NIMET[sisalto.tyhjennys.kentta] ?? sisalto.tyhjennys.kentta}
+            {HANKE_KENTTA_NIMET[tyhjennysNakyma.tyhjennys.kentta] ?? tyhjennysNakyma.tyhjennys.kentta}
             {" — "}
             poistetaan julkaistu arvo ja lähteet.
           </p>
           <p className="mt-2 text-sm">
-            <strong className="font-medium">Perustelu:</strong> {sisalto.tyhjennys.perustelu}
+            <strong className="font-medium">Perustelu:</strong> {tyhjennysNakyma.tyhjennys.perustelu}
           </p>
-          {sisalto.tyhjennys.lahde_url ? (
+          {tyhjennysNakyma.tyhjennys.lahde_url ? (
             <p className="mt-2 text-sm">
               <a
-                href={sisalto.tyhjennys.lahde_url}
+                href={tyhjennysNakyma.tyhjennys.lahde_url}
                 className="text-link underline"
                 rel="noopener noreferrer"
               >
-                {sisalto.tyhjennys.lahde_url}
+                {tyhjennysNakyma.tyhjennys.lahde_url}
               </a>
             </p>
           ) : null}
-          {sisalto.tyhjennys.lainaus ? (
-            <blockquote className="mt-2 border-l-2 pl-3 text-sm">{sisalto.tyhjennys.lainaus}</blockquote>
+          {tyhjennysNakyma.tyhjennys.lainaus ? (
+            <blockquote className="mt-2 border-l-2 pl-3 text-sm">
+              {tyhjennysNakyma.tyhjennys.lainaus}
+            </blockquote>
           ) : null}
-          {sisalto.tyhjennys.merkitse_ei_lahdetta ? (
+          {tyhjennysNakyma.tyhjennys.merkitse_ei_lahdetta ? (
             <p className="mt-2 text-sm text-muted">
               Hyväksynnän jälkeen merkitään: julkista lähdettä ei ole.
             </p>
