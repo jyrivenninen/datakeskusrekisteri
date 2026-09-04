@@ -123,9 +123,14 @@ Authorization: Bearer <SUPABASE_AGENTTI_KEY>
 1. `POST /rest/v1/muutosehdotukset` → tallenna palautuva `id`
 2. `POST /rest/v1/rpc/julkaise_agentti_ehdotus` body: `{"p_ehdotus_id": "<uuid>"}`
 3. Tulkitse vastaus:
-   - `tila: hyvaksytty` + `julkaistu_kentat` → julkaistu, odottaa ylläpidon kuittausta
+   - `tila: hyvaksytty` + `julkaistu_kentat` → julkaistu rekisteriin (`merkitty: koneen_ehdottama`).
+     Tieto näkyy sivustolla, mutta **ei ole vielä ihmisen kuittaama**. Ylläpito käsittelee
+     sen erillisessä [kuittausnäkymässä](https://www.datakeskusrekisteri.fi/yllapito/kuittaus).
    - `tila: odottaa` + `jonossa_kentat` → osa tai kaikki vaatii ihmisen hyväksynnän
    - `viesti` → kirjaa raporttiin
+
+**Kuittaus ei ole agentin tehtävä.** Et voi kutsua `kuitaa_hanke_kentat` etkä asettaa
+`merkitty: ihmisen_vahvistama` / `luottamus: vahvistettu` automaattijulkaisussa.
 
 ---
 
@@ -189,6 +194,57 @@ kaatuu hyväksynnässä tai näyttää ylläpidossa tyhjältä.
 
 ---
 
+## Kuittaus ja luottamus — mitä agentin pitää tietää
+
+Automaattijulkaisun (`julkaise_agentti_ehdotus`) jälkeen kentät ovat julkisia, mutta
+merkitty **`koneen_ehdottama`**. Ylläpitäjä käsittelee ne sivulla **`/yllapito/kuittaus`**
+( ei `/yllapito` -pääsivun muutosehdotusjono ).
+
+### Kaksi erillistä asiaa
+
+| | **Luottamus** | **Kuittaus** |
+|---|---------------|--------------|
+| **Mitä tarkoittaa** | Kuinka varma lähde on (`vahvistettu` / `epavarma` / `ristiriitainen`) | Ihminen on nähnyt automaattijulkaistun tiedon |
+| **Kuka asettaa julkaisussa** | Agentti (`epavarma` oletus) | Ei kukaan — odottaa ylläpitoa |
+| **Kuka voi muuttaa jälkeenpäin** | Ylläpito voi muuttaa **ilman kuittausta** | Vain ylläpito (merkitsee `ihmisen_vahvistama`) |
+| **Agentin rooli** | Aseta rehellisesti lähteen mukaan | **Ei mitään** — älä yritä kuittaa |
+
+### Mitä ylläpito tekee kuittausnäkymässä
+
+1. **Suodattaa** (kunta, hankkeesta vastaava, kenttä, täydennykset …).
+2. **Valitsee rivit** kuittaukseen (checkboxit ovat oletuksena tyhjiä).
+3. **Massakuittaus** vaatii vähintään yhden suodattimen — ilman suodatinta kuittausta ei voi tehdä.
+4. Voi muuttaa **luottamusta** erikseen (esim. nostaa `epavarma` → `ristiriitainen` ilman kuittausta).
+
+### Mitä tämä tarkoittaa agentille
+
+- **Julkaistu ≠ varmennettu.** Raportissa erota:
+  - «Julkaistu automaattisesti» (näkyy sivustolla, odottaa kuittausta)
+  - «Jonossa hyväksyntää» (`muutosehdotukset`, ei vielä sivustolla)
+- Käytä **`luottamus: epavarma`** lähes aina. Viranomaisasiakirjastakin `epavarma` —
+  `vahvistettu` tulee vasta ylläpidon kuittauksella.
+- Jos lähde on epäselvä tai ristiriitainen, **`epavarma`** riittää; ylläpito voi merkitä
+  `ristiriitainen` kuittausnäkymässä.
+- **Älä toista** samaa täydennystä vain siksi, että kuittausta ei ole tehty — kenttä on jo julkaistu.
+- Jos arvo on väärä **kuittauksen jälkeen**, se on **`korjaus`** (jono), ei uusi `taydennys`.
+
+### Ajoraporttiin
+
+Kirjaa erikseen:
+
+```markdown
+### Odottaa kuittausta (julkaistu, koneen_ehdottama)
+| Hanke | Kenttä | Arvo | Luottamus | Lähde |
+
+### Jonossa (ei vielä julkaistu)
+| Hanke | Tyyppi | Kenttä | Syy |
+```
+
+Suositukset ylläpidolle: «N kenttää odottaa kuittausta — suodata esim. täydennykset
+kuittausnäkymässä», ei «hyväksy muutosehdotuksia».
+
+---
+
 ### `uusi_hanke` — uusi hankesivu
 
 **Milloin:** Hanketta ei ole rekisterissä (tarkista duplikaatit ensin).
@@ -210,7 +266,8 @@ toimijalla — täydennä olemassa olevaa.
 **Ehto:** `sisalto.kentat` + täysi lähdepakko (`lahde_url`, `lainaus`, `luottamus`).
 
 **Työnkulku:** INSERT → RPC. Julkaisee automaattisesti, jos lähde kelpaa ja kenttä
-ei ole varmennettu.
+ei ole varmennettu. Julkaistu kenttä menee **kuittausjonoon** (`/yllapito/kuittaus`),
+ei muutosehdotusjonoon.
 
 **Älä käytä kun:**
 - Kentässä on jo arvo → `korjaus` tai `kentta_tyhjennys`
@@ -580,9 +637,11 @@ Jokaisessa `sisalto.kentat`-kentässä:
 
 - `lahde_sivu`: PDF-sivunumero; verkkosivulle jätä pois tai null.
 - `lainaus`: pakollinen paitsi jos kohtaa ei voi poimia.
-- `luottamus`: käytä aina `epavarma` agentilta.
+- `luottamus`: käytä aina `epavarma` agentilta (tai `ristiriitainen` vain jos lähteet
+  ovat selvästi ristiriidassa — harvinaista). **Älä** käytä `vahvistettu`.
 - Toimijan markkinointi / DCM-uutiset → `epavarma` + huomautus lähteen luonteesta.
-- Viranomaisen asiakirja → silti `epavarma` julkaisussa (varmennettu vasta ylläpidon kuittauksella).
+- Viranomaisen asiakirja → silti `epavarma` julkaisussa (`vahvistettu` vasta ylläpidon
+  kuittauksella kuittausnäkymässä).
 - Lähde sanoo «noin», «approximately», «n.» → `epavarma` + lainaus sisältää sanan
   «noin»/«approximately». Älä julkaise tarkkaa lukua, jos lähde ei anna tarkkaa lukua;
   jätä kenttä tyhjäksi tai ehdota `kentta_tyhjennys` olemassa olevalle tarkalle luvulle.
@@ -798,16 +857,20 @@ Jokaisessa `sisalto.kentat`-kentässä:
 ### Uudet hankkeet
 | Nimi | Kunta | Vaihe | Julkaistu? | Hanke-URL tai syy |
 
-### Täydennykset (julkaistu)
-| Hanke | Kenttä | Arvo | Lähde |
+### Täydennykset (julkaistu, odottaa kuittausta)
+| Hanke | Kenttä | Arvo | Luottamus | Lähde |
 
-### Jonossa (vaatii ihmisen)
+### Jonossa (vaatii ihmisen hyväksynnän ennen julkaisua)
 | Hanke | Tyyppi | Kenttä / asia | Syy |
 
 Tyypit jonossa: `korjaus`, `paatos`, `maaraaja`, `kentta_tarkistus`, `kentta_tyhjennys`.
 **Älä** listaa `ristiriita_havaintoa`, jos loit sen vahingossa.
 
+**Huom:** «Julkaistu»-taulukko ≠ «Jonossa»-taulukko. Täydennykset ovat usein jo sivustolla
+ja odottavat vain kuittausta — älä ehdota niiden uudelleenhyväksyntää muutosehdotusjonossa.
+
 ### Suositukset ylläpidolle
+- Kuittausnäkymä (`/yllapito/kuittaus`): N kenttää odottaa — esim. suodata täydennykset
 - Asiakirjoja lisättäväksi luetteloon: …
 - Epäselvät duplikaatit: …
 
@@ -826,6 +889,7 @@ Tyypit jonossa: `korjaus`, `paatos`, `maaraaja`, `kentta_tarkistus`, `kentta_tyh
 - [ ] Duplikaattihanketta ei luotu epäilemättä
 - [ ] Varmennettuja kenttiä ei ylikirjoitettu
 - [ ] «Noin»-lähteestä ei julkaistu tarkkaa lukua ilman perustetta
+- [ ] Raportissa erotettu «julkaistu / odottaa kuittausta» ja «jonossa»
 - [ ] Raportti toimitettu käyttäjälle
 - [ ] 60 min rajaa ei ylitetty (itsenäinen ajo)
 ```
