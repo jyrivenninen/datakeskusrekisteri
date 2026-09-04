@@ -46,6 +46,8 @@ export const MAARAAJA_NIMET: Record<MaaraajaTyyppi, string> = {
   yva_ohjelma: "YVA-ohjelma",
   yva_selostus: "YVA-selostus",
   kaavamuistutus: "Kaavamuistutus",
+  kaava_oas: "Kaava-OAS",
+  kaava_luonnos: "Kaavaluonnos",
   valitusaika: "Valitusaika",
   kuulutus: "Kuulutus",
   muu: "Muu määräaika",

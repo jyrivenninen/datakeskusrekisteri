@@ -163,7 +163,7 @@ kaatuu hyväksynnässä tai näyttää ylläpidossa tyhjältä.
                     │
                     ├─ Viranomaispäätös (lupa, YVA-ratkaisu)? ──► paatos (EI RPC)
                     │
-                    ├─ Vaikuttamisen määräaika (YVA-mielipide, kaavamuistutus, valitusaika)?
+                    ├─ Vaikuttamisen määräaika (YVA, kaava-OAS/luonnos, kaavamuistutus, valitusaika)?
                     │     └─ Selkeä päättymispäivä lähteessä ──► maaraaja (EI RPC)
                     │
                     ├─ Kenttä TYHJÄ rekisterissä?
@@ -410,7 +410,7 @@ Jokaisessa `sisalto.paatos.lahteet[]`-rivissä pakolliset kentät:
 ### `maaraaja` — vaikuttamisen määräaika
 
 **Milloin:** Lähde ilmoittaa **tulevan** vaikuttamisen määräajan: YVA-mielipide,
-YVA-ohjelma/-selostus, kaavamuistutus, valitusaika, kuulutus.
+YVA-ohjelma/-selostus, kaava-OAS, kaavaluonnos, kaavamuistutus, valitusaika, kuulutus.
 
 **Työnkulku:** INSERT **ilman RPC:tä**. Aina ylläpidon hyväksyntä. Hyväksynnän jälkeen
 rivi näkyy hankesivulla; **etusivulla** vain, jos `paattyy_pvm` on tänään tai myöhemmin.
@@ -429,6 +429,8 @@ rivi näkyy hankesivulla; **etusivulla** vain, jos `paattyy_pvm` on tänään ta
 | `yva_ohjelma` | YVA-ohjelman lausuntokierros |
 | `yva_selostus` | YVA-selostuksen lausuntokierros |
 | `kaavamuistutus` | Kaavamuistutuksen jättöaika |
+| `kaava_oas` | Kaava-OAS:n (osallistumis- ja arviointisuunnitelma) lausuntokierros |
+| `kaava_luonnos` | Asemakaavaluonnoksen tai muun kaavaluonnosvaiheen lausuntokierros |
 | `valitusaika` | Valitus-/oikaisuaika |
 | `kuulutus` | Muu virallinen kuulutus |
 | `muu` | Muu selkeästi nimetty määräaika |
@@ -664,8 +666,19 @@ sinne suoraan. Sen sijaan:
 - Käytä asiakirjan URL:ia **kentän lähteenä** (`lahde_url`, `lahde_sivu`, `lainaus`).
 - Merkittävä viranomaispäätös (lupa, YVA-ratkaisu, kaavahyväksyntä) → erillinen
   `paatos`-ehdotus **aina ilman RPC:tä**.
-- Tuleva vaikuttamisen määräaika (YVA-mielipide, kaavamuistutus, valitusaika) →
+- Tuleva vaikuttamisen määräaika (YVA, kaava-OAS/luonnos, kaavamuistutus, valitusaika) →
   `maaraaja`-ehdotus **aina ilman RPC:tä**.
+
+**Ajankohtainen tilanne (2026-09-04):** Avoimet YVA-ikkunat rekisterissä / etusivulla
+(`paattyy_pvm` ≥ tänään): Mykänmaa 10.9.2026 (`yva_ohjelma`), Sarvenmaa 14.9.2026
+(`yva_ohjelma`). Älä luo uusia YVA-määräaikaehdotuksia näille, jos sama päättymispäivä
+on jo julkaistu. Päättyneet: Herva 20.7., Järvenpää selostus 8.7., Jokela selostus 21.8.,
+Muhos ohjelma 10/2025 — piilota vanhentuneet ylläpidossa tarvittaessa, älä lisää uudelleen.
+
+Kaavamääräajat (schema tukee nyt `kaava_oas` ja `kaava_luonnos`): Halsua Lestijärventie OAS
+n. 28.9.2026 → `kaava_oas`; Salo Riikki asemakaavaluonnos n. 9.10.2026 → `kaava_luonnos`.
+Luo `maaraaja`-ehdotus vain, jos lähde antaa selkeän päättymispäivän ja riviä ei ole jo
+julkaistuna samalla tyypillä ja päivämäärällä.
 - Jos asiakirja on tärkeä mutta ei liity yhteen kenttään, mainitse raportin
   «Suositukset ylläpidolle» -osiossa: URL + miksi kannattaa lisätä asiakirjaluetteloon.
 

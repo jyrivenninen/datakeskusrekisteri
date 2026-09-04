@@ -36,6 +36,8 @@ export const MAARAAJA_TYYPIT = [
   "yva_ohjelma",
   "yva_selostus",
   "kaavamuistutus",
+  "kaava_oas",
+  "kaava_luonnos",
   "valitusaika",
   "kuulutus",
   "muu",
