@@ -3,6 +3,7 @@ import { HankeLaskurit } from "@/komponentit/hanke-laskurit";
 import { Kartta, type Karttamerkki } from "@/komponentit/kartta";
 import { VaiheMerkki } from "@/komponentit/vaihe-merkki";
 import { laskeHankeYhteenveto } from "@/lib/hanke-yhteenveto";
+import { haeFingridTuotantoNyt } from "@/lib/fingrid";
 import { hankeVaihtelvalit } from "@/lib/hanke-vaihtelvali";
 import { aktiivisetEhdot, hankkeetSuodatusPolku, onAktiivinenSuodatus } from "@/lib/haku";
 import { MAARAAJA_NIMET, hankeTehoMw, muotoilePvm, muotoileVaihtelvali } from "@/lib/naytto";
@@ -24,8 +25,8 @@ export default async function Etusivu({
   const params = await searchParams;
   const suodatus = parsiSuodatus(params);
   const { user: yllapitaja } = await haeYllapitaja();
-  const [{ hankkeet, johdot, virhe: hankeVirhe }, { maaraajat, virhe: maaraajaVirhe }] =
-    await Promise.all([haeJulkaistutHankkeet(suodatus), haeTulevatMaaraajat()]);
+  const [{ hankkeet, johdot, virhe: hankeVirhe }, { maaraajat, virhe: maaraajaVirhe }, fingridTuotanto] =
+    await Promise.all([haeJulkaistutHankkeet(suodatus), haeTulevatMaaraajat(), haeFingridTuotantoNyt()]);
 
   const { hankkeet: kaikkiHankkeet } = await haeJulkaistutHankkeet();
   const kunnat = [...new Set(kaikkiHankkeet.map((hanke) => hanke.kunta))].sort((a, b) =>
@@ -53,6 +54,18 @@ export default async function Etusivu({
       },
     ];
   });
+
+  const hankkeetTehoMw = merkit.reduce((summa, merkki) => summa + (merkki.tehoMw ?? 0), 0);
+  const hankkeetTehoLkm = merkit.filter((merkki) => merkki.tehoMw != null && merkki.tehoMw > 0).length;
+  const tuotantoVertailu =
+    fingridTuotanto?.kokonaistuotanto_mw != null
+      ? {
+          fingridMw: fingridTuotanto.kokonaistuotanto_mw,
+          fingridPaivitetty: fingridTuotanto.paivitetty_pvm,
+          hankkeetMw: hankkeetTehoMw,
+          hankkeetTehoLkm,
+        }
+      : null;
 
   return (
     <main id="sisalto" className="sivuleveys flex-1 py-10">
@@ -150,7 +163,7 @@ export default async function Etusivu({
           Kartta
         </h3>
         <p className="mt-2 text-sm leading-relaxed text-muted">
-          Nuppineulan väri kertoo hankkeen vaiheen. Keltainen halo kuvaa
+          Loitolla näkyy piste, lähellä nuppineula (vaiheen väri). Keltainen halo kuvaa
           IT-tehoa (tai kokonaistehoa). Lähizoomissa näkyy myös hankealue ja
           sähkönsiirtoreitti, jos ne on merkitty.
         </p>
@@ -160,6 +173,7 @@ export default async function Etusivu({
             sovitaSuomeen
             luokka="min-h-[28rem] h-[min(70svh,42rem)]"
             kartallaLkm={merkit.length}
+            tuotantoVertailu={tuotantoVertailu}
             vaiheLkm={Object.fromEntries(
               HANKE_VAIHEET.map((vaihe) => [
                 vaihe,

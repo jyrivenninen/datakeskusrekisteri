@@ -59,6 +59,9 @@ const TEHO_PEITTO_PYSAKIT: [number, number][] = [
 
 const OLETUSVARI = "#1d4ed8";
 
+/** Zoom, josta nuppineula korvaa piste-merkin (sama kuin alueiden näyttöraja). */
+const NUPPINEULA_ZOOM_MIN = 9;
+
 /** Manner-Suomi ja Ahvenanmaa, hieman reunusta. */
 const SUOMI_RAJAT: [[number, number], [number, number]] = [
   [19.08, 59.45],
@@ -308,14 +311,20 @@ function alueenKeskipiste(alue: SijaintiAlue): { lon: number; lat: number } | nu
   return { lon: summaLon / lkm, lat: summaLat / lkm };
 }
 
-function luoNuppineula(merkki: Karttamerkki) {
+function luoKarttamerkki(merkki: Karttamerkki) {
   const el = document.createElement("a");
   el.href = `/hankkeet/${merkki.id}`;
-  el.className = "kartta-nuppineula";
+  el.className = "kartta-merkki kartta-merkki--piste";
   const vaihenimi = merkki.vaihe ? VAIHE_NIMET[merkki.vaihe] : null;
   el.setAttribute("aria-label", vaihenimi ? `${merkki.nimi}, ${vaihenimi}` : merkki.nimi);
 
+  const piste = document.createElement("span");
+  piste.className = "kartta-merkki-piste";
+  piste.setAttribute("aria-hidden", "true");
+  piste.style.backgroundColor = vaiheVari(merkki.vaihe);
+
   const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+  svg.setAttribute("class", "kartta-merkki-nuppineula");
   svg.setAttribute("viewBox", "0 0 28 40");
   svg.setAttribute("width", "28");
   svg.setAttribute("height", "40");
@@ -338,8 +347,15 @@ function luoNuppineula(merkki: Karttamerkki) {
 
   svg.appendChild(tausta);
   svg.appendChild(keskus);
+  el.appendChild(piste);
   el.appendChild(svg);
   return el;
+}
+
+function paivitaMerkkiTyyppi(elementti: HTMLElement, zoom: number) {
+  const nuppineula = zoom >= NUPPINEULA_ZOOM_MIN;
+  elementti.classList.toggle("kartta-merkki--nuppineula", nuppineula);
+  elementti.classList.toggle("kartta-merkki--piste", !nuppineula);
 }
 
 function piirraTehoHalotKerros(
@@ -401,6 +417,7 @@ export function Kartta({
   vaiheLkm,
   kartallaLkm,
   sovitaSuomeen = false,
+  tuotantoVertailu = null,
 }: {
   merkit: Karttamerkki[];
   luokka?: string;
@@ -408,6 +425,13 @@ export function Kartta({
   /** Kartalla näkyvien hankkeiden kokonaismäärä (legendin otsikko). */
   kartallaLkm?: number;
   sovitaSuomeen?: boolean;
+  /** Fingridin kokonaistuotanto vs. kartalla näkyvien hankkeiden teho (MW). */
+  tuotantoVertailu?: {
+    fingridMw: number;
+    fingridPaivitetty: string;
+    hankkeetMw: number;
+    hankkeetTehoLkm: number;
+  } | null;
 }) {
   const kehys = useRef<HTMLDivElement>(null);
   const karttaRef = useRef<MapLibre | null>(null);
@@ -438,9 +462,12 @@ export function Kartta({
     const naytaTeho = naytaTehoHalotRef.current;
     if (!kartta || !svgTeho || !svgGeometria) return;
 
+    const zoom = kartta.getZoom();
     for (const [, { marker, vaihe }] of merkkiluokatRef.current) {
+      const elementti = marker.getElement();
       const nayta = merkkiNakyvissa({ vaihe }, aktiviset);
-      marker.getElement().style.display = nayta ? "" : "none";
+      elementti.style.display = nayta ? "" : "none";
+      if (nayta) paivitaMerkkiTyyppi(elementti, zoom);
     }
 
     const suodatetut = suodataMerkit(merkitNyt, aktiviset);
@@ -516,9 +543,11 @@ export function Kartta({
             ? alueenKeskipiste(merkki.alue)
             : null;
       if (!keskipiste) continue;
-      const marker = new Marker({ element: luoNuppineula(merkki), anchor: "bottom" })
+      const elementti = luoKarttamerkki(merkki);
+      const marker = new Marker({ element: elementti, anchor: "center" })
         .setLngLat([keskipiste.lon, keskipiste.lat])
         .addTo(kartta);
+      paivitaMerkkiTyyppi(elementti, kartta.getZoom());
       merkkiluokatRef.current.set(merkki.id, { marker, vaihe: merkki.vaihe });
     }
 
@@ -599,6 +628,26 @@ export function Kartta({
   }
 
   const nakyvatLkm = suodataMerkit(merkit, aktivisetVaiheet).length;
+
+  const fingridTeksti =
+    tuotantoVertailu != null
+      ? new Intl.NumberFormat("fi-FI", { maximumFractionDigits: 0 }).format(
+          tuotantoVertailu.fingridMw,
+        )
+      : null;
+  const hankkeetTeksti =
+    tuotantoVertailu != null
+      ? new Intl.NumberFormat("fi-FI", { maximumFractionDigits: 0 }).format(
+          tuotantoVertailu.hankkeetMw,
+        )
+      : null;
+  const suhdeTeksti =
+    tuotantoVertailu != null && tuotantoVertailu.fingridMw > 0
+      ? new Intl.NumberFormat("fi-FI", {
+          maximumFractionDigits: 1,
+          minimumFractionDigits: 1,
+        }).format((tuotantoVertailu.hankkeetMw / tuotantoVertailu.fingridMw) * 100)
+      : null;
 
   return (
     <div className="flex flex-col gap-4 sm:flex-row sm:items-stretch">
@@ -698,6 +747,46 @@ export function Kartta({
             <span>1000+ MW</span>
           </div>
         </div>
+        {tuotantoVertailu ? (
+          <div className="mt-4 border-t border-border pt-3">
+            <h4 className="text-sm font-semibold">Tuotanto vs. datakeskukset</h4>
+            <p className="mt-1 text-xs leading-relaxed text-muted">
+              Fingridin mitaama Suomen kokonaistuotanto verrattuna valittujen
+              hankkeiden yhteistehoön kartalla (IT-teho tai kokonaisteho).
+            </p>
+            <dl className="mt-2 space-y-2 text-sm">
+              <div>
+                <dt className="text-muted">Suomen tuotanto nyt</dt>
+                <dd className="font-semibold tabular-nums">{fingridTeksti} MW</dd>
+              </div>
+              <div>
+                <dt className="text-muted">
+                  Valitut hankkeet kartalla ({tuotantoVertailu.hankkeetTehoLkm}/
+                  {kartallaLkm ?? nakyvatLkm} hanketta merkitty)
+                </dt>
+                <dd className="font-semibold tabular-nums">{hankkeetTeksti} MW</dd>
+              </div>
+              {suhdeTeksti ? (
+                <div>
+                  <dt className="text-muted">Suhde (hankkeet / tuotanto)</dt>
+                  <dd className="font-semibold tabular-nums">{suhdeTeksti} %</dd>
+                </div>
+              ) : null}
+            </dl>
+            <p className="mt-2 text-xs text-muted">
+              Fingrid {new Date(tuotantoVertailu.fingridPaivitetty).toLocaleString("fi-FI")}.
+              Tuotanto on valtakunnallista; kartta ei vielä näytä tuotannon sijaintia.
+            </p>
+            <p className="mt-1 text-xs">
+              <a
+                href="https://data.fingrid.fi/datasets/192"
+                className="text-link underline"
+              >
+                Lähde: Fingrid, kokonaistuotanto
+              </a>
+            </p>
+          </div>
+        ) : null}
       </aside>
     </div>
   );

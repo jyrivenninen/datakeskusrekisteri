@@ -135,15 +135,52 @@ dialog.esiversio-ilmoitus::backdrop {
   outline-offset: 2px;
 }
 
-.kartta-nuppineula {
+.kartta-merkki {
   display: block;
-  filter: drop-shadow(0 1px 2px rgb(0 0 0 / 0.45));
+  position: relative;
+  width: 0;
+  height: 0;
   outline: none;
 }
 
-.kartta-nuppineula:focus-visible {
+.kartta-merkki-piste {
+  position: absolute;
+  left: 0;
+  top: 0;
+  box-sizing: border-box;
+  width: 10px;
+  height: 10px;
+  border: 2px solid #fff;
+  border-radius: 50%;
+  box-shadow: 0 1px 2px rgb(0 0 0 / 0.45);
+  transform: translate(-50%, -50%);
+}
+
+.kartta-merkki-nuppineula {
+  position: absolute;
+  left: 0;
+  top: 0;
+  display: block;
+  filter: drop-shadow(0 1px 2px rgb(0 0 0 / 0.45));
+  transform: translate(-50%, -100%);
+}
+
+.kartta-merkki--piste .kartta-merkki-nuppineula {
+  display: none;
+}
+
+.kartta-merkki--nuppineula .kartta-merkki-piste {
+  display: none;
+}
+
+.kartta-merkki:focus-visible {
   outline: 2px solid var(--link);
   outline-offset: 2px;
+}
+
+.kartta-merkki:focus-visible .kartta-merkki-piste,
+.kartta-merkki:focus-visible .kartta-merkki-nuppineula {
+  outline: none;
 }
 
 /* MML-laattojen ulkopuoli: meren sävy, ei mustaa. */
@@ -208,8 +245,13 @@ summary:active {
   filter: brightness(0.9);
 }
 
-.kartta-nuppineula:active {
-  transform: scale(0.9);
+.kartta-merkki:active .kartta-merkki-piste,
+.kartta-merkki:active .kartta-merkki-nuppineula {
+  transform: translate(-50%, -50%) scale(0.9);
+}
+
+.kartta-merkki--nuppineula:active .kartta-merkki-nuppineula {
+  transform: translate(-50%, -100%) scale(0.9);
 }
 
 .maplibregl-ctrl-group button:active {
@@ -223,8 +265,15 @@ form[aria-busy="true"] input[type="checkbox"] {
 
 @media (prefers-reduced-motion: reduce) {
   button:active:not(:disabled),
-  .kartta-nuppineula:active,
   .maplibregl-ctrl-group button:active {
     transform: none;
+  }
+
+  .kartta-merkki--piste:active .kartta-merkki-piste {
+    transform: translate(-50%, -50%);
+  }
+
+  .kartta-merkki--nuppineula:active .kartta-merkki-nuppineula {
+    transform: translate(-50%, -100%);
   }
 }
