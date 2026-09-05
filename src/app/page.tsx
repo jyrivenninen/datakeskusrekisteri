@@ -1,17 +1,19 @@
 import { HankkeetSuodatin } from "@/komponentit/hankkeet-suodatin";
 import { HankeLaskurit } from "@/komponentit/hanke-laskurit";
-import { Kartta, type Karttamerkki } from "@/komponentit/kartta";
+import { Kartta } from "@/komponentit/kartta";
 import { VaiheMerkki } from "@/komponentit/vaihe-merkki";
 import { laskeHankeYhteenveto } from "@/lib/hanke-yhteenveto";
-import { FINGRID_TUOTANTO_DATASETIT, haeFingridTuotantoNyt } from "@/lib/fingrid";
 import { hankeVaihtelvalit } from "@/lib/hanke-vaihtelvali";
-import { aktiivisetEhdot, hankkeetSuodatusPolku, onAktiivinenSuodatus } from "@/lib/haku";
-import { MAARAAJA_NIMET, hankeTehoMw, muotoilePvm, muotoileVaihtelvali } from "@/lib/naytto";
-import { HANKE_VAIHEET } from "@/lib/supabase/tietokanta";
-import { ratkaiseMaakunta } from "@/lib/maakunta";
+import {
+  aktiivisetEhdot,
+  hankkeetSuodatusPolku,
+  karttaSuodatusPolku,
+  onAktiivinenSuodatus,
+} from "@/lib/haku";
+import { haeKarttaSivuData } from "@/lib/kartta-sivu";
+import { MAARAAJA_NIMET, muotoilePvm, muotoileVaihtelvali } from "@/lib/naytto";
 import {
   haeJulkaistutHankkeet,
-  haeKuntaMaakuntaKartta,
   haeTulevatMaaraajat,
   parsiSuodatus,
 } from "@/lib/supabase/kyselyt";
@@ -28,55 +30,21 @@ export default async function Etusivu({
   const suodatus = parsiSuodatus(params);
   const { user: yllapitaja } = await haeYllapitaja();
   const [
-    { hankkeet, johdot, virhe: hankeVirhe },
+    { hankkeet, virhe: hankeVirhe },
     { maaraajat, virhe: maaraajaVirhe },
-    fingridTuotanto,
-    kuntaMaakunnat,
+    karttaData,
   ] = await Promise.all([
     haeJulkaistutHankkeet(suodatus),
     haeTulevatMaaraajat(),
-    haeFingridTuotantoNyt(),
-    haeKuntaMaakuntaKartta(),
+    haeKarttaSivuData(suodatus),
   ]);
+
+  const { merkit, tuotantoVertailu, vaiheLkm } = karttaData;
 
   const { hankkeet: kaikkiHankkeet } = await haeJulkaistutHankkeet();
   const kunnat = [...new Set(kaikkiHankkeet.map((hanke) => hanke.kunta))].sort((a, b) =>
     a.localeCompare(b, "fi"),
   );
-
-  const merkit: Karttamerkki[] = hankkeet.flatMap((hanke) => {
-    const alue = hanke.sijainti_alue?.type === "Polygon" ? hanke.sijainti_alue : null;
-    const hankeJohdot = johdot
-      .filter((johto) => johto.hanke_id === hanke.id && johto.reitti)
-      .map((johto) => ({ id: johto.id, reitti: johto.reitti! }));
-    if (hanke.sijainti_lat == null && hanke.sijainti_lon == null && !alue && hankeJohdot.length === 0) {
-      return [];
-    }
-    return [
-      {
-        id: hanke.id,
-        nimi: hanke.nimi,
-        vaihe: hanke.vaihe,
-        lat: hanke.sijainti_lat != null ? Number(hanke.sijainti_lat) : undefined,
-        lon: hanke.sijainti_lon != null ? Number(hanke.sijainti_lon) : undefined,
-        tehoMw: hankeTehoMw(hanke),
-        maakunta: ratkaiseMaakunta(hanke.maakunta, hanke.kunta, kuntaMaakunnat).maakunta,
-        alue,
-        johdot: hankeJohdot,
-      },
-    ];
-  });
-
-  const tuotantoVertailu =
-    fingridTuotanto?.kokonaistuotanto_mw != null
-      ? {
-          fingridMw: fingridTuotanto.kokonaistuotanto_mw,
-          fingridPaivitetty: fingridTuotanto.paivitetty_pvm,
-          tuotantotyypit: fingridTuotanto.rivit.filter(
-            (rivi) => rivi.datasetId !== FINGRID_TUOTANTO_DATASETIT.kokonaistuotanto.id,
-          ),
-        }
-      : null;
 
   return (
     <main id="sisalto" className="sivuleveys flex-1 py-10">
@@ -182,15 +150,10 @@ export default async function Etusivu({
           <Kartta
             merkit={merkit}
             sovitaSuomeen
-            luokka="min-h-[28rem] h-[min(70svh,42rem)]"
             kartallaLkm={merkit.length}
             tuotantoVertailu={tuotantoVertailu}
-            vaiheLkm={Object.fromEntries(
-              HANKE_VAIHEET.map((vaihe) => [
-                vaihe,
-                merkit.filter((merkki) => merkki.vaihe === vaihe).length,
-              ]),
-            )}
+            vaiheLkm={vaiheLkm}
+            taydennNayttoHref={karttaSuodatusPolku(suodatus)}
           />
         </div>
         <noscript>

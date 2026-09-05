@@ -49,6 +49,12 @@ export function hankkeetSuodatusPolku(suodatus: HankeSuodatus): string {
   return qs ? `/?${qs}` : "/";
 }
 
+/** Polku koko näytön kartalle samoilla suodattimilla. */
+export function karttaSuodatusPolku(suodatus: HankeSuodatus): string {
+  const qs = hankkeetSuodatusParametrit(suodatus).toString();
+  return qs ? `/kartta?${qs}` : "/kartta";
+}
+
 export type AktiivinenEhto = {
   avain: string;
   nimi: string;

@@ -342,9 +342,7 @@ function yhdistaMaakuntaGeo(
   };
 }
 
-function lisaaMaakuntaKerros(kartta: MapLibre, geo: FeatureCollection) {
-  if (kartta.getSource("maakunnat")) return;
-  kartta.addSource("maakunnat", { type: "geojson", data: geo });
+function lisaaMaakuntaKerrokset(kartta: MapLibre) {
   kartta.addLayer({
     id: "maakunnat-taytto",
     type: "fill",
@@ -353,10 +351,10 @@ function lisaaMaakuntaKerros(kartta: MapLibre, geo: FeatureCollection) {
       "fill-color": [
         "interpolate",
         ["linear"],
-        ["get", "tehoMw"],
+        ["coalesce", ["get", "tehoMw"], 0],
         ...MAAKUNTA_TEHO_VARI_PYSAKIT.flatMap(([mw, vari]) => [mw, vari]),
       ],
-      "fill-opacity": ["case", [">", ["get", "tehoMw"], 0], 0.44, 0.1],
+      "fill-opacity": ["case", [">", ["coalesce", ["get", "tehoMw"], 0], 0], 0.52, 0.08],
     },
   });
   kartta.addLayer({
@@ -364,10 +362,36 @@ function lisaaMaakuntaKerros(kartta: MapLibre, geo: FeatureCollection) {
     type: "line",
     source: "maakunnat",
     paint: {
-      "line-color": "#475569",
-      "line-width": 1,
+      "line-color": "#334155",
+      "line-width": 1.2,
     },
   });
+}
+
+/** Odottaa tyylin latautumista — addSource ennen load-tapahtumaa kaataa hiljaa koko ketjun. */
+function paivitaMaakuntaKerros(
+  kartta: MapLibre,
+  pohja: FeatureCollection,
+  suodatetut: Karttamerkki[],
+  nayta: boolean,
+) {
+  if (!kartta.isStyleLoaded()) return;
+
+  const data = yhdistaMaakuntaGeo(pohja, laskeMaakuntaYhteenvedot(suodatetut));
+  const lahde = kartta.getSource("maakunnat") as GeoJSONSource | undefined;
+
+  if (!lahde) {
+    kartta.addSource("maakunnat", { type: "geojson", data });
+    lisaaMaakuntaKerrokset(kartta);
+  } else {
+    lahde.setData(data);
+  }
+
+  const nakyvyys = nayta ? "visible" : "none";
+  if (kartta.getLayer("maakunnat-taytto")) {
+    kartta.setLayoutProperty("maakunnat-taytto", "visibility", nakyvyys);
+    kartta.setLayoutProperty("maakunnat-reuna", "visibility", nakyvyys);
+  }
 }
 
 function kaikkiVaiheetAktiviset(): Set<HankeVaihe> {
@@ -502,6 +526,8 @@ export function Kartta({
   kartallaLkm,
   sovitaSuomeen = false,
   tuotantoVertailu = null,
+  asettelu = "upotettu",
+  taydennNayttoHref,
 }: {
   merkit: Karttamerkki[];
   luokka?: string;
@@ -515,6 +541,10 @@ export function Kartta({
     fingridPaivitetty: string;
     tuotantotyypit: { nimi: string; mw: number; lahde_url: string }[];
   } | null;
+  /** Upotettu etusivulle tai koko näytön karttasivu. */
+  asettelu?: "upotettu" | "koko";
+  /** Linkki koko näytön kartalle; näytetään vain upotetussa tilassa. */
+  taydennNayttoHref?: string;
 }) {
   const kehys = useRef<HTMLDivElement>(null);
   const karttaRef = useRef<MapLibre | null>(null);
@@ -562,14 +592,8 @@ export function Kartta({
     piirraAlueetJaJohdot(kartta, svgGeometria, suodatetut);
 
     const pohja = maakuntaGeoRef.current;
-    if (pohja && kartta.getSource("maakunnat")) {
-      const naytaMaakunta = naytaMaakunnatRef.current;
-      kartta.setLayoutProperty("maakunnat-taytto", "visibility", naytaMaakunta ? "visible" : "none");
-      kartta.setLayoutProperty("maakunnat-reuna", "visibility", naytaMaakunta ? "visible" : "none");
-      if (naytaMaakunta) {
-        const data = yhdistaMaakuntaGeo(pohja, laskeMaakuntaYhteenvedot(suodatetut));
-        (kartta.getSource("maakunnat") as GeoJSONSource).setData(data);
-      }
+    if (pohja) {
+      paivitaMaakuntaKerros(kartta, pohja, suodatetut, naytaMaakunnatRef.current);
     }
   };
 
@@ -640,11 +664,10 @@ export function Kartta({
       .then((geo) => {
         if (karttaRef.current !== kartta) return;
         maakuntaGeoRef.current = geo;
-        lisaaMaakuntaKerros(kartta, geo);
         paivitaNakyvyys();
       })
       .catch(() => {
-        /* Kartta toimii ilman maakuntakerrosta */
+        /* GeoJSON-lataus epäonnistui; kartta toimii ilman maakuntakerrosta */
       });
 
     merkkiluokatRef.current = new Map();
@@ -711,6 +734,14 @@ export function Kartta({
 
     kartta.on("move", paivita);
     kartta.on("resize", paivita);
+
+    const kokoTarkkailija = new ResizeObserver(() => {
+      kartta.resize();
+      paivita();
+    });
+    const karttaKehys = kehys.current;
+    if (karttaKehys) kokoTarkkailija.observe(karttaKehys);
+
     if (kartta.loaded()) {
       rajaaKartta();
     } else {
@@ -718,6 +749,7 @@ export function Kartta({
     }
 
     return () => {
+      kokoTarkkailija.disconnect();
       kartta.off("move", paivita);
       kartta.off("resize", paivita);
       merkkiluokat.forEach((merkki) => merkki.remove());
@@ -768,15 +800,41 @@ export function Kartta({
       : null;
 
   return (
-    <div className="flex flex-col gap-4 sm:flex-row sm:items-stretch">
+    <div
+      className={
+        asettelu === "koko"
+          ? "flex h-full min-h-0 flex-col gap-4 sm:flex-row sm:items-stretch"
+          : "flex flex-col gap-4 sm:flex-row sm:items-stretch"
+      }
+    >
       <div
-        ref={kehys}
-        className={`relative min-h-[18rem] w-full min-w-0 flex-1 overflow-hidden rounded border border-border ${luokka ?? "h-[28rem]"}`}
-        role="region"
-        aria-label="Hankkeiden sijaintikartta"
-      />
+        className={
+          asettelu === "koko"
+            ? "relative min-h-0 min-w-0 flex-1"
+            : "relative min-h-[min(70svh,42rem)] min-w-0 flex-1 sm:min-h-[28rem]"
+        }
+      >
+        {taydennNayttoHref ? (
+          <a
+            href={taydennNayttoHref}
+            className="absolute left-2 top-2 z-10 rounded border border-border bg-surface/95 px-2.5 py-1.5 text-xs font-medium text-foreground shadow-sm backdrop-blur-sm hover:bg-surface"
+          >
+            Avaa koko näytöllä
+          </a>
+        ) : null}
+        <div
+          ref={kehys}
+          className={`absolute inset-0 overflow-hidden rounded border border-border ${luokka ?? ""}`}
+          role="region"
+          aria-label="Hankkeiden sijaintikartta"
+        />
+      </div>
       <aside
-        className="sm:w-52 sm:shrink-0"
+        className={
+          asettelu === "koko"
+            ? "sm:max-h-full sm:w-52 sm:shrink-0 sm:overflow-y-auto"
+            : "sm:w-52 sm:shrink-0"
+        }
         aria-labelledby="kartta-selite-otsikko"
       >
         <h3 id="kartta-selite-otsikko" className="text-sm font-semibold">

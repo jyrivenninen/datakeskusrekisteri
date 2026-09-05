@@ -315,7 +315,7 @@ export default async function HankeSivu({
         <h2 id="kartta-otsikko" className="sr-only">
           Sijainti kartalla
         </h2>
-        <Kartta merkit={merkit} luokka="h-[22rem] sm:h-[28rem]" />
+        <Kartta merkit={merkit} />
         {alue ? (
           <p className="mt-2 text-sm text-muted">
             Sininen alue on merkitty{" "}
