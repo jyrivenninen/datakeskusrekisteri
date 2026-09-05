@@ -57,14 +57,29 @@ type FingridVastaus = {
 };
 
 function fingridAvain(): string | null {
-  const avain = process.env.FINGRID_API_AVAIN?.trim();
+  let avain = process.env.FINGRID_API_AVAIN?.trim();
+  if (!avain) return null;
+  if (
+    (avain.startsWith('"') && avain.endsWith('"')) ||
+    (avain.startsWith("'") && avain.endsWith("'"))
+  ) {
+    avain = avain.slice(1, -1).trim();
+  }
   return avain || null;
 }
 
+function fingridDataRivit(runko: unknown): FingridDataRivi[] {
+  if (Array.isArray(runko)) return runko as FingridDataRivi[];
+  if (!runko || typeof runko !== "object") return [];
+  const kääritty = runko as FingridVastaus & FingridDataRivi;
+  if (Array.isArray(kääritty.data)) return kääritty.data;
+  if (kääritty.value != null) return [kääritty];
+  return [];
+}
+
 function viimeisinArvo(runko: unknown, datasetId: number): { mw: number; pvm: string } | null {
-  if (!runko || typeof runko !== "object") return null;
-  const data = (runko as FingridVastaus).data;
-  if (!Array.isArray(data) || data.length === 0) return null;
+  const data = fingridDataRivit(runko);
+  if (data.length === 0) return null;
   const rivi =
     [...data].reverse().find((r) => r.datasetId === datasetId || r.datasetId == null) ??
     data[data.length - 1];

@@ -62,6 +62,14 @@ const OLETUSVARI = "#1d4ed8";
 /** Zoom, josta nuppineula korvaa piste-merkin (sama kuin alueiden näyttöraja). */
 const NUPPINEULA_ZOOM_MIN = 9;
 
+/** Piste skaalautuu zoomin mukaan (px), jotta se ei katoa teho-halojen alle. */
+const PISTE_KOKO_PYSAKIT: [number, number][] = [
+  [4, 10],
+  [6, 12],
+  [8, 16],
+  [8.9, 18],
+];
+
 /** Manner-Suomi ja Ahvenanmaa, hieman reunusta. */
 const SUOMI_RAJAT: [[number, number], [number, number]] = [
   [19.08, 59.45],
@@ -356,6 +364,11 @@ function paivitaMerkkiTyyppi(elementti: HTMLElement, zoom: number) {
   const nuppineula = zoom >= NUPPINEULA_ZOOM_MIN;
   elementti.classList.toggle("kartta-merkki--nuppineula", nuppineula);
   elementti.classList.toggle("kartta-merkki--piste", !nuppineula);
+  const piste = elementti.querySelector<HTMLElement>(".kartta-merkki-piste");
+  if (piste && !nuppineula) {
+    const koko = interpoloiLuku(PISTE_KOKO_PYSAKIT, zoom);
+    piste.style.setProperty("--piste-koko", `${koko}px`);
+  }
 }
 
 function piirraTehoHalotKerros(
