@@ -310,6 +310,16 @@ function suodataMerkit(merkit: Karttamerkki[], aktiviset: Set<HankeVaihe>): Kart
   return merkit.filter((merkki) => merkkiNakyvissa(merkki, aktiviset));
 }
 
+/** Sininen–violetti: erottuu kelta-oranssista IT-teho-halosta. */
+const MAAKUNTA_TEHO_VARI_PYSAKIT: [number, string][] = [
+  [0, "#f1f5f9"],
+  [1, "#dbeafe"],
+  [30, "#93c5fd"],
+  [100, "#6366f1"],
+  [300, "#8b5cf6"],
+  [1000, "#5b21b6"],
+];
+
 function yhdistaMaakuntaGeo(
   pohja: FeatureCollection,
   yhteenvedot: MaakuntaYhteenveto[],
@@ -344,20 +354,9 @@ function lisaaMaakuntaKerros(kartta: MapLibre, geo: FeatureCollection) {
         "interpolate",
         ["linear"],
         ["get", "tehoMw"],
-        0,
-        "#e2e8f0",
-        1,
-        "#fef9c3",
-        30,
-        "#fde047",
-        100,
-        "#fbbf24",
-        300,
-        "#f59e0b",
-        1000,
-        "#ea580c",
+        ...MAAKUNTA_TEHO_VARI_PYSAKIT.flatMap(([mw, vari]) => [mw, vari]),
       ],
-      "fill-opacity": ["case", [">", ["get", "tehoMw"], 0], 0.45, 0.12],
+      "fill-opacity": ["case", [">", ["get", "tehoMw"], 0], 0.44, 0.1],
     },
   });
   kartta.addLayer({
@@ -365,7 +364,7 @@ function lisaaMaakuntaKerros(kartta: MapLibre, geo: FeatureCollection) {
     type: "line",
     source: "maakunnat",
     paint: {
-      "line-color": "#64748b",
+      "line-color": "#475569",
       "line-width": 1,
     },
   });
@@ -876,8 +875,8 @@ export function Kartta({
             <span
               className="mt-0.5 inline-block h-3 w-3 shrink-0 rounded-sm border-2"
               style={{
-                backgroundColor: naytaMaakunnat ? "#fbbf24" : "transparent",
-                borderColor: naytaMaakunnat ? "#64748b" : "#94a3b8",
+                backgroundColor: naytaMaakunnat ? "#6366f1" : "transparent",
+                borderColor: naytaMaakunnat ? "#475569" : "#94a3b8",
                 opacity: naytaMaakunnat ? 0.55 : 1,
               }}
               aria-hidden="true"
@@ -885,10 +884,23 @@ export function Kartta({
             <span className="min-w-0 flex-1">
               <span className="block text-sm font-semibold">Maakunnittain</span>
               <span className="mt-1 block text-xs leading-relaxed">
-                Väri = valittujen vaiheiden hankkeiden yhteisteho maakunnassa.
+                Sininen alue = valittujen vaiheiden yhteisteho maakunnassa. Keltainen
+                halo = saman hankkeen teho pisteessä.
               </span>
             </span>
           </button>
+          <div
+            className={`mt-2 h-3 w-full rounded border border-border transition-opacity ${naytaMaakunnat ? "" : "opacity-40"}`}
+            style={{
+              background: "linear-gradient(to right, #dbeafe, #93c5fd, #6366f1, #8b5cf6, #5b21b6)",
+            }}
+            role="img"
+            aria-hidden="true"
+          />
+          <div className="mt-1 flex justify-between text-xs tabular-nums text-muted">
+            <span>0 MW</span>
+            <span>1000+ MW</span>
+          </div>
           {maakuntaYhteenvedot.length > 0 ? (
             <ul className="mt-2 max-h-40 space-y-1 overflow-y-auto text-xs">
               {maakuntaYhteenvedot.map((yhteenveto) => (

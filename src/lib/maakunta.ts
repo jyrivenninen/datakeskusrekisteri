@@ -2,7 +2,7 @@
 
 export const MAAKUNTA_RAJAT_URL = "/geo/maakunnat.geojson";
 export const MAAKUNTA_RAJAT_LAHDE_URL =
-  "https://geo.stat.fi/geoserver/tilastointialueet/wfs?service=WFS&version=2.0.0&request=GetFeature&typeName=tilastointialueet:maakunta4500k&outputFormat=application/json";
+  "https://geo.stat.fi/geoserver/tilastointialueet/wfs?service=WFS&version=2.0.0&request=GetFeature&typeName=tilastointialueet:maakunta4500k&outputFormat=application/json&srsName=urn:ogc:def:crs:EPSG::4326";
 export const MAAKUNTA_RAJAT_LAHDE_NIMI = "Tilastokeskus, maakuntarajat (1:4 500 000)";
 
 export type MaakuntaYhteenveto = {
