@@ -134,7 +134,27 @@ Kantaverkon liityntäpisteet, siirtokapasiteetti, kulutus- ja
 tuotantotiedot. Datakeskushankkeen kannalta olennaista: hankkeet
 sijoittuvat sinne, missä on liityntämahdollisuus.
 
-Käyttö toistaiseksi taustatietona, ei automaattisena kenttätäyttönä.
+Todennus 5.9.2026:
+- juuri: `https://data.fingrid.fi/api`
+- avain: rekisteröidy `https://data.fingrid.fi/instructions` → header
+  `x-api-key` (ei URL-parametria, ei gitiin). Ympäristömuuttuja:
+  `FINGRID_API_AVAIN`
+- rajoitus: 10 000 kyselyä/vrk, vähintään 2 s väli per avain
+- kokonaistuotanto reaaliaika (MW): dataset **192**
+  (`GET /datasets/192/data/latest`)
+- ydinvoima 188, tuulivoima 245, vesivoima 191 — sama rajapinta
+- lisenssi CC BY 4.0
+
+**Huom:** Fingridin tuotantosarjat ovat valtakunnallisia, ei
+maakuntakohtaisia. Karttakerroksen sijaintitieto vaatii erillisen lähteen
+(esim. Tilastokeskuksen aluejako).
+
+Toteutus:
+- `src/lib/fingrid.ts` — palvelinpuolen haku etusivun karttavertailuun
+- tuleva: `agents/lahteet/fingrid.ts` (lahdeajot), tuotantotyypit
+  erikseen, liityntäpisteet kartalle
+
+Käyttö toistaiseksi taustatietona ja vertailuna, ei automaattisena kenttätäyttönä.
 
 ## 7A.5.5 Syken hakemistorajapinta
 

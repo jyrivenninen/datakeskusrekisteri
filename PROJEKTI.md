@@ -183,6 +183,24 @@ Tarkennettu: `PROJEKTI-lisays-vaihe7.md`. Luku 7A.5 ja uusi 7A.6:
 ### Vaihe 8 — Avoin data
 - [ ] JSON-endpointit, CSV-lataus, lisenssitieto (suositus: CC BY 4.0)
 
+### Tuleva kehitys (ei vielä toteutuksjärjestyksessä)
+
+Nämä nousivat käytön ja integraatioiden myötä; tarkennetaan ennen toteutusta.
+
+**Ryhti / Syke**
+- [ ] OGC-sivukoko 1000 → 3000 (Syken sallima enimmäisraja)
+- [ ] Dokumentoi rakennus- ja osoitelatauspaketit (GeoJSON/CSV/GPKG `.gz`) `PROJEKTI-lisays-7A5-rajapinnat.md`:hen
+- [ ] Rakennus/osoite-vuorokausipaketit geokoodauksen tai rakennustunnistuksen tueksi (erillinen feature)
+
+**Kartta ja energia**
+- [x] Fingrid 7A.5.4 v1: reaaliaikainen kokonaistuotanto vs. valittujen hankkeiden teho kartalla
+- [ ] Fingrid: tuotantotyypit (tuuli/ydin/vesi) ja liityntäpisteet kartalle
+- [ ] Maakuntakohtainen sähköntuotanto karttakerroksena (Tilastokeskuksen aluejako; Fingrid on valtakunnallista)
+
+**Muut**
+- [ ] 7A.4 Vanhentumisvahti
+- [ ] 7A.6 Kuntien esityslistat
+
 ---
 
 ## 7. Mitä Cursor tekee itse, mitä kysyy, mitä pyytää käyttäjältä
