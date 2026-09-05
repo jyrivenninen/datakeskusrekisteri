@@ -9,7 +9,7 @@
  * CC BY 4.0. Ei massa-ajoa, ei maksullista sopimuspalvelua.
  * Taustakartta on jo käyttöliittymässä. Maastotietokantaa ei ladata kokonaan.
  *
- * Kirjoittaa muutosehdotukset (mml_havainto), rajapinta_tiivisteet ja lahdeajot.
+ * Käänteinen geokoodaus julkaistuille sijainneille → mml_havainto vain jos kunta eroaa.
  */
 import { createHash } from "node:crypto";
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
@@ -231,15 +231,18 @@ async function main() {
       const muuttunut = vanha != null && vanha.tiiviste !== tiivisteArvo;
       const uusiTiiviste = vanha == null;
 
+      // Jonoon vain kuntaero (7A.5.3). Tyhjä geokoodaus ja tiiviste-muutos eivät ole toimenpiteitä.
       const havainnot: string[] = [];
-      if (!kohde) {
-        havainnot.push("Käänteinen geokoodaus ei palauttanut kohdetta tälle sijainnille.");
-      } else if (mmlKunta && merkkijono(hanke.kunta) && !vertaaNimi(String(hanke.kunta), mmlKunta)) {
+      if (
+        kohde &&
+        mmlKunta &&
+        merkkijono(hanke.kunta) &&
+        !vertaaNimi(String(hanke.kunta), mmlKunta)
+      ) {
         havainnot.push(
           `Rekisterissä kunta on ${hanke.kunta}, MML-geokoodauksessa localadmin on ${mmlKunta}.`,
         );
       }
-      if (muuttunut) havainnot.push("MML-geokoodauksen tietue muuttui edelliseen hakuun verrattuna.");
 
       const ehdotusTarvitaan = havainnot.length > 0 && !jonossa.has(tietue);
 
@@ -281,7 +284,7 @@ async function main() {
         kirjattu += 1;
       } else if (kuiva && ehdotusTarvitaan) {
         kirjattu += 1;
-        console.log("kuiva: kuntaero tai puuttuva osuma");
+        console.log("kuiva: kuntaero");
       }
 
       await odota(viiveMs());
