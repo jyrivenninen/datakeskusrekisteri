@@ -55,15 +55,11 @@ export default async function Etusivu({
     ];
   });
 
-  const hankkeetTehoMw = merkit.reduce((summa, merkki) => summa + (merkki.tehoMw ?? 0), 0);
-  const hankkeetTehoLkm = merkit.filter((merkki) => merkki.tehoMw != null && merkki.tehoMw > 0).length;
   const tuotantoVertailu =
     fingridTuotanto?.kokonaistuotanto_mw != null
       ? {
           fingridMw: fingridTuotanto.kokonaistuotanto_mw,
           fingridPaivitetty: fingridTuotanto.paivitetty_pvm,
-          hankkeetMw: hankkeetTehoMw,
-          hankkeetTehoLkm,
         }
       : null;
 

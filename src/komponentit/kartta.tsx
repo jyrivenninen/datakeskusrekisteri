@@ -438,12 +438,10 @@ export function Kartta({
   /** Kartalla näkyvien hankkeiden kokonaismäärä (legendin otsikko). */
   kartallaLkm?: number;
   sovitaSuomeen?: boolean;
-  /** Fingridin kokonaistuotanto vs. kartalla näkyvien hankkeiden teho (MW). */
+  /** Fingridin valtakunnallinen kokonaistuotanto; hankeluvut lasketaan vaihesuodattimesta. */
   tuotantoVertailu?: {
     fingridMw: number;
     fingridPaivitetty: string;
-    hankkeetMw: number;
-    hankkeetTehoLkm: number;
   } | null;
 }) {
   const kehys = useRef<HTMLDivElement>(null);
@@ -640,7 +638,12 @@ export function Kartta({
     );
   }
 
-  const nakyvatLkm = suodataMerkit(merkit, aktivisetVaiheet).length;
+  const nakyvatMerkit = suodataMerkit(merkit, aktivisetVaiheet);
+  const nakyvatLkm = nakyvatMerkit.length;
+  const hankkeetMw = nakyvatMerkit.reduce((summa, merkki) => summa + (merkki.tehoMw ?? 0), 0);
+  const hankkeetTehoLkm = nakyvatMerkit.filter(
+    (merkki) => merkki.tehoMw != null && merkki.tehoMw > 0,
+  ).length;
 
   const fingridTeksti =
     tuotantoVertailu != null
@@ -650,16 +653,14 @@ export function Kartta({
       : null;
   const hankkeetTeksti =
     tuotantoVertailu != null
-      ? new Intl.NumberFormat("fi-FI", { maximumFractionDigits: 0 }).format(
-          tuotantoVertailu.hankkeetMw,
-        )
+      ? new Intl.NumberFormat("fi-FI", { maximumFractionDigits: 0 }).format(hankkeetMw)
       : null;
   const suhdeTeksti =
     tuotantoVertailu != null && tuotantoVertailu.fingridMw > 0
       ? new Intl.NumberFormat("fi-FI", {
           maximumFractionDigits: 1,
           minimumFractionDigits: 1,
-        }).format((tuotantoVertailu.hankkeetMw / tuotantoVertailu.fingridMw) * 100)
+        }).format((hankkeetMw / tuotantoVertailu.fingridMw) * 100)
       : null;
 
   return (
@@ -764,8 +765,9 @@ export function Kartta({
           <div className="mt-4 border-t border-border pt-3">
             <h4 className="text-sm font-semibold">Tuotanto vs. datakeskukset</h4>
             <p className="mt-1 text-xs leading-relaxed text-muted">
-              Fingridin mitaama Suomen kokonaistuotanto verrattuna valittujen
-              hankkeiden yhteistehoön kartalla (IT-teho tai kokonaisteho).
+              Fingridin mitaama Suomen kokonaistuotanto verrattuna kartalla
+              valittujen vaiheiden hankkeiden yhteitehoon (IT-teho tai
+              kokonaisteho).
             </p>
             <dl className="mt-2 space-y-2 text-sm">
               <div>
@@ -774,8 +776,8 @@ export function Kartta({
               </div>
               <div>
                 <dt className="text-muted">
-                  Valitut hankkeet kartalla ({tuotantoVertailu.hankkeetTehoLkm}/
-                  {kartallaLkm ?? nakyvatLkm} hanketta merkitty)
+                  Valitut hankkeet kartalla ({hankkeetTehoLkm}/{nakyvatLkm}{" "}
+                  hanketta merkitty)
                 </dt>
                 <dd className="font-semibold tabular-nums">{hankkeetTeksti} MW</dd>
               </div>
