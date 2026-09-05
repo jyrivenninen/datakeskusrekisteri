@@ -6,10 +6,9 @@ import {
   Map as MapLibre,
   Marker,
   NavigationControl,
-  type GeoJSONSource,
   type StyleSpecification,
 } from "maplibre-gl";
-import type { FeatureCollection } from "geojson";
+import type { FeatureCollection, MultiPolygon, Polygon } from "geojson";
 import "maplibre-gl/dist/maplibre-gl.css";
 import {
   laskeMaakuntaYhteenvedot,
@@ -148,10 +147,6 @@ function taustakarttaTyyli(avain: string): StyleSpecification {
         attribution: "Maanmittauslaitos",
         maxzoom: 18,
       },
-      maakunnat: {
-        type: "geojson",
-        data: { type: "FeatureCollection", features: [] },
-      },
     },
     layers: [
       {
@@ -163,34 +158,6 @@ function taustakarttaTyyli(avain: string): StyleSpecification {
         id: "taustakartta",
         type: "raster",
         source: "taustakartta",
-      },
-      {
-        id: "maakunnat-taytto",
-        type: "fill",
-        source: "maakunnat",
-        paint: {
-          "fill-color": [
-            "interpolate",
-            ["linear"],
-            ["coalesce", ["get", "tehoMw"], 0],
-            ...MAAKUNTA_TEHO_VARI_PYSAKIT.flatMap(([mw, vari]) => [mw, vari]),
-          ],
-          "fill-opacity": [
-            "case",
-            [">", ["coalesce", ["get", "tehoMw"], 0], 0],
-            0.55,
-            0.06,
-          ],
-        },
-      },
-      {
-        id: "maakunnat-reuna",
-        type: "line",
-        source: "maakunnat",
-        paint: {
-          "line-color": "#334155",
-          "line-width": 1.2,
-        },
       },
     ],
   };
@@ -374,22 +341,66 @@ function yhdistaMaakuntaGeo(
   };
 }
 
-function paivitaMaakuntaKerros(
+function piirraMaakuntaGeometria(
   kartta: MapLibre,
+  svg: SVGSVGElement,
+  geometry: Polygon | MultiPolygon,
+  fill: string,
+  fillOpacity: number,
+  stroke?: string,
+) {
+  const polygonit =
+    geometry.type === "Polygon" ? [geometry.coordinates] : geometry.coordinates;
+
+  for (const polygon of polygonit) {
+    for (const rengas of polygon) {
+      if (rengas.length < 3) continue;
+      const d =
+        rengas
+          .map((piste, i) => {
+            const xy = kartta.project([piste[0], piste[1]]);
+            return `${i === 0 ? "M" : "L"}${xy.x.toFixed(1)} ${xy.y.toFixed(1)}`;
+          })
+          .join(" ") + " Z";
+      const polku = document.createElementNS("http://www.w3.org/2000/svg", "path");
+      polku.setAttribute("d", d);
+      polku.setAttribute("fill", fill);
+      polku.setAttribute("fill-opacity", fillOpacity.toFixed(2));
+      if (stroke) {
+        polku.setAttribute("stroke", stroke);
+        polku.setAttribute("stroke-width", "1.2");
+      }
+      svg.appendChild(polku);
+    }
+  }
+}
+
+/** SVG-kerros: sama ajitus kuin teho-haloilla (piirretään paivitaNakyvyys-kutsussa). */
+function piirraMaakuntaKerros(
+  kartta: MapLibre,
+  svg: SVGSVGElement,
   pohja: FeatureCollection,
   suodatetut: Karttamerkki[],
   nayta: boolean,
 ) {
-  if (!kartta.loaded()) return;
+  const kehys = kartta.getContainer();
+  const leveys = kehys.clientWidth;
+  const korkeus = kehys.clientHeight;
+  svg.setAttribute("width", String(leveys));
+  svg.setAttribute("height", String(korkeus));
+  svg.setAttribute("viewBox", `0 0 ${leveys} ${korkeus}`);
+  while (svg.firstChild) svg.removeChild(svg.firstChild);
+  if (!nayta) return;
 
   const data = yhdistaMaakuntaGeo(pohja, laskeMaakuntaYhteenvedot(suodatetut));
-  const lahde = kartta.getSource("maakunnat") as GeoJSONSource | undefined;
-  lahde?.setData(data);
 
-  const nakyvyys = nayta ? "visible" : "none";
-  if (kartta.getLayer("maakunnat-taytto")) {
-    kartta.setLayoutProperty("maakunnat-taytto", "visibility", nakyvyys);
-    kartta.setLayoutProperty("maakunnat-reuna", "visibility", nakyvyys);
+  for (const feature of data.features) {
+    const geom = feature.geometry;
+    if (!geom || (geom.type !== "Polygon" && geom.type !== "MultiPolygon")) continue;
+    const tehoMw = Number(feature.properties?.tehoMw ?? 0);
+    const vari = interpoloiVari(MAAKUNTA_TEHO_VARI_PYSAKIT, tehoMw);
+    const peitto = tehoMw > 0 ? 0.55 : 0.06;
+    piirraMaakuntaGeometria(kartta, svg, geom, vari, peitto, "#334155");
   }
 }
 
@@ -550,6 +561,7 @@ export function Kartta({
 }) {
   const kehys = useRef<HTMLDivElement>(null);
   const karttaRef = useRef<MapLibre | null>(null);
+  const svgMaakuntaRef = useRef<SVGSVGElement | null>(null);
   const svgTehoRef = useRef<SVGSVGElement | null>(null);
   const svgGeometriaRef = useRef<SVGSVGElement | null>(null);
   const merkitNytRef = useRef<Karttamerkki[]>([]);
@@ -573,12 +585,13 @@ export function Kartta({
 
   const paivitaNakyvyys = () => {
     const kartta = karttaRef.current;
+    const svgMaakunta = svgMaakuntaRef.current;
     const svgTeho = svgTehoRef.current;
     const svgGeometria = svgGeometriaRef.current;
     const merkitNyt = merkitNytRef.current;
     const aktiviset = aktivisetVaiheetRef.current;
     const naytaTeho = naytaTehoHalotRef.current;
-    if (!kartta || !svgTeho || !svgGeometria) return;
+    if (!kartta || !svgMaakunta || !svgTeho || !svgGeometria) return;
 
     const zoom = kartta.getZoom();
     for (const [, { marker, vaihe }] of merkkiluokatRef.current) {
@@ -589,10 +602,15 @@ export function Kartta({
     }
 
     const suodatetut = suodataMerkit(merkitNyt, aktiviset);
+    piirraMaakuntaKerros(
+      kartta,
+      svgMaakunta,
+      MAAKUNTA_POHJA_GEO,
+      suodatetut,
+      naytaMaakunnatRef.current,
+    );
     piirraTehoHalotKerros(kartta, svgTeho, suodatetut, naytaTeho);
     piirraAlueetJaJohdot(kartta, svgGeometria, suodatetut);
-
-    paivitaMaakuntaKerros(kartta, MAAKUNTA_POHJA_GEO, suodatetut, naytaMaakunnatRef.current);
   };
 
   const vaihdaVaihe = (vaihe: HankeVaihe) => {
@@ -635,22 +653,30 @@ export function Kartta({
     });
     kartta.addControl(new NavigationControl({ showCompass: false }), "top-right");
 
+    const svgMaakunta = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+    svgMaakunta.setAttribute("aria-hidden", "true");
+    svgMaakunta.setAttribute("class", "kartta-maakunta-kerros");
+    svgMaakunta.style.cssText =
+      "position:absolute;inset:0;z-index:0;pointer-events:none;overflow:visible;";
+
     const svgTeho = document.createElementNS("http://www.w3.org/2000/svg", "svg");
     svgTeho.setAttribute("aria-hidden", "true");
     svgTeho.setAttribute("class", "kartta-teho-kerros");
     svgTeho.style.cssText =
-      "position:absolute;inset:0;z-index:0;pointer-events:none;overflow:visible;";
+      "position:absolute;inset:0;z-index:1;pointer-events:none;overflow:visible;";
 
     const svgGeometria = document.createElementNS("http://www.w3.org/2000/svg", "svg");
     svgGeometria.setAttribute("aria-hidden", "true");
     svgGeometria.setAttribute("class", "kartta-geometria-kerros");
     svgGeometria.style.cssText =
-      "position:absolute;inset:0;z-index:1;pointer-events:none;overflow:visible;";
+      "position:absolute;inset:0;z-index:2;pointer-events:none;overflow:visible;";
 
+    kartta.getCanvasContainer().appendChild(svgMaakunta);
     kartta.getCanvasContainer().appendChild(svgTeho);
     kartta.getCanvasContainer().appendChild(svgGeometria);
 
     karttaRef.current = kartta;
+    svgMaakuntaRef.current = svgMaakunta;
     svgTehoRef.current = svgTeho;
     svgGeometriaRef.current = svgGeometria;
 
@@ -743,8 +769,10 @@ export function Kartta({
       kartta.off("resize", paivita);
       merkkiluokat.forEach((merkki) => merkki.remove());
       merkkiluokatRef.current.clear();
+      svgMaakunta.remove();
       svgTeho.remove();
       svgGeometria.remove();
+      svgMaakuntaRef.current = null;
       svgTehoRef.current = null;
       svgGeometriaRef.current = null;
       kartta.remove();
