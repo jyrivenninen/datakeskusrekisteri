@@ -442,6 +442,7 @@ export function Kartta({
   tuotantoVertailu?: {
     fingridMw: number;
     fingridPaivitetty: string;
+    tuotantotyypit: { nimi: string; mw: number; lahde_url: string }[];
   } | null;
 }) {
   const kehys = useRef<HTMLDivElement>(null);
@@ -774,6 +775,32 @@ export function Kartta({
                 <dt className="text-muted">Suomen tuotanto nyt</dt>
                 <dd className="font-semibold tabular-nums">{fingridTeksti} MW</dd>
               </div>
+              {tuotantoVertailu.tuotantotyypit.length > 0 ? (
+                <div>
+                  <dt className="text-muted">Tuotantotyypit (Fingrid)</dt>
+                  <dd>
+                    <ul className="mt-1 space-y-1 text-sm">
+                      {tuotantoVertailu.tuotantotyypit.map((tyyppi) => (
+                        <li key={tyyppi.lahde_url} className="flex justify-between gap-2">
+                          <a href={tyyppi.lahde_url} className="text-link underline">
+                            {tyyppi.nimi}
+                          </a>
+                          <span className="shrink-0 tabular-nums font-semibold">
+                            {new Intl.NumberFormat("fi-FI", {
+                              maximumFractionDigits: 0,
+                            }).format(tyyppi.mw)}{" "}
+                            MW
+                          </span>
+                        </li>
+                      ))}
+                    </ul>
+                    <p className="mt-1 text-xs text-muted">
+                      Valtakunnalliset sarjat; eivät kata koko kokonaistuotantoa eivätkä
+                      sijaintia.
+                    </p>
+                  </dd>
+                </div>
+              ) : null}
               <div>
                 <dt className="text-muted">
                   Valitut hankkeet kartalla ({hankkeetTehoLkm}/{nakyvatLkm}{" "}

@@ -105,28 +105,55 @@ async function haeDatasetViimeisin(
   return viimeisinArvo(runko, datasetId);
 }
 
-/** Hakee tuotanto-MW:n Fingridistä (kokonaistuotanto). Palauttaa null jos avain puuttuu. */
+const FINGRID_KYSELY_VALI_MS = 2100;
+
+function odota(ms: number): Promise<void> {
+  return new Promise((resolve) => {
+    setTimeout(resolve, ms);
+  });
+}
+
+/** Hakee tuotanto-MW:n Fingridistä. Palauttaa null jos avain puuttuu tai kokonaistuotanto epäonnistuu. */
 export async function haeFingridTuotantoNyt(): Promise<FingridTuotantoNakyma | null> {
   const avain = fingridAvain();
   if (!avain) return null;
 
-  const tieto = FINGRID_TUOTANTO_DATASETIT.kokonaistuotanto;
+  const jarjestys = [
+    "kokonaistuotanto",
+    "ydinvoima",
+    "tuulivoima",
+    "vesivoima",
+  ] as const satisfies readonly (keyof typeof FINGRID_TUOTANTO_DATASETIT)[];
+
   try {
-    const tulos = await haeDatasetViimeisin(tieto.id, avain);
-    if (!tulos) return null;
-    return {
-      paivitetty_pvm: tulos.pvm,
-      rivit: [
-        {
-          datasetId: tieto.id,
-          nimi: tieto.nimi,
-          mw: tulos.mw,
-          mittausPvm: tulos.pvm,
-          lahde_url: tieto.lahde_url,
-        },
-      ],
-      kokonaistuotanto_mw: tulos.mw,
-    };
+    const rivit: FingridTuotantoRivi[] = [];
+    let kokonaistuotanto_mw: number | null = null;
+    let paivitetty_pvm = new Date().toISOString();
+
+    for (let i = 0; i < jarjestys.length; i++) {
+      if (i > 0) await odota(FINGRID_KYSELY_VALI_MS);
+      const avainDataset = jarjestys[i];
+      const tieto = FINGRID_TUOTANTO_DATASETIT[avainDataset];
+      const tulos = await haeDatasetViimeisin(tieto.id, avain);
+      if (!tulos) {
+        if (avainDataset === "kokonaistuotanto") return null;
+        continue;
+      }
+      if (avainDataset === "kokonaistuotanto") {
+        kokonaistuotanto_mw = tulos.mw;
+        paivitetty_pvm = tulos.pvm;
+      }
+      rivit.push({
+        datasetId: tieto.id,
+        nimi: tieto.nimi,
+        mw: tulos.mw,
+        mittausPvm: tulos.pvm,
+        lahde_url: tieto.lahde_url,
+      });
+    }
+
+    if (kokonaistuotanto_mw == null) return null;
+    return { paivitetty_pvm, rivit, kokonaistuotanto_mw };
   } catch {
     return null;
   }

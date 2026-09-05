@@ -3,7 +3,7 @@ import { HankeLaskurit } from "@/komponentit/hanke-laskurit";
 import { Kartta, type Karttamerkki } from "@/komponentit/kartta";
 import { VaiheMerkki } from "@/komponentit/vaihe-merkki";
 import { laskeHankeYhteenveto } from "@/lib/hanke-yhteenveto";
-import { haeFingridTuotantoNyt } from "@/lib/fingrid";
+import { FINGRID_TUOTANTO_DATASETIT, haeFingridTuotantoNyt } from "@/lib/fingrid";
 import { hankeVaihtelvalit } from "@/lib/hanke-vaihtelvali";
 import { aktiivisetEhdot, hankkeetSuodatusPolku, onAktiivinenSuodatus } from "@/lib/haku";
 import { MAARAAJA_NIMET, hankeTehoMw, muotoilePvm, muotoileVaihtelvali } from "@/lib/naytto";
@@ -60,6 +60,9 @@ export default async function Etusivu({
       ? {
           fingridMw: fingridTuotanto.kokonaistuotanto_mw,
           fingridPaivitetty: fingridTuotanto.paivitetty_pvm,
+          tuotantotyypit: fingridTuotanto.rivit.filter(
+            (rivi) => rivi.datasetId !== FINGRID_TUOTANTO_DATASETIT.kokonaistuotanto.id,
+          ),
         }
       : null;
 
