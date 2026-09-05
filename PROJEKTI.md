@@ -195,8 +195,9 @@ Nämä nousivat käytön ja integraatioiden myötä; tarkennetaan ennen toteutus
 **Kartta ja energia**
 - [x] Fingrid 7A.5.4 v1: reaaliaikainen kokonaistuotanto vs. valittujen hankkeiden teho kartalla
 - [x] Fingrid v2: tuotantotyypit (tuuli/ydin/vesi) karttavalikossa
+- [x] Hankkeiden teho maakunnittain karttakerroksena (Tilastokeskuksen rajat + Syke-koodisto)
 - [ ] Fingrid: liityntäpisteet kartalle
-- [ ] Maakuntakohtainen sähköntuotanto karttakerroksena (Tilastokeskuksen aluejako; Fingrid on valtakunnallista)
+- [ ] Maakuntakohtainen sähköntuotanto karttakerroksena (Energiateollisuus, vuosittainen; Fingrid on valtakunnallista)
 
 **Muut**
 - [ ] 7A.4 Vanhentumisvahti

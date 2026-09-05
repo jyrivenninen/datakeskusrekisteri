@@ -23,6 +23,7 @@ import { hankeOsuvatKokoLuokkaan } from "@/lib/hanke-vaihtelvali";
 import { hankkeSopiiHakuun } from "@/lib/haku";
 import type { HankeSuodatus } from "@/lib/suodatus";
 import { vanhinVahvistettuPvm, viimeisinPaatos, tanaanSuomessa } from "@/lib/naytto";
+import { normalisoiKuntaNimi } from "@/lib/maakunta";
 
 /** Vanha tunniste yhdistämisen jälkeen. Julkinen ohjaustaulu. */
 export async function haeHankeOhjaus(vanhaId: string): Promise<string | null> {
@@ -170,6 +171,30 @@ export async function haeJulkaistutHankkeet(
     return { hankkeet, johdot, virhe: null };
   } catch (syy) {
     return { hankkeet: [], johdot: [], virhe: virheViesti(syy) };
+  }
+}
+
+/** Kunta → maakunta (Syken hakemisto). Karttakerroksen maakunnan ratkaisuun. */
+export async function haeKuntaMaakuntaKartta(): Promise<Map<string, string>> {
+  if (!supabaseYmparistoAsetettu()) return new Map();
+
+  try {
+    const supabase = await luoPalvelinAsiakas();
+    const { data, error } = await supabase
+      .from("kunnat")
+      .select("nimi, maakunta")
+      .eq("voimassa", true);
+    if (error) return new Map();
+
+    const kartta = new Map<string, string>();
+    for (const rivi of data ?? []) {
+      const maakunta = rivi.maakunta?.trim();
+      if (!maakunta) continue;
+      kartta.set(normalisoiKuntaNimi(rivi.nimi), maakunta);
+    }
+    return kartta;
+  } catch {
+    return new Map();
   }
 }
 

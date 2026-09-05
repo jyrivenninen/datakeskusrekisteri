@@ -6,9 +6,18 @@ import {
   Map as MapLibre,
   Marker,
   NavigationControl,
+  type GeoJSONSource,
   type StyleSpecification,
 } from "maplibre-gl";
+import type { FeatureCollection } from "geojson";
 import "maplibre-gl/dist/maplibre-gl.css";
+import {
+  laskeMaakuntaYhteenvedot,
+  MAAKUNTA_RAJAT_LAHDE_NIMI,
+  MAAKUNTA_RAJAT_LAHDE_URL,
+  MAAKUNTA_RAJAT_URL,
+  type MaakuntaYhteenveto,
+} from "@/lib/maakunta";
 import { VAIHE_NIMET, VAIHE_VARIT } from "@/lib/naytto";
 import { HANKE_VAIHEET, type HankeVaihe, type SijaintiAlue, type SijaintiViiva } from "@/lib/supabase/tietokanta";
 
@@ -20,6 +29,8 @@ export type Karttamerkki = {
   lon?: number;
   /** IT-teho tai fallback kokonaisteho (MW); halo piirretään vain jos > 0. */
   tehoMw?: number | null;
+  /** Maakunta hankkeen kentästä tai kunnan koodistosta. */
+  maakunta?: string | null;
   alue?: SijaintiAlue | null;
   johdot?: { id: string; reitti: SijaintiViiva }[];
 };
@@ -299,6 +310,67 @@ function suodataMerkit(merkit: Karttamerkki[], aktiviset: Set<HankeVaihe>): Kart
   return merkit.filter((merkki) => merkkiNakyvissa(merkki, aktiviset));
 }
 
+function yhdistaMaakuntaGeo(
+  pohja: FeatureCollection,
+  yhteenvedot: MaakuntaYhteenveto[],
+): FeatureCollection {
+  const tehot = new Map(yhteenvedot.map((yhteenveto) => [yhteenveto.nimi, yhteenveto]));
+  return {
+    ...pohja,
+    features: pohja.features.map((feature) => {
+      const nimi = String(feature.properties?.nimi ?? "");
+      const yhteenveto = tehot.get(nimi);
+      return {
+        ...feature,
+        properties: {
+          ...feature.properties,
+          tehoMw: yhteenveto?.tehoMw ?? 0,
+          hankkeetLkm: yhteenveto?.hankkeetLkm ?? 0,
+        },
+      };
+    }),
+  };
+}
+
+function lisaaMaakuntaKerros(kartta: MapLibre, geo: FeatureCollection) {
+  if (kartta.getSource("maakunnat")) return;
+  kartta.addSource("maakunnat", { type: "geojson", data: geo });
+  kartta.addLayer({
+    id: "maakunnat-taytto",
+    type: "fill",
+    source: "maakunnat",
+    paint: {
+      "fill-color": [
+        "interpolate",
+        ["linear"],
+        ["get", "tehoMw"],
+        0,
+        "#e2e8f0",
+        1,
+        "#fef9c3",
+        30,
+        "#fde047",
+        100,
+        "#fbbf24",
+        300,
+        "#f59e0b",
+        1000,
+        "#ea580c",
+      ],
+      "fill-opacity": ["case", [">", ["get", "tehoMw"], 0], 0.45, 0.12],
+    },
+  });
+  kartta.addLayer({
+    id: "maakunnat-reuna",
+    type: "line",
+    source: "maakunnat",
+    paint: {
+      "line-color": "#64748b",
+      "line-width": 1,
+    },
+  });
+}
+
 function kaikkiVaiheetAktiviset(): Set<HankeVaihe> {
   return new Set(HANKE_VAIHEET);
 }
@@ -453,13 +525,17 @@ export function Kartta({
   const merkkiluokatRef = useRef<Map<string, { marker: Marker; vaihe?: HankeVaihe }>>(new Map());
   const aktivisetVaiheetRef = useRef<Set<HankeVaihe>>(kaikkiVaiheetAktiviset());
   const naytaTehoHalotRef = useRef(true);
+  const naytaMaakunnatRef = useRef(true);
+  const maakuntaGeoRef = useRef<FeatureCollection | null>(null);
   const avain = process.env.NEXT_PUBLIC_MML_API_AVAIN;
   const merkitAvain = JSON.stringify(merkit);
   const [aktivisetVaiheet, setAktivisetVaiheet] = useState<Set<HankeVaihe>>(kaikkiVaiheetAktiviset);
   const [naytaTehoHalot, setNaytaTehoHalot] = useState(true);
+  const [naytaMaakunnat, setNaytaMaakunnat] = useState(true);
 
   aktivisetVaiheetRef.current = aktivisetVaiheet;
   naytaTehoHalotRef.current = naytaTehoHalot;
+  naytaMaakunnatRef.current = naytaMaakunnat;
 
   useEffect(() => {
     setAktivisetVaiheet(kaikkiVaiheetAktiviset());
@@ -485,6 +561,17 @@ export function Kartta({
     const suodatetut = suodataMerkit(merkitNyt, aktiviset);
     piirraTehoHalotKerros(kartta, svgTeho, suodatetut, naytaTeho);
     piirraAlueetJaJohdot(kartta, svgGeometria, suodatetut);
+
+    const pohja = maakuntaGeoRef.current;
+    if (pohja && kartta.getSource("maakunnat")) {
+      const naytaMaakunta = naytaMaakunnatRef.current;
+      kartta.setLayoutProperty("maakunnat-taytto", "visibility", naytaMaakunta ? "visible" : "none");
+      kartta.setLayoutProperty("maakunnat-reuna", "visibility", naytaMaakunta ? "visible" : "none");
+      if (naytaMaakunta) {
+        const data = yhdistaMaakuntaGeo(pohja, laskeMaakuntaYhteenvedot(suodatetut));
+        (kartta.getSource("maakunnat") as GeoJSONSource).setData(data);
+      }
+    }
   };
 
   const vaihdaVaihe = (vaihe: HankeVaihe) => {
@@ -501,7 +588,7 @@ export function Kartta({
 
   useEffect(() => {
     paivitaNakyvyys();
-  }, [aktivisetVaiheet, naytaTehoHalot]);
+  }, [aktivisetVaiheet, naytaTehoHalot, naytaMaakunnat]);
 
   useEffect(() => {
     if (!kehys.current || !avain) return;
@@ -545,6 +632,21 @@ export function Kartta({
     karttaRef.current = kartta;
     svgTehoRef.current = svgTeho;
     svgGeometriaRef.current = svgGeometria;
+
+    void fetch(MAAKUNTA_RAJAT_URL)
+      .then((vastaus) => {
+        if (!vastaus.ok) throw new Error("Maakuntarajat eivät latautuneet");
+        return vastaus.json() as Promise<FeatureCollection>;
+      })
+      .then((geo) => {
+        if (karttaRef.current !== kartta) return;
+        maakuntaGeoRef.current = geo;
+        lisaaMaakuntaKerros(kartta, geo);
+        paivitaNakyvyys();
+      })
+      .catch(() => {
+        /* Kartta toimii ilman maakuntakerrosta */
+      });
 
     merkkiluokatRef.current = new Map();
     for (const merkki of merkitNyt) {
@@ -645,6 +747,8 @@ export function Kartta({
   const hankkeetTehoLkm = nakyvatMerkit.filter(
     (merkki) => merkki.tehoMw != null && merkki.tehoMw > 0,
   ).length;
+  const maakuntaYhteenvedot = laskeMaakuntaYhteenvedot(nakyvatMerkit);
+  const maakunnatonLkm = nakyvatMerkit.filter((merkki) => !merkki.maakunta?.trim()).length;
 
   const fingridTeksti =
     tuotantoVertailu != null
@@ -761,6 +865,66 @@ export function Kartta({
             <span>1 MW</span>
             <span>1000+ MW</span>
           </div>
+        </div>
+        <div className="mt-4 border-t border-border pt-3">
+          <button
+            type="button"
+            className={`flex w-full items-start gap-2 rounded px-1 py-0.5 text-left transition-colors hover:bg-muted/30 ${naytaMaakunnat ? "" : "text-muted"}`}
+            aria-pressed={naytaMaakunnat}
+            onClick={() => setNaytaMaakunnat((edellinen) => !edellinen)}
+          >
+            <span
+              className="mt-0.5 inline-block h-3 w-3 shrink-0 rounded-sm border-2"
+              style={{
+                backgroundColor: naytaMaakunnat ? "#fbbf24" : "transparent",
+                borderColor: naytaMaakunnat ? "#64748b" : "#94a3b8",
+                opacity: naytaMaakunnat ? 0.55 : 1,
+              }}
+              aria-hidden="true"
+            />
+            <span className="min-w-0 flex-1">
+              <span className="block text-sm font-semibold">Maakunnittain</span>
+              <span className="mt-1 block text-xs leading-relaxed">
+                Väri = valittujen vaiheiden hankkeiden yhteisteho maakunnassa.
+              </span>
+            </span>
+          </button>
+          {maakuntaYhteenvedot.length > 0 ? (
+            <ul className="mt-2 max-h-40 space-y-1 overflow-y-auto text-xs">
+              {maakuntaYhteenvedot.map((yhteenveto) => (
+                <li
+                  key={yhteenveto.nimi}
+                  className="flex items-baseline justify-between gap-2 tabular-nums"
+                >
+                  <span className="min-w-0 truncate">{yhteenveto.nimi}</span>
+                  <span className="shrink-0 font-semibold">
+                    {new Intl.NumberFormat("fi-FI", { maximumFractionDigits: 0 }).format(
+                      yhteenveto.tehoMw,
+                    )}{" "}
+                    MW
+                    <span className="font-normal text-muted">
+                      {" "}
+                      ({yhteenveto.tehoLkm}/{yhteenveto.hankkeetLkm})
+                    </span>
+                  </span>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="mt-2 text-xs text-muted">
+              Ei hankkeita maakunnittain valituilla vaiheilla.
+            </p>
+          )}
+          {maakunnatonLkm > 0 ? (
+            <p className="mt-2 text-xs text-muted">
+              {maakunnatonLkm} hankkeella maakuntaa ei voitu ratkaista.
+            </p>
+          ) : null}
+          <p className="mt-2 text-xs">
+            <a href={MAAKUNTA_RAJAT_LAHDE_URL} className="text-link underline">
+              Lähde: {MAAKUNTA_RAJAT_LAHDE_NIMI}
+            </a>
+          </p>
         </div>
         {tuotantoVertailu ? (
           <div className="mt-4 border-t border-border pt-3">

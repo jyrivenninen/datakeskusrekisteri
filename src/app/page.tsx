@@ -8,8 +8,10 @@ import { hankeVaihtelvalit } from "@/lib/hanke-vaihtelvali";
 import { aktiivisetEhdot, hankkeetSuodatusPolku, onAktiivinenSuodatus } from "@/lib/haku";
 import { MAARAAJA_NIMET, hankeTehoMw, muotoilePvm, muotoileVaihtelvali } from "@/lib/naytto";
 import { HANKE_VAIHEET } from "@/lib/supabase/tietokanta";
+import { ratkaiseMaakunta } from "@/lib/maakunta";
 import {
   haeJulkaistutHankkeet,
+  haeKuntaMaakuntaKartta,
   haeTulevatMaaraajat,
   parsiSuodatus,
 } from "@/lib/supabase/kyselyt";
@@ -25,8 +27,17 @@ export default async function Etusivu({
   const params = await searchParams;
   const suodatus = parsiSuodatus(params);
   const { user: yllapitaja } = await haeYllapitaja();
-  const [{ hankkeet, johdot, virhe: hankeVirhe }, { maaraajat, virhe: maaraajaVirhe }, fingridTuotanto] =
-    await Promise.all([haeJulkaistutHankkeet(suodatus), haeTulevatMaaraajat(), haeFingridTuotantoNyt()]);
+  const [
+    { hankkeet, johdot, virhe: hankeVirhe },
+    { maaraajat, virhe: maaraajaVirhe },
+    fingridTuotanto,
+    kuntaMaakunnat,
+  ] = await Promise.all([
+    haeJulkaistutHankkeet(suodatus),
+    haeTulevatMaaraajat(),
+    haeFingridTuotantoNyt(),
+    haeKuntaMaakuntaKartta(),
+  ]);
 
   const { hankkeet: kaikkiHankkeet } = await haeJulkaistutHankkeet();
   const kunnat = [...new Set(kaikkiHankkeet.map((hanke) => hanke.kunta))].sort((a, b) =>
@@ -49,6 +60,7 @@ export default async function Etusivu({
         lat: hanke.sijainti_lat != null ? Number(hanke.sijainti_lat) : undefined,
         lon: hanke.sijainti_lon != null ? Number(hanke.sijainti_lon) : undefined,
         tehoMw: hankeTehoMw(hanke),
+        maakunta: ratkaiseMaakunta(hanke.maakunta, hanke.kunta, kuntaMaakunnat).maakunta,
         alue,
         johdot: hankeJohdot,
       },
@@ -162,9 +174,9 @@ export default async function Etusivu({
           Kartta
         </h3>
         <p className="mt-2 text-sm leading-relaxed text-muted">
-          Loitolla näkyy piste, lähellä nuppineula (vaiheen väri). Keltainen halo kuvaa
-          IT-tehoa (tai kokonaistehoa). Lähizoomissa näkyy myös hankealue ja
-          sähkönsiirtoreitti, jos ne on merkitty.
+          Loitolla näkyy piste, lähellä nuppineula (vaiheen väri). Keltainen halo ja
+          maakuntaväri kuvaavat IT-tehoa (tai kokonaistehoa). Lähizoomissa näkyy myös
+          hankealue ja sähkönsiirtoreitti, jos ne on merkitty.
         </p>
         <div className="mt-4">
           <Kartta
