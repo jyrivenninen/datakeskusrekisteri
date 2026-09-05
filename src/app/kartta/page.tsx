@@ -39,7 +39,7 @@ export default async function KarttaSivu({
       {hankeVirhe ? (
         <p className="px-4 py-3 text-sm">{hankeVirhe}</p>
       ) : (
-        <div className="min-h-0 flex-1 p-4 pt-3">
+        <div className="flex min-h-[calc(100dvh-7rem)] flex-1 flex-col p-4 pt-3">
           <Kartta
             merkit={merkit}
             sovitaSuomeen

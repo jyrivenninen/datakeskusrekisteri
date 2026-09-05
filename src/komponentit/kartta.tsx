@@ -748,6 +748,11 @@ export function Kartta({
       kartta.once("load", rajaaKartta);
     }
 
+    requestAnimationFrame(() => {
+      kartta.resize();
+      paivitaNakyvyys();
+    });
+
     return () => {
       kokoTarkkailija.disconnect();
       kartta.off("move", paivita);
@@ -808,11 +813,18 @@ export function Kartta({
       }
     >
       <div
-        className={
+        ref={kehys}
+        className={[
+          "relative min-w-0 flex-1 overflow-hidden rounded border border-border",
           asettelu === "koko"
-            ? "relative min-h-0 min-w-0 flex-1"
-            : "relative min-h-[min(70svh,42rem)] min-w-0 flex-1 sm:min-h-[28rem]"
-        }
+            ? "h-full min-h-[20rem]"
+            : "min-h-[min(70svh,42rem)] sm:min-h-[28rem] sm:h-auto sm:self-stretch",
+          luokka ?? "",
+        ]
+          .filter(Boolean)
+          .join(" ")}
+        role="region"
+        aria-label="Hankkeiden sijaintikartta"
       >
         {taydennNayttoHref ? (
           <a
@@ -822,12 +834,6 @@ export function Kartta({
             Avaa koko näytöllä
           </a>
         ) : null}
-        <div
-          ref={kehys}
-          className={`absolute inset-0 overflow-hidden rounded border border-border ${luokka ?? ""}`}
-          role="region"
-          aria-label="Hankkeiden sijaintikartta"
-        />
       </div>
       <aside
         className={
