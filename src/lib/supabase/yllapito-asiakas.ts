@@ -29,6 +29,13 @@ export async function haeHankkeetYllapitoon(
   return data ?? [];
 }
 
+/** Hankkeet, jotka on merkitty duplikaatiksi / yhdistetty pois. */
+export function poistetutHankeIdt(hankkeet: readonly YllapitoHanke[]): Set<string> {
+  return new Set(
+    hankkeet.filter((hanke) => hanke.yhdistetty_kohde_id).map((hanke) => hanke.id),
+  );
+}
+
 /** Julkaisemattomat luonnokset (ei duplikaatteja eikä yhdistettyjä). */
 export async function haeJulkaisemattomatHankkeet(): Promise<YllapitoHanke[]> {
   if (!supabasePalvelinAvainAsetettu()) return [];

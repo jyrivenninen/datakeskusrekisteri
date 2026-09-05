@@ -611,6 +611,13 @@ olla piilotettuna (`julkaistu = false`). Vertaa myös lähes samaa nimeä (esim.
 3. Suosittele **säilytettävää** riviä: enemmän kenttiä, lähteitä, sijaintia, vanhempi vahvistettu tieto.
 4. **Jatka** muiden hankkeiden täydennystä — älä jää duplikaatin ympärille kiertämään.
 
+#### Poistetut / yhdistetyt hankkeet (`yhdistetty_kohde_id`)
+
+Jos hankkeella on `yhdistetty_kohde_id` (ylläpidossa «poistettu duplikaattina»), **älä** luo
+sille täydennystä, korjausta eikä kuvaa. Täydennä **kohdehanketta** (UUID, johon
+`yhdistetty_kohde_id` osoittaa). Agentin API ei näytä poistettuja hankkeita — jos et näe
+hanketta listauksessa, se on jo yhdistetty pois.
+
 **Yhdistäminen ylläpidossa:** `ristiriita_havainto` + sääntö «Lähekkäiset hankkeet»
 (nousee automaattisesti, jos molemmilla on koordinaatit &lt; 500 m). Pelkkä sama nimi
 **ei** aina nosta havaintoa — siksi ajraportti on tärkeä.

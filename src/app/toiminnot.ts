@@ -17,7 +17,7 @@ import {
   type EhdotusSisalto,
   type IlmoitusKentanLahde,
 } from "@/lib/ehdotus";
-import { kasittelijaMerkinta, massaHyvaksyntaOhitettava } from "@/lib/naytto";
+import { ehdotusPoistetulleHankkeelle, kasittelijaMerkinta, massaHyvaksyntaOhitettava } from "@/lib/naytto";
 import { LUOTTAMUSTASOT, PALAUTE_AIHEET, type Luottamus } from "@/lib/supabase/tietokanta";
 import { haeKirjautunutKayttaja, haeYllapitaja, luoPalvelinAsiakas, vaadiYllapitaja as vaadiYllapitajaSivu } from "@/lib/supabase/palvelin";
 import { hylkaaMuutosehdotus, hyvaksyMuutosehdotus, julkaiseHanke, kuitaaHankeKentat, merkitseHankeDuplikaatiksi, paivitaKenttaLahdeUrl, paivitaKuittausLuottamus, piilotaHankeKuva, yhdistaHankkeetEhdotuksesta } from "@/lib/supabase/hyvaksynta";
@@ -28,7 +28,7 @@ import {
   parsiKuittausSuodatus,
   suodataKuittausRivit,
 } from "@/lib/kuittaus-suodatus";
-import { luoYllapitoAsiakas, supabasePalvelinAvainAsetettu } from "@/lib/supabase/yllapito-asiakas";
+import { haeHankkeetYllapitoon, luoYllapitoAsiakas, poistetutHankeIdt, supabasePalvelinAvainAsetettu } from "@/lib/supabase/yllapito-asiakas";
 import { ESIVERSIO_EVASTE } from "@/lib/esiversio";
 
 function ilmoitusPaluu(tyyppi: string, virhe: string): never {
@@ -1093,18 +1093,32 @@ export async function hyvaksyKaikkiOdottavatToiminto(formData: FormData): Promis
   const { supabase } = await haeKirjautunutKayttaja();
   const { data: odottavat, error } = await supabase
     .from("muutosehdotukset")
-    .select("id, tyyppi")
+    .select("id, tyyppi, hanke_id")
     .eq("tila", "odottaa")
     .order("luotu_pvm", { ascending: true });
   if (error) {
     redirect(`/yllapito?virhe=${encodeURIComponent(error.message)}`);
   }
 
+  const hankeIdt = [
+    ...new Set(
+      (odottavat ?? [])
+        .map((rivi) => rivi.hanke_id)
+        .filter((id): id is string => Boolean(id)),
+    ),
+  ];
+  const hankkeet = await haeHankkeetYllapitoon(hankeIdt);
+  const duplikaattiHankeIdt = poistetutHankeIdt(hankkeet);
+
   let hyvaksytty = 0;
   let ohitettu = 0;
   const epaonnistuneet: string[] = [];
   for (const rivi of odottavat ?? []) {
     if (massaHyvaksyntaOhitettava(rivi.tyyppi)) {
+      ohitettu += 1;
+      continue;
+    }
+    if (ehdotusPoistetulleHankkeelle(rivi.hanke_id, duplikaattiHankeIdt)) {
       ohitettu += 1;
       continue;
     }
@@ -1126,7 +1140,7 @@ export async function hyvaksyKaikkiOdottavatToiminto(formData: FormData): Promis
   const jonoon: string[] = [...epaonnistuneet];
   if (ohitettu > 0) {
     jonoon.unshift(
-      `${ohitettu} riviä jäi jonoon (ristiriitahavainto, kenttämuutos tai päätös): käsittele yksitellen.`,
+      `${ohitettu} riviä jäi jonoon (ristiriitahavainto, kenttämuutos, päätös tai poistettu hanke): käsittele yksitellen.`,
     );
   }
   if (jonoon.length > 0) {

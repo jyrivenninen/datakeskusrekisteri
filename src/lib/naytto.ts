@@ -173,6 +173,14 @@ export function hyvaksyPainikeTeksti(
   return "Hyväksy ja julkaise";
 }
 
+/** Ehdotus koskee poistettua duplikaattihanketta — ei näytetä ylläpidossa eikä hyväksytä. */
+export function ehdotusPoistetulleHankkeelle(
+  hankeId: string | null | undefined,
+  poistetutHankeIdt: ReadonlySet<string>,
+): boolean {
+  return Boolean(hankeId && poistetutHankeIdt.has(hankeId));
+}
+
 /** Massakäsittely ohittaa: vaatii yksittäisen tarkistuksen tai erillisen perustelun. */
 export function massaHyvaksyntaOhitettava(tyyppi: string): boolean {
   return (

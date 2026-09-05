@@ -2,7 +2,15 @@ import Link from "next/link";
 import { haeKirjautunutKayttaja } from "@/lib/supabase/palvelin";
 import { redirect } from "next/navigation";
 import { hyvaksyKaikkiOdottavatToiminto, julkaiseHankeToiminto, kirjauduUlos, merkitseHankeDuplikaatiksiToiminto } from "@/app/toiminnot";
-import { jarjestaMuutosehdotukset, kasittelySelite, muotoilePvm, MUUTOSEHDOTUS_TYYPPI_NIMET, PALAUTE_AIHE_NIMET, VAIHE_NIMET } from "@/lib/naytto";
+import {
+  ehdotusPoistetulleHankkeelle,
+  jarjestaMuutosehdotukset,
+  kasittelySelite,
+  muotoilePvm,
+  MUUTOSEHDOTUS_TYYPPI_NIMET,
+  PALAUTE_AIHE_NIMET,
+  VAIHE_NIMET,
+} from "@/lib/naytto";
 import {
   EhdotusLuokka,
   EhdotusTila,
@@ -14,6 +22,7 @@ import {
   haeHankkeetYllapitoon,
   haeJulkaisemattomatHankkeet,
   haePoistetutHankkeet,
+  poistetutHankeIdt,
   supabasePalvelinAvainAsetettu,
 } from "@/lib/supabase/yllapito-asiakas";
 import { haeKuittausNakyma } from "@/lib/supabase/kuittaus-kysely";
@@ -58,9 +67,13 @@ export default async function YllapitoSivu({
   ];
   let hankkeet = await haeHankkeetYllapitoon(hankeIdt);
   if (hankkeet.length === 0 && hankeIdt.length > 0) {
-    const { data } = await supabase.from("hankkeet").select("id, nimi, kunta").in("id", hankeIdt);
+    const { data } = await supabase
+      .from("hankkeet")
+      .select("id, nimi, kunta, yhdistetty_kohde_id")
+      .in("id", hankeIdt);
     hankkeet = data ?? [];
   }
+  const duplikaattiHankeIdt = poistetutHankeIdt(hankkeet);
   const hankeNimella = new Map(hankkeet.map((hanke) => [hanke.id, hanke.nimi]));
   const { data: ajot } = await supabase
     .from("lahdeajot")
@@ -73,7 +86,9 @@ export default async function YllapitoSivu({
     .order("luotu_pvm", { ascending: false });
   const odottavatPalautteet = (palautteet ?? []).filter((rivi) => rivi.tila === "odottaa");
   const kasitellytPalautteet = (palautteet ?? []).filter((rivi) => rivi.tila !== "odottaa");
-  const jarjestetyt = jarjestaMuutosehdotukset(ehdotukset ?? []);
+  const jarjestetyt = jarjestaMuutosehdotukset(ehdotukset ?? []).filter(
+    (ehdotus) => !ehdotusPoistetulleHankkeelle(ehdotus.hanke_id, duplikaattiHankeIdt),
+  );
   const odottavat = jarjestetyt.filter((e) => e.tila === "odottaa");
   const kasitellyt = jarjestetyt.filter((e) => e.tila !== "odottaa");
   const odottavia = odottavat.length;

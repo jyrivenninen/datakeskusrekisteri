@@ -2,6 +2,7 @@ import { notFound, redirect } from "next/navigation";
 import { hyvaksyEhdotusToiminto, hylkaaEhdotusToiminto, julkaiseHankeToiminto, korjaaLinkkiLahdeToiminto } from "@/app/toiminnot";
 import { EhdotusLuokka, EhdotusTila } from "@/komponentit/ehdotus-tila";
 import {
+  ehdotusPoistetulleHankkeelle,
   ehdotuksenHankeIdt,
   HANKE_KENTTA_NIMET,
   LUOTTAMUS_NIMET,
@@ -25,6 +26,7 @@ import { haeKirjautunutKayttaja } from "@/lib/supabase/palvelin";
 import { haeKenttaTyhjennysNakyma, type EhdotusSisalto } from "@/lib/ehdotus";
 import {
   haeHankkeetYllapitoon,
+  poistetutHankeIdt,
   supabasePalvelinAvainAsetettu,
 } from "@/lib/supabase/yllapito-asiakas";
 
@@ -73,9 +75,17 @@ export default async function EhdotusSivu({
   if (hankkeet.length === 0 && hankeIdt.length > 0) {
     const { data } = await supabase
       .from("hankkeet")
-      .select("id, nimi, kunta, vaihe, julkaistu")
+      .select("id, nimi, kunta, vaihe, julkaistu, yhdistetty_kohde_id")
       .in("id", hankeIdt);
     hankkeet = data ?? [];
+  }
+  if (
+    ehdotus.hanke_id &&
+    ehdotusPoistetulleHankkeelle(ehdotus.hanke_id, poistetutHankeIdt(hankkeet))
+  ) {
+    redirect(
+      `/yllapito?virhe=${encodeURIComponent("Ehdotus koskee poistettua duplikaattihanketta.")}`,
+    );
   }
   const hankeNimella = new Map(hankkeet.map((hanke) => [hanke.id, hanke]));
   const kasittely = kasittelySelite(ehdotus.kasittelija, ehdotus.kasitelty_pvm);

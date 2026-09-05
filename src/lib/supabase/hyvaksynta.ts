@@ -124,6 +124,20 @@ export async function hyvaksyMuutosehdotus(
     throw new Error("Ehdotus on jo käsitelty.");
   }
 
+  if (ehdotus.hanke_id) {
+    const { data: hanke, error: hankeVirhe } = await supabase
+      .from("hankkeet")
+      .select("yhdistetty_kohde_id")
+      .eq("id", ehdotus.hanke_id)
+      .maybeSingle();
+    if (hankeVirhe) throw new Error(hankeVirhe.message);
+    if (hanke?.yhdistetty_kohde_id) {
+      throw new Error(
+        "Hanke on poistettu duplikaattina — ehdotusta ei voi hyväksyä. Täydennä kohdehanketta.",
+      );
+    }
+  }
+
   if (ehdotus.tyyppi === "ytj_havainto") {
     const ytj = (ehdotus.sisalto as EhdotusSisalto).ytj;
     if (ytj?.ehdota_tunnus) {
