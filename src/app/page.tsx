@@ -146,10 +146,11 @@ export default async function Etusivu({
           maakuntaväri kuvaavat IT-tehoa (tai kokonaistehoa). Lähizoomissa näkyy myös
           hankealue ja sähkönsiirtoreitti, jos ne on merkitty.
         </p>
-        <div className="mt-4">
+        <div className="mt-4 h-[calc(100dvh-17rem)] min-h-[22rem] max-sm:h-[min(72dvh,34rem)]">
           <Kartta
             merkit={merkit}
             sovitaSuomeen
+            sovitaIkkunaan
             kartallaLkm={merkit.length}
             tuotantoVertailu={tuotantoVertailu}
             vaiheLkm={vaiheLkm}

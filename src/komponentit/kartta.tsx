@@ -13,9 +13,9 @@ import type { FeatureCollection } from "geojson";
 import "maplibre-gl/dist/maplibre-gl.css";
 import {
   laskeMaakuntaYhteenvedot,
+  MAAKUNTA_POHJA_GEO,
   MAAKUNTA_RAJAT_LAHDE_NIMI,
   MAAKUNTA_RAJAT_LAHDE_URL,
-  MAAKUNTA_RAJAT_URL,
   type MaakuntaYhteenveto,
 } from "@/lib/maakunta";
 import { VAIHE_NIMET, VAIHE_VARIT } from "@/lib/naytto";
@@ -124,6 +124,16 @@ function parsiAlue(arvo: unknown): SijaintiAlue | null {
   return null;
 }
 
+/** Sininen–violetti: erottuu kelta-oranssista IT-teho-halosta. */
+const MAAKUNTA_TEHO_VARI_PYSAKIT: [number, string][] = [
+  [0, "#f1f5f9"],
+  [1, "#dbeafe"],
+  [30, "#93c5fd"],
+  [100, "#6366f1"],
+  [300, "#8b5cf6"],
+  [1000, "#5b21b6"],
+];
+
 function taustakarttaTyyli(avain: string): StyleSpecification {
   return {
     version: 8,
@@ -138,6 +148,10 @@ function taustakarttaTyyli(avain: string): StyleSpecification {
         attribution: "Maanmittauslaitos",
         maxzoom: 18,
       },
+      maakunnat: {
+        type: "geojson",
+        data: { type: "FeatureCollection", features: [] },
+      },
     },
     layers: [
       {
@@ -149,6 +163,34 @@ function taustakarttaTyyli(avain: string): StyleSpecification {
         id: "taustakartta",
         type: "raster",
         source: "taustakartta",
+      },
+      {
+        id: "maakunnat-taytto",
+        type: "fill",
+        source: "maakunnat",
+        paint: {
+          "fill-color": [
+            "interpolate",
+            ["linear"],
+            ["coalesce", ["get", "tehoMw"], 0],
+            ...MAAKUNTA_TEHO_VARI_PYSAKIT.flatMap(([mw, vari]) => [mw, vari]),
+          ],
+          "fill-opacity": [
+            "case",
+            [">", ["coalesce", ["get", "tehoMw"], 0], 0],
+            0.55,
+            0.06,
+          ],
+        },
+      },
+      {
+        id: "maakunnat-reuna",
+        type: "line",
+        source: "maakunnat",
+        paint: {
+          "line-color": "#334155",
+          "line-width": 1.2,
+        },
       },
     ],
   };
@@ -310,16 +352,6 @@ function suodataMerkit(merkit: Karttamerkki[], aktiviset: Set<HankeVaihe>): Kart
   return merkit.filter((merkki) => merkkiNakyvissa(merkki, aktiviset));
 }
 
-/** Sininen–violetti: erottuu kelta-oranssista IT-teho-halosta. */
-const MAAKUNTA_TEHO_VARI_PYSAKIT: [number, string][] = [
-  [0, "#f1f5f9"],
-  [1, "#dbeafe"],
-  [30, "#93c5fd"],
-  [100, "#6366f1"],
-  [300, "#8b5cf6"],
-  [1000, "#5b21b6"],
-];
-
 function yhdistaMaakuntaGeo(
   pohja: FeatureCollection,
   yhteenvedot: MaakuntaYhteenveto[],
@@ -342,50 +374,17 @@ function yhdistaMaakuntaGeo(
   };
 }
 
-function lisaaMaakuntaKerrokset(kartta: MapLibre) {
-  kartta.addLayer({
-    id: "maakunnat-taytto",
-    type: "fill",
-    source: "maakunnat",
-    paint: {
-      "fill-color": [
-        "interpolate",
-        ["linear"],
-        ["coalesce", ["get", "tehoMw"], 0],
-        ...MAAKUNTA_TEHO_VARI_PYSAKIT.flatMap(([mw, vari]) => [mw, vari]),
-      ],
-      "fill-opacity": ["case", [">", ["coalesce", ["get", "tehoMw"], 0], 0], 0.52, 0.08],
-    },
-  });
-  kartta.addLayer({
-    id: "maakunnat-reuna",
-    type: "line",
-    source: "maakunnat",
-    paint: {
-      "line-color": "#334155",
-      "line-width": 1.2,
-    },
-  });
-}
-
-/** Odottaa tyylin latautumista — addSource ennen load-tapahtumaa kaataa hiljaa koko ketjun. */
 function paivitaMaakuntaKerros(
   kartta: MapLibre,
   pohja: FeatureCollection,
   suodatetut: Karttamerkki[],
   nayta: boolean,
 ) {
-  if (!kartta.isStyleLoaded()) return;
+  if (!kartta.loaded()) return;
 
   const data = yhdistaMaakuntaGeo(pohja, laskeMaakuntaYhteenvedot(suodatetut));
   const lahde = kartta.getSource("maakunnat") as GeoJSONSource | undefined;
-
-  if (!lahde) {
-    kartta.addSource("maakunnat", { type: "geojson", data });
-    lisaaMaakuntaKerrokset(kartta);
-  } else {
-    lahde.setData(data);
-  }
+  lahde?.setData(data);
 
   const nakyvyys = nayta ? "visible" : "none";
   if (kartta.getLayer("maakunnat-taytto")) {
@@ -527,6 +526,7 @@ export function Kartta({
   sovitaSuomeen = false,
   tuotantoVertailu = null,
   asettelu = "upotettu",
+  sovitaIkkunaan = false,
   taydennNayttoHref,
 }: {
   merkit: Karttamerkki[];
@@ -543,6 +543,8 @@ export function Kartta({
   } | null;
   /** Upotettu etusivulle tai koko näytön karttasivu. */
   asettelu?: "upotettu" | "koko";
+  /** Rajaa kartta+legenda näkyvään ikkunaan (etusivu). */
+  sovitaIkkunaan?: boolean;
   /** Linkki koko näytön kartalle; näytetään vain upotetussa tilassa. */
   taydennNayttoHref?: string;
 }) {
@@ -555,7 +557,6 @@ export function Kartta({
   const aktivisetVaiheetRef = useRef<Set<HankeVaihe>>(kaikkiVaiheetAktiviset());
   const naytaTehoHalotRef = useRef(true);
   const naytaMaakunnatRef = useRef(true);
-  const maakuntaGeoRef = useRef<FeatureCollection | null>(null);
   const avain = process.env.NEXT_PUBLIC_MML_API_AVAIN;
   const merkitAvain = JSON.stringify(merkit);
   const [aktivisetVaiheet, setAktivisetVaiheet] = useState<Set<HankeVaihe>>(kaikkiVaiheetAktiviset);
@@ -591,10 +592,7 @@ export function Kartta({
     piirraTehoHalotKerros(kartta, svgTeho, suodatetut, naytaTeho);
     piirraAlueetJaJohdot(kartta, svgGeometria, suodatetut);
 
-    const pohja = maakuntaGeoRef.current;
-    if (pohja) {
-      paivitaMaakuntaKerros(kartta, pohja, suodatetut, naytaMaakunnatRef.current);
-    }
+    paivitaMaakuntaKerros(kartta, MAAKUNTA_POHJA_GEO, suodatetut, naytaMaakunnatRef.current);
   };
 
   const vaihdaVaihe = (vaihe: HankeVaihe) => {
@@ -655,20 +653,6 @@ export function Kartta({
     karttaRef.current = kartta;
     svgTehoRef.current = svgTeho;
     svgGeometriaRef.current = svgGeometria;
-
-    void fetch(MAAKUNTA_RAJAT_URL)
-      .then((vastaus) => {
-        if (!vastaus.ok) throw new Error("Maakuntarajat eivät latautuneet");
-        return vastaus.json() as Promise<FeatureCollection>;
-      })
-      .then((geo) => {
-        if (karttaRef.current !== kartta) return;
-        maakuntaGeoRef.current = geo;
-        paivitaNakyvyys();
-      })
-      .catch(() => {
-        /* GeoJSON-lataus epäonnistui; kartta toimii ilman maakuntakerrosta */
-      });
 
     merkkiluokatRef.current = new Map();
     for (const merkki of merkitNyt) {
@@ -806,11 +790,11 @@ export function Kartta({
 
   return (
     <div
-      className={
-        asettelu === "koko"
-          ? "flex h-full min-h-0 flex-col gap-4 sm:flex-row sm:items-stretch"
-          : "flex flex-col gap-4 sm:flex-row sm:items-stretch"
-      }
+      className={[
+        asettelu === "koko" || sovitaIkkunaan
+          ? "flex h-full min-h-0 flex-col gap-3 sm:flex-row sm:items-stretch"
+          : "flex flex-col gap-4 sm:flex-row sm:items-stretch",
+      ].join(" ")}
     >
       <div
         ref={kehys}
@@ -818,7 +802,9 @@ export function Kartta({
           "relative min-w-0 flex-1 overflow-hidden rounded border border-border",
           asettelu === "koko"
             ? "h-full min-h-[20rem]"
-            : "min-h-[min(70svh,42rem)] sm:min-h-[28rem] sm:h-auto sm:self-stretch",
+            : sovitaIkkunaan
+              ? "min-h-0 h-full"
+              : "min-h-[min(70svh,42rem)] sm:min-h-[28rem] sm:h-auto sm:self-stretch",
           luokka ?? "",
         ]
           .filter(Boolean)
@@ -837,8 +823,8 @@ export function Kartta({
       </div>
       <aside
         className={
-          asettelu === "koko"
-            ? "sm:max-h-full sm:w-52 sm:shrink-0 sm:overflow-y-auto"
+          asettelu === "koko" || sovitaIkkunaan
+            ? "max-h-[38%] min-h-0 shrink-0 overflow-y-auto sm:max-h-full sm:w-52"
             : "sm:w-52 sm:shrink-0"
         }
         aria-labelledby="kartta-selite-otsikko"

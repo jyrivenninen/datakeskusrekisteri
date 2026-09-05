@@ -1,9 +1,18 @@
 /** Maakuntarajat: Tilastokeskus WFS tilastointialueet:maakunta4500k, CC BY 4.0. */
 
+import type { FeatureCollection } from "geojson";
+import maakunnatRaw from "@/data/maakunnat.json";
+
 export const MAAKUNTA_RAJAT_URL = "/geo/maakunnat.geojson";
 export const MAAKUNTA_RAJAT_LAHDE_URL =
   "https://geo.stat.fi/geoserver/tilastointialueet/wfs?service=WFS&version=2.0.0&request=GetFeature&typeName=tilastointialueet:maakunta4500k&outputFormat=application/json&srsName=urn:ogc:def:crs:EPSG::4326";
 export const MAAKUNTA_RAJAT_LAHDE_NIMI = "Tilastokeskus, maakuntarajat (1:4 500 000)";
+
+/** Bundlattu WGS84-rajadata — MapLibre-kerros ei riipu erillisestä fetchistä. */
+export const MAAKUNTA_POHJA_GEO: FeatureCollection = {
+  type: "FeatureCollection",
+  features: (maakunnatRaw as unknown as FeatureCollection).features,
+};
 
 export type MaakuntaYhteenveto = {
   nimi: string;
