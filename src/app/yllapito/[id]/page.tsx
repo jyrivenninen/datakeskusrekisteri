@@ -228,6 +228,7 @@ export default async function EhdotusSivu({
             {hankeIdt.map((hankeId) => {
               const hanke = hankeNimella.get(hankeId);
               const piilossa = hanke?.julkaistu === false;
+              const duplikaatti = Boolean(hanke?.yhdistetty_kohde_id);
               return (
                 <li key={hankeId}>
                   <a href={`/hankkeet/${hankeId}`} className="text-link underline">
@@ -240,10 +241,12 @@ export default async function EhdotusSivu({
                       {VAIHE_NIMET[hanke.vaihe as keyof typeof VAIHE_NIMET] ?? hanke.vaihe}
                     </span>
                   ) : null}
-                  {piilossa ? (
+                  {duplikaatti ? (
+                    <span className="text-muted"> · poistettu duplikaattina</span>
+                  ) : piilossa ? (
                     <span className="text-muted"> · ei julkaistu julkisesti</span>
                   ) : null}
-                  {piilossa && supabasePalvelinAvainAsetettu() ? (
+                  {piilossa && !duplikaatti && supabasePalvelinAvainAsetettu() ? (
                     <form action={julkaiseHankeToiminto} className="mt-2">
                       <input type="hidden" name="hanke_id" value={hankeId} />
                       <input type="hidden" name="paluu" value={`/yllapito/${id}`} />

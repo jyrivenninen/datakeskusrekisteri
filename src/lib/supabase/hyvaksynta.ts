@@ -434,6 +434,22 @@ export async function julkaiseHanke(hankeId: string, kasittelija: string) {
   if (error) throw new Error(error.message);
 }
 
+export async function merkitseHankeDuplikaatiksi(
+  duplikaattiId: string,
+  kohdeId: string,
+  kasittelija: string,
+  perustelu: string,
+) {
+  const supabase = luoYllapitoAsiakas();
+  const { error } = await supabase.rpc("merkitse_hanke_duplikaatiksi", {
+    p_duplikaatti: duplikaattiId,
+    p_kohde: kohdeId,
+    p_kasittelija: kasittelija,
+    p_perustelu: perustelu,
+  });
+  if (error) throw new Error(error.message);
+}
+
 export async function hylkaaMuutosehdotus(
   ehdotusId: string,
   kasittelija: string,

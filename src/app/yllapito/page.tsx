@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { haeKirjautunutKayttaja } from "@/lib/supabase/palvelin";
 import { redirect } from "next/navigation";
-import { hyvaksyKaikkiOdottavatToiminto, julkaiseHankeToiminto, kirjauduUlos } from "@/app/toiminnot";
+import { hyvaksyKaikkiOdottavatToiminto, julkaiseHankeToiminto, kirjauduUlos, merkitseHankeDuplikaatiksiToiminto } from "@/app/toiminnot";
 import { jarjestaMuutosehdotukset, kasittelySelite, muotoilePvm, MUUTOSEHDOTUS_TYYPPI_NIMET, PALAUTE_AIHE_NIMET, VAIHE_NIMET } from "@/lib/naytto";
 import {
   EhdotusLuokka,
@@ -10,8 +10,10 @@ import {
 } from "@/komponentit/ehdotus-tila";
 import { YllapitoOhjeet } from "@/komponentit/yllapito-ohjeet";
 import {
+  haeHankkeetDuplikaattiKohteet,
   haeHankkeetYllapitoon,
   haeJulkaisemattomatHankkeet,
+  haePoistetutHankkeet,
   supabasePalvelinAvainAsetettu,
 } from "@/lib/supabase/yllapito-asiakas";
 import { haeKuittausNakyma } from "@/lib/supabase/kuittaus-kysely";
@@ -36,6 +38,7 @@ export default async function YllapitoSivu({
     hylatty?: string;
     kuitattu?: string;
     julkaistu?: string;
+    poistettu?: string;
     virhe?: string;
     palaute?: string;
   }>;
@@ -82,6 +85,19 @@ export default async function YllapitoSivu({
   const julkaisemattomat = supabasePalvelinAvainAsetettu()
     ? await haeJulkaisemattomatHankkeet()
     : [];
+  const poistetut = supabasePalvelinAvainAsetettu() ? await haePoistetutHankkeet() : [];
+  const duplikaattiKohteet = supabasePalvelinAvainAsetettu()
+    ? await haeHankkeetDuplikaattiKohteet()
+    : [];
+  const poistettuKohdeIdt = [
+    ...new Set(
+      poistetut
+        .map((hanke) => hanke.yhdistetty_kohde_id)
+        .filter((id): id is string => Boolean(id)),
+    ),
+  ];
+  const poistetutKohteet = await haeHankkeetYllapitoon(poistettuKohdeIdt);
+  const kohdeNimella = new Map(poistetutKohteet.map((hanke) => [hanke.id, hanke.nimi]));
 
   function ehdotusRivi(ehdotus: (typeof jarjestetyt)[number]) {
     const kasittely = kasittelySelite(ehdotus.kasittelija, ehdotus.kasitelty_pvm);
@@ -135,6 +151,9 @@ export default async function YllapitoSivu({
         </p>
       ) : null}
       {params.julkaistu ? <p className="mt-4">Hanke julkaistiin julkiselle sivustolle.</p> : null}
+      {params.poistettu ? (
+        <p className="mt-4">Hanke merkittiin duplikaatiksi ja siirrettiin poistettujen listalle.</p>
+      ) : null}
       {params.virhe ? <p className="mt-4" role="alert">{params.virhe}</p> : null}
       {(ajot ?? []).length > 0 ? (
         <details className="mt-6 rounded border border-border bg-surface">
@@ -211,11 +230,108 @@ export default async function YllapitoSivu({
             Julkaisemattomat hankkeet
           </h2>
           <p className="mt-2 max-w-prose text-sm text-muted">
-            Nämä hankkeet ovat tietokannassa, mutta eivät näy julkisella listauksella eikä
-            haussa. Tarkista tiedot ennen julkaisua.
+            Luonnokset, joita ei ole vielä julkaistu julkiselle sivustolle. Tarkista tiedot ennen
+            julkaisua tai merkitse duplikaatiksi, jos sama hanke on jo rekisterissä.
           </p>
           <ul className="mt-4 divide-y divide-border border-y border-border">
-            {julkaisemattomat.map((hanke) => (
+            {julkaisemattomat.map((hanke) => {
+              const kohteet = duplikaattiKohteet.filter((kohde) => kohde.id !== hanke.id);
+              return (
+                <li key={hanke.id} className="py-4">
+                  <p className="font-medium">
+                    <a href={`/hankkeet/${hanke.id}`} className="text-link underline">
+                      {hanke.nimi}
+                    </a>
+                    {hanke.kunta ? ` · ${hanke.kunta}` : ""}
+                  </p>
+                  <p className="mt-1 text-sm text-muted">
+                    {hanke.vaihe
+                      ? VAIHE_NIMET[hanke.vaihe as keyof typeof VAIHE_NIMET] ?? hanke.vaihe
+                      : "—"}
+                    {" · "}
+                    odottaa julkaisua
+                  </p>
+                  {supabasePalvelinAvainAsetettu() ? (
+                    <div className="mt-3 flex flex-wrap gap-4">
+                      <form action={julkaiseHankeToiminto}>
+                        <input type="hidden" name="hanke_id" value={hanke.id} />
+                        <input type="hidden" name="paluu" value="/yllapito" />
+                        <button
+                          type="submit"
+                          className="rounded border border-foreground px-3 py-1.5 text-sm font-medium"
+                        >
+                          Julkaise hanke
+                        </button>
+                      </form>
+                      {kohteet.length > 0 ? (
+                        <details className="min-w-[min(100%,20rem)] flex-1">
+                          <summary className="cursor-pointer text-sm font-medium">
+                            Merkitse duplikaatiksi
+                          </summary>
+                          <form action={merkitseHankeDuplikaatiksiToiminto} className="mt-3 space-y-2">
+                            <input type="hidden" name="duplikaatti_id" value={hanke.id} />
+                            <input type="hidden" name="paluu" value="/yllapito" />
+                            <p>
+                              <label htmlFor={`kohde-${hanke.id}`} className="text-sm font-medium">
+                                Säilytettävä hanke
+                              </label>
+                              <select
+                                id={`kohde-${hanke.id}`}
+                                name="kohde_id"
+                                required
+                                className="mt-1 block w-full rounded border border-border bg-surface px-2 py-2 text-sm"
+                              >
+                                <option value="">Valitse hanke</option>
+                                {kohteet.map((kohde) => (
+                                  <option key={kohde.id} value={kohde.id}>
+                                    {kohde.nimi}
+                                    {kohde.kunta ? ` (${kohde.kunta})` : ""}
+                                  </option>
+                                ))}
+                              </select>
+                            </p>
+                            <p>
+                              <label htmlFor={`perustelu-${hanke.id}`} className="text-sm font-medium">
+                                Perustelu
+                              </label>
+                              <textarea
+                                id={`perustelu-${hanke.id}`}
+                                name="perustelu"
+                                required
+                                minLength={12}
+                                rows={2}
+                                className="mt-1 block w-full rounded border border-border bg-surface px-2 py-2 text-sm"
+                                placeholder="Miksi tämä on duplikaatti?"
+                              />
+                            </p>
+                            <button
+                              type="submit"
+                              className="rounded border border-border px-3 py-1.5 text-sm"
+                            >
+                              Merkitse poistetuksi
+                            </button>
+                          </form>
+                        </details>
+                      ) : null}
+                    </div>
+                  ) : null}
+                </li>
+              );
+            })}
+          </ul>
+        </section>
+      ) : null}
+      {poistetut.length > 0 ? (
+        <section className="mt-8" aria-labelledby="poistetut-otsikko">
+          <h2 id="poistetut-otsikko" className="text-xl font-semibold">
+            Poistetut hankkeet
+          </h2>
+          <p className="mt-2 max-w-prose text-sm text-muted">
+            Duplikaatit ja yhdistämisen jälkeen piilotetut hankkeet. Rivejä ei poisteta
+            tietokannasta.
+          </p>
+          <ul className="mt-4 divide-y divide-border border-y border-border">
+            {poistetut.map((hanke) => (
               <li key={hanke.id} className="py-4">
                 <p className="font-medium">
                   <a href={`/hankkeet/${hanke.id}`} className="text-link underline">
@@ -224,23 +340,24 @@ export default async function YllapitoSivu({
                   {hanke.kunta ? ` · ${hanke.kunta}` : ""}
                 </p>
                 <p className="mt-1 text-sm text-muted">
-                  {hanke.vaihe
-                    ? VAIHE_NIMET[hanke.vaihe as keyof typeof VAIHE_NIMET] ?? hanke.vaihe
-                    : "—"}
-                  {" · "}
-                  ei julkaistu
+                  {hanke.yhdistetty_kohde_id ? (
+                    <>
+                      Kohde:{" "}
+                      <a
+                        href={`/hankkeet/${hanke.yhdistetty_kohde_id}`}
+                        className="text-link underline"
+                      >
+                        {kohdeNimella.get(hanke.yhdistetty_kohde_id) ?? "Avaa kohdehanke"}
+                      </a>
+                    </>
+                  ) : (
+                    "Kohde puuttuu"
+                  )}
+                  {hanke.poistettu_pvm ? ` · ${muotoilePvm(hanke.poistettu_pvm)}` : ""}
+                  {hanke.poistettu_kasittelija ? ` · ${hanke.poistettu_kasittelija}` : ""}
                 </p>
-                {supabasePalvelinAvainAsetettu() ? (
-                  <form action={julkaiseHankeToiminto} className="mt-3">
-                    <input type="hidden" name="hanke_id" value={hanke.id} />
-                    <input type="hidden" name="paluu" value="/yllapito" />
-                    <button
-                      type="submit"
-                      className="rounded border border-foreground px-3 py-1.5 text-sm font-medium"
-                    >
-                      Julkaise hanke
-                    </button>
-                  </form>
+                {hanke.poistettu_perustelu ? (
+                  <p className="mt-1 text-sm">{hanke.poistettu_perustelu}</p>
                 ) : null}
               </li>
             ))}

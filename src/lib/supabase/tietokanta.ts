@@ -190,6 +190,10 @@ export type Hanke = {
   toimija_organisaatio_id: string | null;
   yva_diaarinumero: string | null;
   julkaistu: boolean;
+  yhdistetty_kohde_id: string | null;
+  poistettu_perustelu: string | null;
+  poistettu_pvm: string | null;
+  poistettu_kasittelija: string | null;
   luotu_pvm: string;
   paivitetty_pvm: string;
 };

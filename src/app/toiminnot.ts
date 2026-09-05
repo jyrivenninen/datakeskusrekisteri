@@ -20,7 +20,7 @@ import {
 import { kasittelijaMerkinta, massaHyvaksyntaOhitettava } from "@/lib/naytto";
 import { LUOTTAMUSTASOT, PALAUTE_AIHEET, type Luottamus } from "@/lib/supabase/tietokanta";
 import { haeKirjautunutKayttaja, haeYllapitaja, luoPalvelinAsiakas, vaadiYllapitaja as vaadiYllapitajaSivu } from "@/lib/supabase/palvelin";
-import { hylkaaMuutosehdotus, hyvaksyMuutosehdotus, julkaiseHanke, kuitaaHankeKentat, paivitaKenttaLahdeUrl, paivitaKuittausLuottamus, piilotaHankeKuva, yhdistaHankkeetEhdotuksesta } from "@/lib/supabase/hyvaksynta";
+import { hylkaaMuutosehdotus, hyvaksyMuutosehdotus, julkaiseHanke, kuitaaHankeKentat, merkitseHankeDuplikaatiksi, paivitaKenttaLahdeUrl, paivitaKuittausLuottamus, piilotaHankeKuva, yhdistaHankkeetEhdotuksesta } from "@/lib/supabase/hyvaksynta";
 import { haeKuittausNakyma } from "@/lib/supabase/kuittaus-kysely";
 import { onKuittausTaydennys, ryhmitteleKuittausKentat } from "@/lib/kuittaus";
 import {
@@ -723,6 +723,39 @@ export async function julkaiseHankeToiminto(formData: FormData): Promise<void> {
   revalidatePath(`/hankkeet/${hankeId}`);
   const erotin = paluu.includes("?") ? "&" : "?";
   redirect(`${paluu}${erotin}julkaistu=1`);
+}
+
+export async function merkitseHankeDuplikaatiksiToiminto(formData: FormData): Promise<void> {
+  const { kasittelija } = await vaadiYllapitaja();
+  const duplikaattiId = String(formData.get("duplikaatti_id") ?? "").trim();
+  const kohdeId = String(formData.get("kohde_id") ?? "").trim();
+  const perustelu = String(formData.get("perustelu") ?? "").trim();
+  const paluu = String(formData.get("paluu") ?? "/yllapito").trim() || "/yllapito";
+  if (!duplikaattiId || !kohdeId) {
+    redirect(`${paluu}?virhe=${encodeURIComponent("Duplikaatti ja kohde vaaditaan.")}`);
+  }
+  if (perustelu.length < 12) {
+    redirect(
+      `${paluu}?virhe=${encodeURIComponent("Perustele duplikaatti vähintään 12 merkillä.")}`,
+    );
+  }
+  if (!supabasePalvelinAvainAsetettu()) {
+    redirect(
+      `${paluu}?virhe=${encodeURIComponent("Toiminto vaatii palvelinavaimen.")}`,
+    );
+  }
+  try {
+    await merkitseHankeDuplikaatiksi(duplikaattiId, kohdeId, kasittelija, perustelu);
+  } catch (syy) {
+    const viesti = syy instanceof Error ? syy.message : "Duplikaatin merkintä epäonnistui.";
+    redirect(`${paluu}?virhe=${encodeURIComponent(viesti)}`);
+  }
+  revalidatePath("/");
+  revalidatePath("/yllapito");
+  revalidatePath("/hankkeet", "layout");
+  revalidatePath(`/hankkeet/${duplikaattiId}`);
+  const erotin = paluu.includes("?") ? "&" : "?";
+  redirect(`${paluu}${erotin}poistettu=1`);
 }
 
 export async function korjaaLinkkiLahdeToiminto(formData: FormData): Promise<void> {

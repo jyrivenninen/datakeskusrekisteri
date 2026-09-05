@@ -120,9 +120,10 @@ export function YllapitoOhjeet({ massahyvaksynta = false }: { massahyvaksynta?: 
             </li>
             <li>Hylkäys jättää julkaisematta. Perustelu jää lokiin.</li>
             <li>
-              <strong className="font-medium">Julkaisematon hanke</strong> on tietokannassa
-              mutta piilotettu julkiselta sivustolta. Julkaise se ylläpidon listalta tai
-              ehdotuksen Hanke-osiossa, kun perustiedot on tarkistettu.
+              <strong className="font-medium">Julkaisematon hanke</strong> on luonnos, jota
+              ei ole vielä julkaistu julkiselle sivustolle. Julkaise se, kun perustiedot on
+              tarkistettu. Jos kyse on duplikaatista, merkitse se poistetuksi ja valitse
+              säilytettävä hanke — rivi siirtyy Poistetut hankkeet -listalle.
             </li>
             {massahyvaksynta ? (
               <li>
