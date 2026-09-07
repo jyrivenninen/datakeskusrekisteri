@@ -18,6 +18,7 @@
     "agentti:kuntakokoukset": "tsx agents/lahteet/kunnat/esityslistat.ts",
     "agentti:jwt": "tsx scripts/luo-agentti-jwt.ts",
     "agentti:testaa-yhteys": "tsx scripts/testaa-agentti-yhteys.ts",
+    "kunta:rss-lahteet": "tsx scripts/lisaa-kunta-rss-lahteet.ts",
     "test:rls": "npx supabase db query --linked -f supabase/tests/rls-oikeudet.sql",
     "test:rls:jwt": "tsx supabase/tests/rls-oikeudet.ts",
     "test": "tsx --test src/lib/haku.test.ts"
