@@ -11,6 +11,12 @@ import {
 import type { FeatureCollection, MultiPolygon, Polygon } from "geojson";
 import "maplibre-gl/dist/maplibre-gl.css";
 import {
+  ENERGIA_MAAKUNTA_TUOTANTO,
+  haeMaakuntaSahkontuotantoTwh,
+  laskeMaakuntaTuotantoRivit,
+  type MaakuntaTuotantoRivi,
+} from "@/lib/energiateollisuus-tuotanto";
+import {
   laskeMaakuntaYhteenvedot,
   laskeSahkoYhteenveto,
   MAAKUNTA_POHJA_GEO,
@@ -19,7 +25,7 @@ import {
   type MaakuntaTila,
   type MaakuntaYhteenveto,
 } from "@/lib/maakunta";
-import { muotoileVaihtelvali, VAIHE_NIMET, VAIHE_VARIT } from "@/lib/naytto";
+import { muotoileLuku, muotoileVaihtelvali, VAIHE_NIMET, VAIHE_VARIT } from "@/lib/naytto";
 import { HANKE_VAIHEET, type HankeVaihe, type SijaintiAlue, type SijaintiViiva } from "@/lib/supabase/tietokanta";
 
 export type Karttamerkki = {
@@ -159,6 +165,23 @@ const MAAKUNTA_SAHKO_VARI_PYSAKIT: [number, string][] = [
   [10, "#14532d"],
 ];
 
+/** Oranssi: maakunnan nettosähköntuotanto (TWh/a, Energiateollisuus). */
+const MAAKUNTA_TUOTANTO_VARI_PYSAKIT: [number, string][] = [
+  [0, "#fff7ed"],
+  [0.2, "#fed7aa"],
+  [1, "#fdba74"],
+  [5, "#fb923c"],
+  [15, "#ea580c"],
+  [30, "#9a3412"],
+];
+
+const MAAKUNTA_TILA_JARJESTYS = [
+  "hankkeet",
+  "it_teho",
+  "sahkonkaytto",
+  "sahkontuotanto",
+] as const satisfies readonly MaakuntaTila[];
+
 const MAAKUNTA_TILA_SELITE: Record<
   MaakuntaTila,
   { otsikko: string; kuvaus: string; gradient: string; min: string; max: string }
@@ -183,6 +206,13 @@ const MAAKUNTA_TILA_SELITE: Record<
     gradient: "linear-gradient(to right, #bbf7d0, #4ade80, #16a34a, #15803d, #14532d)",
     min: "0",
     max: "10+ TWh/a",
+  },
+  sahkontuotanto: {
+    otsikko: "Sähköntuotanto",
+    kuvaus: `Maakunnan väri = nettosähköntuotanto (TWh/a), ${ENERGIA_MAAKUNTA_TUOTANTO.vuosi}. Voimalaitosten sijainti määrää maakunnan — ei kulutusta. Keltainen halo = hankkeiden IT-teho.`,
+    gradient: "linear-gradient(to right, #fed7aa, #fdba74, #fb923c, #ea580c, #9a3412)",
+    min: "0",
+    max: "30+ TWh/a",
   },
 };
 
@@ -213,6 +243,12 @@ function muotoileMaakuntaArvo(yhteenveto: MaakuntaYhteenveto, tila: MaakuntaTila
     return `— (${yhteenveto.hankkeetLkm})`;
   }
   return `${muotoileVaihtelvali(yhteenveto.sahkonkayttoTwhMin, yhteenveto.sahkonkayttoTwhMax, "TWh/a")} (${yhteenveto.sahkonkayttoLkm}/${yhteenveto.hankkeetLkm})`;
+}
+
+function muotoileTuotantoRivi(rivi: MaakuntaTuotantoRivi): string {
+  const tuotanto = `${muotoileLuku(rivi.sahkontuotantoTwh)} TWh/a`;
+  if (rivi.sahkonkayttoLkm === 0) return tuotanto;
+  return `${tuotanto} (hank. ${muotoileVaihtelvali(rivi.sahkonkayttoTwhMin, rivi.sahkonkayttoTwhMax, "TWh/a")})`;
 }
 
 function taustakarttaTyyli(avain: string): StyleSpecification {
@@ -419,6 +455,7 @@ function yhdistaMaakuntaGeo(
           hankkeetLkm: yhteenveto?.hankkeetLkm ?? 0,
           sahkonkayttoTwhMin: yhteenveto?.sahkonkayttoTwhMin ?? 0,
           sahkonkayttoLkm: yhteenveto?.sahkonkayttoLkm ?? 0,
+          sahkontuotantoTwh: haeMaakuntaSahkontuotantoTwh(nimi) ?? 0,
         },
       };
     }),
@@ -492,10 +529,14 @@ function piirraMaakuntaKerros(
       const tehoMw = Number(feature.properties?.tehoMw ?? 0);
       vari = interpoloiVari(MAAKUNTA_TEHO_VARI_PYSAKIT, tehoMw);
       peitto = tehoMw > 0 ? 0.55 : 0.06;
-    } else {
+    } else if (tila === "sahkonkaytto") {
       const twh = Number(feature.properties?.sahkonkayttoTwhMin ?? 0);
       vari = interpoloiVari(MAAKUNTA_SAHKO_VARI_PYSAKIT, twh);
       peitto = twh > 0 ? 0.5 : 0.06;
+    } else {
+      const twh = Number(feature.properties?.sahkontuotantoTwh ?? 0);
+      vari = interpoloiVari(MAAKUNTA_TUOTANTO_VARI_PYSAKIT, twh);
+      peitto = twh > 0 ? 0.52 : 0.06;
     }
     piirraMaakuntaGeometria(kartta, svg, geom, vari, peitto, "#334155");
   }
@@ -896,10 +937,12 @@ export function Kartta({
   const hankkeetTehoLkm = nakyvatMerkit.filter(
     (merkki) => merkki.tehoMw != null && merkki.tehoMw > 0,
   ).length;
-  const maakuntaYhteenvedot = jarjestaMaakunnat(
-    laskeMaakuntaYhteenvedot(nakyvatMerkit),
-    maakuntaTila,
-  );
+  const hankkeetMaakunnittain = laskeMaakuntaYhteenvedot(nakyvatMerkit);
+  const maakuntaYhteenvedot = jarjestaMaakunnat(hankkeetMaakunnittain, maakuntaTila);
+  const tuotantoRivit =
+    maakuntaTila === "sahkontuotanto"
+      ? laskeMaakuntaTuotantoRivit(hankkeetMaakunnittain)
+      : [];
   const maakunnatonLkm = nakyvatMerkit.filter((merkki) => !merkki.maakunta?.trim()).length;
   const sahkoYhteenveto = laskeSahkoYhteenveto(nakyvatMerkit);
   const maakuntaSelite = MAAKUNTA_TILA_SELITE[maakuntaTila];
@@ -1076,7 +1119,7 @@ export function Kartta({
             className={`mt-2 space-y-1 ${naytaMaakunnat ? "" : "pointer-events-none opacity-40"}`}
             aria-label="Maakuntakerroksen mittari"
           >
-            {(["hankkeet", "it_teho", "sahkonkaytto"] as const).map((tila) => (
+            {MAAKUNTA_TILA_JARJESTYS.map((tila) => (
               <label
                 key={tila}
                 className="flex cursor-pointer items-center gap-2 rounded px-1 py-0.5 text-xs hover:bg-muted/30"
@@ -1102,7 +1145,21 @@ export function Kartta({
             <span>{maakuntaSelite.min}</span>
             <span>{maakuntaSelite.max}</span>
           </div>
-          {maakuntaYhteenvedot.length > 0 ? (
+          {maakuntaTila === "sahkontuotanto" ? (
+            <ul className="mt-2 max-h-40 space-y-1 overflow-y-auto text-xs">
+              {tuotantoRivit.map((rivi) => (
+                <li
+                  key={rivi.nimi}
+                  className="flex items-baseline justify-between gap-2 tabular-nums"
+                >
+                  <span className="min-w-0 truncate">{rivi.nimi}</span>
+                  <span className="shrink-0 text-right font-semibold">
+                    {muotoileTuotantoRivi(rivi)}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          ) : maakuntaYhteenvedot.length > 0 ? (
             <ul className="mt-2 max-h-40 space-y-1 overflow-y-auto text-xs">
               {maakuntaYhteenvedot.map((yhteenveto) => (
                 <li
@@ -1121,6 +1178,9 @@ export function Kartta({
               Ei hankkeita maakunnittain valituilla vaiheilla.
             </p>
           )}
+          {maakuntaTila === "sahkontuotanto" ? (
+            <p className="mt-2 text-xs text-muted">{ENERGIA_MAAKUNTA_TUOTANTO.huomautus}</p>
+          ) : null}
           {maakunnatonLkm > 0 ? (
             <p className="mt-2 text-xs text-muted">
               {maakunnatonLkm} hankkeella maakuntaa ei voitu ratkaista.
@@ -1130,6 +1190,14 @@ export function Kartta({
             <a href={MAAKUNTA_RAJAT_LAHDE_URL} className="text-link underline">
               Lähde: {MAAKUNTA_RAJAT_LAHDE_NIMI}
             </a>
+            {maakuntaTila === "sahkontuotanto" ? (
+              <>
+                {" · "}
+                <a href={ENERGIA_MAAKUNTA_TUOTANTO.lahde_sivu_url} className="text-link underline">
+                  {ENERGIA_MAAKUNTA_TUOTANTO.lahde_nimi} ({ENERGIA_MAAKUNTA_TUOTANTO.vuosi})
+                </a>
+              </>
+            ) : null}
           </p>
         </div>
         <div className="mt-4 border-t border-border pt-3">

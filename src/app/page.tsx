@@ -11,6 +11,7 @@ import {
   onAktiivinenSuodatus,
 } from "@/lib/haku";
 import { haeKarttaSivuData } from "@/lib/kartta-sivu";
+import { ENERGIA_MAAKUNTA_TUOTANTO } from "@/lib/energiateollisuus-tuotanto";
 import { MAARAAJA_NIMET, muotoilePvm, muotoileVaihtelvali } from "@/lib/naytto";
 import {
   haeJulkaistutHankkeet,
@@ -144,7 +145,8 @@ export default async function Etusivu({
         <p className="mt-2 text-sm leading-relaxed text-muted">
           Loitolla näkyy piste, lähellä nuppineula (vaiheen väri). Keltainen halo
           kuvaa IT-tehoa (tai kokonaistehoa). Maakuntaväri näyttää oletuksena
-          hankkeiden lukumäärän; valittavissa myös IT-teho tai sähkönkäyttö.
+          hankkeiden lukumäärän; valittavissa myös IT-teho, hankkeiden sähkönkäyttö
+          tai maakunnan sähköntuotanto (Energiateollisuus {ENERGIA_MAAKUNTA_TUOTANTO.vuosi}).
           Lähizoomissa näkyy hankealue ja sähkönsiirtoreitti, jos merkitty.
         </p>
         <div className="mt-4 h-[calc(100dvh-17rem)] min-h-[22rem] max-sm:h-[min(72dvh,34rem)]">

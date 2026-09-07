@@ -1,0 +1,29 @@
+{
+  "vuosi": 2024,
+  "yksikko": "GWh",
+  "lahde_url": "https://energia.fi/wp-content/uploads/2025/12/Sahkontuotanto-maakunnittain-2007-2024.xlsx",
+  "lahde_sivu_url": "https://energia.fi/tilastot/sahkotilastot/sahkontuotanto-ja-kaytto/",
+  "lahde_nimi": "Energiateollisuus ry, Sähköntuotanto maakunnittain 2007–2024",
+  "huomautus": "Aurinkosähkö ja pien-CHP eivät ole maakunnittaisessa tilastossa mukana (lähde, 2024-välilehti).",
+  "maakunnat": {
+    "Uusimaa": { "yhteensa_gwh": 9815 },
+    "Varsinais-Suomi": { "yhteensa_gwh": 636 },
+    "Satakunta": { "yhteensa_gwh": 25618 },
+    "Kanta-Häme": { "yhteensa_gwh": 295 },
+    "Pirkanmaa": { "yhteensa_gwh": 909 },
+    "Päijät-Häme": { "yhteensa_gwh": 514 },
+    "Kymenlaakso": { "yhteensa_gwh": 2234 },
+    "Etelä-Karjala": { "yhteensa_gwh": 3251 },
+    "Etelä-Savo": { "yhteensa_gwh": 231 },
+    "Pohjois-Savo": { "yhteensa_gwh": 824 },
+    "Pohjois-Karjala": { "yhteensa_gwh": 1427 },
+    "Keski-Suomi": { "yhteensa_gwh": 2997 },
+    "Etelä-Pohjanmaa": { "yhteensa_gwh": 2736 },
+    "Pohjanmaa": { "yhteensa_gwh": 4799 },
+    "Keski-Pohjanmaa": { "yhteensa_gwh": 1206 },
+    "Pohjois-Pohjanmaa": { "yhteensa_gwh": 11541 },
+    "Kainuu": { "yhteensa_gwh": 1903 },
+    "Lappi": { "yhteensa_gwh": 7769 },
+    "Ahvenanmaa": { "yhteensa_gwh": 204 }
+  }
+}

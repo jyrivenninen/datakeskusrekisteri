@@ -26,7 +26,7 @@ export type MaakuntaYhteenveto = {
   sahkonkayttoLkm: number;
 };
 
-export type MaakuntaTila = "hankkeet" | "it_teho" | "sahkonkaytto";
+export type MaakuntaTila = "hankkeet" | "it_teho" | "sahkonkaytto" | "sahkontuotanto";
 
 export type MaakuntaRatkaistu = {
   maakunta: string | null;

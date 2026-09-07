@@ -168,8 +168,8 @@ async function normalisoiSijaintiAlueKentat(
     luottamus: geokoodausUrl ? "epavarma" : kentanLuottamus(sijaintiAlue, "epavarma"),
   };
 
-  uusi.sijainti_lat = { ...pohja, arvo: lat };
-  uusi.sijainti_lon = { ...pohja, arvo: lon };
+  uusi.sijainti_lat = { ...pohja, arvo: String(lat) };
+  uusi.sijainti_lon = { ...pohja, arvo: String(lon) };
   return uusi;
 }
 
@@ -427,7 +427,7 @@ export async function hyvaksyMuutosehdotus(
       continue;
     }
     if (kentta === "sijainti_alue" && onSijaintiAluePolygon(tieto.arvo)) {
-      hanke.sijainti_alue = tieto.arvo as object;
+      hanke.sijainti_alue = tieto.arvo as unknown as object;
       continue;
     }
     const arvo = kenttaArvoksi(kentta, tieto.arvo);
