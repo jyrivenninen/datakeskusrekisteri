@@ -40,6 +40,7 @@ export function hankkeetSuodatusParametrit(suodatus: HankeSuodatus): URLSearchPa
   if (suodatus.vaihe) p.set("vaihe", suodatus.vaihe);
   if (suodatus.koko) p.set("koko", suodatus.koko);
   if (suodatus.kuvalliset) p.set("kuvalliset", "1");
+  if (suodatus.jarjestys) p.set("jarjestys", suodatus.jarjestys);
   return p;
 }
 

@@ -1,9 +1,11 @@
 import { HankkeetSuodatin } from "@/komponentit/hankkeet-suodatin";
+import { HankeLuetteloJarjestys } from "@/komponentit/hanke-luettelo-jarjestys";
 import { HankeLaskurit } from "@/komponentit/hanke-laskurit";
 import { Kartta } from "@/komponentit/kartta";
 import { VaiheMerkki } from "@/komponentit/vaihe-merkki";
 import { laskeHankeYhteenveto } from "@/lib/hanke-yhteenveto";
 import { hankeVaihtelvalit } from "@/lib/hanke-vaihtelvali";
+import { jarjestaHankkeet, parsiHankeJarjestys } from "@/lib/hanke-jarjestys";
 import {
   aktiivisetEhdot,
   hankkeetSuodatusPolku,
@@ -25,10 +27,18 @@ export const revalidate = 60;
 export default async function Etusivu({
   searchParams,
 }: {
-  searchParams: Promise<{ q?: string; kunta?: string; vaihe?: string; koko?: string; kuvalliset?: string }>;
+  searchParams: Promise<{
+    q?: string;
+    kunta?: string;
+    vaihe?: string;
+    koko?: string;
+    kuvalliset?: string;
+    jarjestys?: string;
+  }>;
 }) {
   const params = await searchParams;
   const suodatus = parsiSuodatus(params);
+  const jarjestys = parsiHankeJarjestys(suodatus.jarjestys);
   const { user: yllapitaja } = await haeYllapitaja();
   const [
     { hankkeet, virhe: hankeVirhe },
@@ -41,6 +51,7 @@ export default async function Etusivu({
   ]);
 
   const { merkit, tuotantoVertailu, vaiheLkm } = karttaData;
+  const jarjestetytHankkeet = jarjestaHankkeet(hankkeet, jarjestys);
 
   const { hankkeet: kaikkiHankkeet } = await haeJulkaistutHankkeet();
   const kunnat = [...new Set(kaikkiHankkeet.map((hanke) => hanke.kunta))].sort((a, b) =>
@@ -167,12 +178,15 @@ export default async function Etusivu({
           </p>
         </noscript>
 
-        <h3 id="hankeluettelo-otsikko" className="mt-10 text-lg font-semibold">
-          Luettelo
-        </h3>
+        <div className="mt-10 flex flex-wrap items-center justify-between gap-3">
+          <h3 id="hankeluettelo-otsikko" className="text-lg font-semibold">
+            Luettelo
+          </h3>
+          <HankeLuetteloJarjestys suodatus={suodatus} />
+        </div>
         {hankeVirhe ? (
           <p className="mt-4 text-sm">{hankeVirhe}</p>
-        ) : hankkeet.length === 0 ? (
+        ) : jarjestetytHankkeet.length === 0 ? (
           <div className="mt-4 rounded-lg border border-border bg-surface p-4">
             <p className="leading-relaxed">Ei hankkeita valituilla ehdoilla.</p>
             {onAktiivinenSuodatus(suodatus) ? (
@@ -194,7 +208,7 @@ export default async function Etusivu({
           </div>
         ) : (
           <ul className="mt-4 divide-y divide-border border-y border-border">
-            {hankkeet.map((hanke) => {
+            {jarjestetytHankkeet.map((hanke) => {
               const teho = hankeVaihtelvalit(hanke, hanke.vaihtoehdot).teho;
               return (
                 <li key={hanke.id} className="py-4">
