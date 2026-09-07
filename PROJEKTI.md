@@ -174,7 +174,7 @@ Tarkennettu: `PROJEKTI-lisays-vaihe7.md`. Luku 7A.5 ja uusi 7A.6:
 - [x] 7A.5.2 YTJ/PRH (`agents/lahteet/ytj.ts`)
 - [x] 7A.5.3 MML geokoodaus (`agents/lahteet/mml.ts`)
 - [x] 7A.5.5 Syken hakemisto, kuntakoodisto (`agents/lahteet/hakemisto.ts`)
-- [ ] 7A.6 Kuntien esityslistat (`agents/lahteet/kunnat/`)
+- [ ] 7A.6 Kuntien esityslistat (`agents/lahteet/kunnat/`) — RSS/iCal valmis, avoindata ja järjestelmäsovittimet puuttuu
 - [ ] Mallirajapinta (`agents/malli.ts`) ennen 7B:tä
 - [ ] 7B.1 Lähteenvahvistaja (`agents/lahteenvahvistaja.ts`)
 - [ ] 7B.2 Esikäsittelijä (`agents/esikasittelija.ts`)
@@ -203,7 +203,7 @@ Nämä nousivat käytön ja integraatioiden myötä; tarkennetaan ennen toteutus
 
 **Muut**
 - [x] 7A.4 Vanhentumisvahti
-- [ ] 7A.6 Kuntien esityslistat
+- [ ] 7A.6 Kuntien esityslistat (RSS/iCal aloitettu)
 
 ---
 
