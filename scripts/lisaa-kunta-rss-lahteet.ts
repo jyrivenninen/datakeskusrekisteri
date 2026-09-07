@@ -44,6 +44,91 @@ const LAHTEET: { nimi: string; url: string; huomautus?: string }[] = [
     url: "https://raisio.oncloudos.com/cgi/DREQUEST.PHP?page=rss/meetingitems&show=30",
     huomautus: "Dynasty oncloudos",
   },
+  {
+    nimi: "Eurajoki",
+    url: "https://eurajoki.oncloudos.com/cgi/DREQUEST.PHP?page=rss/meetingitems&show=30",
+    huomautus: "Dynasty oncloudos",
+  },
+  {
+    nimi: "Forssa",
+    url: "https://forssa.oncloudos.com/cgi/DREQUEST.PHP?page=rss/meetingitems&show=30",
+    huomautus: "Dynasty oncloudos",
+  },
+  {
+    nimi: "Harjavalta",
+    url: "https://harjavalta10.oncloudos.com/cgi/DREQUEST.PHP?page=rss/meetingitems&show=30",
+    huomautus: "Dynasty harjavalta10",
+  },
+  {
+    nimi: "Hyrynsalmi",
+    url: "https://hyrynsalmi10.oncloudos.com/cgi/DREQUEST.PHP?page=rss/meetingitems&show=30",
+    huomautus: "Dynasty hyrynsalmi10",
+  },
+  {
+    nimi: "Ii",
+    url: "https://ii.oncloudos.com/cgi/DREQUEST.PHP?page=rss/meetingitems&show=30",
+    huomautus: "Dynasty oncloudos",
+  },
+  {
+    nimi: "Joroinen",
+    url: "https://joroinen.oncloudos.com/cgi/DREQUEST.PHP?page=rss/meetingitems&show=30",
+    huomautus: "Dynasty oncloudos",
+  },
+  {
+    nimi: "Kemi",
+    url: "https://kemi.oncloudos.com/cgi/DREQUEST.PHP?page=rss/meetingitems&show=30",
+    huomautus: "Dynasty oncloudos",
+  },
+  {
+    nimi: "Kemijärvi",
+    url: "https://kemijarvi.oncloudos.com/cgi/DREQUEST.PHP?page=rss/meetingitems&show=30",
+    huomautus: "Dynasty oncloudos",
+  },
+  {
+    nimi: "Keuruu",
+    url: "https://keuruu.oncloudos.com/cgi/DREQUEST.PHP?page=rss/meetingitems&show=30",
+    huomautus: "Dynasty oncloudos",
+  },
+  {
+    nimi: "Kuhmo",
+    url: "https://kuhmo10.oncloudos.com/cgi/DREQUEST.PHP?page=rss/meetingitems&show=30",
+    huomautus: "Dynasty kuhmo10",
+  },
+  {
+    nimi: "Kuopio",
+    url: "https://kuopio.oncloudos.com/cgi/DREQUEST.PHP?page=rss/meetingitems&show=30",
+    huomautus: "Dynasty oncloudos",
+  },
+  {
+    nimi: "Mäntsälä",
+    url: "https://mantsala.oncloudos.com/cgi/DREQUEST.PHP?page=rss/meetingitems&show=30",
+    huomautus: "Dynasty oncloudos",
+  },
+  {
+    nimi: "Mänttä-Vilppula",
+    url: "https://mantta-vilppulad10.oncloudos.com/cgi/DREQUEST.PHP?page=rss/meetingitems&show=30",
+    huomautus: "Dynasty mantta-vilppulad10",
+  },
+  {
+    nimi: "Nurmijärvi",
+    url: "https://nurmijarvi10.oncloudos.com/cgi/DREQUEST.PHP?page=rss/meetingitems&show=30",
+    huomautus: "Dynasty nurmijarvi10",
+  },
+  {
+    nimi: "Utajärvi",
+    url: "https://utajarvi.oncloudos.com/cgi/DREQUEST.PHP?page=rss/meetingitems&show=30",
+    huomautus: "Dynasty oncloudos",
+  },
+  {
+    nimi: "Vaala",
+    url: "https://vaala.oncloudos.com/cgi/DREQUEST.PHP?page=rss/meetingitems&show=30",
+    huomautus: "Dynasty oncloudos",
+  },
+  {
+    nimi: "Vihti",
+    url: "https://vihti.oncloudos.com/cgi/DREQUEST.PHP?page=rss/meetingitems&show=30",
+    huomautus: "Dynasty oncloudos",
+  },
 ];
 
 async function main() {
