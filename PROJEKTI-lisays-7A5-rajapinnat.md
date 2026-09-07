@@ -81,6 +81,38 @@ Kuiva-ajo: `RYHTI_KUIVA=1`. Oletus `sykeuserid=datakeskusrekisteri`;
 ympäristömuuttuja `SYKE_RAJAPINTA_TUNNISTE` yliajaa. Tietueen `lahde_url`
 on ilman tunnistetta. GitHub Actions: cron 19:20 UTC.
 
+### 7A.5.1b Ryhti — rakennus- ja osoiteaineistopaketit
+
+Syke julkaisee valmiiden rakennusten ja osoitteiden avoimen aineiston myös
+**vuorokausipaketteina**. Paketit päivittyvät kerran päivässä aamuyöllä.
+Koko Suomen kerralla lataava paketti on vaihtoehto OGC-rajapinnalle, kun
+tarvitaan kertaluonteinen analyysi eikä rajapintahakuja.
+
+**Milloin paketti, milloin OGC:**
+- **OGC API Features** — kohdehaut (osoite, kunta, aikaleima). Käytetään
+  geokoodauksen tarkistukseen ja rakennustunnistukseen (`src/lib/ryhti-rakennus.ts`).
+- **Aineistopaketit** — koko maan eräajo, BI/analyysi. Ei ladata kokonaan
+  jokaisella agenttiajolla (open_address.json.gz ~400 MB pakattuna).
+
+Todennus 7.9.2026 (`https://ryhti.syke.fi/palvelut/palvelut-tiedon-hyodyntajille/`):
+
+| Aineisto | CSV | JSON | GPKG |
+|---|---|---|---|
+| Valmiit rakennukset | `https://paikkatiedot.ymparisto.fi/geoserver/www/open_building.csv.gz` | `.../open_building.json.gz` | `.../open_building.gpkg.gz` |
+| Rakennusten osoitteet | `https://paikkatiedot.ymparisto.fi/geoserver/www/open_address.csv.gz` | `.../open_address.json.gz` | `.../open_address.gpkg.gz` |
+
+- Formaatti: `.gz`, sisältö EPSG:3067 (metatiedot PDF:ssä).
+- Lisenssi: CC BY 4.0, viittaus Suomen ympäristökeskukseen.
+- OGC-vastine (kohdehaut): juuri
+  `https://paikkatiedot.ymparisto.fi/geoserver/ryhti_building/ogc/features/v1`
+  kokoelmat `open_building`, `open_address`, `avoimet_rakennukset`.
+- `sykeuserid` URL-parametrina kuten kaava-OGC:ssä.
+
+Sovitin geokoodauksen tueksi: `agents/lahteet/ryhti-rakennukset.ts`
+(`npm run agentti:ryhti-rakennukset`). Kirjaa pakettien saatavuuden
+(`rajapinta_tiivisteet`) ja ehdottaa rakennustunnistusta OGC-haulla
+(`ryhti_havainto`). Kuiva-ajo: `RYHTI_RAKENNUS_KUIVA=1`.
+
 ## 7A.5.2 YTJ / PRH
 
 Toimijan nimi, Y-tunnus, rekisteröintipäivä, toimiala, kotipaikka.
@@ -152,7 +184,15 @@ maakuntakohtaisia. Karttakerroksen sijaintitieto vaatii erillisen lähteen
 Toteutus:
 - `src/lib/fingrid.ts` — palvelinpuolen haku etusivun karttavertailuun
 - `agents/lahteet/fingrid.ts` — lahdeajot (`npm run agentti:fingrid`), GitHub Actions cron
-- tuotantotyypit erikseen kartalla; liityntäpisteet kartalle (tuleva kehitys)
+- tuotantotyypit erikseen kartalla
+- **Liityntäpisteet kartalla:** Fingridin avoin data-API ei sisällä
+  sähköasemien koordinaatteja. Sijainnit haetaan OpenStreetMap Overpass
+  -rajapinnasta (≥110 kV, nimetyt asemat), tallennetaan
+  `fingrid_liityntapisteet`-tauluun ja näytetään kartalla erillisenä
+  kerroksena. `luottamus = epavarma`; virallinen liityntätieto:
+  [Verkkokiikari](https://www.fingrid.fi/kantaverkko/liitynta-kantaverkkoon/verkkokiikari/).
+- `agents/lahteet/fingrid-liityntapisteet.ts` (`npm run agentti:fingrid-liityntapisteet`)
+- `src/lib/fingrid-liityntapisteet.ts` — karttanäkymän luku
 
 Käyttö toistaiseksi taustatietona ja vertailuna, ei automaattisena kenttätäyttönä.
 
@@ -276,6 +316,11 @@ Ehdot:
 **4. Ihmisilmoitus.** Osa kunnista jää katveeseen aina. Sen paikkaa
 ilmoituslomake ja paikalliset yhteyshenkilöt — se on ominaisuus, ei
 puute.
+
+**Automaattinen kartoitus:** `agents/lahteet/kunnat/kartoitus.ts` etsii
+puuttuville hankekunnille RSS- ja avoindata.fi-lähteitä. Ajetaan
+esityslistat-agentin yhteydessä (`KUNTA_KARTOITUS_KIRJOITA=1`) tai
+erikseen (`npm run kunta:kartoitus`, `KUNTA_KARTOITUS_KIRJOITA=1`).
 
 ---
 

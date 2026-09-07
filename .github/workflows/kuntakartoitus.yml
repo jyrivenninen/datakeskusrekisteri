@@ -1,18 +1,16 @@
-# Viikoittainen kuntien esityslista-RSS (7A.6). Ei kielimallia.
-# Tiistaisin 05:30 UTC. Manuaalinen workflow_dispatch tuotantoon.
+# Kuntalähteiden automaattikartoitus (7A.6). Kuukausittain.
 
-name: kuntakokoukset
+name: kuntakartoitus
 
 on:
   schedule:
-    # Tiistai 08:30 Suomen aikaa (talvi UTC+2)
-    - cron: "30 5 * * 2"
+    - cron: "0 6 1 * *"
   workflow_dispatch:
 
 jobs:
-  esityslistat:
+  kartoitus:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 120
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -20,9 +18,9 @@ jobs:
           node-version: "22"
           cache: npm
       - run: npm ci
-      - name: Hae kuntien RSS/iCal-syötteet
+      - name: Kartoita RSS ja avoindata.fi
         env:
           NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
           KUNTA_KARTOITUS_KIRJOITA: "1"
-        run: npx tsx agents/lahteet/kunnat/esityslistat.ts
+        run: npx tsx scripts/kartoita-kuntalahteet.ts

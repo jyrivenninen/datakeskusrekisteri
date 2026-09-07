@@ -17,6 +17,7 @@ import {
   haeSeuratutLahteet,
   puuttuvatLahteet,
 } from "./kuntakartoitus";
+import { kartoitaPuuttuvatLahteet } from "./kartoitus";
 import { haeKuntaDokumentit } from "./sovittimet/dynasty";
 import { casemSovitin } from "./sovittimet/casem";
 import { htmlSovitin } from "./sovittimet/html";
@@ -129,7 +130,12 @@ async function main() {
   });
 
   const hankkeet = await haeHankekunnat(supabase);
-  const lahteet = await haeSeuratutLahteet(supabase);
+  let lahteet = await haeSeuratutLahteet(supabase);
+
+  if (process.env.KUNTA_KARTOITUS_KIRJOITA === "1") {
+    await kartoitaPuuttuvatLahteet(supabase, { kirjoita: true, kuiva: kuiva });
+    lahteet = await haeSeuratutLahteet(supabase);
+  }
 
   if (kartoitus) {
     const puuttuvat = puuttuvatLahteet(hankkeet, lahteet);

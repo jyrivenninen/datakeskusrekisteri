@@ -28,6 +28,7 @@ import {
   type MaakuntaTila,
   type MaakuntaYhteenveto,
 } from "@/lib/maakunta";
+import type { FingridLiityntapiste } from "@/lib/fingrid-liityntapisteet";
 import { muotoileLuku, muotoileVaihtelvali, VAIHE_NIMET, VAIHE_VARIT } from "@/lib/naytto";
 import { HANKE_VAIHEET, type HankeVaihe, type SijaintiAlue, type SijaintiViiva } from "@/lib/supabase/tietokanta";
 
@@ -716,6 +717,32 @@ function piirraAlueetJaJohdot(kartta: MapLibre, svg: SVGSVGElement, merkit: Kart
   }
 }
 
+function piirraLiityntapisteet(
+  kartta: MapLibre,
+  svg: SVGSVGElement,
+  pisteet: FingridLiityntapiste[],
+  nayta: boolean,
+) {
+  while (svg.firstChild) svg.removeChild(svg.firstChild);
+  if (!nayta || pisteet.length === 0) return;
+  const zoom = kartta.getZoom();
+  if (zoom < 6) return;
+  const koko = zoom >= 10 ? 7 : 5;
+  for (const piste of pisteet) {
+    const xy = kartta.project([piste.lon, piste.lat]);
+    const nelio = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+    nelio.setAttribute("x", String(xy.x - koko / 2));
+    nelio.setAttribute("y", String(xy.y - koko / 2));
+    nelio.setAttribute("width", String(koko));
+    nelio.setAttribute("height", String(koko));
+    nelio.setAttribute("fill", "#7c3aed");
+    nelio.setAttribute("stroke", "#fff");
+    nelio.setAttribute("stroke-width", "1");
+    nelio.setAttribute("opacity", "0.85");
+    svg.appendChild(nelio);
+  }
+}
+
 export function Kartta({
   merkit,
   luokka,
@@ -723,6 +750,7 @@ export function Kartta({
   kartallaLkm,
   sovitaSuomeen = false,
   tuotantoVertailu = null,
+  liityntapisteet = [],
   asettelu = "upotettu",
   sovitaIkkunaan = false,
   taydennNayttoHref,
@@ -739,6 +767,8 @@ export function Kartta({
     fingridPaivitetty: string;
     tuotantotyypit: { nimi: string; mw: number; lahde_url: string }[];
   } | null;
+  /** Sähköasemat (OSM, ≥110 kV) — ei Fingridin virallista sijaintidataa. */
+  liityntapisteet?: FingridLiityntapiste[];
   /** Upotettu etusivulle tai koko näytön karttasivu. */
   asettelu?: "upotettu" | "koko";
   /** Rajaa kartta+legenda näkyvään ikkunaan (etusivu). */
@@ -751,6 +781,8 @@ export function Kartta({
   const svgMaakuntaRef = useRef<SVGSVGElement | null>(null);
   const svgTehoRef = useRef<SVGSVGElement | null>(null);
   const svgGeometriaRef = useRef<SVGSVGElement | null>(null);
+  const svgLiityntapisteRef = useRef<SVGSVGElement | null>(null);
+  const liityntapisteetRef = useRef<FingridLiityntapiste[]>(liityntapisteet);
   const merkitNytRef = useRef<Karttamerkki[]>([]);
   const merkkiluokatRef = useRef<Map<string, { marker: Marker; vaihe?: HankeVaihe }>>(new Map());
   const aktivisetVaiheetRef = useRef<Set<HankeVaihe>>(kaikkiVaiheetAktiviset());
@@ -765,12 +797,19 @@ export function Kartta({
   const [naytaJohdonmukaisuus, setNaytaJohdonmukaisuus] = useState(false);
   const [naytaMaakunnat, setNaytaMaakunnat] = useState(true);
   const [maakuntaTila, setMaakuntaTila] = useState<MaakuntaTila>("hankkeet");
+  const [naytaLiityntapisteet, setNaytaLiityntapisteet] = useState(
+    liityntapisteet.length > 0,
+  );
+
+  liityntapisteetRef.current = liityntapisteet;
 
   aktivisetVaiheetRef.current = aktivisetVaiheet;
   naytaTehoHalotRef.current = naytaTehoHalot;
   naytaJohdonmukaisuusRef.current = naytaJohdonmukaisuus;
   naytaMaakunnatRef.current = naytaMaakunnat;
   maakuntaTilaRef.current = maakuntaTila;
+  const naytaLiityntapisteetRef = useRef(naytaLiityntapisteet);
+  naytaLiityntapisteetRef.current = naytaLiityntapisteet;
 
   useEffect(() => {
     setAktivisetVaiheet(kaikkiVaiheetAktiviset());
@@ -781,11 +820,12 @@ export function Kartta({
     const svgMaakunta = svgMaakuntaRef.current;
     const svgTeho = svgTehoRef.current;
     const svgGeometria = svgGeometriaRef.current;
+    const svgLiityntapiste = svgLiityntapisteRef.current;
     const merkitNyt = merkitNytRef.current;
     const aktiviset = aktivisetVaiheetRef.current;
     const naytaTeho = naytaTehoHalotRef.current;
     const naytaJohdonmukaisuus = naytaJohdonmukaisuusRef.current;
-    if (!kartta || !svgMaakunta || !svgTeho || !svgGeometria) return;
+    if (!kartta || !svgMaakunta || !svgTeho || !svgGeometria || !svgLiityntapiste) return;
 
     const zoom = kartta.getZoom();
     for (const [, { marker, vaihe }] of merkkiluokatRef.current) {
@@ -806,6 +846,12 @@ export function Kartta({
     );
     piirraTehoHalotKerros(kartta, svgTeho, suodatetut, naytaTeho, naytaJohdonmukaisuus);
     piirraAlueetJaJohdot(kartta, svgGeometria, suodatetut);
+    piirraLiityntapisteet(
+      kartta,
+      svgLiityntapiste,
+      liityntapisteetRef.current,
+      naytaLiityntapisteetRef.current,
+    );
   };
 
   const vaihdaVaihe = (vaihe: HankeVaihe) => {
@@ -822,7 +868,7 @@ export function Kartta({
 
   useEffect(() => {
     paivitaNakyvyys();
-  }, [aktivisetVaiheet, naytaTehoHalot, naytaJohdonmukaisuus, naytaMaakunnat, maakuntaTila]);
+  }, [aktivisetVaiheet, naytaTehoHalot, naytaJohdonmukaisuus, naytaMaakunnat, maakuntaTila, naytaLiityntapisteet, liityntapisteet]);
 
   useEffect(() => {
     if (!kehys.current || !avain) return;
@@ -866,14 +912,22 @@ export function Kartta({
     svgGeometria.style.cssText =
       "position:absolute;inset:0;z-index:2;pointer-events:none;overflow:visible;";
 
+    const svgLiityntapiste = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+    svgLiityntapiste.setAttribute("aria-hidden", "true");
+    svgLiityntapiste.setAttribute("class", "kartta-liityntapiste-kerros");
+    svgLiityntapiste.style.cssText =
+      "position:absolute;inset:0;z-index:3;pointer-events:none;overflow:visible;";
+
     kartta.getCanvasContainer().appendChild(svgMaakunta);
     kartta.getCanvasContainer().appendChild(svgTeho);
     kartta.getCanvasContainer().appendChild(svgGeometria);
+    kartta.getCanvasContainer().appendChild(svgLiityntapiste);
 
     karttaRef.current = kartta;
     svgMaakuntaRef.current = svgMaakunta;
     svgTehoRef.current = svgTeho;
     svgGeometriaRef.current = svgGeometria;
+    svgLiityntapisteRef.current = svgLiityntapiste;
 
     merkkiluokatRef.current = new Map();
     for (const merkki of merkitNyt) {
@@ -1203,6 +1257,42 @@ export function Kartta({
             </ul>
           ) : null}
         </div>
+        {liityntapisteet.length > 0 ? (
+          <div className="mt-4 border-t border-border pt-3">
+            <button
+              type="button"
+              className={`flex w-full items-start gap-2 rounded px-1 py-0.5 text-left transition-colors hover:bg-muted/30 ${naytaLiityntapisteet ? "" : "text-muted"}`}
+              aria-pressed={naytaLiityntapisteet}
+              onClick={() => setNaytaLiityntapisteet((edellinen) => !edellinen)}
+            >
+              <span
+                className="mt-0.5 inline-block size-3 shrink-0 border border-white"
+                style={{
+                  backgroundColor: naytaLiityntapisteet ? "#7c3aed" : "transparent",
+                  borderColor: naytaLiityntapisteet ? "#fff" : "#94a3b8",
+                }}
+                aria-hidden="true"
+              />
+              <span className="min-w-0 flex-1">
+                <span className="block text-sm font-semibold">Sähköasemat (≥110 kV)</span>
+                <span className="mt-1 block text-xs leading-relaxed">
+                  OpenStreetMap, ei Fingridin virallista sijaintidataa. Näkyy zoomissa ≥6.
+                  Virallinen liityntätieto:{" "}
+                  <a
+                    href="https://www.fingrid.fi/kantaverkko/liitynta-kantaverkkoon/verkkokiikari/"
+                    className="text-link underline"
+                  >
+                    Verkkokiikari
+                  </a>
+                  .
+                </span>
+              </span>
+            </button>
+            <p className="mt-2 text-xs tabular-nums text-muted">
+              {liityntapisteet.length} asemaa kartalla
+            </p>
+          </div>
+        ) : null}
         <div className="mt-4 border-t border-border pt-3">
           <button
             type="button"
@@ -1390,7 +1480,7 @@ export function Kartta({
             </dl>
             <p className="mt-2 text-xs text-muted">
               Fingrid {new Date(tuotantoVertailu.fingridPaivitetty).toLocaleString("fi-FI")}.
-              Tuotanto on valtakunnallista; kartta ei vielä näytä tuotannon sijaintia.
+              Tuotanto on valtakunnallista eikä kata sijaintia.
             </p>
             <p className="mt-1 text-xs">
               <a

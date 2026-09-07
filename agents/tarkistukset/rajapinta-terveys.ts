@@ -35,7 +35,13 @@ const PINGIT: PingKohde[] = [
     odotettuMax: 299,
   },
   {
-    nimi: "ryhti-ogc",
+    nimi: "ryhti-rakennus-ogc",
+    url: `https://paikkatiedot.ymparisto.fi/geoserver/ryhti_building/ogc/features/v1/collections?sykeuserid=${SYKE_USERID}`,
+    odotettuMin: 200,
+    odotettuMax: 299,
+  },
+  {
+    nimi: "ryhti-kaava-ogc",
     url: `https://paikkatiedot.ymparisto.fi/geoserver/ryhti_plan/ogc/features/v1/collections?sykeuserid=${SYKE_USERID}`,
     odotettuMin: 200,
     odotettuMax: 299,

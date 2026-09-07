@@ -1,0 +1,26 @@
+# Ryhti rakennus/osoite — pakettivalvonta ja OGC-rakennustunnistus (7A.5.1b).
+
+name: ryhti-rakennukset
+
+on:
+  schedule:
+    - cron: "40 19 * * 3"
+  workflow_dispatch:
+
+jobs:
+  ryhti-rakennukset:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+      - run: npm ci
+      - name: Ryhti rakennus/osoite
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          SYKE_RAJAPINTA_TUNNISTE: ${{ secrets.SYKE_RAJAPINTA_TUNNISTE }}
+        run: npx tsx agents/lahteet/ryhti-rakennukset.ts

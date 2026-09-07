@@ -196,8 +196,8 @@ Nämä nousivat käytön ja integraatioiden myötä; tarkennetaan ennen toteutus
 
 **Ryhti / Syke**
 - [x] OGC-sivukoko 1000 → 3000 (Syken sallima enimmäisraja)
-- [ ] Dokumentoi rakennus- ja osoitelatauspaketit (GeoJSON/CSV/GPKG `.gz`) `PROJEKTI-lisays-7A5-rajapinnat.md`:hen
-- [ ] Rakennus/osoite-vuorokausipaketit geokoodauksen tai rakennustunnistuksen tueksi (erillinen feature)
+- [x] Dokumentoi rakennus- ja osoitelatauspaketit (GeoJSON/CSV/GPKG `.gz`) `PROJEKTI-lisays-7A5-rajapinnat.md`:hen
+- [x] Rakennus/osoite-vuorokausipaketit geokoodauksen tai rakennustunnistuksen tueksi (erillinen feature)
 
 **Kartta ja energia**
 - [x] Fingrid 7A.5.4 v1: reaaliaikainen kokonaistuotanto vs. valittujen hankkeiden teho kartalla
@@ -206,11 +206,11 @@ Nämä nousivat käytön ja integraatioiden myötä; tarkennetaan ennen toteutus
 - [x] Kartta vaihe 1: maakuntakerros valittavissa (hankkeet / IT-teho / sähkönkäyttö), erillinen sähkönkäyttö-yhteenveto
 - [x] Maakuntakohtainen sähköntuotanto karttakerroksena (Energiateollisuus 2024, vuosittainen; Fingrid on valtakunnallista)
 - [x] Kartta: IT-teho vs. dokumentoidun kulutuksen johdonmukaisuus (suuntaa-antava tarkistus)
-- [ ] Fingrid: liityntäpisteet kartalle (ei koneellista sijaintidataa avoimessa API:ssa)
+- [x] Fingrid: liityntäpisteet kartalle (ei koneellista sijaintidataa avoimessa API:ssa)
 
 **Muut**
 - [x] 7A.4 Vanhentumisvahti
-- [ ] 7A.6 Kuntien esityslistat — uusia lähteitä kartoitetaan ajossa (RSS + avoindata.fi)
+- [x] 7A.6 Kuntien esityslistat — uusia lähteitä kartoitetaan ajossa (RSS + avoindata.fi)
 
 ---
 

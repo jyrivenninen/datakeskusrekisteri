@@ -50,7 +50,7 @@ export default async function Etusivu({
     haeKarttaSivuData(suodatus),
   ]);
 
-  const { merkit, tuotantoVertailu, vaiheLkm } = karttaData;
+  const { merkit, tuotantoVertailu, liityntapisteet, vaiheLkm } = karttaData;
   const jarjestetytHankkeet = jarjestaHankkeet(hankkeet, jarjestys);
 
   const { hankkeet: kaikkiHankkeet } = await haeJulkaistutHankkeet();
@@ -167,6 +167,7 @@ export default async function Etusivu({
             sovitaIkkunaan
             kartallaLkm={merkit.length}
             tuotantoVertailu={tuotantoVertailu}
+            liityntapisteet={liityntapisteet}
             vaiheLkm={vaiheLkm}
             taydennNayttoHref={karttaSuodatusPolku(suodatus)}
           />

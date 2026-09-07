@@ -18,7 +18,8 @@ export default async function KarttaSivu({
 }) {
   const params = await searchParams;
   const suodatus = parsiSuodatus(params);
-  const { merkit, tuotantoVertailu, vaiheLkm, hankeVirhe } = await haeKarttaSivuData(suodatus);
+  const { merkit, tuotantoVertailu, liityntapisteet, vaiheLkm, hankeVirhe } =
+    await haeKarttaSivuData(suodatus);
 
   return (
     <main id="sisalto" className="flex min-h-0 flex-1 flex-col">
@@ -46,6 +47,7 @@ export default async function KarttaSivu({
             asettelu="koko"
             kartallaLkm={merkit.length}
             tuotantoVertailu={tuotantoVertailu}
+            liityntapisteet={liityntapisteet}
             vaiheLkm={vaiheLkm}
           />
         </div>

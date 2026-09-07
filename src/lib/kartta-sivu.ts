@@ -1,5 +1,9 @@
 import type { Karttamerkki } from "@/komponentit/kartta";
 import { FINGRID_TUOTANTO_DATASETIT, haeFingridTuotantoNyt } from "@/lib/fingrid";
+import {
+  haeFingridLiityntapisteet,
+  type FingridLiityntapiste,
+} from "@/lib/fingrid-liityntapisteet";
 import { hankeVaihtelvalit } from "@/lib/hanke-vaihtelvali";
 import { ratkaiseMaakunta } from "@/lib/maakunta";
 import { hankeTehoMw } from "@/lib/naytto";
@@ -19,16 +23,18 @@ export type KarttaTuotantoVertailu = {
 export type KarttaSivuData = {
   merkit: Karttamerkki[];
   tuotantoVertailu: KarttaTuotantoVertailu | null;
+  liityntapisteet: FingridLiityntapiste[];
   vaiheLkm: Partial<Record<HankeVaihe, number>>;
   hankeVirhe: string | null;
 };
 
 export async function haeKarttaSivuData(suodatus: HankeSuodatus): Promise<KarttaSivuData> {
-  const [{ hankkeet, johdot, virhe: hankeVirhe }, fingridTuotanto, kuntaMaakunnat] =
+  const [{ hankkeet, johdot, virhe: hankeVirhe }, fingridTuotanto, kuntaMaakunnat, liityntapisteet] =
     await Promise.all([
       haeJulkaistutHankkeet(suodatus),
       haeFingridTuotantoNyt(),
       haeKuntaMaakuntaKartta(),
+      haeFingridLiityntapisteet(),
     ]);
 
   const merkit: Karttamerkki[] = hankkeet.flatMap((hanke) => {
@@ -80,5 +86,5 @@ export async function haeKarttaSivuData(suodatus: HankeSuodatus): Promise<Kartta
     ]),
   ) as Partial<Record<HankeVaihe, number>>;
 
-  return { merkit, tuotantoVertailu, vaiheLkm, hankeVirhe };
+  return { merkit, tuotantoVertailu, liityntapisteet, vaiheLkm, hankeVirhe };
 }
