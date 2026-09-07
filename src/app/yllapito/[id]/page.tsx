@@ -74,6 +74,7 @@ export default async function EhdotusSivu({
   const kunta = sisalto.kunta;
   const dokumentti = sisalto.dokumentti;
   const lahteenvahvistus = sisalto.lahteenvahvistus;
+  const esikasittelu = sisalto.esikasittelu;
   const ristiriita = sisalto.ristiriita;
   const hankeIdt = ehdotuksenHankeIdt(ehdotus.hanke_id, ristiriita);
   let hankkeet = await haeHankkeetYllapitoon(hankeIdt);
@@ -720,6 +721,73 @@ export default async function EhdotusSivu({
                 </a>
               </dd>
             </div>
+          </dl>
+        </section>
+      ) : null}
+
+      {esikasittelu?.valmis ? (
+        <section className="mt-6" aria-labelledby="esikasittelu-otsikko">
+          <h2 id="esikasittelu-otsikko" className="text-xl font-semibold">
+            Esikäsittely
+          </h2>
+          <p className="mt-2 text-sm text-muted">
+            Agentti on täydentänyt ilmoitusta rakenteisista lähteistä ja
+            valinnaisesti lähdeasiakirjasta. Kaikki lisätyt kentät on merkitty
+            luottamuksella Epävarma.
+          </p>
+          <dl className="mt-4 divide-y divide-border border-y border-border">
+            <div className="py-3">
+              <dt className="font-medium">Käsitelty</dt>
+              <dd className="mt-1">{esikasittelu.kasitelty_pvm.slice(0, 19).replace("T", " ")}</dd>
+            </div>
+            {esikasittelu.lisatyt_kentat.length > 0 ? (
+              <div className="py-3">
+                <dt className="font-medium">Lisätyt kentät</dt>
+                <dd className="mt-1">
+                  {esikasittelu.lisatyt_kentat
+                    .map((k) => HANKE_KENTTA_NIMET[k] ?? k)
+                    .join(", ")}
+                </dd>
+              </div>
+            ) : null}
+            {esikasittelu.huomautukset.map((h) => (
+              <div key={h} className="py-3">
+                <dt className="font-medium">Huomautus</dt>
+                <dd className="mt-1">{h}</dd>
+              </div>
+            ))}
+            {esikasittelu.duplikaatit?.map((d) => (
+              <div key={d.id} className="py-3">
+                <dt className="font-medium">Mahdollinen duplikaatti</dt>
+                <dd className="mt-1">
+                  <a href={`/hankkeet/${d.id}`} className="text-link underline">
+                    {d.nimi}
+                  </a>
+                  {" "}
+                  ({d.kunta})
+                </dd>
+              </div>
+            ))}
+            {esikasittelu.ryhti ? (
+              <div className="py-3">
+                <dt className="font-medium">Ryhti-osuma</dt>
+                <dd className="mt-1">
+                  {esikasittelu.ryhti.nimi ?? esikasittelu.ryhti.kaavatunnus ?? "—"}
+                  {esikasittelu.ryhti.kaavatunnus ? (
+                    <span className="text-muted"> · {esikasittelu.ryhti.kaavatunnus}</span>
+                  ) : null}
+                  <p className="mt-1 text-sm">
+                    <a
+                      href={esikasittelu.ryhti.lahde_url}
+                      className="text-link underline"
+                      rel="noopener noreferrer"
+                    >
+                      {esikasittelu.ryhti.lahde_url}
+                    </a>
+                  </p>
+                </dd>
+              </div>
+            ) : null}
           </dl>
         </section>
       ) : null}

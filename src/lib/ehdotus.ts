@@ -159,6 +159,18 @@ export type EhdotusSisalto = {
     dokumentti_id: string | null;
     merkkimaara: number | null;
   };
+  esikasittelu?: {
+    valmis: boolean;
+    kasitelty_pvm: string;
+    lisatyt_kentat: string[];
+    huomautukset: string[];
+    duplikaatit?: Array<{ id: string; nimi: string; kunta: string }>;
+    ryhti?: {
+      nimi: string | null;
+      kaavatunnus: string | null;
+      lahde_url: string;
+    };
+  };
 };
 
 const NUMEERISET = new Set([
