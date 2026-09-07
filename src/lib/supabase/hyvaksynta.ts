@@ -6,9 +6,11 @@ import {
   type EhdotettuKentta,
   type EhdotusSisalto,
 } from "@/lib/ehdotus";
+import { geokoodaaOsoite, onSijaintiAluePolygon } from "@/lib/geokoodaus";
 import { ehdotuksenHankeIdt } from "@/lib/naytto";
 import { LAHDE_LAJIT, type LahdeLaji } from "@/lib/supabase/tietokanta";
 import { luoYllapitoAsiakas } from "@/lib/supabase/yllapito-asiakas";
+import type { SupabaseClient } from "@supabase/supabase-js";
 
 function tanaan(): string {
   return new Date().toISOString().slice(0, 10);
@@ -45,6 +47,33 @@ function lahdeRivi(
   };
 }
 
+/** Agentin päätösehdotuksissa voi puuttua paattava_organisaatio_id-lähde. */
+function taydennaPaatosOrganisaatioLahde(
+  paatos: NonNullable<EhdotusSisalto["paatos"]>,
+): NonNullable<EhdotusSisalto["paatos"]> {
+  if (!paatos.paattava_organisaatio_nimi?.trim()) return paatos;
+  if (paatos.paattava_organisaatio_id) return paatos;
+  const onOrgLahde = paatos.lahteet.some(
+    (l) => l.kentta === "paattava_organisaatio_id",
+  );
+  if (onOrgLahde) return paatos;
+  const pohja =
+    paatos.lahteet.find((l) => l.kentta === "kuvaus") ?? paatos.lahteet[0];
+  if (!pohja) return paatos;
+  return {
+    ...paatos,
+    lahteet: [
+      ...paatos.lahteet,
+      {
+        ...pohja,
+        kentta: "paattava_organisaatio_id",
+        merkitty: "ihmisen_vahvistama" as const,
+        lainaus: pohja.lainaus?.trim() || paatos.paattava_organisaatio_nimi,
+      },
+    ],
+  };
+}
+
 function ristiriitaEiUudelleenPerustelu(teksti: string | undefined): string {
   const t = (teksti ?? "").trim();
   if (t.length < 12) {
@@ -68,6 +97,80 @@ function ristiriitaSisaltoEiUudelleen(
       ei_uudelleen_perustelu: perustelu,
     },
   };
+}
+
+/**
+ * Agentin teksti-sijainti_alue → koordinaatit + sijainti-lähde.
+ * GeoJSON-polygonit jätetään ennalleen (RPC kirjoittaa sijainti_alue-sarakkeeseen).
+ */
+async function normalisoiSijaintiAlueKentat(
+  kentat: Record<string, EhdotettuKentta>,
+  hankeId: string | null,
+  supabase: SupabaseClient,
+): Promise<Record<string, EhdotettuKentta>> {
+  const sijaintiAlue = kentat.sijainti_alue;
+  if (!sijaintiAlue) return kentat;
+
+  if (onSijaintiAluePolygon(sijaintiAlue.arvo)) {
+    return kentat;
+  }
+
+  const osoite = String(sijaintiAlue.arvo ?? "").trim();
+  const uusi = { ...kentat };
+  delete uusi.sijainti_alue;
+
+  if (!osoite) {
+    return uusi;
+  }
+
+  let lat: number | null = null;
+  let lon: number | null = null;
+  let geokoodausUrl: string | null = null;
+  let geokoodausLabel: string | null = null;
+
+  try {
+    const tulos = await geokoodaaOsoite(osoite);
+    lat = tulos.lat;
+    lon = tulos.lon;
+    geokoodausUrl = tulos.lahde_url;
+    geokoodausLabel = tulos.label;
+  } catch {
+    // Käytetään olemassa olevia koordinaatteja alla.
+  }
+
+  if ((lat == null || lon == null) && hankeId) {
+    const { data, error } = await supabase
+      .from("hankkeet")
+      .select("sijainti_lat, sijainti_lon")
+      .eq("id", hankeId)
+      .maybeSingle();
+    if (error) throw new Error(error.message);
+    if (data?.sijainti_lat != null && data?.sijainti_lon != null) {
+      lat = Number(data.sijainti_lat);
+      lon = Number(data.sijainti_lon);
+    }
+  }
+
+  if (lat == null || lon == null || !Number.isFinite(lat) || !Number.isFinite(lon)) {
+    throw new Error(
+      `Osoitetta "${osoite}" ei voitu geokoodata eikä hankkeella ole olemassa olevia koordinaatteja.`,
+    );
+  }
+
+  const lainaus =
+    sijaintiAlue.lainaus?.trim() ||
+    (geokoodausLabel ? `${osoite} (${geokoodausLabel})` : osoite);
+
+  const pohja: EhdotettuKentta = {
+    ...sijaintiAlue,
+    lainaus,
+    lahde_url: geokoodausUrl ?? sijaintiAlue.lahde_url,
+    luottamus: geokoodausUrl ? "epavarma" : kentanLuottamus(sijaintiAlue, "epavarma"),
+  };
+
+  uusi.sijainti_lat = { ...pohja, arvo: lat };
+  uusi.sijainti_lon = { ...pohja, arvo: lon };
+  return uusi;
 }
 
 export async function yhdistaHankkeetEhdotuksesta(
@@ -191,12 +294,22 @@ export async function hyvaksyMuutosehdotus(
   }
 
   if (ehdotus.tyyppi === "paatos") {
-    const paatos = (ehdotus.sisalto as EhdotusSisalto).paatos;
+    const alkuperainenSisalto = ehdotus.sisalto as EhdotusSisalto;
+    let paatos = alkuperainenSisalto.paatos;
     if (!paatos?.kuvaus?.trim() || !paatos?.pvm?.trim()) {
       throw new Error("Paatos-ehdotuksesta puuttuvat kuvaus tai pvm.");
     }
     if (!Array.isArray(paatos.lahteet) || paatos.lahteet.length === 0) {
       throw new Error("Paatos-ehdotuksesta puuttuvat lähderivit (lahteet).");
+    }
+    paatos = taydennaPaatosOrganisaatioLahde(paatos);
+    if (paatos !== alkuperainenSisalto.paatos) {
+      const { error: paivitysVirhe } = await supabase
+        .from("muutosehdotukset")
+        .update({ sisalto: { ...alkuperainenSisalto, paatos } })
+        .eq("id", ehdotusId)
+        .eq("tila", "odottaa");
+      if (paivitysVirhe) throw new Error(paivitysVirhe.message);
     }
     const { error: rpcVirhe } = await supabase.rpc("julkaise_paatos", {
       p_ehdotus_id: ehdotusId,
@@ -255,7 +368,8 @@ export async function hyvaksyMuutosehdotus(
   }
 
   const sisalto = ehdotus.sisalto as EhdotusSisalto;
-  const kentat = sisalto.kentat ?? {};
+  let kentat = sisalto.kentat ?? {};
+  kentat = await normalisoiSijaintiAlueKentat(kentat, ehdotus.hanke_id, supabase);
   const vaihtoehdot = sisalto.vaihtoehdot ?? {};
   const kuvat = sisalto.kuvat ?? [];
 
@@ -303,12 +417,17 @@ export async function hyvaksyMuutosehdotus(
     "sijainti_lat",
     "sijainti_lon",
     "sijainti_alue_tyyppi",
+    "sijainti_alue",
   ]);
 
-  const hanke: Record<string, string> = {};
+  const hanke: Record<string, string | object> = {};
   for (const [kentta, tieto] of Object.entries(kentat)) {
     if (kentta === "toimija_nimi") {
       hanke.toimija_nimi = tieto.arvo;
+      continue;
+    }
+    if (kentta === "sijainti_alue" && onSijaintiAluePolygon(tieto.arvo)) {
+      hanke.sijainti_alue = tieto.arvo as object;
       continue;
     }
     const arvo = kenttaArvoksi(kentta, tieto.arvo);
@@ -325,7 +444,12 @@ export async function hyvaksyMuutosehdotus(
       ),
     );
   const sijaintiLahde =
-    kentat.sijainti_lat ?? kentat.sijainti_lon ?? kentat.sijainti_alue_tyyppi;
+    kentat.sijainti_lat ??
+    kentat.sijainti_lon ??
+    kentat.sijainti_alue_tyyppi ??
+    (kentat.sijainti_alue && onSijaintiAluePolygon(kentat.sijainti_alue.arvo)
+      ? kentat.sijainti_alue
+      : undefined);
   if (sijaintiLahde) {
     lahteet.push(lahdeRivi("sijainti", sijaintiLahde, "epavarma"));
   }
