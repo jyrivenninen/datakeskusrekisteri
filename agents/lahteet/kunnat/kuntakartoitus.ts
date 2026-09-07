@@ -10,7 +10,7 @@ type LahdeRivi = {
   kunnat: { id: string; koodi: string; nimi: string } | { id: string; koodi: string; nimi: string }[] | null;
 };
 
-/** Seurannassa olevat RSS/iCal-lähteet tietokannasta. */
+/** Seurannassa olevat esityslistalähteet tietokannasta. */
 export async function haeSeuratutLahteet(
   supabase: TietokantaAsiakas,
 ): Promise<KuntaLahde[]> {
@@ -18,7 +18,7 @@ export async function haeSeuratutLahteet(
     .from("kunta_esityslista_lahteet")
     .select("id, jarjestelma, perus_url, kunnat ( id, koodi, nimi )")
     .eq("seurannassa", true)
-    .in("jarjestelma", ["rss", "ical"]);
+    .in("jarjestelma", ["rss", "ical", "casem"]);
   if (error) throw new Error(error.message);
 
   const lahteet: KuntaLahde[] = [];

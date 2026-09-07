@@ -165,7 +165,12 @@ async function main() {
     .select("kunnat(nimi)")
     .eq("seurannassa", true);
   const konfig = new Set(
-    (lahteet ?? []).map((l) => (l.kunnat as { nimi: string } | null)?.nimi).filter(Boolean),
+    (lahteet ?? [])
+      .map((l) => {
+        const kunta = Array.isArray(l.kunnat) ? l.kunnat[0] : l.kunnat;
+        return kunta?.nimi;
+      })
+      .filter((n): n is string => Boolean(n)),
   );
 
   const puuttuvat = [

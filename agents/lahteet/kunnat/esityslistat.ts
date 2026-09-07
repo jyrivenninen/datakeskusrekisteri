@@ -1,5 +1,5 @@
 /**
- * 7A.6 Kuntien esityslistat — vaihe 1: RSS ja iCal. Ei kielimallia.
+ * 7A.6 Kuntien esityslistat — RSS, iCal ja CaseM/CloudNC. Ei kielimallia.
  *
  * Lukee kunta_esityslista_lahteet-taulusta seurattavat syötteet, suodattaa
  * hakusanat ja kirjaa osumat muutosehdotukset-tauluun (kunta_havainto).
@@ -17,6 +17,7 @@ import {
   haeSeuratutLahteet,
   puuttuvatLahteet,
 } from "./kuntakartoitus";
+import { casemSovitin } from "./sovittimet/casem";
 import { icalSovitin } from "./sovittimet/ical";
 import { rssSovitin } from "./sovittimet/rss";
 import type { HankeKunnassa, KuntaLahde, KuntaSovitin } from "./tyypit";
@@ -45,6 +46,7 @@ function paivaaTaaksepain(): number {
 function sovitinJarjestelmalle(jarjestelma: string): KuntaSovitin | null {
   if (jarjestelma === "rss") return rssSovitin;
   if (jarjestelma === "ical") return icalSovitin;
+  if (jarjestelma === "casem") return casemSovitin;
   return null;
 }
 
@@ -93,10 +95,10 @@ async function main() {
   if (kartoitus) {
     const puuttuvat = puuttuvatLahteet(hankkeet, lahteet);
     console.log(
-      `Kartoitus: ${lahteet.length} RSS/iCal-lähdettä, ${puuttuvat.length} hankekuntaa ilman lähdettä.`,
+      `Kartoitus: ${lahteet.length} lähdettä, ${puuttuvat.length} hankekuntaa ilman lähdettä.`,
     );
     for (const k of puuttuvat.sort((a, b) => b.hankkeita - a.hankkeita).slice(0, 40)) {
-      console.log(`  ${k.kunta}: ${k.hankkeita} hanketta, ei RSS/iCal-lähdettä`);
+      console.log(`  ${k.kunta}: ${k.hankkeita} hanketta, ei lähdettä`);
     }
     if (puuttuvat.length > 40) console.log(`  … ja ${puuttuvat.length - 40} muuta`);
     if (kuiva || lahteet.length === 0) return;
@@ -104,7 +106,7 @@ async function main() {
 
   if (lahteet.length === 0) {
     console.log(
-      `${EHDOTTAJA}: ei seurattavia RSS/iCal-lähteitä. Lisää kunta_esityslista_lahteet-tauluun tai aja KUNTA_ESITYSLISTA_KARTOITUS=1.`,
+      `${EHDOTTAJA}: ei seurattavia lähteitä. Lisää kunta_esityslista_lahteet-tauluun tai aja KUNTA_ESITYSLISTA_KARTOITUS=1.`,
     );
     return;
   }
