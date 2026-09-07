@@ -101,6 +101,8 @@ export const MUUTOSEHDOTUS_TYYPPI_NIMET: Record<string, string> = {
   ytj_havainto: "YTJ-havainto",
   mml_havainto: "MML-havainto",
   dokumentti_muuttunut: "Dokumentti muuttunut",
+  lahteenvahvistus: "Lähteenvahvistus",
+  lahteenvahvistus_pyynto: "Lähteenvahvistuspyyntö",
   ristiriita_havainto: "Ristiriitahavainto",
   kentta_tarkistus: "Kenttä tarkistettu ilman lähdettä",
   kentta_tyhjennys: "Kentän tyhjennys",
@@ -128,8 +130,16 @@ export const HAVAINTO_TYYPIT = new Set([
   "ytj_havainto",
   "mml_havainto",
   "dokumentti_muuttunut",
+  "lahteenvahvistus",
   "ristiriita_havainto",
 ]);
+
+export const LAHTEENVAHVISTUS_TULOS_NIMET: Record<string, string> = {
+  tukee: "Tukee",
+  ei_tue: "Ei tue",
+  ei_loydy: "Ei löydy",
+  dokumentti_muuttunut: "Dokumentti muuttunut",
+};
 
 /** Kenttäkohtainen merkintä tai tyhjennys — ei uutta arvoa eikä pelkkää havaintoa. */
 export const KENTTA_LUOKKA_TYYPIT = new Set(["kentta_tarkistus", "kentta_tyhjennys"]);

@@ -16,6 +16,7 @@
     "agentti:ytj": "tsx agents/lahteet/ytj.ts",
     "agentti:mml": "tsx agents/lahteet/mml.ts",
     "agentti:kuntakokoukset": "tsx agents/lahteet/kunnat/esityslistat.ts",
+    "agentti:lahteenvahvistaja": "tsx agents/lahteenvahvistaja.ts",
     "agentti:jwt": "tsx scripts/luo-agentti-jwt.ts",
     "agentti:testaa-yhteys": "tsx scripts/testaa-agentti-yhteys.ts",
     "kunta:rss-lahteet": "tsx scripts/lisaa-kunta-rss-lahteet.ts",

@@ -144,6 +144,21 @@ export type EhdotusSisalto = {
       laji: "kuulutus" | "muu";
     }>;
   };
+  lahteenvahvistus?: {
+    taulu: "hankkeet";
+    rivi_id: string;
+    kentta: string;
+    kentta_nimi: string;
+    tallennettu_arvo: string;
+    lahde_url: string;
+    lahde_sivu: number | null;
+    kentta_lahde_id: string | null;
+    tulos: "tukee" | "ei_tue" | "ei_loydy" | "dokumentti_muuttunut";
+    lainaus: string | null;
+    sivu: number | null;
+    dokumentti_id: string | null;
+    merkkimaara: number | null;
+  };
 };
 
 const NUMEERISET = new Set([

@@ -5,6 +5,7 @@ import {
   ehdotusPoistetulleHankkeelle,
   ehdotuksenHankeIdt,
   HANKE_KENTTA_NIMET,
+  LAHTEENVAHVISTUS_TULOS_NIMET,
   LUOTTAMUS_NIMET,
   MERKINTA_NIMET,
   PAATOS_KENTTA_NIMET,
@@ -72,6 +73,7 @@ export default async function EhdotusSivu({
   const mml = sisalto.mml;
   const kunta = sisalto.kunta;
   const dokumentti = sisalto.dokumentti;
+  const lahteenvahvistus = sisalto.lahteenvahvistus;
   const ristiriita = sisalto.ristiriita;
   const hankeIdt = ehdotuksenHankeIdt(ehdotus.hanke_id, ristiriita);
   let hankkeet = await haeHankkeetYllapitoon(hankeIdt);
@@ -655,6 +657,66 @@ export default async function EhdotusSivu({
                   rel="noopener noreferrer"
                 >
                   {ehdotus.lahde_url}
+                </a>
+              </dd>
+            </div>
+          </dl>
+        </section>
+      ) : null}
+
+      {lahteenvahvistus ? (
+        <section className="mt-6" aria-labelledby="lahteenvahvistus-otsikko">
+          <h2 id="lahteenvahvistus-otsikko" className="text-xl font-semibold">
+            Lähteenvahvistus
+          </h2>
+          <p className="mt-2 text-sm text-muted">
+            Kielimalli on verrannut tallennettua arvoa lähdeasiakirjaan.
+            Hyväksyntä merkitsee havainnon käsitellyksi; se ei muuta kentän arvoa
+            eikä luottamusta.
+          </p>
+          <dl className="mt-4 divide-y divide-border border-y border-border">
+            <div className="py-3">
+              <dt className="font-medium">Kenttä</dt>
+              <dd className="mt-1">{lahteenvahvistus.kentta_nimi}</dd>
+            </div>
+            <div className="py-3">
+              <dt className="font-medium">Tallennettu arvo</dt>
+              <dd className="mt-1">{lahteenvahvistus.tallennettu_arvo}</dd>
+            </div>
+            <div className="py-3">
+              <dt className="font-medium">Tulos</dt>
+              <dd className="mt-1">
+                {LAHTEENVAHVISTUS_TULOS_NIMET[lahteenvahvistus.tulos] ??
+                  lahteenvahvistus.tulos}
+              </dd>
+            </div>
+            {lahteenvahvistus.lainaus ? (
+              <div className="py-3">
+                <dt className="font-medium">Lainaus</dt>
+                <dd className="mt-1 whitespace-pre-wrap">{lahteenvahvistus.lainaus}</dd>
+              </div>
+            ) : null}
+            {lahteenvahvistus.sivu != null ? (
+              <div className="py-3">
+                <dt className="font-medium">Sivu</dt>
+                <dd className="mt-1">{lahteenvahvistus.sivu}</dd>
+              </div>
+            ) : null}
+            {lahteenvahvistus.lahde_sivu != null ? (
+              <div className="py-3">
+                <dt className="font-medium">Lähde merkitty sivulle</dt>
+                <dd className="mt-1">{lahteenvahvistus.lahde_sivu}</dd>
+              </div>
+            ) : null}
+            <div className="py-3">
+              <dt className="font-medium">Lähdeasiakirja</dt>
+              <dd className="mt-1">
+                <a
+                  href={lahteenvahvistus.lahde_url}
+                  className="text-link underline"
+                  rel="noopener noreferrer"
+                >
+                  {lahteenvahvistus.lahde_url}
                 </a>
               </dd>
             </div>
