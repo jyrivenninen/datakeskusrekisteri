@@ -1,6 +1,6 @@
--- Kuntahavainto: hyväksyntä voi julkaista valitut asiakirjat hankkeen alle.
+-- Korjaus: text[] || 'muoto' aiheutti "malformed array literal: muoto".
 
-CREATE FUNCTION julkaise_kunta_havainto(
+CREATE OR REPLACE FUNCTION julkaise_kunta_havainto(
   p_ehdotus_id uuid,
   p_kasittelija text,
   p_hanke_id uuid DEFAULT NULL,
