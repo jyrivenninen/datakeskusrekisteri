@@ -8,6 +8,8 @@ import {
   LUOTTAMUS_NIMET,
   MERKINTA_NIMET,
   PAATOS_KENTTA_NIMET,
+  DOKUMENTTI_LAJI_NIMET,
+  DOKUMENTTI_MUOTO_NIMET,
   hyvaksyPainikeTeksti,
   kasittelySelite,
   MAARAAJA_KENTTA_NIMET,
@@ -68,6 +70,7 @@ export default async function EhdotusSivu({
   const ryhti = sisalto.ryhti;
   const ytj = sisalto.ytj;
   const mml = sisalto.mml;
+  const kunta = sisalto.kunta;
   const dokumentti = sisalto.dokumentti;
   const ristiriita = sisalto.ristiriita;
   const hankeIdt = ehdotuksenHankeIdt(ehdotus.hanke_id, ristiriita);
@@ -99,6 +102,18 @@ export default async function EhdotusSivu({
     ehdotus.tyyppi === "kentta_tyhjennys" && ehdotus.hanke_id
       ? haeKenttaTyhjennysNakyma(sisalto, ehdotus.hanke_id, ehdotus.huomautus, ehdotus.lahde_url)
       : null;
+
+  let kunnanHankkeet: Array<{ id: string; nimi: string; kunta: string }> = [];
+  if (kunta?.kunta_nimi) {
+    const { data: kunnanHankkeetData } = await supabase
+      .from("hankkeet")
+      .select("id, nimi, kunta, yhdistetty_kohde_id, julkaistu")
+      .ilike("kunta", kunta.kunta_nimi)
+      .is("yhdistetty_kohde_id", null)
+      .order("nimi");
+    kunnanHankkeet = (kunnanHankkeetData ?? []).filter((h) => h.julkaistu !== false);
+  }
+  const kuntaDokumentit = kunta?.dokumentit ?? [];
 
   let tyhjennysHanke: { julkaistu: boolean; kenttaArvo: string | null } | null = null;
   if (tyhjennysNakyma && ehdotus.hanke_id) {
@@ -283,6 +298,91 @@ export default async function EhdotusSivu({
         <p className="mt-4">
           <strong>Käsittelyn perustelu:</strong> {ehdotus.perustelu}
         </p>
+      ) : null}
+
+      {kunta ? (
+        <section className="mt-6" aria-labelledby="kunta-otsikko">
+          <h2 id="kunta-otsikko" className="text-xl font-semibold">
+            Kuntakokousasia
+          </h2>
+          <p className="mt-2 text-sm text-muted">
+            Hyväksyntä merkitsee havainnon käsitellyksi. Voit valita asiakirjat
+            julkaistavaksi hankkeen alle.
+          </p>
+          <dl className="mt-4 divide-y divide-border border-y border-border">
+            <div className="py-3">
+              <dt className="font-medium">Kunta</dt>
+              <dd className="mt-1">{kunta.kunta_nimi}</dd>
+            </div>
+            <div className="py-3">
+              <dt className="font-medium">Asia</dt>
+              <dd className="mt-1">{kunta.otsikko}</dd>
+            </div>
+            {kunta.kuvaus ? (
+              <div className="py-3">
+                <dt className="font-medium">Kuvaus</dt>
+                <dd className="mt-1">{kunta.kuvaus}</dd>
+              </div>
+            ) : null}
+            <div className="py-3">
+              <dt className="font-medium">Hakusana</dt>
+              <dd className="mt-1">{kunta.hakusana}</dd>
+            </div>
+            {kunta.alkoi ? (
+              <div className="py-3">
+                <dt className="font-medium">Kokous</dt>
+                <dd className="mt-1">{kunta.alkoi.slice(0, 10)}</dd>
+              </div>
+            ) : null}
+            <div className="py-3">
+              <dt className="font-medium">Asiasivu</dt>
+              <dd className="mt-1">
+                <a
+                  href={ehdotus.lahde_url ?? "#"}
+                  className="text-link underline"
+                  rel="noopener noreferrer"
+                >
+                  {ehdotus.lahde_url}
+                </a>
+              </dd>
+            </div>
+            <div className="py-3">
+              <dt className="font-medium">Syöte</dt>
+              <dd className="mt-1">
+                <a
+                  href={kunta.syote_url}
+                  className="text-link underline"
+                  rel="noopener noreferrer"
+                >
+                  {kunta.syote_url}
+                </a>
+              </dd>
+            </div>
+          </dl>
+          {kuntaDokumentit.length > 0 ? (
+            <div className="mt-4">
+              <h3 className="font-medium">Ehdotetut asiakirjat</h3>
+              <ul className="mt-2 space-y-2 text-sm">
+                {kuntaDokumentit.map((dok) => (
+                  <li key={dok.url} className="rounded border border-border px-3 py-2">
+                    <a href={dok.url} className="text-link underline" rel="noopener noreferrer">
+                      {dok.otsikko}
+                    </a>
+                    <p className="mt-1 text-muted">
+                      {DOKUMENTTI_LAJI_NIMET[dok.laji] ?? dok.laji}
+                      {dok.muoto ? ` · ${DOKUMENTTI_MUOTO_NIMET[dok.muoto] ?? dok.muoto}` : ""}
+                    </p>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ) : (
+            <p className="mt-4 text-sm text-muted">
+              Asiakirjalinkkejä ei poimittu automaattisesti. Voit merkitä havainnon
+              käsitellyksi ilman asiakirjojen lisäämistä.
+            </p>
+          )}
+        </section>
       ) : null}
 
       {ryhti ? (
@@ -1122,6 +1222,67 @@ export default async function EhdotusSivu({
                   minLength={12}
                   className="w-full rounded border border-border bg-surface px-2 py-2"
                 />
+              </div>
+            ) : null}
+            {kunta && ehdotus.tyyppi === "kunta_havainto" ? (
+              <div className="space-y-4 rounded border border-border bg-surface p-4">
+                {kunnanHankkeet.length > 0 ? (
+                  <div>
+                    <label htmlFor="kunta-hanke-id" className="block text-sm font-medium">
+                      Hanke asiakirjoille
+                    </label>
+                    <p className="mt-1 max-w-prose text-sm text-muted">
+                      Valitse mihin hankkeeseen valitut asiakirjat julkaistaan.
+                    </p>
+                    <select
+                      id="kunta-hanke-id"
+                      name="kunta_hanke_id"
+                      defaultValue={ehdotus.hanke_id ?? kunnanHankkeet[0]?.id ?? ""}
+                      className="mt-2 w-full rounded border border-border bg-background px-2 py-2 text-sm"
+                    >
+                      {kunnanHankkeet.map((hanke) => (
+                        <option key={hanke.id} value={hanke.id}>
+                          {hanke.nimi}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                ) : (
+                  <p className="text-sm text-muted" role="alert">
+                    Kunnassa ei ole julkaistuja hankkeita — asiakirjoja ei voi lisätä.
+                  </p>
+                )}
+                {kuntaDokumentit.length > 0 && kunnanHankkeet.length > 0 ? (
+                  <fieldset className="space-y-2">
+                    <legend className="text-sm font-medium">
+                      Julkaise asiakirjat hankkeen alle
+                    </legend>
+                    <p className="max-w-prose text-sm text-muted">
+                      Valitse mitkä linkit siirtyvät hankesivun asiakirjalistalle.
+                      Voit jättää kaikki valitsematta ja merkitä vain havainnon
+                      käsitellyksi.
+                    </p>
+                    {kuntaDokumentit.map((dok, indeksi) => (
+                      <div key={dok.url} className="flex items-start gap-2">
+                        <input
+                          id={`kunta-dok-${indeksi}`}
+                          type="checkbox"
+                          name="kunta_dokumentti_url"
+                          value={dok.url}
+                          defaultChecked
+                          className="mt-1"
+                        />
+                        <label htmlFor={`kunta-dok-${indeksi}`} className="text-sm">
+                          {dok.otsikko}
+                          <span className="text-muted">
+                            {" "}
+                            · {DOKUMENTTI_LAJI_NIMET[dok.laji] ?? dok.laji}
+                          </span>
+                        </label>
+                      </div>
+                    ))}
+                  </fieldset>
+                ) : null}
               </div>
             ) : null}
             {ristiriita && hankeIdt.length === 2 ? (

@@ -199,6 +199,7 @@ export const RISTIRIITA_SAANTO_NIMET: Record<string, string> = {
   koordinaatit_suomi: "Sijainti Suomen alueen ulkopuolella",
   maaraaika_mennyt: "Vanhempi määräaika yhä julkaistu, uudempi voimassa",
   lahekkaiset_hankkeet: "Lähekkäiset hankkeet",
+  samannimi_kunnassa: "Sama nimi ja kunta",
 };
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -209,7 +210,11 @@ export function ehdotuksenHankeIdt(
 ): string[] {
   const idt: string[] = [];
   if (hankeId) idt.push(hankeId);
-  if (ristiriita?.saanto === "lahekkaiset_hankkeet" && ristiriita.avain) {
+  if (
+    (ristiriita?.saanto === "lahekkaiset_hankkeet" ||
+      ristiriita?.saanto === "samannimi_kunnassa") &&
+    ristiriita.avain
+  ) {
     for (const osa of ristiriita.avain.split(":")) {
       if (UUID.test(osa) && !idt.includes(osa)) idt.push(osa);
     }

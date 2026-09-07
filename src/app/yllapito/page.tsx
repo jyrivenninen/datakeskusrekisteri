@@ -1,4 +1,5 @@
 import Link from "next/link";
+import type { EhdotusSisalto } from "@/lib/ehdotus";
 import { haeKirjautunutKayttaja } from "@/lib/supabase/palvelin";
 import { redirect } from "next/navigation";
 import { hyvaksyKaikkiOdottavatToiminto, julkaiseHankeToiminto, kirjauduUlos, merkitseHankeDuplikaatiksiToiminto } from "@/app/toiminnot";
@@ -61,7 +62,7 @@ export default async function YllapitoSivu({
   const params = await searchParams;
   const { data: ehdotukset } = await supabase
     .from("muutosehdotukset")
-    .select("id, tyyppi, tila, luotu_pvm, ehdottaja_tunniste, hanke_id, kasittelija, kasitelty_pvm")
+    .select("id, tyyppi, tila, luotu_pvm, ehdottaja_tunniste, hanke_id, kasittelija, kasitelty_pvm, huomautus, sisalto")
     .order("luotu_pvm", { ascending: false });
   const hankeIdt = [
     ...new Set(
@@ -130,6 +131,8 @@ export default async function YllapitoSivu({
 
   function ehdotusRivi(ehdotus: (typeof jarjestetyt)[number]) {
     const kasittely = kasittelySelite(ehdotus.kasittelija, ehdotus.kasitelty_pvm);
+    const sisalto = ehdotus.sisalto as EhdotusSisalto | null;
+    const kuntaDokumentit = sisalto?.kunta?.dokumentit?.length ?? 0;
     return (
       <li
         key={ehdotus.id}
@@ -148,7 +151,13 @@ export default async function YllapitoSivu({
             ? ` · ${hankeNimella.get(ehdotus.hanke_id)}`
             : ""}
           {` · ${ehdotus.ehdottaja_tunniste}`}
+          {ehdotus.tyyppi === "kunta_havainto" && kuntaDokumentit > 0
+            ? ` · ${kuntaDokumentit} ehdotettua asiakirjaa`
+            : ""}
         </p>
+        {ehdotus.huomautus ? (
+          <p className="mt-1 text-sm">{ehdotus.huomautus}</p>
+        ) : null}
         {kasittely ? <p className="mt-1 text-sm text-muted">{kasittely}</p> : null}
       </li>
     );

@@ -9,7 +9,7 @@ import { lataaPaikallinenYmparisto } from "../agents/ymparisto";
 
 type LahdeRivi = {
   nimi: string;
-  jarjestelma: "rss" | "casem";
+  jarjestelma: "rss" | "casem" | "html" | "tweb";
   url: string;
   huomautus?: string;
 };
@@ -190,6 +190,30 @@ const LAHTEET: LahdeRivi[] = [
     url: "https://rovaniemi.cloudnc.fi/fi-FI",
     huomautus: "CloudNC CaseM",
   },
+  {
+    nimi: "Kajaani",
+    jarjestelma: "casem",
+    url: "https://kajaani.cloudnc.fi/fi-FI",
+    huomautus: "CloudNC CaseM",
+  },
+  {
+    nimi: "Helsinki",
+    jarjestelma: "html",
+    url: "https://paatokset.hel.fi/fi",
+    huomautus: "Drupal paatokset.hel.fi, HTML-parseri",
+  },
+  {
+    nimi: "Kouvola",
+    jarjestelma: "rss",
+    url: "https://ep10.kouvola.fi/cgi/DREQUEST.PHP?page=rss/meetingitems&show=30",
+    huomautus: "Dynasty ep10.kouvola.fi",
+  },
+  {
+    nimi: "Oulu",
+    jarjestelma: "tweb",
+    url: "https://asiakirjat.ouka.fi/ktwebscr/epj_rssfeed.htm?toimielin=",
+    huomautus: "KTweb Triplan, RSS + esityslista HTML",
+  },
 ];
 
 async function main() {
@@ -243,7 +267,7 @@ async function main() {
     .from("kunta_esityslista_lahteet")
     .select("*", { count: "exact", head: true })
     .eq("seurannassa", true)
-    .in("jarjestelma", ["rss", "ical", "casem"]);
+    .in("jarjestelma", ["rss", "ical", "casem", "html", "tweb"]);
   console.log(`Valmis. ${lisatty} lähdettä upsertattu, ${ohitettu} ohitettu. Seurannassa yhteensä ${count ?? "?"} lähdettä.`);
 }
 

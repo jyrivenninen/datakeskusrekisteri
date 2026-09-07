@@ -1,5 +1,5 @@
 /**
- * 7A.6 Kuntien esityslistat — RSS, iCal ja CaseM/CloudNC. Ei kielimallia.
+ * 7A.6 Kuntien esityslistat — RSS, iCal, CaseM/CloudNC, HTML ja KTweb. Ei kielimallia.
  *
  * Lukee kunta_esityslista_lahteet-taulusta seurattavat syötteet, suodattaa
  * hakusanat ja kirjaa osumat muutosehdotukset-tauluun (kunta_havainto).
@@ -17,10 +17,13 @@ import {
   haeSeuratutLahteet,
   puuttuvatLahteet,
 } from "./kuntakartoitus";
+import { haeKuntaDokumentit } from "./sovittimet/dynasty";
 import { casemSovitin } from "./sovittimet/casem";
+import { htmlSovitin } from "./sovittimet/html";
 import { icalSovitin } from "./sovittimet/ical";
 import { rssSovitin } from "./sovittimet/rss";
-import type { HankeKunnassa, KuntaLahde, KuntaSovitin } from "./tyypit";
+import { twebSovitin } from "./sovittimet/tweb";
+import type { HankeKunnassa, KuntaDokumentti, KuntaLahde, KuntaSovitin } from "./tyypit";
 
 const USER_AGENT =
   "Datakeskusrekisteri/0.1 (+https://datakeskusrekisteri.vercel.app/; kuntakokoukset)";
@@ -47,6 +50,8 @@ function sovitinJarjestelmalle(jarjestelma: string): KuntaSovitin | null {
   if (jarjestelma === "rss") return rssSovitin;
   if (jarjestelma === "ical") return icalSovitin;
   if (jarjestelma === "casem") return casemSovitin;
+  if (jarjestelma === "html") return htmlSovitin;
+  if (jarjestelma === "tweb") return twebSovitin;
   return null;
 }
 
@@ -71,6 +76,27 @@ function valitseHanke(
   const teksti = `${otsikko} ${kuvaus ?? ""}`.toLowerCase();
   const osuma = hankkeet.find((h) => teksti.includes(h.nimi.trim().toLowerCase()));
   return osuma ?? hankkeet[0] ?? null;
+}
+
+async function haeAsiaDokumentit(
+  adapteri: KuntaSovitin,
+  asiaUrl: string,
+): Promise<KuntaDokumentti[]> {
+  try {
+    const dynasty = await haeKuntaDokumentit(asiaUrl);
+    if (dynasty.length > 0) return dynasty;
+    const asiat = await adapteri.haeAsiat(asiaUrl);
+    return asiat.map((asia) => ({
+      url: asia.url,
+      otsikko: asia.otsikko,
+      muoto: /\.pdf($|\?)/i.test(asia.url) ? "pdf" : "muu",
+      laji: asia.kuvaus === "muu" ? "muu" : "kuulutus",
+    }));
+  } catch (syy) {
+    const viesti = syy instanceof Error ? syy.message : "asiakirjat epäonnistui";
+    console.warn(`asiakirjat ${asiaUrl}: ${viesti}`);
+    return [];
+  }
 }
 
 async function main() {
@@ -174,8 +200,13 @@ async function main() {
         const hanke = valitseHanke(paikallisetHankkeet, kohde.otsikko, kohde.kuvaus);
         const huomautus = `${lahde.kuntaNimi}: «${kohde.otsikko}» (hakusana: ${sana}).`;
 
+        const dokumentit = await haeAsiaDokumentit(adapteri, lahdeUrl);
+        await odota(viiveMs());
+
         if (kuiva) {
-          console.log(`kuiva: ${huomautus} → ${lahdeUrl}`);
+          console.log(
+            `kuiva: ${huomautus} → ${lahdeUrl}${dokumentit.length ? ` (${dokumentit.length} asiakirjaa)` : ""}`,
+          );
           kirjattu += 1;
           continue;
         }
@@ -200,13 +231,16 @@ async function main() {
               alkoi: kohde.alkaa?.toISOString() ?? null,
               hakusana: sana,
               hankkeita_kunnassa: paikallisetHankkeet.length,
+              dokumentit,
             },
           },
         });
         if (lisaysVirhe) throw new Error(lisaysVirhe.message);
         jonossa.add(lahdeUrl);
         kirjattu += 1;
-        console.log(`kirjattu: ${lahde.kuntaNimi} · ${kohde.otsikko.slice(0, 60)}`);
+        console.log(
+          `kirjattu: ${lahde.kuntaNimi} · ${kohde.otsikko.slice(0, 60)}${dokumentit.length ? ` · ${dokumentit.length} asiakirjaa` : ""}`,
+        );
       }
 
       await odota(viiveMs());

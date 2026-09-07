@@ -127,6 +127,23 @@ export type EhdotusSisalto = {
       merkitty: "koneen_ehdottama" | "ihmisen_vahvistama";
     }>;
   };
+  kunta?: {
+    kunta_id: string;
+    kunta_nimi: string;
+    jarjestelma: string;
+    syote_url: string;
+    otsikko: string;
+    kuvaus: string | null;
+    alkoi: string | null;
+    hakusana: string;
+    hankkeita_kunnassa: number;
+    dokumentit?: Array<{
+      url: string;
+      otsikko: string;
+      muoto: "pdf" | "html" | "muu";
+      laji: "kuulutus" | "muu";
+    }>;
+  };
 };
 
 const NUMEERISET = new Set([

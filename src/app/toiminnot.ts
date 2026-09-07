@@ -687,6 +687,11 @@ export async function hyvaksyEhdotusToiminto(formData: FormData): Promise<void> 
     } else {
       await hyvaksyMuutosehdotus(id, kasittelija, {
         perustelu: String(formData.get("ei_uudelleen_perustelu") ?? ""),
+        hanke_id: String(formData.get("kunta_hanke_id") ?? "").trim() || undefined,
+        dokumentit_url: formData
+          .getAll("kunta_dokumentti_url")
+          .map((arvo) => String(arvo).trim())
+          .filter(Boolean),
       });
     }
   } catch (syy) {

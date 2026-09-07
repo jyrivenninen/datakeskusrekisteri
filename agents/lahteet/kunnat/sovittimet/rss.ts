@@ -1,4 +1,5 @@
-import type { KuntaSovitin, Kokous } from "../tyypit";
+import { haeDynastyDokumentit, onkoDynastyAsiaUrl } from "./dynasty";
+import type { Asia, KuntaSovitin, Kokous } from "../tyypit";
 
 function puraTagi(lohko: string, tagi: string): string | null {
   const re = new RegExp(
@@ -36,6 +37,22 @@ function jaaKohteet(sisalto: string): string[] {
   return [...normalisoitu.matchAll(/<item[\s>][\s\S]*?<\/item>/gi)].map((m) => m[0]);
 }
 
+function puraXmlEncoding(otsikko: string): "latin1" | "utf8" {
+  const osuma = otsikko.match(/encoding=['"]([^'"]+)['"]/i);
+  const enc = osuma?.[1]?.toLowerCase() ?? "";
+  if (enc.includes("8859") || enc === "latin1" || enc === "windows-1252") {
+    return "latin1";
+  }
+  return "utf8";
+}
+
+async function haeRssTeksti(vastaus: Response): Promise<string> {
+  const puskuri = Buffer.from(await vastaus.arrayBuffer());
+  const alku = puskuri.subarray(0, 200).toString("latin1");
+  const encoding = puraXmlEncoding(alku);
+  return puskuri.toString(encoding);
+}
+
 function parseRss(sisalto: string, alkaen: Date): Kokous[] {
   const tulokset: Kokous[] = [];
   for (const lohko of jaaKohteet(sisalto)) {
@@ -65,11 +82,14 @@ export const rssSovitin: KuntaSovitin = {
     if (!vastaus.ok) {
       throw new Error(`RSS ${vastaus.status}: ${kuntaUrl}`);
     }
-    const teksti = await vastaus.text();
+    const teksti = await haeRssTeksti(vastaus);
     return parseRss(teksti, alkaen);
   },
 
-  async haeAsiat() {
-    return [];
+  async haeAsiat(asiaUrl) {
+    if (onkoDynastyAsiaUrl(asiaUrl)) {
+      return haeDynastyDokumentit(asiaUrl);
+    }
+    return [] as Asia[];
   },
 };

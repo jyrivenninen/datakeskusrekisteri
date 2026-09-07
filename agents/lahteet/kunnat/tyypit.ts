@@ -13,6 +13,14 @@ export type Asia = {
   kuvaus?: string;
 };
 
+/** Kuntahavainnon ehdotetut asiakirjat (sisalto.kunta.dokumentit). */
+export type KuntaDokumentti = {
+  url: string;
+  otsikko: string;
+  muoto: "pdf" | "html" | "muu";
+  laji: "kuulutus" | "muu";
+};
+
 export interface KuntaSovitin {
   tunnus: string;
   haeKokoukset(kuntaUrl: string, alkaen: Date): Promise<Kokous[]>;

@@ -211,7 +211,11 @@ export async function yhdistaHankkeetEhdotuksesta(
 export async function hyvaksyMuutosehdotus(
   ehdotusId: string,
   kasittelija: string,
-  valinnat?: { perustelu?: string },
+  valinnat?: {
+    perustelu?: string;
+    hanke_id?: string;
+    dokumentit_url?: string[];
+  },
 ) {
   const supabase = luoYllapitoAsiakas();
   const { data: ehdotus, error } = await supabase
@@ -338,7 +342,6 @@ export async function hyvaksyMuutosehdotus(
   if (
     ehdotus.tyyppi === "linkki_rikki" ||
     ehdotus.tyyppi === "ryhti_havainto" ||
-    ehdotus.tyyppi === "kunta_havainto" ||
     ehdotus.tyyppi === "ytj_havainto" ||
     ehdotus.tyyppi === "mml_havainto" ||
     ehdotus.tyyppi === "dokumentti_muuttunut" ||
@@ -364,6 +367,23 @@ export async function hyvaksyMuutosehdotus(
       .eq("id", ehdotusId)
       .eq("tila", "odottaa");
     if (paivitysVirhe) throw new Error(paivitysVirhe.message);
+    return;
+  }
+
+  if (ehdotus.tyyppi === "kunta_havainto") {
+    const hankeId =
+      valinnat?.hanke_id?.trim() || ehdotus.hanke_id || null;
+    const dokumentitUrl = valinnat?.dokumentit_url ?? [];
+    if (dokumentitUrl.length > 0 && !hankeId) {
+      throw new Error("Asiakirjojen julkaisu vaatii hankkeen valinnan.");
+    }
+    const { error: rpcVirhe } = await supabase.rpc("julkaise_kunta_havainto", {
+      p_ehdotus_id: ehdotusId,
+      p_kasittelija: kasittelija,
+      p_hanke_id: hankeId,
+      p_dokumentit_url: dokumentitUrl,
+    });
+    if (rpcVirhe) throw new Error(rpcVirhe.message);
     return;
   }
 

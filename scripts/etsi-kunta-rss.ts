@@ -71,6 +71,7 @@ function ehdokasUrlit(nimi: string): string[] {
     Imatra: [`https://imatra.oncloudos.com${RSS_POLKU}`],
     Järvenpää: [`https://jarvenpaa.oncloudos.com${RSS_POLKU}`],
     Kerava: [`https://kerava.oncloudos.com${RSS_POLKU}`],
+    Kouvola: [`https://ep10.kouvola.fi/cgi/DREQUEST.PHP?page=rss/meetingitems&show=5`],
     Kokkola: [`https://kokkola.oncloudos.com${RSS_POLKU}`],
     Kuopio: [`https://kuopio.oncloudos.com${RSS_POLKU}`],
     Lappeenranta: [`https://lappeenranta.oncloudos.com${RSS_POLKU}`],
