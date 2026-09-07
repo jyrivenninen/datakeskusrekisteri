@@ -152,13 +152,13 @@ async function main() {
     ajoId = ajo.id as string;
   }
 
-  const { data: odottavat } = await supabase
+  const { data: kasitellyt } = await supabase
     .from("muutosehdotukset")
     .select("lahde_url")
     .eq("tyyppi", "kunta_havainto")
-    .eq("tila", "odottaa");
-  const jonossa = new Set(
-    (odottavat ?? []).map((r) => r.lahde_url).filter((u): u is string => Boolean(u)),
+    .in("tila", ["odottaa", "hyvaksytty"]);
+  const joKasitelty = new Set(
+    (kasitellyt ?? []).map((r) => r.lahde_url).filter((u): u is string => Boolean(u)),
   );
 
   let osumia = 0;
@@ -195,7 +195,7 @@ async function main() {
         osumia += 1;
 
         const lahdeUrl = kohde.url;
-        if (jonossa.has(lahdeUrl)) continue;
+        if (joKasitelty.has(lahdeUrl)) continue;
 
         const hanke = valitseHanke(paikallisetHankkeet, kohde.otsikko, kohde.kuvaus);
         const huomautus = `${lahde.kuntaNimi}: «${kohde.otsikko}» (hakusana: ${sana}).`;
@@ -236,7 +236,7 @@ async function main() {
           },
         });
         if (lisaysVirhe) throw new Error(lisaysVirhe.message);
-        jonossa.add(lahdeUrl);
+        joKasitelty.add(lahdeUrl);
         kirjattu += 1;
         console.log(
           `kirjattu: ${lahde.kuntaNimi} · ${kohde.otsikko.slice(0, 60)}${dokumentit.length ? ` · ${dokumentit.length} asiakirjaa` : ""}`,
