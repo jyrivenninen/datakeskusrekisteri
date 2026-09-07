@@ -169,12 +169,17 @@ Tarkennettu: `PROJEKTI-lisays-vaihe7.md`. Luku 7A.5 ja uusi 7A.6:
 - [x] 7A.2 Dokumenttien muutosvahti (`agents/tarkistukset/dokumentit.ts`)
 - [x] 7A.3 Ristiriidat SQL:llä (`agents/tarkistukset/ristiriidat.ts`)
 - [x] 7A.4 Vanhentumisvahti (`agents/tarkistukset/vanhentuneet.ts`)
-- [ ] 7A.5 Rakenteiset rajapinnat (`agents/lahteet/`)
+- [x] 7A.5 Rakenteiset rajapinnat (`agents/lahteet/`)
 - [x] 7A.5.1 Ryhti, avoin kaava-aineisto (`agents/lahteet/ryhti.ts`)
 - [x] 7A.5.2 YTJ/PRH (`agents/lahteet/ytj.ts`)
 - [x] 7A.5.3 MML geokoodaus (`agents/lahteet/mml.ts`)
+- [x] 7A.5.4 Fingrid lahdeajot (`agents/lahteet/fingrid.ts`)
 - [x] 7A.5.5 Syken hakemisto, kuntakoodisto (`agents/lahteet/hakemisto.ts`)
-- [ ] 7A.6 Kuntien esityslistat (`agents/lahteet/kunnat/`) — 34 lähdettä; Kouvola toimii; Oulu KTweb (robots www.ouka.fi); Helsinki HTML ok
+- [x] 7A.5.6 Syken kuulutukset — HTML-seuranta, ei RSS/API (`agents/lahteet/kuulutukset.ts`)
+- [x] 7A.5.7 Tilastokeskus PxWeb väkiluvut (`agents/lahteet/pxweb.ts`)
+- [x] 7A.5.8 avoindata.fi-haku (`scripts/etsi-kunta-avoindata.ts`)
+- [x] Rajapintojen terveysvalvonta (`agents/tarkistukset/rajapinta-terveys.ts`)
+- [x] 7A.6 Kuntien esityslistat (`agents/lahteet/kunnat/`) — 34+ lähdettä; avoindata-sovitin; Kouvola/Oulu/Helsinki
 - [x] Mallirajapinta (`agents/malli.ts`) ennen 7B:tä
 - [x] 7B.1 Lähteenvahvistaja (`agents/lahteenvahvistaja.ts`)
 - [x] 7B.2 Esikäsittelijä (`agents/esikasittelija.ts`)
@@ -188,7 +193,7 @@ Tarkennettu: `PROJEKTI-lisays-vaihe7.md`. Luku 7A.5 ja uusi 7A.6:
 Nämä nousivat käytön ja integraatioiden myötä; tarkennetaan ennen toteutusta.
 
 **Ryhti / Syke**
-- [ ] OGC-sivukoko 1000 → 3000 (Syken sallima enimmäisraja)
+- [x] OGC-sivukoko 1000 → 3000 (Syken sallima enimmäisraja)
 - [ ] Dokumentoi rakennus- ja osoitelatauspaketit (GeoJSON/CSV/GPKG `.gz`) `PROJEKTI-lisays-7A5-rajapinnat.md`:hen
 - [ ] Rakennus/osoite-vuorokausipaketit geokoodauksen tai rakennustunnistuksen tueksi (erillinen feature)
 
@@ -203,7 +208,7 @@ Nämä nousivat käytön ja integraatioiden myötä; tarkennetaan ennen toteutus
 
 **Muut**
 - [x] 7A.4 Vanhentumisvahti
-- [ ] 7A.6 Kuntien esityslistat (34 lähdettä; dokumentit hankkeelle yllapidosta; Oulu KTweb)
+- [ ] 7A.6 Kuntien esityslistat — uusia lähteitä kartoitetaan ajossa (RSS + avoindata.fi)
 
 ---
 

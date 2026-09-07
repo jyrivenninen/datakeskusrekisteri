@@ -18,7 +18,7 @@ export async function haeSeuratutLahteet(
     .from("kunta_esityslista_lahteet")
     .select("id, jarjestelma, perus_url, kunnat ( id, koodi, nimi )")
     .eq("seurannassa", true)
-    .in("jarjestelma", ["rss", "ical", "casem", "html", "tweb"]);
+    .in("jarjestelma", ["rss", "ical", "casem", "html", "tweb", "avoindata"]);
   if (error) throw new Error(error.message);
 
   const lahteet: KuntaLahde[] = [];

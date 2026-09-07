@@ -151,8 +151,8 @@ maakuntakohtaisia. Karttakerroksen sijaintitieto vaatii erillisen lähteen
 
 Toteutus:
 - `src/lib/fingrid.ts` — palvelinpuolen haku etusivun karttavertailuun
-- tuleva: `agents/lahteet/fingrid.ts` (lahdeajot), tuotantotyypit
-  erikseen, liityntäpisteet kartalle
+- `agents/lahteet/fingrid.ts` — lahdeajot (`npm run agentti:fingrid`), GitHub Actions cron
+- tuotantotyypit erikseen kartalla; liityntäpisteet kartalle (tuleva kehitys)
 
 Käyttö toistaiseksi taustatietona ja vertailuna, ei automaattisena kenttätäyttönä.
 
@@ -182,15 +182,31 @@ Kuiva-ajo: `HAKEMISTO_KUIVA=1`.
 
 ## 7A.5.6 Syken kuulutukset
 
-Ympäristölupa- ja YVA-kuulutukset. Selvitä onko saatavilla rakenteisena
-vai vain HTML-sivuna. Jos vain HTML, se menee kohtaan 7A.6.
+Ympäristölupa- ja YVA-kuulutukset.
 
-Lähtökohta: `https://www.syke.fi/fi/palvelut/viranomaispalvelut/kuulutukset`
+Todennus 7.9.2026:
+- Syken kuulutukset-sivu (`https://www.syke.fi/fi/palvelut/viranomaispalvelut/kuulutukset`)
+  on rajat ylittävien YVA/SOVA-kuulutusten staattinen HTML-sivu, ei RSS/API-syötettä.
+- Kotimaisten YVA-hankkeiden haku: `https://www.ymparisto.fi/.../YVA/YVA_haku` (HTML).
+- Rakenteista kuulutusrajapintaa ei löytynyt → HTML-seuranta (7A.6-luonteinen).
+
+Sovitin: `agents/lahteet/kuulutukset.ts` (`npm run agentti:kuulutukset`).
+Tiivisteet `rajapinta_tiivisteet`-tauluun; muutos näkyy `lahdeajot.virhe`-kentässä.
 
 ## 7A.5.7 Tilastokeskus PxWeb
 
 Kuntien perustiedot: väkiluku, pinta-ala, talousluvut. JSON-muotoinen
 PxWeb-rajapinta. Käytetään hankkeen suhteuttamiseen kunnan kokoon.
+
+Todennus 7.9.2026 (kesäkuu 2026 -uudistuksen jälkeen):
+- juuri: `https://pxdata.stat.fi/PxWeb/api/v1/` (ei pxweb2.stat.fi)
+- väestörakenne, kunnittain: `StatFin/vaerak/11re.px`
+- muuttujakoodit haetaan metadatasta (`alue_*`, `timeperiod_y`, `contentscode`)
+- arvo `vaerak-vaesto`, aluekoodi `KU{nnn}` (esim. KU905 = Oulu)
+
+Sovitin: `agents/lahteet/pxweb.ts` (`npm run agentti:pxweb`).
+Kirjoittaa `kunnat.vaekiluku`, `vaekiluku_vuosi`, `vaekiluku_lahde_url`.
+Migraatio: `20260907280000_kunnat_vaekiluku.sql`.
 
 ## 7A.5.8 avoindata.fi / opendata.fi
 
@@ -199,6 +215,13 @@ Kansallinen avoimen datan hakemisto.
 **Toimintaohje:** ennen kuin oletat, ettei jostain tiedosta ole
 rajapintaa, hae avoindata.fi:stä. Osa kunnista julkaisee päätösdataa
 siellä mainostamatta sitä omilla sivuillaan.
+
+Todennus 7.9.2026:
+- CKAN API: `https://avoindata.fi/data/api/3/action/package_search`
+- esim. Oulu: JSON `https://api.ouka.fi/v1/city_council_meetings`
+
+Kartoitus: `npm run kunta:avoindata-etsi` (`KUNTA_AVOINDATA_KIRJOITA=1` kirjoittaa DB:hen).
+Sovitin: `agents/lahteet/kunnat/sovittimet/avoindata.ts` (`jarjestelma=avoindata`).
 
 ---
 
@@ -265,6 +288,10 @@ Rajapinnat muuttuvat ja versioituvat. Lisää seurantaan Syken
 rajapintamuutosten RSS-syöte
 (`https://rajapinnat.ymparisto.fi/api/rss/feed.xml`), jotta
 rikkoutuvat rajapinnat huomataan ennen kuin ne kaatavat ajon.
+
+Sovitin: `agents/tarkistukset/rajapinta-terveys.ts`
+(`npm run agentti:rajapinta-terveys`). Pingaa hakemisto, Ryhti OGC,
+PxWeb, avoindata.fi, YTJ ja valinnaisesti Fingrid.
 
 ---
 

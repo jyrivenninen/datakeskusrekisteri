@@ -26,7 +26,7 @@ const SOVITIN = "ryhti-kaava";
 const EHDOTTAJA = "agents/lahteet/ryhti";
 const JUURI =
   "https://paikkatiedot.ymparisto.fi/geoserver/ryhti_plan/ogc/features/v1";
-const SIVU_KOKO = 1000;
+const SIVU_KOKO = 3000;
 const OLETUS_HAKUSANAT = [
   "datakeskus",
   "konesali",

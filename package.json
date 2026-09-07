@@ -15,6 +15,10 @@
     "agentti:ryhti": "tsx agents/lahteet/ryhti.ts",
     "agentti:ytj": "tsx agents/lahteet/ytj.ts",
     "agentti:mml": "tsx agents/lahteet/mml.ts",
+    "agentti:fingrid": "tsx agents/lahteet/fingrid.ts",
+    "agentti:pxweb": "tsx agents/lahteet/pxweb.ts",
+    "agentti:kuulutukset": "tsx agents/lahteet/kuulutukset.ts",
+    "agentti:rajapinta-terveys": "tsx agents/tarkistukset/rajapinta-terveys.ts",
     "agentti:kuntakokoukset": "tsx agents/lahteet/kunnat/esityslistat.ts",
     "agentti:lahteenvahvistaja": "tsx agents/lahteenvahvistaja.ts",
     "agentti:esikasittelija": "tsx agents/esikasittelija.ts",
@@ -23,6 +27,7 @@
     "agentti:testaa-yhteys": "tsx scripts/testaa-agentti-yhteys.ts",
     "kunta:rss-lahteet": "tsx scripts/lisaa-kunta-rss-lahteet.ts",
     "kunta:rss-etsi": "tsx scripts/etsi-kunta-rss.ts",
+    "kunta:avoindata-etsi": "tsx scripts/etsi-kunta-avoindata.ts",
     "test:rls": "npx supabase db query --linked -f supabase/tests/rls-oikeudet.sql",
     "test:rls:jwt": "tsx supabase/tests/rls-oikeudet.ts",
     "test": "tsx --test src/lib/haku.test.ts"

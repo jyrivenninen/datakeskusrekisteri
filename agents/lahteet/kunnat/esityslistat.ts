@@ -1,5 +1,5 @@
 /**
- * 7A.6 Kuntien esityslistat — RSS, iCal, CaseM/CloudNC, HTML ja KTweb. Ei kielimallia.
+ * 7A.6 Kuntien esityslistat — RSS, iCal, CaseM/CloudNC, HTML, KTweb ja avoindata.fi JSON. Ei kielimallia.
  *
  * Lukee kunta_esityslista_lahteet-taulusta seurattavat syötteet, suodattaa
  * hakusanat ja kirjaa osumat muutosehdotukset-tauluun (kunta_havainto).
@@ -21,6 +21,7 @@ import { haeKuntaDokumentit } from "./sovittimet/dynasty";
 import { casemSovitin } from "./sovittimet/casem";
 import { htmlSovitin } from "./sovittimet/html";
 import { icalSovitin } from "./sovittimet/ical";
+import { avoindataSovitin } from "./sovittimet/avoindata";
 import { rssSovitin } from "./sovittimet/rss";
 import { twebSovitin } from "./sovittimet/tweb";
 import type { HankeKunnassa, KuntaDokumentti, KuntaLahde, KuntaSovitin } from "./tyypit";
@@ -52,6 +53,7 @@ function sovitinJarjestelmalle(jarjestelma: string): KuntaSovitin | null {
   if (jarjestelma === "casem") return casemSovitin;
   if (jarjestelma === "html") return htmlSovitin;
   if (jarjestelma === "tweb") return twebSovitin;
+  if (jarjestelma === "avoindata") return avoindataSovitin;
   return null;
 }
 
