@@ -186,7 +186,9 @@ Tarkennettu: `PROJEKTI-lisays-vaihe7.md`. Luku 7A.5 ja uusi 7A.6:
 - [x] 7B.3 Muutosten tiivistäjä (`agents/tiivistaja.ts`)
 
 ### Vaihe 8 — Avoin data
-- [ ] JSON-endpointit, CSV-lataus, lisenssitieto (suositus: CC BY 4.0)
+- [x] JSON-endpointit (`/hankkeet/[id]/json`, `/data/hankkeet.json`)
+- [x] CSV-lataus (`/data/hankkeet.csv`)
+- [x] Lisenssitieto CC BY 4.0 (`/tietoa`, JSON-metatiedot)
 
 ### Tuleva kehitys (ei vielä toteutuksjärjestyksessä)
 

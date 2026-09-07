@@ -194,6 +194,11 @@ export async function generateMetadata({
   return {
     title: `${hanke.nimi} – Datakeskushankkeiden kansallinen rekisteri`,
     description: `Julkaistut tiedot hankkeesta ${hanke.nimi}, ${hanke.kunta}.`,
+    alternates: {
+      types: {
+        "application/json": `/hankkeet/${hanke.id}/json`,
+      },
+    },
   };
 }
 
@@ -672,6 +677,16 @@ export default async function HankeSivu({
           </Korttiruudukko>
         </section>
       ) : null}
+
+      <p className="mt-10 text-sm text-muted">
+        <a href={`/hankkeet/${hanke.id}/json`} className="text-link underline">
+          Lataa hankkeen tiedot JSON-muodossa
+        </a>
+        {" · "}
+        <a href={`/hankkeet/${hanke.id}/asiakirjat`} className="text-link underline">
+          Asiakirjalista (JSON)
+        </a>
+      </p>
     </main>
   );
 }

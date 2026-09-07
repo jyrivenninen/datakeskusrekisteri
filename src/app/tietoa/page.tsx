@@ -84,6 +84,39 @@ export default async function TietoaPalvelustaSivu() {
         <RyhtiKattavuus luokka="mt-4" />
       </section>
 
+      <section className="mt-10" aria-labelledby="avoin-data-otsikko">
+        <h2 id="avoin-data-otsikko" className="text-xl font-semibold">
+          Avoin data
+        </h2>
+        <p className="mt-3 leading-relaxed">
+          Julkaistu rekisteri on ladattavissa koneluettavassa muodossa. Lisenssi:{" "}
+          <a
+            href="https://creativecommons.org/licenses/by/4.0/"
+            className="text-link underline"
+            rel="license"
+          >
+            Creative Commons Attribution 4.0 (CC BY 4.0)
+          </a>
+          . Viittaa lähteeseen: Datakeskushankkeiden kansallinen rekisteri.
+        </p>
+        <ul className="mt-3 list-disc space-y-2 pl-5 leading-relaxed">
+          <li>
+            <a href="/data/hankkeet.json" className="text-link underline">
+              Koko rekisteri (JSON)
+            </a>
+          </li>
+          <li>
+            <a href="/data/hankkeet.csv" className="text-link underline">
+              Koko rekisteri (CSV)
+            </a>
+          </li>
+        </ul>
+        <p className="mt-3 text-sm text-muted leading-relaxed">
+          Yksittäisen hankkeen JSON: <code className="text-foreground">/hankkeet/[id]/json</code>.
+          Asiakirjalista: <code className="text-foreground">/hankkeet/[id]/asiakirjat</code>.
+        </p>
+      </section>
+
       <section className="mt-10" aria-labelledby="ajot-otsikko">
         <h2 id="ajot-otsikko" className="text-xl font-semibold">
           Lähdeajot
