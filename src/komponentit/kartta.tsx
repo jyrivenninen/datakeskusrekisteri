@@ -11,6 +11,9 @@ import {
 import type { FeatureCollection, MultiPolygon, Polygon } from "geojson";
 import "maplibre-gl/dist/maplibre-gl.css";
 import {
+  laskeJohdonmukaisuus,
+} from "@/lib/sahko-johdonmukaisuus";
+import {
   ENERGIA_MAAKUNTA_TUOTANTO,
   haeMaakuntaSahkontuotantoTwh,
   laskeMaakuntaTuotantoRivit,
@@ -249,6 +252,16 @@ function muotoileTuotantoRivi(rivi: MaakuntaTuotantoRivi): string {
   const tuotanto = `${muotoileLuku(rivi.sahkontuotantoTwh)} TWh/a`;
   if (rivi.sahkonkayttoLkm === 0) return tuotanto;
   return `${tuotanto} (hank. ${muotoileVaihtelvali(rivi.sahkonkayttoTwhMin, rivi.sahkonkayttoTwhMax, "TWh/a")})`;
+}
+
+function muotoileJohdonmukaisuusTeksti(merkki: Karttamerkki): string {
+  const t = laskeJohdonmukaisuus(
+    merkki.tehoMw,
+    merkki.sahkonkayttoTwhMin,
+    merkki.sahkonkayttoTwhMax,
+  );
+  if (t.itTehoMw == null || t.kulutusMwMin == null || t.kulutusMwMax == null) return "";
+  return `IT ${muotoileLuku(t.itTehoMw)} MW · kulutus ${muotoileVaihtelvali(t.kulutusMwMin, t.kulutusMwMax, "MW")}`;
 }
 
 function taustakarttaTyyli(avain: string): StyleSpecification {
@@ -614,11 +627,42 @@ function paivitaMerkkiTyyppi(elementti: HTMLElement, zoom: number) {
   }
 }
 
+function piirraJohdonmukaisuusRenkaat(
+  kartta: MapLibre,
+  svg: SVGSVGElement,
+  merkit: Karttamerkki[],
+) {
+  const zoom = kartta.getZoom();
+  for (const merkki of merkit) {
+    const tarkistus = laskeJohdonmukaisuus(
+      merkki.tehoMw,
+      merkki.sahkonkayttoTwhMin,
+      merkki.sahkonkayttoTwhMax,
+    );
+    if (tarkistus.tila !== "tarkista") continue;
+    const keskipiste = merkinKeskipiste(merkki);
+    if (!keskipiste) continue;
+    const xy = kartta.project([keskipiste.lon, keskipiste.lat]);
+    const perus = merkki.tehoMw != null && merkki.tehoMw > 0 ? merkki.tehoMw : 50;
+    const sade = tehoSadePx(perus, zoom) + 8;
+    const ympyra = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+    ympyra.setAttribute("cx", xy.x.toFixed(1));
+    ympyra.setAttribute("cy", xy.y.toFixed(1));
+    ympyra.setAttribute("r", sade.toFixed(1));
+    ympyra.setAttribute("fill", "none");
+    ympyra.setAttribute("stroke", "#dc2626");
+    ympyra.setAttribute("stroke-width", "2.5");
+    ympyra.setAttribute("stroke-dasharray", "7 5");
+    svg.appendChild(ympyra);
+  }
+}
+
 function piirraTehoHalotKerros(
   kartta: MapLibre,
   svg: SVGSVGElement,
   merkit: Karttamerkki[],
-  nayta: boolean,
+  naytaTeho: boolean,
+  naytaJohdonmukaisuus: boolean,
 ) {
   const kehys = kartta.getContainer();
   const leveys = kehys.clientWidth;
@@ -627,9 +671,14 @@ function piirraTehoHalotKerros(
   svg.setAttribute("height", String(korkeus));
   svg.setAttribute("viewBox", `0 0 ${leveys} ${korkeus}`);
   while (svg.firstChild) svg.removeChild(svg.firstChild);
-  if (!nayta) return;
-  lisaaTehoSuodatin(svg);
-  piirraTehoHalot(kartta, svg, merkit);
+  if (!naytaTeho && !naytaJohdonmukaisuus) return;
+  if (naytaTeho) {
+    lisaaTehoSuodatin(svg);
+    piirraTehoHalot(kartta, svg, merkit);
+  }
+  if (naytaJohdonmukaisuus) {
+    piirraJohdonmukaisuusRenkaat(kartta, svg, merkit);
+  }
 }
 
 function piirraAlueetJaJohdot(kartta: MapLibre, svg: SVGSVGElement, merkit: Karttamerkki[]) {
@@ -706,17 +755,20 @@ export function Kartta({
   const merkkiluokatRef = useRef<Map<string, { marker: Marker; vaihe?: HankeVaihe }>>(new Map());
   const aktivisetVaiheetRef = useRef<Set<HankeVaihe>>(kaikkiVaiheetAktiviset());
   const naytaTehoHalotRef = useRef(true);
+  const naytaJohdonmukaisuusRef = useRef(false);
   const naytaMaakunnatRef = useRef(true);
   const maakuntaTilaRef = useRef<MaakuntaTila>("hankkeet");
   const avain = process.env.NEXT_PUBLIC_MML_API_AVAIN;
   const merkitAvain = JSON.stringify(merkit);
   const [aktivisetVaiheet, setAktivisetVaiheet] = useState<Set<HankeVaihe>>(kaikkiVaiheetAktiviset);
   const [naytaTehoHalot, setNaytaTehoHalot] = useState(true);
+  const [naytaJohdonmukaisuus, setNaytaJohdonmukaisuus] = useState(false);
   const [naytaMaakunnat, setNaytaMaakunnat] = useState(true);
   const [maakuntaTila, setMaakuntaTila] = useState<MaakuntaTila>("hankkeet");
 
   aktivisetVaiheetRef.current = aktivisetVaiheet;
   naytaTehoHalotRef.current = naytaTehoHalot;
+  naytaJohdonmukaisuusRef.current = naytaJohdonmukaisuus;
   naytaMaakunnatRef.current = naytaMaakunnat;
   maakuntaTilaRef.current = maakuntaTila;
 
@@ -732,6 +784,7 @@ export function Kartta({
     const merkitNyt = merkitNytRef.current;
     const aktiviset = aktivisetVaiheetRef.current;
     const naytaTeho = naytaTehoHalotRef.current;
+    const naytaJohdonmukaisuus = naytaJohdonmukaisuusRef.current;
     if (!kartta || !svgMaakunta || !svgTeho || !svgGeometria) return;
 
     const zoom = kartta.getZoom();
@@ -751,7 +804,7 @@ export function Kartta({
       naytaMaakunnatRef.current,
       maakuntaTilaRef.current,
     );
-    piirraTehoHalotKerros(kartta, svgTeho, suodatetut, naytaTeho);
+    piirraTehoHalotKerros(kartta, svgTeho, suodatetut, naytaTeho, naytaJohdonmukaisuus);
     piirraAlueetJaJohdot(kartta, svgGeometria, suodatetut);
   };
 
@@ -769,7 +822,7 @@ export function Kartta({
 
   useEffect(() => {
     paivitaNakyvyys();
-  }, [aktivisetVaiheet, naytaTehoHalot, naytaMaakunnat, maakuntaTila]);
+  }, [aktivisetVaiheet, naytaTehoHalot, naytaJohdonmukaisuus, naytaMaakunnat, maakuntaTila]);
 
   useEffect(() => {
     if (!kehys.current || !avain) return;
@@ -946,6 +999,22 @@ export function Kartta({
   const maakunnatonLkm = nakyvatMerkit.filter((merkki) => !merkki.maakunta?.trim()).length;
   const sahkoYhteenveto = laskeSahkoYhteenveto(nakyvatMerkit);
   const maakuntaSelite = MAAKUNTA_TILA_SELITE[maakuntaTila];
+  const johdonmukaisuusTarkistettavat = nakyvatMerkit.filter(
+    (merkki) =>
+      laskeJohdonmukaisuus(
+        merkki.tehoMw,
+        merkki.sahkonkayttoTwhMin,
+        merkki.sahkonkayttoTwhMax,
+      ).tila === "tarkista",
+  );
+  const johdonmukaisuusVertailtavat = nakyvatMerkit.filter(
+    (merkki) =>
+      laskeJohdonmukaisuus(
+        merkki.tehoMw,
+        merkki.sahkonkayttoTwhMin,
+        merkki.sahkonkayttoTwhMax,
+      ).tila !== "puuttuu",
+  ).length;
 
   const fingridTeksti =
     tuotantoVertailu != null
@@ -1091,6 +1160,48 @@ export function Kartta({
             <span>1 MW</span>
             <span>1000+ MW</span>
           </div>
+        </div>
+        <div className="mt-4 border-t border-border pt-3">
+          <button
+            type="button"
+            className={`flex w-full items-start gap-2 rounded px-1 py-0.5 text-left transition-colors hover:bg-muted/30 ${naytaJohdonmukaisuus ? "" : "text-muted"}`}
+            aria-pressed={naytaJohdonmukaisuus}
+            onClick={() => setNaytaJohdonmukaisuus((edellinen) => !edellinen)}
+          >
+            <span
+              className="mt-0.5 inline-block h-3 w-3 shrink-0 rounded-full border-2 border-dashed"
+              style={{
+                borderColor: naytaJohdonmukaisuus ? "#dc2626" : "#94a3b8",
+                backgroundColor: naytaJohdonmukaisuus ? "rgba(220,38,38,0.15)" : "transparent",
+              }}
+              aria-hidden="true"
+            />
+            <span className="min-w-0 flex-1">
+              <span className="block text-sm font-semibold">IT-teho vs. kulutus</span>
+              <span className="mt-1 block text-xs leading-relaxed">
+                Punainen katkoviiva, jos IT-teho (MW) ja dokumentoidun vuosikulutuksen
+                keskiteho poikkeavat selvästi. Suuntaa-antava; kulutus voi sisältää jäähdytyksen.
+              </span>
+            </span>
+          </button>
+          <p className="mt-2 text-xs tabular-nums text-muted">
+            Tarkistettavaa {johdonmukaisuusTarkistettavat.length}/
+            {johdonmukaisuusVertailtavat} vertailtavaa hanketta
+          </p>
+          {naytaJohdonmukaisuus && johdonmukaisuusTarkistettavat.length > 0 ? (
+            <ul className="mt-2 max-h-32 space-y-1 overflow-y-auto text-xs">
+              {johdonmukaisuusTarkistettavat.map((merkki) => (
+                <li key={merkki.id}>
+                  <a href={`/hankkeet/${merkki.id}`} className="text-link underline">
+                    {merkki.nimi}
+                  </a>
+                  <span className="mt-0.5 block tabular-nums text-muted">
+                    {muotoileJohdonmukaisuusTeksti(merkki)}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          ) : null}
         </div>
         <div className="mt-4 border-t border-border pt-3">
           <button
