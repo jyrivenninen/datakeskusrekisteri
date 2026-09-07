@@ -6,6 +6,7 @@ import {
   ehdotusPoistetulleHankkeelle,
   jarjestaMuutosehdotukset,
   kasittelySelite,
+  HANKE_KENTTA_NIMET,
   muotoilePvm,
   MUUTOSEHDOTUS_TYYPPI_NIMET,
   PALAUTE_AIHE_NIMET,
@@ -25,6 +26,10 @@ import {
   poistetutHankeIdt,
   supabasePalvelinAvainAsetettu,
 } from "@/lib/supabase/yllapito-asiakas";
+import {
+  haeVanhentuneetKentat,
+  VANHENTUNUT_KUUKAUTTA_OLETUS,
+} from "@/lib/supabase/vanhentuneet-kysely";
 import { haeKuittausNakyma } from "@/lib/supabase/kuittaus-kysely";
 
 async function vaadiYllapitaja() {
@@ -97,6 +102,15 @@ export default async function YllapitoSivu({
 
   const kuittausTulos = supabasePalvelinAvainAsetettu() ? await haeKuittausNakyma() : null;
   const kuittausLkm = kuittausTulos?.rivit.length ?? 0;
+  let vanhentuneet: Awaited<ReturnType<typeof haeVanhentuneetKentat>> = [];
+  if (supabasePalvelinAvainAsetettu()) {
+    try {
+      vanhentuneet = await haeVanhentuneetKentat(VANHENTUNUT_KUUKAUTTA_OLETUS);
+    } catch {
+      vanhentuneet = [];
+    }
+  }
+  const vanhentuneetNaytto = vanhentuneet.slice(0, 60);
   const julkaisemattomat = supabasePalvelinAvainAsetettu()
     ? await haeJulkaisemattomatHankkeet()
     : [];
@@ -431,6 +445,53 @@ export default async function YllapitoSivu({
           >
             Avaa kuittausnäkymä ({kuittausLkm})
           </Link>
+        </section>
+      ) : null}
+      {vanhentuneet.length > 0 ? (
+        <section className="mt-8" aria-labelledby="vanhentuneet-otsikko">
+          <h2 id="vanhentuneet-otsikko" className="text-xl font-semibold">
+            Vanhentuneet kentät
+          </h2>
+          <p className="mt-2 max-w-prose text-sm text-muted">
+            Lähde tai kenttätarkistus on yli {VANHENTUNUT_KUUKAUTTA_OLETUS} kuukautta vanha.
+            Tarkista, onko tieto yhä ajantasainen. Agentti ajaa viikoittain (
+            <code>npm run agentti:vanhentuneet</code>).
+          </p>
+          <ul className="mt-4 divide-y divide-border border-y border-border">
+            {vanhentuneetNaytto.map((rivi) => (
+              <li key={`${rivi.laji}-${rivi.hanke_id}-${rivi.kentta}`} className="py-3">
+                <p className="font-medium">
+                  <a href={`/hankkeet/${rivi.hanke_id}`} className="text-link underline">
+                    {rivi.hanke_nimi}
+                  </a>
+                  {" · "}
+                  {HANKE_KENTTA_NIMET[rivi.kentta] ?? rivi.kentta}
+                </p>
+                <p className="mt-1 text-sm text-muted">
+                  {rivi.laji === "tarkistus" ? "Tarkistus" : "Lähde"} · tarkistettu{" "}
+                  {muotoilePvm(rivi.vahvistettu_pvm)}
+                  {rivi.lahde_url ? (
+                    <>
+                      {" · "}
+                      <a href={rivi.lahde_url} className="text-link underline">
+                        Lähde
+                      </a>
+                    </>
+                  ) : null}
+                  {rivi.luottamus ? ` · ${rivi.luottamus}` : ""}
+                  {rivi.merkitty ? ` · ${rivi.merkitty.replace("_", " ")}` : ""}
+                </p>
+                {rivi.huomautus ? (
+                  <p className="mt-1 text-sm">{rivi.huomautus}</p>
+                ) : null}
+              </li>
+            ))}
+          </ul>
+          {vanhentuneet.length > vanhentuneetNaytto.length ? (
+            <p className="mt-2 text-sm text-muted">
+              Näytetään {vanhentuneetNaytto.length}/{vanhentuneet.length} vanhinta ensin.
+            </p>
+          ) : null}
         </section>
       ) : null}
       <section className="mt-8" aria-labelledby="ehdotukset-otsikko">

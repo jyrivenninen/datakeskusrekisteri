@@ -93,6 +93,10 @@ Testiraportin jälkeen **pysähdy** ja kysy käyttäjältä:
 
 **Älä jatka** ennen kuin käyttäjä vastaa myöntävästi.
 
+**Vaihe A valmis (2026-09-07):** API 200, analyysi (esim. Vihdin datakeskus eb8a2276),
+~46 hanketta teho ilman sähkönkäyttöä, kirjoitustesti Kirkkonummi 59a16b0a →
+`sahkonkaytto_twh_a=1.512` julkaistu. Tuntiajo sallittu tehtävään 2b.
+
 ### Vaihe B: Itsenäinen tuntiajo (vain vahvistuksen jälkeen)
 
 Kun käyttäjä on vahvistanut:
@@ -697,13 +701,17 @@ Kysymysmuoto (aina todennettava):
 
 - YVA-asiakirjan, lupapäätöksen tai virallisen hankeselvityksen eksplisiittinen
   vuosikulutus / sähköntarve TWh/a:na (tai muunna GWh/a → TWh/a: `GWh / 1000`)
+- YVA:n pehmeä arvio **luvulla**, esim. «arviolta noin 1512 GWh» → `1.512` TWh/a,
+  `luottamus: epavarma`, lainaus sanatarkasti (sama linja kuin Espoo/Kirkkonummi)
 - VE-vaihtoehdon oma arvo → täytä `vaihtoehdot`-taulun rivi, ei päähankkeen kenttää,
   jos arvo koskee vain yhtä vaihtoehtoa
 
 **Hylkää / jätä tyhjäksi:**
 
-- «Noin», «arvio», «jopa» ilman tarkkaa lukua → `kentta_tarkistus`, ei julkaisua
+- «Noin», «arvio», «jopa» **ilman numeerista arvoa** → `kentta_tarkistus`, ei julkaisua
 - IT-teho (MW) **ei** ole sähkönkäyttö — älä kopioi `it_teho_mw` → `sahkonkaytto_twh_a`
+- **Älä laske** sähkönkäyttöä tehosta (`MW × 8760` tai vastaava) — vain dokumentoitu
+  vuosikulutus lähteestä
 - Generaattorien polttoaineteho (MW) — eri kenttä (`generaattori_polttoaineteho_mw`)
 - Uutisartikkelin yleisluonteinen maininta ilman lukua
 

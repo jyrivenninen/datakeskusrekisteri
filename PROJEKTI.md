@@ -168,7 +168,7 @@ Tarkennettu: `PROJEKTI-lisays-vaihe7.md`. Luku 7A.5 ja uusi 7A.6:
 - [x] 7A.1 Linkkitarkistus (`agents/tarkistukset/linkit.ts`)
 - [x] 7A.2 Dokumenttien muutosvahti (`agents/tarkistukset/dokumentit.ts`)
 - [x] 7A.3 Ristiriidat SQL:llä (`agents/tarkistukset/ristiriidat.ts`)
-- [ ] 7A.4 Vanhentumisvahti (`agents/tarkistukset/vanhentuneet.ts`)
+- [x] 7A.4 Vanhentumisvahti (`agents/tarkistukset/vanhentuneet.ts`)
 - [ ] 7A.5 Rakenteiset rajapinnat (`agents/lahteet/`)
 - [x] 7A.5.1 Ryhti, avoin kaava-aineisto (`agents/lahteet/ryhti.ts`)
 - [x] 7A.5.2 YTJ/PRH (`agents/lahteet/ytj.ts`)
@@ -202,7 +202,7 @@ Nämä nousivat käytön ja integraatioiden myötä; tarkennetaan ennen toteutus
 - [ ] Fingrid: liityntäpisteet kartalle (ei koneellista sijaintidataa avoimessa API:ssa)
 
 **Muut**
-- [ ] 7A.4 Vanhentumisvahti
+- [x] 7A.4 Vanhentumisvahti
 - [ ] 7A.6 Kuntien esityslistat
 
 ---
