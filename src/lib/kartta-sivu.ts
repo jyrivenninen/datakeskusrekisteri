@@ -1,5 +1,6 @@
 import type { Karttamerkki } from "@/komponentit/kartta";
 import { FINGRID_TUOTANTO_DATASETIT, haeFingridTuotantoNyt } from "@/lib/fingrid";
+import { hankeVaihtelvalit } from "@/lib/hanke-vaihtelvali";
 import { ratkaiseMaakunta } from "@/lib/maakunta";
 import { hankeTehoMw } from "@/lib/naytto";
 import type { HankeSuodatus } from "@/lib/suodatus";
@@ -43,6 +44,7 @@ export async function haeKarttaSivuData(suodatus: HankeSuodatus): Promise<Kartta
     ) {
       return [];
     }
+    const sahko = hankeVaihtelvalit(hanke, hanke.vaihtoehdot ?? []).sahkonkaytto;
     return [
       {
         id: hanke.id,
@@ -51,6 +53,8 @@ export async function haeKarttaSivuData(suodatus: HankeSuodatus): Promise<Kartta
         lat: hanke.sijainti_lat != null ? Number(hanke.sijainti_lat) : undefined,
         lon: hanke.sijainti_lon != null ? Number(hanke.sijainti_lon) : undefined,
         tehoMw: hankeTehoMw(hanke),
+        sahkonkayttoTwhMin: sahko?.min ?? null,
+        sahkonkayttoTwhMax: sahko?.max ?? null,
         maakunta: ratkaiseMaakunta(hanke.maakunta, hanke.kunta, kuntaMaakunnat).maakunta,
         alue,
         johdot: hankeJohdot,

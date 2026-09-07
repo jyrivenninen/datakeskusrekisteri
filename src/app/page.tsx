@@ -142,9 +142,10 @@ export default async function Etusivu({
           Kartta
         </h3>
         <p className="mt-2 text-sm leading-relaxed text-muted">
-          Loitolla näkyy piste, lähellä nuppineula (vaiheen väri). Keltainen halo ja
-          maakuntaväri kuvaavat IT-tehoa (tai kokonaistehoa). Lähizoomissa näkyy myös
-          hankealue ja sähkönsiirtoreitti, jos ne on merkitty.
+          Loitolla näkyy piste, lähellä nuppineula (vaiheen väri). Keltainen halo
+          kuvaa IT-tehoa (tai kokonaistehoa). Maakuntaväri näyttää oletuksena
+          hankkeiden lukumäärän; valittavissa myös IT-teho tai sähkönkäyttö.
+          Lähizoomissa näkyy hankealue ja sähkönsiirtoreitti, jos merkitty.
         </p>
         <div className="mt-4 h-[calc(100dvh-17rem)] min-h-[22rem] max-sm:h-[min(72dvh,34rem)]">
           <Kartta

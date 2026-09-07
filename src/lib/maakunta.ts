@@ -19,7 +19,14 @@ export type MaakuntaYhteenveto = {
   hankkeetLkm: number;
   tehoMw: number;
   tehoLkm: number;
+  /** Sähkönkäytön alaraja (TWh/a), VE-minimien summa. */
+  sahkonkayttoTwhMin: number;
+  /** Sähkönkäytön yläraja (TWh/a), VE-maksimien summa. */
+  sahkonkayttoTwhMax: number;
+  sahkonkayttoLkm: number;
 };
+
+export type MaakuntaTila = "hankkeet" | "it_teho" | "sahkonkaytto";
 
 export type MaakuntaRatkaistu = {
   maakunta: string | null;
@@ -44,7 +51,12 @@ export function ratkaiseMaakunta(
 }
 
 export function laskeMaakuntaYhteenvedot(
-  merkit: ReadonlyArray<{ maakunta?: string | null; tehoMw?: number | null }>,
+  merkit: ReadonlyArray<{
+    maakunta?: string | null;
+    tehoMw?: number | null;
+    sahkonkayttoTwhMin?: number | null;
+    sahkonkayttoTwhMax?: number | null;
+  }>,
 ): MaakuntaYhteenveto[] {
   const kartta = new Map<string, MaakuntaYhteenveto>();
   for (const merkki of merkit) {
@@ -55,11 +67,26 @@ export function laskeMaakuntaYhteenvedot(
       hankkeetLkm: 0,
       tehoMw: 0,
       tehoLkm: 0,
+      sahkonkayttoTwhMin: 0,
+      sahkonkayttoTwhMax: 0,
+      sahkonkayttoLkm: 0,
     };
     nykyinen.hankkeetLkm += 1;
     if (merkki.tehoMw != null && merkki.tehoMw > 0) {
       nykyinen.tehoMw += merkki.tehoMw;
       nykyinen.tehoLkm += 1;
+    }
+    const sahkoMin = merkki.sahkonkayttoTwhMin;
+    const sahkoMax = merkki.sahkonkayttoTwhMax;
+    if (
+      sahkoMin != null &&
+      sahkoMax != null &&
+      Number.isFinite(sahkoMin) &&
+      Number.isFinite(sahkoMax)
+    ) {
+      nykyinen.sahkonkayttoTwhMin += sahkoMin;
+      nykyinen.sahkonkayttoTwhMax += sahkoMax;
+      nykyinen.sahkonkayttoLkm += 1;
     }
     kartta.set(nimi, nykyinen);
   }
@@ -67,4 +94,25 @@ export function laskeMaakuntaYhteenvedot(
     if (b.tehoMw !== a.tehoMw) return b.tehoMw - a.tehoMw;
     return a.nimi.localeCompare(b.nimi, "fi");
   });
+}
+
+/** Valittujen karttamerkkien sähkönkäyttö yhteensä (TWh/a). */
+export function laskeSahkoYhteenveto(
+  merkit: ReadonlyArray<{
+    sahkonkayttoTwhMin?: number | null;
+    sahkonkayttoTwhMax?: number | null;
+  }>,
+): { min: number; max: number; merkittyLkm: number; kaikkiLkm: number } {
+  let min = 0;
+  let max = 0;
+  let merkittyLkm = 0;
+  for (const merkki of merkit) {
+    const a = merkki.sahkonkayttoTwhMin;
+    const b = merkki.sahkonkayttoTwhMax;
+    if (a == null || b == null || !Number.isFinite(a) || !Number.isFinite(b)) continue;
+    min += a;
+    max += b;
+    merkittyLkm += 1;
+  }
+  return { min, max, merkittyLkm, kaikkiLkm: merkit.length };
 }

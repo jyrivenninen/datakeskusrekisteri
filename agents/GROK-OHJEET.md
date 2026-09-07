@@ -99,8 +99,9 @@ Kun käyttäjä on vahvistanut:
 
 - Työskentele **enintään 60 minuuttia** per ajokerta.
 - Kirjaa aloitus- ja lopetusaika raporttiin.
-- Priorisoi: (1) uudet hankkeet, (2) tulevat määräajat, (3) tyhjät kentät,
-  (4) viranomaispäätökset, (5) korjausehdotukset jonoon.
+- Priorisoi: (1) uudet hankkeet, (2) **karttaluvut — sähkönkäyttö** (tehtävä 2b),
+  (3) tulevat määräajat, (4) tyhjät kentät, (5) viranomaispäätökset,
+  (6) korjausehdotukset jonoon.
 - Lopuksi lähetä **ajoraportti** ( alla oleva malli ).
 - Jos 60 min täyttyy kesken, lopeta siististi ja kerro mitä jäi kesken.
 
@@ -662,6 +663,106 @@ Täytä lisäksi kaikki löydetyt kentät **joihin on lähde**:
 8. Jos julkaistu arvo on virheellinen eikä korvattavissa → `kentta_tyhjennys` (ei RPC).
 
 **Älä koske** kenttiin, joissa on `merkitty = ihmisen_vahvistama` (varmennettu).
+
+---
+
+## Tehtävä 2b — Karttaluvut (prioriteetti, 2026-09)
+
+Kartta erottaa nyt **IT-tehon (MW)** ja **sähkönkäytön (TWh/a)**. Rekisterissä on
+kattavuusaukko: monella hankkeella on IT-teho mutta ei sähkönkäyttöä. Täytä ensin
+nämä — älä arvaa lukuja.
+
+### 1. Hae aukot
+
+```http
+GET /rest/v1/hankkeet?select=id,nimi,kunta,vaihe,it_teho_mw,teho_mw,sahkonkaytto_twh_a,julkaistu&julkaistu=eq.true
+```
+
+Suodata client-puolella (tai SQL:llä):
+
+- `(it_teho_mw > 0 OR teho_mw > 0)` **JA** `sahkonkaytto_twh_a IS NULL`
+- Järjestä: suurin `it_teho_mw` ensin (tai `teho_mw` jos IT puuttuu)
+
+Raportoi alussa: «X hanketta: teho merkitty, sähkönkäyttö puuttuu».
+
+### 2. Mitä etsit lähteestä
+
+Kysymysmuoto (aina todennettava):
+
+> «Löytyykö lähteestä [URL] maininta hankkeen **sähkönkäytöstä** terawattituntina
+> vuodessa (TWh/a, GWh/a tai vastaava)? Jos löytyy, palauta luku, yksikkö,
+> sivunumero ja sanatarkka kohta. Jos ei löydy, palauta `ei_loydy`.»
+
+**Hyväksy:**
+
+- YVA-asiakirjan, lupapäätöksen tai virallisen hankeselvityksen eksplisiittinen
+  vuosikulutus / sähköntarve TWh/a:na (tai muunna GWh/a → TWh/a: `GWh / 1000`)
+- VE-vaihtoehdon oma arvo → täytä `vaihtoehdot`-taulun rivi, ei päähankkeen kenttää,
+  jos arvo koskee vain yhtä vaihtoehtoa
+
+**Hylkää / jätä tyhjäksi:**
+
+- «Noin», «arvio», «jopa» ilman tarkkaa lukua → `kentta_tarkistus`, ei julkaisua
+- IT-teho (MW) **ei** ole sähkönkäyttö — älä kopioi `it_teho_mw` → `sahkonkaytto_twh_a`
+- Generaattorien polttoaineteho (MW) — eri kenttä (`generaattori_polttoaineteho_mw`)
+- Uutisartikkelin yleisluonteinen maininta ilman lukua
+
+### 3. Julkaisu
+
+| Tilanne | Toimenpide |
+|---------|------------|
+| Tyhjä kenttä, luku lähteestä | `taydennys` + `julkaise_agentti_ehdotus` |
+| Tyhjä, ei lukua | `kentta_tarkistus` (ei RPC) |
+| Arvo olemassa, eri luku lähteessä | `korjaus` + RPC (jonoon) |
+| Vain VE:ssä arvo | `taydennys` vaihtoehtoriville |
+
+Kenttä: `sahkonkaytto_twh_a`. Lähde: asiakirjan URL + sivu + lainaus.
+
+```json
+{
+  "tyyppi": "taydennys",
+  "hanke_id": "<uuid>",
+  "ehdotus": {
+    "sahkonkaytto_twh_a": 0.85
+  },
+  "lahteet": [{
+    "kentta": "sahkonkaytto_twh_a",
+    "lahde_url": "https://…",
+    "lahde_sivu": 42,
+    "lainaus": "…",
+    "vahvistettu_pvm": "2026-03-15",
+    "luottamus": "epavarma"
+  }],
+  "huomautus": "YVA-dokumentin vuosikulutus; muunnettu GWh → TWh."
+}
+```
+
+**Luottamus:** agentti saa asettaa vain `epavarma` (ei `vahvistettu`).
+
+### 4. Muut karttaan liittyvät aukot (toissijainen)
+
+Kun sähkönkäyttö-aukot on käyty läpi, sama logiikka:
+
+| Kenttä | Prioriteetti | Lähde |
+|--------|--------------|-------|
+| `it_teho_mw` | Korkea jos `teho_mw` on epätarkka fallback | YVA, lupa, virallinen esite |
+| `sahkonkaytto_twh_a` | Korkea (yllä) | YVA, energiataulukot |
+| `pinta_ala_ha` | Keskitaso | Kaava, YVA |
+| `generaattorit_lkm` | Matala ellei YVA mainitse | YVA, lupa |
+
+### 5. Raportointi
+
+Ajoraportissa erillinen osio:
+
+```markdown
+### Karttaluvut
+| Mittari | Arvo |
+| Sähkönkäyttö täydennetty (julkaistu) | N |
+| Sähkönkäyttö jonossa (korjaus) | N |
+| Tarkistuspyyntö (ei lukua) | N |
+| IT-teho täydennetty | N |
+| Jäljellä (teho ilman sähköä) | N |
+```
 
 ---
 

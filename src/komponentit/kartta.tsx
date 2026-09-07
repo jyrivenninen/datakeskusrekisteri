@@ -12,12 +12,14 @@ import type { FeatureCollection, MultiPolygon, Polygon } from "geojson";
 import "maplibre-gl/dist/maplibre-gl.css";
 import {
   laskeMaakuntaYhteenvedot,
+  laskeSahkoYhteenveto,
   MAAKUNTA_POHJA_GEO,
   MAAKUNTA_RAJAT_LAHDE_NIMI,
   MAAKUNTA_RAJAT_LAHDE_URL,
+  type MaakuntaTila,
   type MaakuntaYhteenveto,
 } from "@/lib/maakunta";
-import { VAIHE_NIMET, VAIHE_VARIT } from "@/lib/naytto";
+import { muotoileVaihtelvali, VAIHE_NIMET, VAIHE_VARIT } from "@/lib/naytto";
 import { HANKE_VAIHEET, type HankeVaihe, type SijaintiAlue, type SijaintiViiva } from "@/lib/supabase/tietokanta";
 
 export type Karttamerkki = {
@@ -28,6 +30,10 @@ export type Karttamerkki = {
   lon?: number;
   /** IT-teho tai fallback kokonaisteho (MW); halo piirretään vain jos > 0. */
   tehoMw?: number | null;
+  /** VE-minimi sähkönkäytöstä (TWh/a), jos lähde antaa vaihteluvälin. */
+  sahkonkayttoTwhMin?: number | null;
+  /** VE-maksimi sähkönkäytöstä (TWh/a). */
+  sahkonkayttoTwhMax?: number | null;
   /** Maakunta hankkeen kentästä tai kunnan koodistosta. */
   maakunta?: string | null;
   alue?: SijaintiAlue | null;
@@ -132,6 +138,82 @@ const MAAKUNTA_TEHO_VARI_PYSAKIT: [number, string][] = [
   [300, "#8b5cf6"],
   [1000, "#5b21b6"],
 ];
+
+/** Indigo: hankkeiden lukumäärä maakunnassa. */
+const MAAKUNTA_LKM_VARI_PYSAKIT: [number, string][] = [
+  [0, "#f8fafc"],
+  [1, "#e0e7ff"],
+  [3, "#c7d2fe"],
+  [8, "#818cf8"],
+  [15, "#6366f1"],
+  [30, "#4338ca"],
+];
+
+/** Vihreä: sähkönkäytön summa (TWh/a) maakunnassa. */
+const MAAKUNTA_SAHKO_VARI_PYSAKIT: [number, string][] = [
+  [0, "#f0fdf4"],
+  [0.05, "#bbf7d0"],
+  [0.2, "#4ade80"],
+  [0.5, "#16a34a"],
+  [2, "#15803d"],
+  [10, "#14532d"],
+];
+
+const MAAKUNTA_TILA_SELITE: Record<
+  MaakuntaTila,
+  { otsikko: string; kuvaus: string; gradient: string; min: string; max: string }
+> = {
+  hankkeet: {
+    otsikko: "Hankkeet",
+    kuvaus: "Maakunnan väri = valittujen vaiheiden hankkeiden lukumäärä. Keltainen halo = IT-teho pisteessä.",
+    gradient: "linear-gradient(to right, #e0e7ff, #c7d2fe, #818cf8, #6366f1, #4338ca)",
+    min: "0",
+    max: "30+",
+  },
+  it_teho: {
+    otsikko: "IT-teho yhteensä",
+    kuvaus: "Maakunnan väri = valittujen hankkeiden IT-teho tai kokonaisteho (MW) yhteensä. Keltainen halo = saman hankkeen teho pisteessä.",
+    gradient: "linear-gradient(to right, #dbeafe, #93c5fd, #6366f1, #8b5cf6, #5b21b6)",
+    min: "0 MW",
+    max: "1000+ MW",
+  },
+  sahkonkaytto: {
+    otsikko: "Sähkönkäyttö",
+    kuvaus: "Maakunnan väri = valittujen hankkeiden sähkönkäytön alaraja (TWh/a) yhteensä, jos lähde antaa arvon. Keltainen halo = IT-teho (MW).",
+    gradient: "linear-gradient(to right, #bbf7d0, #4ade80, #16a34a, #15803d, #14532d)",
+    min: "0",
+    max: "10+ TWh/a",
+  },
+};
+
+function jarjestaMaakunnat(
+  yhteenvedot: MaakuntaYhteenveto[],
+  tila: MaakuntaTila,
+): MaakuntaYhteenveto[] {
+  return [...yhteenvedot].sort((a, b) => {
+    const avain =
+      tila === "hankkeet"
+        ? "hankkeetLkm"
+        : tila === "it_teho"
+          ? "tehoMw"
+          : "sahkonkayttoTwhMin";
+    if (b[avain] !== a[avain]) return b[avain] - a[avain];
+    return a.nimi.localeCompare(b.nimi, "fi");
+  });
+}
+
+function muotoileMaakuntaArvo(yhteenveto: MaakuntaYhteenveto, tila: MaakuntaTila): string {
+  if (tila === "hankkeet") {
+    return `${yhteenveto.hankkeetLkm} hanketta`;
+  }
+  if (tila === "it_teho") {
+    return `${new Intl.NumberFormat("fi-FI", { maximumFractionDigits: 0 }).format(yhteenveto.tehoMw)} MW (${yhteenveto.tehoLkm}/${yhteenveto.hankkeetLkm})`;
+  }
+  if (yhteenveto.sahkonkayttoLkm === 0) {
+    return `— (${yhteenveto.hankkeetLkm})`;
+  }
+  return `${muotoileVaihtelvali(yhteenveto.sahkonkayttoTwhMin, yhteenveto.sahkonkayttoTwhMax, "TWh/a")} (${yhteenveto.sahkonkayttoLkm}/${yhteenveto.hankkeetLkm})`;
+}
 
 function taustakarttaTyyli(avain: string): StyleSpecification {
   return {
@@ -335,6 +417,8 @@ function yhdistaMaakuntaGeo(
           ...feature.properties,
           tehoMw: yhteenveto?.tehoMw ?? 0,
           hankkeetLkm: yhteenveto?.hankkeetLkm ?? 0,
+          sahkonkayttoTwhMin: yhteenveto?.sahkonkayttoTwhMin ?? 0,
+          sahkonkayttoLkm: yhteenveto?.sahkonkayttoLkm ?? 0,
         },
       };
     }),
@@ -382,6 +466,7 @@ function piirraMaakuntaKerros(
   pohja: FeatureCollection,
   suodatetut: Karttamerkki[],
   nayta: boolean,
+  tila: MaakuntaTila,
 ) {
   const kehys = kartta.getContainer();
   const leveys = kehys.clientWidth;
@@ -397,9 +482,21 @@ function piirraMaakuntaKerros(
   for (const feature of data.features) {
     const geom = feature.geometry;
     if (!geom || (geom.type !== "Polygon" && geom.type !== "MultiPolygon")) continue;
-    const tehoMw = Number(feature.properties?.tehoMw ?? 0);
-    const vari = interpoloiVari(MAAKUNTA_TEHO_VARI_PYSAKIT, tehoMw);
-    const peitto = tehoMw > 0 ? 0.55 : 0.06;
+    let vari = "#f8fafc";
+    let peitto = 0.06;
+    if (tila === "hankkeet") {
+      const lkm = Number(feature.properties?.hankkeetLkm ?? 0);
+      vari = interpoloiVari(MAAKUNTA_LKM_VARI_PYSAKIT, lkm);
+      peitto = lkm > 0 ? 0.5 : 0.06;
+    } else if (tila === "it_teho") {
+      const tehoMw = Number(feature.properties?.tehoMw ?? 0);
+      vari = interpoloiVari(MAAKUNTA_TEHO_VARI_PYSAKIT, tehoMw);
+      peitto = tehoMw > 0 ? 0.55 : 0.06;
+    } else {
+      const twh = Number(feature.properties?.sahkonkayttoTwhMin ?? 0);
+      vari = interpoloiVari(MAAKUNTA_SAHKO_VARI_PYSAKIT, twh);
+      peitto = twh > 0 ? 0.5 : 0.06;
+    }
     piirraMaakuntaGeometria(kartta, svg, geom, vari, peitto, "#334155");
   }
 }
@@ -569,15 +666,18 @@ export function Kartta({
   const aktivisetVaiheetRef = useRef<Set<HankeVaihe>>(kaikkiVaiheetAktiviset());
   const naytaTehoHalotRef = useRef(true);
   const naytaMaakunnatRef = useRef(true);
+  const maakuntaTilaRef = useRef<MaakuntaTila>("hankkeet");
   const avain = process.env.NEXT_PUBLIC_MML_API_AVAIN;
   const merkitAvain = JSON.stringify(merkit);
   const [aktivisetVaiheet, setAktivisetVaiheet] = useState<Set<HankeVaihe>>(kaikkiVaiheetAktiviset);
   const [naytaTehoHalot, setNaytaTehoHalot] = useState(true);
   const [naytaMaakunnat, setNaytaMaakunnat] = useState(true);
+  const [maakuntaTila, setMaakuntaTila] = useState<MaakuntaTila>("hankkeet");
 
   aktivisetVaiheetRef.current = aktivisetVaiheet;
   naytaTehoHalotRef.current = naytaTehoHalot;
   naytaMaakunnatRef.current = naytaMaakunnat;
+  maakuntaTilaRef.current = maakuntaTila;
 
   useEffect(() => {
     setAktivisetVaiheet(kaikkiVaiheetAktiviset());
@@ -608,6 +708,7 @@ export function Kartta({
       MAAKUNTA_POHJA_GEO,
       suodatetut,
       naytaMaakunnatRef.current,
+      maakuntaTilaRef.current,
     );
     piirraTehoHalotKerros(kartta, svgTeho, suodatetut, naytaTeho);
     piirraAlueetJaJohdot(kartta, svgGeometria, suodatetut);
@@ -627,7 +728,7 @@ export function Kartta({
 
   useEffect(() => {
     paivitaNakyvyys();
-  }, [aktivisetVaiheet, naytaTehoHalot, naytaMaakunnat]);
+  }, [aktivisetVaiheet, naytaTehoHalot, naytaMaakunnat, maakuntaTila]);
 
   useEffect(() => {
     if (!kehys.current || !avain) return;
@@ -795,8 +896,13 @@ export function Kartta({
   const hankkeetTehoLkm = nakyvatMerkit.filter(
     (merkki) => merkki.tehoMw != null && merkki.tehoMw > 0,
   ).length;
-  const maakuntaYhteenvedot = laskeMaakuntaYhteenvedot(nakyvatMerkit);
+  const maakuntaYhteenvedot = jarjestaMaakunnat(
+    laskeMaakuntaYhteenvedot(nakyvatMerkit),
+    maakuntaTila,
+  );
   const maakunnatonLkm = nakyvatMerkit.filter((merkki) => !merkki.maakunta?.trim()).length;
+  const sahkoYhteenveto = laskeSahkoYhteenveto(nakyvatMerkit);
+  const maakuntaSelite = MAAKUNTA_TILA_SELITE[maakuntaTila];
 
   const fingridTeksti =
     tuotantoVertailu != null
@@ -962,22 +1068,39 @@ export function Kartta({
             <span className="min-w-0 flex-1">
               <span className="block text-sm font-semibold">Maakunnittain</span>
               <span className="mt-1 block text-xs leading-relaxed">
-                Sininen alue = valittujen vaiheiden yhteisteho maakunnassa. Keltainen
-                halo = saman hankkeen teho pisteessä.
+                {maakuntaSelite.kuvaus}
               </span>
             </span>
           </button>
+          <fieldset
+            className={`mt-2 space-y-1 ${naytaMaakunnat ? "" : "pointer-events-none opacity-40"}`}
+            aria-label="Maakuntakerroksen mittari"
+          >
+            {(["hankkeet", "it_teho", "sahkonkaytto"] as const).map((tila) => (
+              <label
+                key={tila}
+                className="flex cursor-pointer items-center gap-2 rounded px-1 py-0.5 text-xs hover:bg-muted/30"
+              >
+                <input
+                  type="radio"
+                  name="maakunta-tila"
+                  className="shrink-0"
+                  checked={maakuntaTila === tila}
+                  onChange={() => setMaakuntaTila(tila)}
+                />
+                <span>{MAAKUNTA_TILA_SELITE[tila].otsikko}</span>
+              </label>
+            ))}
+          </fieldset>
           <div
             className={`mt-2 h-3 w-full rounded border border-border transition-opacity ${naytaMaakunnat ? "" : "opacity-40"}`}
-            style={{
-              background: "linear-gradient(to right, #dbeafe, #93c5fd, #6366f1, #8b5cf6, #5b21b6)",
-            }}
+            style={{ background: maakuntaSelite.gradient }}
             role="img"
             aria-hidden="true"
           />
           <div className="mt-1 flex justify-between text-xs tabular-nums text-muted">
-            <span>0 MW</span>
-            <span>1000+ MW</span>
+            <span>{maakuntaSelite.min}</span>
+            <span>{maakuntaSelite.max}</span>
           </div>
           {maakuntaYhteenvedot.length > 0 ? (
             <ul className="mt-2 max-h-40 space-y-1 overflow-y-auto text-xs">
@@ -988,14 +1111,7 @@ export function Kartta({
                 >
                   <span className="min-w-0 truncate">{yhteenveto.nimi}</span>
                   <span className="shrink-0 font-semibold">
-                    {new Intl.NumberFormat("fi-FI", { maximumFractionDigits: 0 }).format(
-                      yhteenveto.tehoMw,
-                    )}{" "}
-                    MW
-                    <span className="font-normal text-muted">
-                      {" "}
-                      ({yhteenveto.tehoLkm}/{yhteenveto.hankkeetLkm})
-                    </span>
+                    {muotoileMaakuntaArvo(yhteenveto, maakuntaTila)}
                   </span>
                 </li>
               ))}
@@ -1016,13 +1132,37 @@ export function Kartta({
             </a>
           </p>
         </div>
+        <div className="mt-4 border-t border-border pt-3">
+          <h4 className="text-sm font-semibold">Sähkönkäyttö (valitut hankkeet)</h4>
+          <p className="mt-1 text-xs leading-relaxed text-muted">
+            YVA- ja lupadokumenttien sähkönkäyttö (TWh/a). IT-teho (MW) on eri
+            suure; vertailu Fingridin tuotantoon alla on vain suuntaa-antava.
+          </p>
+          <dl className="mt-2 text-sm">
+            <dt className="text-muted">Yhteensä</dt>
+            <dd className="font-semibold tabular-nums">
+              {sahkoYhteenveto.merkittyLkm > 0
+                ? muotoileVaihtelvali(
+                    sahkoYhteenveto.min,
+                    sahkoYhteenveto.max,
+                    "TWh/a",
+                  )
+                : "—"}
+            </dd>
+            <dt className="mt-1 text-xs text-muted">Kattavuus</dt>
+            <dd className="text-xs tabular-nums text-muted">
+              {sahkoYhteenveto.merkittyLkm}/{sahkoYhteenveto.kaikkiLkm} hanketta
+              merkitty
+            </dd>
+          </dl>
+        </div>
         {tuotantoVertailu ? (
           <div className="mt-4 border-t border-border pt-3">
             <h4 className="text-sm font-semibold">Tuotanto vs. datakeskukset</h4>
             <p className="mt-1 text-xs leading-relaxed text-muted">
-              Fingridin mitaama Suomen kokonaistuotanto verrattuna kartalla
-              valittujen vaiheiden hankkeiden yhteitehoon (IT-teho tai
-              kokonaisteho).
+              Fingridin mitaama Suomen kokonaistuotanto (MW) verrattuna kartalla
+              valittujen hankkeiden IT-tehoon. Sähkönkäyttö (TWh/a) on eri
+              yksikkö — katso yllä.
             </p>
             <dl className="mt-2 space-y-2 text-sm">
               <div>
