@@ -55,6 +55,17 @@ function sovitinJarjestelmalle(jarjestelma: string): KuntaSovitin | null {
   return null;
 }
 
+/** Robots-tarkistus juuri. Oulun asiakirjat-alidomain estää kaiken; pääsivusto sallii. */
+function robotsTarkistusOsoite(lahde: KuntaLahde): URL {
+  if (
+    lahde.jarjestelma === "tweb" &&
+    lahde.kuntaNimi.trim().toLowerCase() === "oulu"
+  ) {
+    return new URL("https://www.ouka.fi");
+  }
+  return new URL(lahde.perusUrl);
+}
+
 function hankkeetKunnassa(
   hankkeet: HankeKunnassa[],
   lahde: KuntaLahde,
@@ -170,7 +181,7 @@ async function main() {
       const adapteri = sovitinJarjestelmalle(lahde.jarjestelma);
       if (!adapteri) continue;
 
-      const juuri = new URL(lahde.perusUrl);
+      const juuri = robotsTarkistusOsoite(lahde);
       if (!(await robotsSallii(juuri, USER_AGENT))) {
         console.warn(`robots.txt estää: ${lahde.kuntaNimi} ${lahde.perusUrl}`);
         continue;

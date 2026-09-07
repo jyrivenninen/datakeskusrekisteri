@@ -1,9 +1,11 @@
-# Viikoittainen kuntien esityslista-RSS (7A.6 vaihe 1). Ei kielimallia.
+# Viikoittainen kuntien esityslista-RSS (7A.6). Ei kielimallia.
+# Tiistaisin 05:30 UTC. Manuaalinen workflow_dispatch tuotantoon.
 
 name: kuntakokoukset
 
 on:
   schedule:
+    # Tiistai 08:30 Suomen aikaa (talvi UTC+2)
     - cron: "30 5 * * 2"
   workflow_dispatch:
 

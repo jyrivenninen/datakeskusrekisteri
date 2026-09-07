@@ -174,8 +174,8 @@ Tarkennettu: `PROJEKTI-lisays-vaihe7.md`. Luku 7A.5 ja uusi 7A.6:
 - [x] 7A.5.2 YTJ/PRH (`agents/lahteet/ytj.ts`)
 - [x] 7A.5.3 MML geokoodaus (`agents/lahteet/mml.ts`)
 - [x] 7A.5.5 Syken hakemisto, kuntakoodisto (`agents/lahteet/hakemisto.ts`)
-- [ ] 7A.6 Kuntien esityslistat (`agents/lahteet/kunnat/`) — 33 lähdettä (RSS/CaseM/HTML/Tweb); Kouvola toimii; Oulu robots.txt estää; Helsinki HTML parseri ok
-- [ ] Mallirajapinta (`agents/malli.ts`) ennen 7B:tä
+- [ ] 7A.6 Kuntien esityslistat (`agents/lahteet/kunnat/`) — 34 lähdettä; Kouvola toimii; Oulu KTweb (robots www.ouka.fi); Helsinki HTML ok
+- [x] Mallirajapinta (`agents/malli.ts`) ennen 7B:tä
 - [ ] 7B.1 Lähteenvahvistaja (`agents/lahteenvahvistaja.ts`)
 - [ ] 7B.2 Esikäsittelijä (`agents/esikasittelija.ts`)
 - [ ] 7B.3 Muutosten tiivistäjä (`agents/tiivistaja.ts`)
@@ -203,7 +203,7 @@ Nämä nousivat käytön ja integraatioiden myötä; tarkennetaan ennen toteutus
 
 **Muut**
 - [x] 7A.4 Vanhentumisvahti
-- [ ] 7A.6 Kuntien esityslistat (33 lähdettä; dokumentit hankkeelle yllapidosta; Oulu katve robots.txt)
+- [ ] 7A.6 Kuntien esityslistat (34 lähdettä; dokumentit hankkeelle yllapidosta; Oulu KTweb)
 
 ---
 

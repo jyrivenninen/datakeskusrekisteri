@@ -155,6 +155,7 @@ async function main() {
   const avain = process.env.SUPABASE_SERVICE_ROLE_KEY;
   if (!url || !avain) throw new Error("Supabase-asetukset puuttuvat.");
   const sb = createClient(url, avain, { auth: { persistSession: false } });
+  const kirjoita = process.env.KUNTA_RSS_KIRJOITA === "1";
 
   const { data: h } = await sb
     .from("hankkeet")
@@ -207,6 +208,40 @@ async function main() {
   console.log(`\nYhteensä ${loytyi.length}/${puuttuvat.length}`);
   console.log("\n=== EI RSS ===");
   console.log(eiLoydy.join(", "));
+
+  if (kirjoita && loytyi.length > 0) {
+    const nimet = loytyi.map((r) => r.nimi);
+    const { data: kunnat, error: kuntaVirhe } = await sb
+      .from("kunnat")
+      .select("id, nimi")
+      .in("nimi", nimet);
+    if (kuntaVirhe) throw new Error(kuntaVirhe.message);
+    const idNimella = new Map((kunnat ?? []).map((k) => [k.nimi, k.id as string]));
+    let upsert = 0;
+    for (const r of loytyi) {
+      const kuntaId = idNimella.get(r.nimi);
+      if (!kuntaId) {
+        console.warn(`Kirjoitus ohitettu ${r.nimi}: ei kunnat-riviä.`);
+        continue;
+      }
+      const { error } = await sb.from("kunta_esityslista_lahteet").upsert(
+        {
+          kunta_id: kuntaId,
+          jarjestelma: "rss",
+          perus_url: r.url,
+          seurannassa: true,
+          huomautus: "Dynasty RSS, etsi-kunta-rss.ts",
+        },
+        { onConflict: "kunta_id,jarjestelma" },
+      );
+      if (error) throw new Error(`${r.nimi}: ${error.message}`);
+      console.log(`Kirjoitettu ${r.nimi} → ${r.url}`);
+      upsert += 1;
+    }
+    console.log(`\nKirjoitettu ${upsert} uutta RSS-lähdettä.`);
+  } else if (kirjoita) {
+    console.log("\nEi uusia lähteitä kirjoitettavaksi.");
+  }
 }
 
 main().catch((e) => {

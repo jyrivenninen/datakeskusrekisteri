@@ -65,6 +65,12 @@ const LAHTEET: LahdeRivi[] = [
     huomautus: "Dynasty oncloudos",
   },
   {
+    nimi: "Eura",
+    jarjestelma: "rss",
+    url: "https://eura.oncloudos.com/cgi/DREQUEST.PHP?page=rss/meetingitems&show=30",
+    huomautus: "Dynasty oncloudos, etsi-kunta-rss",
+  },
+  {
     nimi: "Forssa",
     jarjestelma: "rss",
     url: "https://forssa.oncloudos.com/cgi/DREQUEST.PHP?page=rss/meetingitems&show=30",
@@ -212,7 +218,8 @@ const LAHTEET: LahdeRivi[] = [
     nimi: "Oulu",
     jarjestelma: "tweb",
     url: "https://asiakirjat.ouka.fi/ktwebscr/epj_rssfeed.htm?toimielin=",
-    huomautus: "KTweb Triplan, RSS + esityslista HTML",
+    huomautus:
+      "KTweb Triplan; robots-tarkistus www.ouka.fi (asiakirjat.ouka.fi Disallow: /)",
   },
 ];
 
