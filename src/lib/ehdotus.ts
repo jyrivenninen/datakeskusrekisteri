@@ -171,6 +171,13 @@ export type EhdotusSisalto = {
       lahde_url: string;
     };
   };
+  tiivistys?: {
+    valmis: boolean;
+    kasitelty_pvm: string;
+    yhteenveto: string;
+    koskee_kenttia: string[];
+    perustelu: string;
+  };
 };
 
 const NUMEERISET = new Set([

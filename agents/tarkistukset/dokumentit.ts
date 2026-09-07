@@ -22,6 +22,7 @@ const USER_AGENT =
 const EHDOTTAJA = "agents/tarkistukset/dokumentit";
 const SOVITIN = "dokumentit";
 const MAX_BAITIT = 25 * 1024 * 1024;
+const TEKSTI_KATKELMA = 80_000;
 
 type DokumenttiRivi = {
   id: string;
@@ -239,6 +240,7 @@ async function main() {
           dokumentti_id: dok.id,
           tiiviste: tiivisteArvo,
           merkkimaara,
+          teksti_katkelma: teksti.slice(0, TEKSTI_KATKELMA) || null,
         });
         if (tiivisteVirhe) throw new Error(tiivisteVirhe.message);
       }

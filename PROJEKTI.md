@@ -178,7 +178,7 @@ Tarkennettu: `PROJEKTI-lisays-vaihe7.md`. Luku 7A.5 ja uusi 7A.6:
 - [x] Mallirajapinta (`agents/malli.ts`) ennen 7B:tä
 - [x] 7B.1 Lähteenvahvistaja (`agents/lahteenvahvistaja.ts`)
 - [x] 7B.2 Esikäsittelijä (`agents/esikasittelija.ts`)
-- [ ] 7B.3 Muutosten tiivistäjä (`agents/tiivistaja.ts`)
+- [x] 7B.3 Muutosten tiivistäjä (`agents/tiivistaja.ts`)
 
 ### Vaihe 8 — Avoin data
 - [ ] JSON-endpointit, CSV-lataus, lisenssitieto (suositus: CC BY 4.0)

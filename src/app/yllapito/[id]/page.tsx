@@ -75,6 +75,7 @@ export default async function EhdotusSivu({
   const dokumentti = sisalto.dokumentti;
   const lahteenvahvistus = sisalto.lahteenvahvistus;
   const esikasittelu = sisalto.esikasittelu;
+  const tiivistys = sisalto.tiivistys;
   const ristiriita = sisalto.ristiriita;
   const hankeIdt = ehdotuksenHankeIdt(ehdotus.hanke_id, ristiriita);
   let hankkeet = await haeHankkeetYllapitoon(hankeIdt);
@@ -841,6 +842,35 @@ export default async function EhdotusSivu({
                 </a>
               </dd>
             </div>
+            {tiivistys?.valmis ? (
+              <>
+                <div className="py-3">
+                  <dt className="font-medium">Muutoksen yhteenveto</dt>
+                  <dd className="mt-1 whitespace-pre-wrap">{tiivistys.yhteenveto}</dd>
+                </div>
+                {tiivistys.koskee_kenttia.length > 0 ? (
+                  <div className="py-3">
+                    <dt className="font-medium">Voi koskea kenttiä</dt>
+                    <dd className="mt-1">
+                      {tiivistys.koskee_kenttia
+                        .map((k) => HANKE_KENTTA_NIMET[k] ?? k)
+                        .join(", ")}
+                    </dd>
+                  </div>
+                ) : (
+                  <div className="py-3">
+                    <dt className="font-medium">Kentät</dt>
+                    <dd className="mt-1 text-muted">Ei tunnistettu suoraa vaikutusta tallennettuihin kenttiin.</dd>
+                  </div>
+                )}
+                {tiivistys.perustelu ? (
+                  <div className="py-3">
+                    <dt className="font-medium">Perustelu</dt>
+                    <dd className="mt-1 whitespace-pre-wrap">{tiivistys.perustelu}</dd>
+                  </div>
+                ) : null}
+              </>
+            ) : null}
           </dl>
         </section>
       ) : null}
