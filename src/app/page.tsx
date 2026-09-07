@@ -1,5 +1,5 @@
 import { HankkeetSuodatin } from "@/komponentit/hankkeet-suodatin";
-import { HankeLuetteloJarjestys } from "@/komponentit/hanke-luettelo-jarjestys";
+import { HankeLuetteloOsio } from "@/komponentit/hanke-luettelo-jarjestys";
 import { HankeLaskurit } from "@/komponentit/hanke-laskurit";
 import { Kartta } from "@/komponentit/kartta";
 import { VaiheMerkki } from "@/komponentit/vaihe-merkki";
@@ -178,64 +178,60 @@ export default async function Etusivu({
           </p>
         </noscript>
 
-        <div className="mt-10 flex flex-wrap items-center justify-between gap-3">
-          <h3 id="hankeluettelo-otsikko" className="text-lg font-semibold">
-            Luettelo
-          </h3>
-          <HankeLuetteloJarjestys suodatus={suodatus} />
-        </div>
-        {hankeVirhe ? (
-          <p className="mt-4 text-sm">{hankeVirhe}</p>
-        ) : jarjestetytHankkeet.length === 0 ? (
-          <div className="mt-4 rounded-lg border border-border bg-surface p-4">
-            <p className="leading-relaxed">Ei hankkeita valituilla ehdoilla.</p>
-            {onAktiivinenSuodatus(suodatus) ? (
-              <>
-                <ul className="mt-3 flex flex-wrap gap-2 text-sm text-muted">
-                  {aktiivisetEhdot(suodatus).map((ehto) => (
-                    <li key={ehto.avain} className="rounded-full border border-border px-2 py-0.5">
-                      {ehto.nimi}
-                    </li>
-                  ))}
-                </ul>
-                <p className="mt-4">
-                  <a href={hankkeetSuodatusPolku({})} className="text-link underline">
-                    Tyhjennä haku ja suodattimet
-                  </a>
-                </p>
-              </>
-            ) : null}
-          </div>
-        ) : (
-          <ul className="mt-4 divide-y divide-border border-y border-border">
-            {jarjestetytHankkeet.map((hanke) => {
-              const teho = hankeVaihtelvalit(hanke, hanke.vaihtoehdot).teho;
-              return (
-                <li key={hanke.id} className="py-4">
-                  <h4 className="text-lg font-semibold">
-                    <a href={`/hankkeet/${hanke.id}`} className="text-link underline">
-                      {hanke.nimi}
+        <HankeLuetteloOsio suodatus={suodatus}>
+          {hankeVirhe ? (
+            <p className="mt-4 text-sm">{hankeVirhe}</p>
+          ) : jarjestetytHankkeet.length === 0 ? (
+            <div className="mt-4 rounded-lg border border-border bg-surface p-4">
+              <p className="leading-relaxed">Ei hankkeita valituilla ehdoilla.</p>
+              {onAktiivinenSuodatus(suodatus) ? (
+                <>
+                  <ul className="mt-3 flex flex-wrap gap-2 text-sm text-muted">
+                    {aktiivisetEhdot(suodatus).map((ehto) => (
+                      <li key={ehto.avain} className="rounded-full border border-border px-2 py-0.5">
+                        {ehto.nimi}
+                      </li>
+                    ))}
+                  </ul>
+                  <p className="mt-4">
+                    <a href={hankkeetSuodatusPolku({})} className="text-link underline">
+                      Tyhjennä haku ja suodattimet
                     </a>
-                  </h4>
-                  <p className="mt-1 text-sm text-muted">
-                    {hanke.kunta}
-                    {hanke.maakunta ? `, ${hanke.maakunta}` : ""} ·{" "}
-                    <VaiheMerkki vaihe={hanke.vaihe} />
-                    {teho
-                      ? ` · ${muotoileVaihtelvali(teho.min, teho.max, "MW")}`
-                      : ""}
-                    {hanke.vanhin_vahvistettu_pvm
-                      ? ` · vanhin tarkistettu ${muotoilePvm(hanke.vanhin_vahvistettu_pvm)}`
-                      : ""}
-                    {hanke.viimeisin_paatos
-                      ? ` · ${hanke.viimeisin_paatos.kuvaus} · ${muotoilePvm(hanke.viimeisin_paatos.pvm)}`
-                      : ""}
                   </p>
-                </li>
-              );
-            })}
-          </ul>
-        )}
+                </>
+              ) : null}
+            </div>
+          ) : (
+            <ul className="mt-4 divide-y divide-border border-y border-border">
+              {jarjestetytHankkeet.map((hanke) => {
+                const teho = hankeVaihtelvalit(hanke, hanke.vaihtoehdot).teho;
+                return (
+                  <li key={hanke.id} className="py-4">
+                    <h4 className="text-lg font-semibold">
+                      <a href={`/hankkeet/${hanke.id}`} className="text-link underline">
+                        {hanke.nimi}
+                      </a>
+                    </h4>
+                    <p className="mt-1 text-sm text-muted">
+                      {hanke.kunta}
+                      {hanke.maakunta ? `, ${hanke.maakunta}` : ""} ·{" "}
+                      <VaiheMerkki vaihe={hanke.vaihe} />
+                      {teho
+                        ? ` · ${muotoileVaihtelvali(teho.min, teho.max, "MW")}`
+                        : ""}
+                      {hanke.vanhin_vahvistettu_pvm
+                        ? ` · vanhin tarkistettu ${muotoilePvm(hanke.vanhin_vahvistettu_pvm)}`
+                        : ""}
+                      {hanke.viimeisin_paatos
+                        ? ` · ${hanke.viimeisin_paatos.kuvaus} · ${muotoilePvm(hanke.viimeisin_paatos.pvm)}`
+                        : ""}
+                    </p>
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+        </HankeLuetteloOsio>
       </section>
     </main>
   );
