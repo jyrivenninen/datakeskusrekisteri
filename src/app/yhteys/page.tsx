@@ -62,17 +62,6 @@ export default async function YhteysSivu({
           </select>
         </p>
         <p className="flex flex-col gap-1">
-          <label htmlFor="nimi" className="text-sm font-medium">
-            Nimi (vapaaehtoinen)
-          </label>
-          <input
-            id="nimi"
-            name="nimi"
-            maxLength={200}
-            className="rounded border border-border bg-surface px-2 py-2"
-          />
-        </p>
-        <p className="flex flex-col gap-1">
           <label htmlFor="sahkoposti" className="text-sm font-medium">
             Sähköposti (vapaaehtoinen, ei julkaista)
           </label>

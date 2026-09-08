@@ -444,17 +444,12 @@ export function muotoileAika(arvo: string): string {
   }).format(pvm);
 }
 
-/** Kuka käsitteli: ylläpitäjän nimi ja sähköposti, tai käyttäjätunniste. */
+/** Kuka käsitteli: käyttäjätunniste (ei henkilön nimeä). */
 export function kasittelijaMerkinta(
-  nimi: string | null | undefined,
-  sahkoposti: string | null | undefined,
+  _nimi: string | null | undefined,
+  _sahkoposti: string | null | undefined,
   kayttajaId: string,
 ): string {
-  const n = (nimi ?? "").trim();
-  const posti = (sahkoposti ?? "").trim();
-  if (n && posti) return `${n} · ${posti}`;
-  if (n) return n;
-  if (posti) return posti;
   return kayttajaId;
 }
 
