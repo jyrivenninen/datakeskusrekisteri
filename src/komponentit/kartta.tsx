@@ -1213,48 +1213,50 @@ export function Kartta({
             <span>1000+ MW</span>
           </div>
         </div>
-        <div className="mt-4 border-t border-border pt-3">
-          <button
-            type="button"
-            className={`flex w-full items-start gap-2 rounded px-1 py-0.5 text-left transition-colors hover:bg-muted/30 ${naytaJohdonmukaisuus ? "" : "text-muted"}`}
-            aria-pressed={naytaJohdonmukaisuus}
-            onClick={() => setNaytaJohdonmukaisuus((edellinen) => !edellinen)}
-          >
-            <span
-              className="mt-0.5 inline-block h-3 w-3 shrink-0 rounded-full border-2 border-dashed"
-              style={{
-                borderColor: naytaJohdonmukaisuus ? "#dc2626" : "#94a3b8",
-                backgroundColor: naytaJohdonmukaisuus ? "rgba(220,38,38,0.15)" : "transparent",
-              }}
-              aria-hidden="true"
-            />
-            <span className="min-w-0 flex-1">
-              <span className="block text-sm font-semibold">IT-teho vs. kulutus</span>
-              <span className="mt-1 block text-xs leading-relaxed">
-                Punainen katkoviiva, jos IT-teho (MW) ja dokumentoidun vuosikulutuksen
-                keskiteho poikkeavat selvästi. Suuntaa-antava; kulutus voi sisältää jäähdytyksen.
+        {johdonmukaisuusTarkistettavat.length > 0 ? (
+          <div className="mt-4 border-t border-border pt-3">
+            <button
+              type="button"
+              className={`flex w-full items-start gap-2 rounded px-1 py-0.5 text-left transition-colors hover:bg-muted/30 ${naytaJohdonmukaisuus ? "" : "text-muted"}`}
+              aria-pressed={naytaJohdonmukaisuus}
+              onClick={() => setNaytaJohdonmukaisuus((edellinen) => !edellinen)}
+            >
+              <span
+                className="mt-0.5 inline-block h-3 w-3 shrink-0 rounded-full border-2 border-dashed"
+                style={{
+                  borderColor: naytaJohdonmukaisuus ? "#dc2626" : "#94a3b8",
+                  backgroundColor: naytaJohdonmukaisuus ? "rgba(220,38,38,0.15)" : "transparent",
+                }}
+                aria-hidden="true"
+              />
+              <span className="min-w-0 flex-1">
+                <span className="block text-sm font-semibold">IT-teho vs. kulutus</span>
+                <span className="mt-1 block text-xs leading-relaxed">
+                  Punainen katkoviiva, jos IT-teho (MW) ja dokumentoidun vuosikulutuksen
+                  keskiteho poikkeavat selvästi. Suuntaa-antava; kulutus voi sisältää jäähdytyksen.
+                </span>
               </span>
-            </span>
-          </button>
-          <p className="mt-2 text-xs tabular-nums text-muted">
-            Tarkistettavaa {johdonmukaisuusTarkistettavat.length}/
-            {johdonmukaisuusVertailtavat} vertailtavaa hanketta
-          </p>
-          {naytaJohdonmukaisuus && johdonmukaisuusTarkistettavat.length > 0 ? (
-            <ul className="mt-2 max-h-32 space-y-1 overflow-y-auto text-xs">
-              {johdonmukaisuusTarkistettavat.map((merkki) => (
-                <li key={merkki.id}>
-                  <a href={`/hankkeet/${merkki.id}`} className="text-link underline">
-                    {merkki.nimi}
-                  </a>
-                  <span className="mt-0.5 block tabular-nums text-muted">
-                    {muotoileJohdonmukaisuusTeksti(merkki)}
-                  </span>
-                </li>
-              ))}
-            </ul>
-          ) : null}
-        </div>
+            </button>
+            <p className="mt-2 text-xs tabular-nums text-muted">
+              Tarkistettavaa {johdonmukaisuusTarkistettavat.length}/
+              {johdonmukaisuusVertailtavat} vertailtavaa hanketta
+            </p>
+            {naytaJohdonmukaisuus ? (
+              <ul className="mt-2 max-h-32 space-y-1 overflow-y-auto text-xs">
+                {johdonmukaisuusTarkistettavat.map((merkki) => (
+                  <li key={merkki.id}>
+                    <a href={`/hankkeet/${merkki.id}`} className="text-link underline">
+                      {merkki.nimi}
+                    </a>
+                    <span className="mt-0.5 block tabular-nums text-muted">
+                      {muotoileJohdonmukaisuusTeksti(merkki)}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            ) : null}
+          </div>
+        ) : null}
         {liityntapisteet.length > 0 ? (
           <div className="mt-4 border-t border-border pt-3">
             <button
