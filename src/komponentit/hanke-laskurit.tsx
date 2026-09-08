@@ -4,10 +4,7 @@ import {
   SUOMI_SAHKON_TUOTANTO_2024,
   SUOMI_SAHKONTUOTANTO_CO2_2024,
 } from "@/lib/suomi-energia";
-
-function kattavuus(merkitty: number, kaikki: number): string {
-  return `${merkitty}/${kaikki} hankkeella merkitty`;
-}
+import { KattavuusHankkeilla } from "@/komponentit/kattavuus-teksti";
 
 function muotoileProsentti(osuus: number): string {
   const prosentti = osuus * 100;
@@ -70,8 +67,11 @@ export function HankeLaskurit({ yhteenveto }: { yhteenveto: HankeYhteenveto }) {
           <p className="text-sm text-muted">Arvioitu sähkönkäyttö</p>
           <p className="mt-1 text-2xl font-semibold tabular-nums">{sahkoTeksti}</p>
           <p className="mt-1 text-sm text-muted">
-            {kattavuus(yhteenveto.sahkonkayttoMerkittyLkm, hankeita)}. Osuus
-            Suomen sähköntuotannosta {SUOMI_SAHKON_TUOTANTO_2024.vuosi}:{" "}
+            <KattavuusHankkeilla
+              merkitty={yhteenveto.sahkonkayttoMerkittyLkm}
+              kaikki={hankeita}
+            />
+            . Osuus Suomen sähköntuotannosta {SUOMI_SAHKON_TUOTANTO_2024.vuosi}:{" "}
             <span className="text-foreground">{osuusTeksti}</span> (
             {muotoileLuku(SUOMI_SAHKON_TUOTANTO_2024.twh)} TWh).
           </p>
@@ -93,8 +93,8 @@ export function HankeLaskurit({ yhteenveto }: { yhteenveto: HankeYhteenveto }) {
               : muotoileVaihtelvali(yhteenveto.tehoMwMin, yhteenveto.tehoMwMax, "MW")}
           </p>
           <p className="mt-1 text-sm text-muted">
-            {kattavuus(yhteenveto.tehoMerkittyLkm, hankeita)}. IT-teho, jos
-            merkitty, muuten teho. Generaattorin polttoainetehoa ei käytetä.
+            <KattavuusHankkeilla merkitty={yhteenveto.tehoMerkittyLkm} kaikki={hankeita} />
+            . IT-teho, jos merkitty, muuten teho. Generaattorin polttoainetehoa ei käytetä.
           </p>
         </li>
         <li className="rounded border border-border bg-surface p-4">
@@ -109,7 +109,7 @@ export function HankeLaskurit({ yhteenveto }: { yhteenveto: HankeYhteenveto }) {
                 )}
           </p>
           <p className="mt-1 text-sm text-muted">
-            {kattavuus(yhteenveto.pintaAlaMerkittyLkm, hankeita)}
+            <KattavuusHankkeilla merkitty={yhteenveto.pintaAlaMerkittyLkm} kaikki={hankeita} />
           </p>
         </li>
         <li className="rounded border border-border bg-surface p-4">
@@ -124,7 +124,10 @@ export function HankeLaskurit({ yhteenveto }: { yhteenveto: HankeYhteenveto }) {
                 )}
           </p>
           <p className="mt-1 text-sm text-muted">
-            {kattavuus(yhteenveto.generaattoritMerkittyLkm, hankeita)}
+            <KattavuusHankkeilla
+              merkitty={yhteenveto.generaattoritMerkittyLkm}
+              kaikki={hankeita}
+            />
           </p>
         </li>
       </ul>

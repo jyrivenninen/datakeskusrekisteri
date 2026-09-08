@@ -37,6 +37,16 @@ body {
   font-family: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
 }
 
+/* Koko näytön kartta: täyttää ikkunan, alatunniste piiloon. */
+body:has(.kartta-koko-naytto) {
+  height: 100dvh;
+  overflow: hidden;
+}
+
+body:has(.kartta-koko-naytto) footer {
+  display: none;
+}
+
 /* Puhelin: täysi leveys + reunus. Leveä näyttö: hyödynnä tilaa ilman reunoihin liimaamista. */
 .sivuleveys {
   box-sizing: border-box;

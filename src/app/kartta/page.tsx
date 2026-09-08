@@ -22,8 +22,8 @@ export default async function KarttaSivu({
     await haeKarttaSivuData(suodatus);
 
   return (
-    <main id="sisalto" className="flex min-h-0 flex-1 flex-col">
-      <div className="flex flex-wrap items-center gap-x-4 gap-y-1 border-b border-border px-4 py-2 text-sm">
+    <main id="sisalto" className="kartta-koko-naytto flex min-h-0 flex-1 flex-col overflow-hidden">
+      <div className="flex shrink-0 flex-wrap items-center gap-x-4 gap-y-1 border-b border-border px-4 py-2 text-sm">
         <a href={hankkeetSuodatusPolku(suodatus)} className="text-link underline">
           ← Takaisin hankkeisiin
         </a>
@@ -40,7 +40,7 @@ export default async function KarttaSivu({
       {hankeVirhe ? (
         <p className="px-4 py-3 text-sm">{hankeVirhe}</p>
       ) : (
-        <div className="flex min-h-[calc(100dvh-7rem)] flex-1 flex-col p-4 pt-3">
+        <div className="flex min-h-0 flex-1 flex-col p-4 pt-3">
           <Kartta
             merkit={merkit}
             sovitaSuomeen

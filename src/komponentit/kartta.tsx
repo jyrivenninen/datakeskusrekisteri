@@ -13,6 +13,7 @@ import "maplibre-gl/dist/maplibre-gl.css";
 import {
   laskeJohdonmukaisuus,
 } from "@/lib/sahko-johdonmukaisuus";
+import { KattavuusHankkeita } from "@/komponentit/kattavuus-teksti";
 import {
   ENERGIA_MAAKUNTA_TUOTANTO,
   haeMaakuntaSahkontuotantoTwh,
@@ -1005,12 +1006,19 @@ export function Kartta({
       kartta.once("load", rajaaKartta);
     }
 
-    requestAnimationFrame(() => {
+    const resizeKartta = () => {
       kartta.resize();
       paivitaNakyvyys();
+    };
+
+    requestAnimationFrame(() => {
+      resizeKartta();
+      requestAnimationFrame(resizeKartta);
     });
+    const resizeAjastin = window.setTimeout(resizeKartta, 150);
 
     return () => {
+      window.clearTimeout(resizeAjastin);
       kokoTarkkailija.disconnect();
       kartta.off("move", paivita);
       kartta.off("resize", paivita);
@@ -1090,19 +1098,17 @@ export function Kartta({
     <div
       className={[
         asettelu === "koko" || sovitaIkkunaan
-          ? "flex h-full min-h-0 flex-col gap-3 sm:flex-row sm:items-stretch"
+          ? "flex h-full min-h-0 flex-1 flex-col gap-3 sm:flex-row sm:items-stretch"
           : "flex flex-col gap-4 sm:flex-row sm:items-stretch",
       ].join(" ")}
     >
       <div
         ref={kehys}
         className={[
-          "relative min-w-0 flex-1 overflow-hidden rounded border border-border",
-          asettelu === "koko"
-            ? "h-full min-h-[20rem]"
-            : sovitaIkkunaan
-              ? "min-h-0 h-full"
-              : "min-h-[min(70svh,42rem)] sm:min-h-[28rem] sm:h-auto sm:self-stretch",
+          "relative min-h-0 min-w-0 flex-1 overflow-hidden rounded border border-border",
+          asettelu === "koko" || sovitaIkkunaan
+            ? "min-h-[12rem]"
+            : "min-h-[min(70svh,42rem)] sm:min-h-[28rem] sm:h-auto sm:self-stretch",
           luokka ?? "",
         ]
           .filter(Boolean)
@@ -1122,7 +1128,7 @@ export function Kartta({
       <aside
         className={
           asettelu === "koko" || sovitaIkkunaan
-            ? "max-h-[38%] min-h-0 shrink-0 overflow-y-auto sm:max-h-full sm:w-52"
+            ? "max-h-[38%] min-h-0 shrink-0 overflow-y-auto sm:max-h-none sm:w-52"
             : "sm:w-52 sm:shrink-0"
         }
         aria-labelledby="kartta-selite-otsikko"
@@ -1420,8 +1426,10 @@ export function Kartta({
             </dd>
             <dt className="mt-1 text-xs text-muted">Kattavuus</dt>
             <dd className="text-xs tabular-nums text-muted">
-              {sahkoYhteenveto.merkittyLkm}/{sahkoYhteenveto.kaikkiLkm} hanketta
-              merkitty
+              <KattavuusHankkeita
+                merkitty={sahkoYhteenveto.merkittyLkm}
+                kaikki={sahkoYhteenveto.kaikkiLkm}
+              />
             </dd>
           </dl>
         </div>
@@ -1466,8 +1474,8 @@ export function Kartta({
               ) : null}
               <div>
                 <dt className="text-muted">
-                  Valitut hankkeet kartalla ({hankkeetTehoLkm}/{nakyvatLkm}{" "}
-                  hanketta merkitty)
+                  Valitut hankkeet kartalla (
+                  <KattavuusHankkeita merkitty={hankkeetTehoLkm} kaikki={nakyvatLkm} />)
                 </dt>
                 <dd className="font-semibold tabular-nums">{hankkeetTeksti} MW</dd>
               </div>
