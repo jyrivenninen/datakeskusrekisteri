@@ -53,18 +53,6 @@ export default async function PalauteSivu({
       ) : null}
       <dl className="mt-6 divide-y divide-border border-y border-border">
         <div className="py-3">
-          <dt className="font-medium">Sähköposti</dt>
-          <dd className="mt-1">
-            {palaute.sahkoposti ? (
-              <a href={`mailto:${palaute.sahkoposti}`} className="text-link underline">
-                {palaute.sahkoposti}
-              </a>
-            ) : (
-              "ei annettu"
-            )}
-          </dd>
-        </div>
-        <div className="py-3">
           <dt className="font-medium">Viesti</dt>
           <dd className="mt-1 whitespace-pre-wrap">{palaute.viesti}</dd>
         </div>

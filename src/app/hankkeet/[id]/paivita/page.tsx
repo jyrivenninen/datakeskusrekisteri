@@ -209,18 +209,6 @@ export default async function KenttapaivitysSivu({
               className="rounded border border-border bg-surface px-2 py-2"
             />
           </p>
-          {julkaiseSuoraan ? null : (
-            <p className="flex flex-col gap-1">
-              <label htmlFor="ehdottaja_tunniste" className="text-sm font-medium">
-                Sähköposti tai muu yhteystieto (ei julkaista)
-              </label>
-              <input
-                id="ehdottaja_tunniste"
-                name="ehdottaja_tunniste"
-                className="rounded border border-border bg-surface px-2 py-2"
-              />
-            </p>
-          )}
           <LomakeLahetysNappi
             valmis={julkaiseSuoraan ? "Julkaise päivitys" : "Lähetä tarkistettavaksi"}
             odottaa="Lähetetään…"
@@ -249,18 +237,6 @@ export default async function KenttapaivitysSivu({
               className="rounded border border-border bg-surface px-2 py-2"
             />
           </p>
-          {julkaiseSuoraan ? null : (
-            <p className="flex flex-col gap-1">
-              <label htmlFor="tarkistus_tunniste" className="text-sm font-medium">
-                Sähköposti tai muu yhteystieto (ei julkaista)
-              </label>
-              <input
-                id="tarkistus_tunniste"
-                name="ehdottaja_tunniste"
-                className="rounded border border-border bg-surface px-2 py-2"
-              />
-            </p>
-          )}
           <LomakeLahetysNappi
             valmis={julkaiseSuoraan ? "Merkitse tarkistetuksi" : "Lähetä tarkistus jonoon"}
             odottaa="Lähetetään…"
@@ -315,18 +291,6 @@ export default async function KenttapaivitysSivu({
               Merkitse tyhjän kentän tarkistetuksi: julkista lähdettä ei ole
             </label>
           </p>
-          {julkaiseSuoraan ? null : (
-            <p className="flex flex-col gap-1">
-              <label htmlFor="tyhjennys_tunniste" className="text-sm font-medium">
-                Sähköposti tai muu yhteystieto (ei julkaista)
-              </label>
-              <input
-                id="tyhjennys_tunniste"
-                name="ehdottaja_tunniste"
-                className="rounded border border-border bg-surface px-2 py-2"
-              />
-            </p>
-          )}
           <LomakeLahetysNappi
             valmis={julkaiseSuoraan ? "Tyhjennä ja julkaise" : "Lähetä tyhjennys jonoon"}
             odottaa="Lähetetään…"

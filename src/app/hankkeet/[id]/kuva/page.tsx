@@ -165,18 +165,6 @@ export default async function KuvaEhdotusSivu({
               className="rounded border border-border bg-surface px-2 py-2"
             />
           </p>
-          {julkaiseSuoraan ? null : (
-            <p className="flex flex-col gap-1">
-              <label htmlFor="ehdottaja_tunniste" className="text-sm font-medium">
-                Sähköposti tai muu yhteystieto (ei julkaista)
-              </label>
-              <input
-                id="ehdottaja_tunniste"
-                name="ehdottaja_tunniste"
-                className="rounded border border-border bg-surface px-2 py-2"
-              />
-            </p>
-          )}
           <LomakeLahetysNappi
             valmis={julkaiseSuoraan ? "Julkaise valokuva" : "Lähetä tarkistettavaksi"}
             odottaa="Lähetetään…"

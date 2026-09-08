@@ -1194,7 +1194,6 @@ export async function lahetaPalaute(formData: FormData): Promise<void> {
   const aihe = PALAUTE_AIHEET.includes(aiheRaaka as (typeof PALAUTE_AIHEET)[number])
     ? aiheRaaka
     : palauteVirhe("Valitse aihe.");
-  const sahkoposti = String(formData.get("sahkoposti") ?? "").trim() || null;
   const viesti = String(formData.get("viesti") ?? "").trim();
 
   if (viesti.length < 12) {
@@ -1203,14 +1202,10 @@ export async function lahetaPalaute(formData: FormData): Promise<void> {
   if (viesti.length > 8000) {
     palauteVirhe("Viesti on liian pitkä.");
   }
-  if (sahkoposti && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(sahkoposti)) {
-    palauteVirhe("Tarkista sähköpostiosoite.");
-  }
 
   const supabase = await luoPalvelinAsiakas();
   const { error } = await supabase.from("palautteet").insert({
     aihe,
-    sahkoposti,
     viesti,
     tila: "odottaa",
   });

@@ -468,7 +468,6 @@ export type PalauteTila = (typeof PALAUTE_TILAT)[number];
 export type Palaute = {
   id: string;
   aihe: PalauteAihe;
-  sahkoposti: string | null;
   viesti: string;
   tila: PalauteTila;
   luotu_pvm: string;

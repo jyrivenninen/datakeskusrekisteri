@@ -88,7 +88,7 @@ export default async function YllapitoSivu({
     .limit(20);
   const { data: palautteet } = await supabase
     .from("palautteet")
-    .select("id, aihe, sahkoposti, viesti, tila, luotu_pvm, kasittelija, kasitelty_pvm")
+    .select("id, aihe, viesti, tila, luotu_pvm, kasittelija, kasitelty_pvm")
     .order("luotu_pvm", { ascending: false });
   const odottavatPalautteet = (palautteet ?? []).filter((rivi) => rivi.tila === "odottaa");
   const kasitellytPalautteet = (palautteet ?? []).filter((rivi) => rivi.tila !== "odottaa");
@@ -230,7 +230,6 @@ export default async function YllapitoSivu({
                 </a>
                 <p className="mt-1 text-sm text-muted">
                   {muotoilePvm(palaute.luotu_pvm)}
-                  {palaute.sahkoposti ? ` · ${palaute.sahkoposti}` : ""}
                 </p>
                 <p className="mt-1 max-w-prose text-sm">{palaute.viesti.slice(0, 160)}</p>
               </li>
