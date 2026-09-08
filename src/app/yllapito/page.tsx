@@ -228,9 +228,7 @@ export default async function YllapitoSivu({
                 <a href={`/yllapito/palaute/${palaute.id}`} className="text-link underline">
                   {PALAUTE_AIHE_NIMET[palaute.aihe] ?? palaute.aihe}
                 </a>
-                <p className="mt-1 text-sm text-muted">
-                  {muotoilePvm(palaute.luotu_pvm)}
-                </p>
+                <p className="mt-1 text-sm text-muted">{muotoilePvm(palaute.luotu_pvm)}</p>
                 <p className="mt-1 max-w-prose text-sm">{palaute.viesti.slice(0, 160)}</p>
               </li>
             ))
@@ -245,15 +243,15 @@ export default async function YllapitoSivu({
               {kasitellytPalautteet.map((palaute) => {
                 const kasittely = kasittelySelite(palaute.kasittelija, palaute.kasitelty_pvm);
                 return (
-                <li key={palaute.id} className="py-3">
-                  <a href={`/yllapito/palaute/${palaute.id}`} className="text-link underline">
-                    {PALAUTE_AIHE_NIMET[palaute.aihe] ?? palaute.aihe}
-                  </a>
-                  <p className="mt-1 text-sm text-muted">
-                    {muotoilePvm(palaute.luotu_pvm)}
-                    {kasittely ? ` · ${kasittely}` : ""}
-                  </p>
-                </li>
+                  <li key={palaute.id} className="py-3">
+                    <a href={`/yllapito/palaute/${palaute.id}`} className="text-link underline">
+                      {PALAUTE_AIHE_NIMET[palaute.aihe] ?? palaute.aihe}
+                    </a>
+                    <p className="mt-1 text-sm text-muted">
+                      {muotoilePvm(palaute.luotu_pvm)}
+                      {kasittely ? ` · ${kasittely}` : ""}
+                    </p>
+                  </li>
                 );
               })}
             </ul>

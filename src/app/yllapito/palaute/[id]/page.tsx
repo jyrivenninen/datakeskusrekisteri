@@ -64,7 +64,7 @@ export default async function PalauteSivu({
         ) : null}
         {palaute.kasittelija ? (
           <div className="py-3">
-            <dt className="font-medium">Käsittelijä</dt>
+            <dt className="font-medium">Käsittelijätunniste</dt>
             <dd className="mt-1">
               {palaute.kasittelija}
               {palaute.kasitelty_pvm ? ` · ${muotoileAika(palaute.kasitelty_pvm)}` : ""}

@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { lahetaPalaute } from "@/app/toiminnot";
+import { LomakeLahetysNappi } from "@/komponentit/lomake-lahetysnappi";
 import { PALAUTE_AIHE_NIMET } from "@/lib/naytto";
 import { PALAUTE_AIHEET } from "@/lib/supabase/tietokanta";
 
@@ -20,8 +21,8 @@ export default async function YhteysSivu({
       <h1 className="text-3xl font-semibold tracking-tight">Ota yhteyttä</h1>
       <p className="mt-4 max-w-prose leading-relaxed text-muted">
         Voit jättää palautetta, kysymyksen tai muun viestin ylläpidolle. Viesti
-        ei näy julkisella sivustolla, eikä siitä lähde sähköpostia. Hanketiedot
-        merkitään lähteineen{" "}
+        ei näy julkisella sivustolla, eikä siitä lähde sähköpostia. Lomake ei
+        kerää nimeä eikä yhteystietoja. Hanketiedot merkitään lähteineen{" "}
         <a href="/ilmoitus" className="text-link underline">
           ilmoituslomakkeella
         </a>
@@ -51,6 +52,7 @@ export default async function YhteysSivu({
           <select
             id="aihe"
             name="aihe"
+            required
             className="rounded border border-border bg-surface px-2 py-2"
             defaultValue="palaute"
           >
@@ -63,7 +65,7 @@ export default async function YhteysSivu({
         </p>
         <p className="flex flex-col gap-1">
           <label htmlFor="viesti" className="text-sm font-medium">
-            Viesti (pakollinen)
+            Viesti
           </label>
           <textarea
             id="viesti"
@@ -75,12 +77,7 @@ export default async function YhteysSivu({
             className="rounded border border-border bg-surface px-2 py-2"
           />
         </p>
-        <button
-          type="submit"
-          className="rounded border border-foreground bg-foreground px-4 py-2 text-sm font-medium text-background"
-        >
-          Lähetä
-        </button>
+        <LomakeLahetysNappi valmis="Lähetä" odottaa="Lähetetään…" />
       </form>
     </main>
   );
