@@ -797,9 +797,7 @@ export function Kartta({
   const [naytaJohdonmukaisuus, setNaytaJohdonmukaisuus] = useState(false);
   const [naytaMaakunnat, setNaytaMaakunnat] = useState(true);
   const [maakuntaTila, setMaakuntaTila] = useState<MaakuntaTila>("hankkeet");
-  const [naytaLiityntapisteet, setNaytaLiityntapisteet] = useState(
-    liityntapisteet.length > 0,
-  );
+  const [naytaLiityntapisteet, setNaytaLiityntapisteet] = useState(false);
 
   liityntapisteetRef.current = liityntapisteet;
 
