@@ -32,7 +32,7 @@ async function korjaaLahdeLaji(
   const kentat = { ...sisalto.kentat };
   let muuttui = false;
   for (const [avain, tieto] of Object.entries(kentat)) {
-    if (tieto.lahde_laji === "pdf") {
+    if ((tieto.lahde_laji as string | undefined) === "pdf") {
       kentat[avain] = { ...tieto, lahde_laji: "dokumentti" };
       muuttui = true;
     }
