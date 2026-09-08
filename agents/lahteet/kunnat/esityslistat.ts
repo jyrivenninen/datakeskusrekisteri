@@ -11,6 +11,7 @@
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import { robotsSallii } from "../../tarkistukset/robots";
 import { lataaPaikallinenYmparisto } from "../../ymparisto";
+import { rekisteroiLahdeajoKeskeytys, suljeVanhentuneetKaynnissa } from "../../lahdeajo";
 import { hakusanat, osuuHakusanaan } from "./hakusanat";
 import {
   haeHankekunnat,
@@ -161,7 +162,17 @@ async function main() {
   const sanat = hakusanat();
 
   let ajoId: string | null = null;
+  let osumia = 0;
+  let kirjattu = 0;
+  let httpTila: number | null = null;
+  let poistaKeskeytys: (() => void) | null = null;
+
   if (!kuiva) {
+    const suljettu = await suljeVanhentuneetKaynnissa(supabase, SOVITIN);
+    if (suljettu > 0) {
+      console.log(`${SOVITIN}: suljettiin ${suljettu} vanhentunutta käynnissä-ajoa.`);
+    }
+
     const { data: ajo, error: ajoVirhe } = await supabase
       .from("lahdeajot")
       .insert({ sovitin: SOVITIN, tila: "kaynnissa" })
@@ -169,6 +180,11 @@ async function main() {
       .single();
     if (ajoVirhe) throw new Error(ajoVirhe.message);
     ajoId = ajo.id as string;
+    poistaKeskeytys = rekisteroiLahdeajoKeskeytys(supabase, {
+      ajoId,
+      osumia: () => osumia,
+      httpTila: () => httpTila,
+    });
   }
 
   const { data: kasitellyt } = await supabase
@@ -179,10 +195,6 @@ async function main() {
   const joKasitelty = new Set(
     (kasitellyt ?? []).map((r) => r.lahde_url).filter((u): u is string => Boolean(u)),
   );
-
-  let osumia = 0;
-  let kirjattu = 0;
-  let httpTila: number | null = null;
 
   try {
     for (const lahde of lahteet) {
@@ -296,6 +308,8 @@ async function main() {
         .eq("id", ajoId);
     }
     throw syy;
+  } finally {
+    poistaKeskeytys?.();
   }
 }
 
