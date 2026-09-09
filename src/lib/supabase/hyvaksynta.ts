@@ -557,21 +557,14 @@ export async function paivitaKenttaLahdeUrl(
     throw new Error("Uusi lähde-URL puuttuu tai on virheellinen.");
   }
   const supabase = luoYllapitoAsiakas();
-  const { data, error } = await supabase
-    .from("kentta_lahteet")
-    .update({
-      lahde_url: uusi,
-      vahvistettu_pvm: tanaan(),
-    })
-    .eq("taulu", taulu)
-    .eq("rivi_id", riviId)
-    .eq("kentta", kentta)
-    .eq("lahde_url", vanhaUrl.trim())
-    .select("id");
+  const { error } = await supabase.rpc("korjaa_kentta_lahde_url", {
+    p_taulu: taulu,
+    p_rivi_id: riviId,
+    p_kentta: kentta,
+    p_vanha_url: vanhaUrl.trim(),
+    p_uusi_url: uusi,
+  });
   if (error) throw new Error(error.message);
-  if (!data?.length) {
-    throw new Error("Lähdettä ei löytynyt. Tarkista, ettei URL:ää ole jo korjattu.");
-  }
 }
 
 export async function piilotaHankeKuva(kuvaId: string, kasittelija: string) {

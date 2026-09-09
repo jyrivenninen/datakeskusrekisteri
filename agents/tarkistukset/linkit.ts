@@ -192,6 +192,39 @@ async function main() {
     (odottavat ?? []).map((r) => r.lahde_url).filter((u): u is string => Boolean(u)),
   );
 
+  // Älä toista samaa URL:ää, jos se on jo kuitattu eikä lähde-URL:ää ole päivitetty sen jälkeen.
+  const { data: kuitatut } = await supabase
+    .from("muutosehdotukset")
+    .select("lahde_url, kasitelty_pvm")
+    .eq("tyyppi", "linkki_rikki")
+    .eq("tila", "hyvaksytty")
+    .not("lahde_url", "is", null);
+  const viimeisinKuittaus = new Map<string, string>();
+  for (const rivi of kuitatut ?? []) {
+    const url = rivi.lahde_url as string;
+    const pvm = rivi.kasitelty_pvm as string;
+    const edellinen = viimeisinKuittaus.get(url);
+    if (!edellinen || pvm > edellinen) viimeisinKuittaus.set(url, pvm);
+  }
+  for (const [url, kasiteltyPvm] of viimeisinKuittaus) {
+    const paiva = kasiteltyPvm.slice(0, 10);
+    const { data: paivitettyLahde } = await supabase
+      .from("kentta_lahteet")
+      .select("id")
+      .eq("lahde_url", url)
+      .gt("vahvistettu_pvm", paiva)
+      .limit(1);
+    const { data: paivitettyDok } = await supabase
+      .from("dokumentit")
+      .select("id")
+      .eq("url", url)
+      .gt("paivitetty_pvm", kasiteltyPvm)
+      .limit(1);
+    if (!(paivitettyLahde?.length || paivitettyDok?.length)) {
+      jonossa.add(url);
+    }
+  }
+
   let tarkistettu = 0;
   let kirjattu = 0;
   let ohitettuRobots = 0;
