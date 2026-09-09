@@ -79,6 +79,34 @@ async function korjaaLahteet() {
 
 let sb: ReturnType<typeof createClient>;
 
+async function odottaa(id: string): Promise<boolean> {
+  const { data } = await sb
+    .from("muutosehdotukset")
+    .select("tila")
+    .eq("id", id)
+    .maybeSingle();
+  return (data as { tila?: string } | null)?.tila === "odottaa";
+}
+
+async function hyvaksyJosOdottaa(
+  id: string,
+  valinnat?: { perustelu?: string },
+): Promise<void> {
+  if (!(await odottaa(id))) {
+    console.log(`− ohitettu ${id} (ei odottaa)`);
+    return;
+  }
+  await hyvaksyMuutosehdotus(id, KASITTELIJA, valinnat);
+}
+
+async function hylkaaJosOdottaa(id: string, perustelu: string): Promise<void> {
+  if (!(await odottaa(id))) {
+    console.log(`− ohitettu ${id} (ei odottaa)`);
+    return;
+  }
+  await hylkaaMuutosehdotus(id, KASITTELIJA, perustelu);
+}
+
 async function main() {
   lataaPaikallinenYmparisto();
   sb = createClient(
@@ -97,6 +125,10 @@ async function main() {
   }
 
   for (const id of LINKKI_RIKKI) {
+    if (!(await odottaa(id))) {
+      console.log(`− ohitettu ${id} (ei odottaa)`);
+      continue;
+    }
     await hyvaksyMuutosehdotus(id, KASITTELIJA);
     console.log(`✓ linkki_rikki ${id}`);
   }
@@ -104,9 +136,13 @@ async function main() {
   for (const id of RISTIRIIDAT) {
     const { data } = await sb
       .from("muutosehdotukset")
-      .select("sisalto")
+      .select("sisalto, tila")
       .eq("id", id)
       .maybeSingle();
+    if ((data as { tila?: string } | null)?.tila !== "odottaa") {
+      console.log(`− ohitettu ${id} (ei odottaa)`);
+      continue;
+    }
     const saanto = (
       (data as { sisalto?: { ristiriita?: { saanto?: string } } } | null)?.sisalto
     )?.ristiriita?.saanto;
@@ -115,16 +151,13 @@ async function main() {
     console.log(`✓ ristiriita ${id} (${saanto ?? "?"})`);
   }
 
-  // Verda Cloud Oy: Y-tunnus PRH:sta
-  await hyvaksyMuutosehdotus("34d19db7-f1ad-4583-8118-95231f1e760b", KASITTELIJA);
-  console.log("✓ ytj_havainto Verda Cloud");
+  await hyvaksyJosOdottaa("34d19db7-f1ad-4583-8118-95231f1e760b");
+  console.log("✓ ytj_havainto Verda Cloud (jos odotti)");
 
-  await hylkaaMuutosehdotus(
+  await hylkaaJosOdottaa(
     "38b2c100-5971-460e-80f8-c569e0d52caa",
-    KASITTELIJA,
     "PRH avoin YTJ ei kata tätä tunnusta; ei automaattista korjausta.",
   );
-  console.log("⊘ ytj_havainto 3367058-8 hylätty");
 
   const { count } = await sb
     .from("muutosehdotukset")

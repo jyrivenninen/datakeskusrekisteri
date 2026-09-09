@@ -29,8 +29,8 @@ const SEURATUT: { id: string; url: string; kuvaus: string }[] = [
   },
   {
     id: "ymparisto-yva-haku",
-    url: "https://www.ymparisto.fi/fi-FI/Hankkeet_ja_ymparistovaikutusten_arviointi/YVA/YVA_haku",
-    kuvaus: "Ymparisto.fi: YVA-haku (HTML, ei avointa rajapintaa)",
+    url: "https://www.ymparisto.fi/fi/search?filters=any&filters=type&filters=yva_project&size=n_20_n",
+    kuvaus: "Ymparisto.fi: YVA-hankelista (sisäinen haku, HTML)",
   },
 ];
 

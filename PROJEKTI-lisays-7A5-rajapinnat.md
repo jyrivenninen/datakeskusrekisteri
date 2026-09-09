@@ -227,7 +227,7 @@ Ympäristölupa- ja YVA-kuulutukset.
 Todennus 7.9.2026:
 - Syken kuulutukset-sivu (`https://www.syke.fi/fi/palvelut/viranomaispalvelut/kuulutukset`)
   on rajat ylittävien YVA/SOVA-kuulutusten staattinen HTML-sivu, ei RSS/API-syötettä.
-- Kotimaisten YVA-hankkeiden haku: `https://www.ymparisto.fi/.../YVA/YVA_haku` (HTML).
+- Kotimaisten YVA-hankkeiden haku: `https://www.ymparisto.fi/fi/search?filters=any&filters=type&filters=yva_project&size=n_20_n` (HTML; vanha `/YVA/YVA_haku` poistui 2026).
 - Rakenteista kuulutusrajapintaa ei löytynyt → HTML-seuranta (7A.6-luonteinen).
 
 Sovitin: `agents/lahteet/kuulutukset.ts` (`npm run agentti:kuulutukset`).
