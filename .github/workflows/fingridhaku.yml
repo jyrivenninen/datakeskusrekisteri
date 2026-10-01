@@ -1,10 +1,11 @@
-# Fingrid tuotantosarjat (7A.5.4). Cron: aamu Suomessa.
+# Fingrid tuotantosarjat (7A.5.4). Cron: tasatunnein.
+# GitHub voi käynnistää ajon muutaman minuutin yli tasatunnin.
 
 name: fingridhaku
 
 on:
   schedule:
-    - cron: "0 6 * * *"
+    - cron: "0 * * * *"
   workflow_dispatch:
 
 jobs:

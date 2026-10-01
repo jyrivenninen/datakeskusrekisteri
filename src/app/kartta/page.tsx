@@ -1,4 +1,4 @@
-import { Kartta } from "@/komponentit/kartta";
+import { KarttaViive } from "@/komponentit/kartta-viive";
 import { aktiivisetEhdot, hankkeetSuodatusPolku, onAktiivinenSuodatus } from "@/lib/haku";
 import { haeKarttaSivuData } from "@/lib/kartta-sivu";
 import { parsiSuodatus } from "@/lib/supabase/kyselyt";
@@ -41,7 +41,7 @@ export default async function KarttaSivu({
         <p className="px-4 py-3 text-sm">{hankeVirhe}</p>
       ) : (
         <div className="flex min-h-0 flex-1 flex-col p-4 pt-3">
-          <Kartta
+          <KarttaViive
             merkit={merkit}
             sovitaSuomeen
             asettelu="koko"

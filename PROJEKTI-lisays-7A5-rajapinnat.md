@@ -182,8 +182,10 @@ maakuntakohtaisia. Karttakerroksen sijaintitieto vaatii erillisen lähteen
 (esim. Tilastokeskuksen aluejako).
 
 Toteutus:
-- `src/lib/fingrid.ts` — palvelinpuolen haku etusivun karttavertailuun
-- `agents/lahteet/fingrid.ts` — lahdeajot (`npm run agentti:fingrid`), GitHub Actions cron
+- `src/lib/fingrid.ts` — rajapintahaku vain ajossa (vähintään 2 s väli)
+- `fingrid_tuotanto` — viimeisin mittaus datasettiä kohden
+- `src/lib/fingrid-tuotanto.ts` — kartta lukee tallenteen, ei rajapintaa
+- `agents/lahteet/fingrid.ts` — lahdeajot (`npm run agentti:fingrid`), GitHub Actions cron tasatunnein (`0 * * * *`)
 - tuotantotyypit erikseen kartalla
 - **Liityntäpisteet kartalla:** Fingridin avoin data-API ei sisällä
   sähköasemien koordinaatteja. Sijainnit haetaan OpenStreetMap Overpass

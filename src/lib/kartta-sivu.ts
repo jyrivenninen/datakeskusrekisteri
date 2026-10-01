@@ -1,5 +1,6 @@
 import type { Karttamerkki } from "@/komponentit/kartta";
-import { FINGRID_TUOTANTO_DATASETIT, haeFingridTuotantoNyt } from "@/lib/fingrid";
+import { FINGRID_TUOTANTO_DATASETIT } from "@/lib/fingrid";
+import { haeTallennettuFingridTuotanto } from "@/lib/fingrid-tuotanto";
 import {
   haeFingridLiityntapisteet,
   type FingridLiityntapiste,
@@ -8,10 +9,11 @@ import { hankeVaihtelvalit } from "@/lib/hanke-vaihtelvali";
 import { ratkaiseMaakunta } from "@/lib/maakunta";
 import { hankeTehoMw } from "@/lib/naytto";
 import type { HankeSuodatus } from "@/lib/suodatus";
-import { HANKE_VAIHEET, type HankeVaihe } from "@/lib/supabase/tietokanta";
+import { HANKE_VAIHEET, type HankeJohto, type HankeVaihe } from "@/lib/supabase/tietokanta";
 import {
   haeJulkaistutHankkeet,
   haeKuntaMaakuntaKartta,
+  type HankeListalla,
 } from "@/lib/supabase/kyselyt";
 
 export type KarttaTuotantoVertailu = {
@@ -28,14 +30,34 @@ export type KarttaSivuData = {
   hankeVirhe: string | null;
 };
 
-export async function haeKarttaSivuData(suodatus: HankeSuodatus): Promise<KarttaSivuData> {
-  const [{ hankkeet, johdot, virhe: hankeVirhe }, fingridTuotanto, kuntaMaakunnat, liityntapisteet] =
-    await Promise.all([
-      haeJulkaistutHankkeet(suodatus),
-      haeFingridTuotantoNyt(),
-      haeKuntaMaakuntaKartta(),
-      haeFingridLiityntapisteet(),
-    ]);
+export type KarttaTaydennys = {
+  fingridTuotanto: Awaited<ReturnType<typeof haeTallennettuFingridTuotanto>>;
+  kuntaMaakunnat: Map<string, string>;
+  liityntapisteet: FingridLiityntapiste[];
+};
+
+export type HankeListaTulos = {
+  hankkeet: HankeListalla[];
+  johdot: HankeJohto[];
+  virhe: string | null;
+};
+
+/** Fingrid-tallenne, kuntien maakunnat ja liityntäpisteet. Ei hankelistaa. */
+export async function haeKarttaTaydennys(): Promise<KarttaTaydennys> {
+  const [fingridTuotanto, kuntaMaakunnat, liityntapisteet] = await Promise.all([
+    haeTallennettuFingridTuotanto(),
+    haeKuntaMaakuntaKartta(),
+    haeFingridLiityntapisteet(),
+  ]);
+  return { fingridTuotanto, kuntaMaakunnat, liityntapisteet };
+}
+
+export function kokoaKarttaSivuData(
+  lista: HankeListaTulos,
+  taydennys: KarttaTaydennys,
+): KarttaSivuData {
+  const { hankkeet, johdot, virhe: hankeVirhe } = lista;
+  const { fingridTuotanto, kuntaMaakunnat, liityntapisteet } = taydennys;
 
   const merkit: Karttamerkki[] = hankkeet.flatMap((hanke) => {
     const alue = hanke.sijainti_alue?.type === "Polygon" ? hanke.sijainti_alue : null;
@@ -87,4 +109,12 @@ export async function haeKarttaSivuData(suodatus: HankeSuodatus): Promise<Kartta
   ) as Partial<Record<HankeVaihe, number>>;
 
   return { merkit, tuotantoVertailu, liityntapisteet, vaiheLkm, hankeVirhe };
+}
+
+export async function haeKarttaSivuData(suodatus: HankeSuodatus): Promise<KarttaSivuData> {
+  const [lista, taydennys] = await Promise.all([
+    haeJulkaistutHankkeet(suodatus),
+    haeKarttaTaydennys(),
+  ]);
+  return kokoaKarttaSivuData(lista, taydennys);
 }

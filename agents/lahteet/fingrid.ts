@@ -1,8 +1,9 @@
 /**
  * 7A.5.4 Fingrid avoin data — lahdeajojen kirjaus. Ei kielimallia.
  *
- * Hakee tuotantosarjat (192/188/245/191) ja kirjaa onnistuneen haun lahdeajot-tauluun.
- * Karttakerros käyttää src/lib/fingrid.ts:ää erikseen.
+ * Hakee tuotantosarjat (192/188/245/191), tallentaa viimeisimmän mittauksen
+ * fingrid_tuotanto-tauluun ja kirjaa ajon lahdeajot-tauluun.
+ * Kartta lukee taulua, ei rajapintaa.
  *
  * Ympäristö: FINGRID_API_AVAIN, NEXT_PUBLIC_SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY
  * Valinnainen: FINGRID_KUIVA=1
@@ -59,6 +60,24 @@ async function main() {
     console.log(
       `Fingrid: kokonaistuotanto ${tulos.kokonaistuotanto_mw?.toFixed(0)} MW, ${osumia} sarjaa, ${tulos.paivitetty_pvm}.`,
     );
+
+    if (!kuiva) {
+      const haettu_pvm = new Date().toISOString();
+      for (const rivi of tulos.rivit) {
+        const { error } = await supabase.from("fingrid_tuotanto").upsert(
+          {
+            dataset_id: rivi.datasetId,
+            nimi: rivi.nimi,
+            mw: rivi.mw,
+            mittaus_pvm: rivi.mittausPvm,
+            lahde_url: rivi.lahde_url,
+            haettu_pvm,
+          },
+          { onConflict: "dataset_id" },
+        );
+        if (error) throw new Error(error.message);
+      }
+    }
 
     if (ajoId) {
       const { error } = await supabase

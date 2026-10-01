@@ -1,7 +1,7 @@
 import { HankkeetSuodatin } from "@/komponentit/hankkeet-suodatin";
 import { HankeLuetteloOsio } from "@/komponentit/hanke-luettelo-jarjestys";
 import { HankeLaskurit } from "@/komponentit/hanke-laskurit";
-import { Kartta } from "@/komponentit/kartta";
+import { KarttaViive } from "@/komponentit/kartta-viive";
 import { VaiheMerkki } from "@/komponentit/vaihe-merkki";
 import { laskeHankeYhteenveto } from "@/lib/hanke-yhteenveto";
 import { hankeVaihtelvalit } from "@/lib/hanke-vaihtelvali";
@@ -12,13 +12,14 @@ import {
   karttaSuodatusPolku,
   onAktiivinenSuodatus,
 } from "@/lib/haku";
-import { haeKarttaSivuData } from "@/lib/kartta-sivu";
+import { haeKarttaTaydennys, kokoaKarttaSivuData } from "@/lib/kartta-sivu";
 import { ENERGIA_MAAKUNTA_TUOTANTO } from "@/lib/energiateollisuus-tuotanto";
 import { MAARAAJA_NIMET, muotoilePvm, muotoileVaihtelvali } from "@/lib/naytto";
 import {
   haeJulkaistutHankkeet,
   haeTulevatMaaraajat,
   parsiSuodatus,
+  rajaaHankelista,
 } from "@/lib/supabase/kyselyt";
 import { haeYllapitaja } from "@/lib/supabase/palvelin";
 
@@ -39,21 +40,25 @@ export default async function Etusivu({
   const params = await searchParams;
   const suodatus = parsiSuodatus(params);
   const jarjestys = parsiHankeJarjestys(suodatus.jarjestys);
-  const { user: yllapitaja } = await haeYllapitaja();
   const [
-    { hankkeet, virhe: hankeVirhe },
+    { user: yllapitaja },
+    lista,
     { maaraajat, virhe: maaraajaVirhe },
-    karttaData,
+    taydennys,
   ] = await Promise.all([
-    haeJulkaistutHankkeet(suodatus),
+    haeYllapitaja(),
+    haeJulkaistutHankkeet(),
     haeTulevatMaaraajat(),
-    haeKarttaSivuData(suodatus),
+    haeKarttaTaydennys(),
   ]);
-
-  const { merkit, tuotantoVertailu, liityntapisteet, vaiheLkm } = karttaData;
+  const { hankkeet, johdot, virhe: hankeVirhe } = await rajaaHankelista(lista, suodatus);
+  const { merkit, tuotantoVertailu, liityntapisteet, vaiheLkm } = kokoaKarttaSivuData(
+    { hankkeet, johdot, virhe: hankeVirhe },
+    taydennys,
+  );
   const jarjestetytHankkeet = jarjestaHankkeet(hankkeet, jarjestys);
 
-  const { hankkeet: kaikkiHankkeet } = await haeJulkaistutHankkeet();
+  const { hankkeet: kaikkiHankkeet } = lista;
   const kunnat = [...new Set(kaikkiHankkeet.map((hanke) => hanke.kunta))].sort((a, b) =>
     a.localeCompare(b, "fi"),
   );
@@ -161,7 +166,7 @@ export default async function Etusivu({
           Lähizoomissa näkyy hankealue ja sähkönsiirtoreitti, jos merkitty.
         </p>
         <div className="mt-4 h-[calc(100dvh-17rem)] min-h-[22rem] max-sm:h-[min(72dvh,34rem)]">
-          <Kartta
+          <KarttaViive
             merkit={merkit}
             sovitaSuomeen
             sovitaIkkunaan

@@ -174,6 +174,60 @@ export async function haeJulkaistutHankkeet(
   }
 }
 
+/** Rajaa valmiin hankelistan muistissa. Kuvalliset-suodatin tekee yhden kuvakyselyn. */
+export async function rajaaHankelista(
+  tulos: { hankkeet: HankeListalla[]; johdot: HankeJohto[]; virhe: string | null },
+  suodatus: HankeSuodatus,
+): Promise<{ hankkeet: HankeListalla[]; johdot: HankeJohto[]; virhe: string | null }> {
+  if (tulos.virhe) return tulos;
+  if (!suodatus.q && !suodatus.kunta && !suodatus.vaihe && !suodatus.koko && !suodatus.kuvalliset) {
+    return tulos;
+  }
+
+  let hankkeet = tulos.hankkeet;
+  if (suodatus.kunta) {
+    hankkeet = hankkeet.filter((hanke) => hanke.kunta === suodatus.kunta);
+  }
+  if (suodatus.vaihe) {
+    hankkeet = hankkeet.filter((hanke) => hanke.vaihe === suodatus.vaihe);
+  }
+  if (suodatus.koko) {
+    const kokoLuokka = suodatus.koko;
+    hankkeet = hankkeet.filter((hanke) =>
+      hankeOsuvatKokoLuokkaan(hanke, hanke.vaihtoehdot, kokoLuokka),
+    );
+  }
+  if (suodatus.q) {
+    hankkeet = hankkeet.filter((hanke) => hankkeSopiiHakuun(hanke, suodatus.q));
+  }
+
+  if (suodatus.kuvalliset && hankkeet.length > 0) {
+    try {
+      const supabase = await luoPalvelinAsiakas();
+      const { data: kuvaRivit, error: kuvaVirhe } = await supabase
+        .from("hanke_kuvat")
+        .select("hanke_id")
+        .eq("julkaistu", true)
+        .in(
+          "hanke_id",
+          hankkeet.map((hanke) => hanke.id),
+        );
+      if (kuvaVirhe) return { hankkeet: [], johdot: [], virhe: kuvaVirhe.message };
+      const kuvalliset = new Set((kuvaRivit ?? []).map((rivi) => rivi.hanke_id));
+      hankkeet = hankkeet.filter((hanke) => kuvalliset.has(hanke.id));
+    } catch (syy) {
+      return { hankkeet: [], johdot: [], virhe: virheViesti(syy) };
+    }
+  }
+
+  const idt = new Set(hankkeet.map((hanke) => hanke.id));
+  return {
+    hankkeet,
+    johdot: tulos.johdot.filter((johto) => idt.has(johto.hanke_id)),
+    virhe: null,
+  };
+}
+
 /** Kunta → maakunta (Syken hakemisto). Karttakerroksen maakunnan ratkaisuun. */
 export async function haeKuntaMaakuntaKartta(): Promise<Map<string, string>> {
   if (!supabaseYmparistoAsetettu()) return new Map();
@@ -216,7 +270,7 @@ export type HankeAsiakirja = Dokumentti & {
   kattaa: AsiakirjanKaytto[];
 };
 
-function asiakirjanKaytto(lahteet: KenttaLahde[], dokumentti: Dokumentti): AsiakirjanKaytto[] {
+export function asiakirjanKaytto(lahteet: KenttaLahde[], dokumentti: Dokumentti): AsiakirjanKaytto[] {
   const kartta = new Map<string, AsiakirjanKaytto>();
   for (const lahde of lahteet) {
     if (lahde.dokumentti_id !== dokumentti.id && lahde.lahde_url !== dokumentti.url) continue;

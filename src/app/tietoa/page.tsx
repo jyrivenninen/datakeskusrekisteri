@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { AvoinDataLinkki } from "@/komponentit/avoin-data-linkki";
 import { RyhtiKattavuus } from "@/komponentit/ryhti-kattavuus";
 import {
   LAHDEAJO_SOVITIN_NIMET,
@@ -101,14 +102,29 @@ export default async function TietoaPalvelustaSivu() {
         </p>
         <ul className="mt-3 list-disc space-y-2 pl-5 leading-relaxed">
           <li>
-            <a href="/data/hankkeet.json" className="text-link underline">
-              Koko rekisteri (JSON)
-            </a>
+            <AvoinDataLinkki
+              href="/data/hankkeet.json"
+              nimi="Koko rekisteri (JSON)"
+              tiedosto="hankkeet.json"
+            />
           </li>
           <li>
-            <a href="/data/hankkeet.csv" className="text-link underline">
-              Koko rekisteri (CSV)
-            </a>
+            <AvoinDataLinkki
+              href="/data/hankkeet.csv"
+              nimi="Koko rekisteri (CSV)"
+              tiedosto="hankkeet.csv"
+            />
+          </li>
+          <li>
+            <AvoinDataLinkki
+              href="/data/hankkeet.gpkg"
+              nimi="Koko rekisteri (GeoPackage)"
+              tiedosto="hankkeet.gpkg"
+            />
+            <span className="text-muted">
+              {" "}
+              — pisteet, hankealueet ja johtoreitit, EPSG:4326.
+            </span>
           </li>
         </ul>
         <p className="mt-3 text-sm text-muted leading-relaxed">

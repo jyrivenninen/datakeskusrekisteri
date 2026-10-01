@@ -110,7 +110,7 @@ Mallia vaativille agenteille kysytään todennettavaa: lähdekohta tai
 
 Kaikki julkaistu tieto on saatavilla koneluettavasti alusta asti:
 - JSON-endpoint hankekohtaisesti
-- Koko rekisterin lataus CSV- ja JSON-muodossa
+- Koko rekisterin lataus CSV-, JSON- ja GeoPackage-muodossa
 
 Tämä palvelee kolmea asiaa yhtä aikaa: omia agentteja, toimittajia ja
 tutkijoita, sekä sitä että sivusto on aidosti avointa dataa eikä vain
@@ -188,6 +188,8 @@ Tarkennettu: `PROJEKTI-lisays-vaihe7.md`. Luku 7A.5 ja uusi 7A.6:
 ### Vaihe 8 — Avoin data
 - [x] JSON-endpointit (`/hankkeet/[id]/json`, `/data/hankkeet.json`)
 - [x] CSV-lataus (`/data/hankkeet.csv`)
+- [x] GeoPackage (`/data/hankkeet.gpkg`): pisteet, hankealueet, johtoreitit
+- [x] Avoin data kootaan tauluittain yhdellä kyselyerällä; latauslinkki näyttää muodostuksen
 - [x] Lisenssitieto CC BY 4.0 (`/tietoa`, JSON-metatiedot)
 
 ### Tuleva kehitys (ei vielä toteutuksjärjestyksessä)
@@ -200,7 +202,8 @@ Nämä nousivat käytön ja integraatioiden myötä; tarkennetaan ennen toteutus
 - [x] Rakennus/osoite-vuorokausipaketit geokoodauksen tai rakennustunnistuksen tueksi (erillinen feature)
 
 **Kartta ja energia**
-- [x] Fingrid 7A.5.4 v1: reaaliaikainen kokonaistuotanto vs. valittujen hankkeiden teho kartalla
+- [x] Fingrid 7A.5.4 v1: kokonaistuotanto vs. valittujen hankkeiden teho kartalla
+- [x] Fingrid-tuotanto tallennetaan `fingrid_tuotanto`-tauluun ja päivitetään tasatunnin ajossa; sivulataus ei kutsu rajapintaa
 - [x] Fingrid v2: tuotantotyypit (tuuli/ydin/vesi) karttavalikossa
 - [x] Hankkeiden teho maakunnittain karttakerroksena (Tilastokeskuksen rajat + Syke-koodisto)
 - [x] Kartta vaihe 1: maakuntakerros valittavissa (hankkeet / IT-teho / sähkönkäyttö), erillinen sähkönkäyttö-yhteenveto

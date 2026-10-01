@@ -33,7 +33,7 @@
     "kunta:kartoitus": "tsx scripts/kartoita-kuntalahteet.ts",
     "test:rls": "npx supabase db query --linked -f supabase/tests/rls-oikeudet.sql",
     "test:rls:jwt": "tsx supabase/tests/rls-oikeudet.ts",
-    "test": "tsx --test src/lib/haku.test.ts src/lib/avoin-data.test.ts src/lib/hanke-jarjestys.test.ts"
+    "test": "tsx --test src/lib/haku.test.ts src/lib/avoin-data.test.ts src/lib/hanke-jarjestys.test.ts src/lib/geopackage.test.ts"
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.4",
@@ -42,6 +42,7 @@
     "next": "16.3.2",
     "react": "19.2.8",
     "react-dom": "19.2.8",
+    "sql.js": "^1.14.2",
     "unpdf": "^1.8.1"
   },
   "devDependencies": {
@@ -49,6 +50,7 @@
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "@types/sql.js": "^1.4.11",
     "eslint": "^9",
     "eslint-config-next": "16.3.2",
     "tailwindcss": "^4",

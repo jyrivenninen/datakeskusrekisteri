@@ -189,6 +189,7 @@ export type AvoinDataRekisteri = {
   linkit: {
     csv: string;
     json: string;
+    gpkg: string;
   };
   hankkeet: AvoinDataHanke[];
 };
@@ -210,6 +211,7 @@ export function rakennaAvoinDataRekisteri(
     linkit: {
       json: `${juuriUrl}/data/hankkeet.json`,
       csv: `${juuriUrl}/data/hankkeet.csv`,
+      gpkg: `${juuriUrl}/data/hankkeet.gpkg`,
     },
     hankkeet,
   };
@@ -285,7 +287,17 @@ export function hankkeetCsv(hankkeet: AvoinDataHanke[]): string {
 export function avoinDataOtsikot(): Record<string, string> {
   return {
     "Content-Type": "application/json; charset=utf-8",
-    "Cache-Control": "public, max-age=60",
+    "Cache-Control": "public, max-age=300",
+    "X-Open-Data-License": AVOIN_DATA_LISENSSI.lyhenne,
+    Link: `<${AVOIN_DATA_LISENSSI.url}>; rel="license"`,
+  };
+}
+
+export function avoinDataGpkgOtsikot(): Record<string, string> {
+  return {
+    "Content-Type": "application/geopackage+sqlite3",
+    "Content-Disposition": 'attachment; filename="hankkeet.gpkg"',
+    "Cache-Control": "public, max-age=300",
     "X-Open-Data-License": AVOIN_DATA_LISENSSI.lyhenne,
     Link: `<${AVOIN_DATA_LISENSSI.url}>; rel="license"`,
   };
@@ -295,7 +307,7 @@ export function avoinDataCsvOtsikot(): Record<string, string> {
   return {
     "Content-Type": "text/csv; charset=utf-8",
     "Content-Disposition": 'attachment; filename="hankkeet.csv"',
-    "Cache-Control": "public, max-age=60",
+    "Cache-Control": "public, max-age=300",
     "X-Open-Data-License": AVOIN_DATA_LISENSSI.lyhenne,
     Link: `<${AVOIN_DATA_LISENSSI.url}>; rel="license"`,
   };

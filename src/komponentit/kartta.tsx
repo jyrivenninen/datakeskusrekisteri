@@ -1443,7 +1443,7 @@ export function Kartta({
             </p>
             <dl className="mt-2 space-y-2 text-sm">
               <div>
-                <dt className="text-muted">Suomen tuotanto nyt</dt>
+                <dt className="text-muted">Suomen tuotanto</dt>
                 <dd className="font-semibold tabular-nums">{fingridTeksti} MW</dd>
               </div>
               {tuotantoVertailu.tuotantotyypit.length > 0 ? (
@@ -1487,8 +1487,10 @@ export function Kartta({
               ) : null}
             </dl>
             <p className="mt-2 text-xs text-muted">
-              Fingrid {new Date(tuotantoVertailu.fingridPaivitetty).toLocaleString("fi-FI")}.
-              Tuotanto on valtakunnallista eikä kata sijaintia.
+              Fingrid{" "}
+              {new Date(tuotantoVertailu.fingridPaivitetty).toLocaleString("fi-FI")}.
+              Luku päivitetään kerran tunnissa ja näytetään viimeisin tallennettu
+              mittaus. Tuotanto on valtakunnallista eikä kata sijaintia.
             </p>
             <p className="mt-1 text-xs">
               <a

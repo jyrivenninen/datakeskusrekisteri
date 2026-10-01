@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { notFound, permanentRedirect } from "next/navigation";
 import { AvattavaKortti, Korttiruudukko } from "@/komponentit/avattava-kortti";
-import { Kartta } from "@/komponentit/kartta";
+import { KarttaViive } from "@/komponentit/kartta-viive";
 import { HankeGalleria } from "@/komponentit/hanke-galleria";
 import { VaiheMerkki } from "@/komponentit/vaihe-merkki";
 import { lomakeKenttaKortista, VAIHTOEHTO_KENTAT } from "@/lib/ehdotus";
@@ -320,7 +320,7 @@ export default async function HankeSivu({
         <h2 id="kartta-otsikko" className="sr-only">
           Sijainti kartalla
         </h2>
-        <Kartta merkit={merkit} />
+        <KarttaViive merkit={merkit} />
         {alue ? (
           <p className="mt-2 text-sm text-muted">
             Sininen alue on merkitty{" "}
