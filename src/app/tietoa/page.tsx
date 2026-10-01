@@ -156,29 +156,35 @@ export default async function TietoaPalvelustaSivu() {
       </section>
 
       <section className="mt-10" aria-labelledby="loki-otsikko">
-        <h2 id="loki-otsikko" className="text-xl font-semibold">
-          Kehitysloki
-        </h2>
-        <p className="mt-3 leading-relaxed text-muted">
-          Merkinnät kuvaavat julkaistuja muutoksia palveluun.
-        </p>
-        {KEHITYSLOKI.map((merkinta) => (
-          <article key={merkinta.pvm} className="mt-6">
-            <h3 className="text-lg font-semibold">
-              <time dateTime={merkinta.pvm}>{muotoilePvm(merkinta.pvm)}</time>
-              {" · "}
-              {merkinta.otsikko}
-            </h3>
-            {merkinta.johdanto ? (
-              <p className="mt-2 leading-relaxed">{merkinta.johdanto}</p>
-            ) : null}
-            <ul className="mt-2 list-disc space-y-1 pl-5 leading-relaxed">
-              {merkinta.kohdat.map((kohta) => (
-                <li key={kohta}>{kohta}</li>
-              ))}
-            </ul>
-          </article>
-        ))}
+        <details className="rounded border border-border">
+          <summary className="cursor-pointer px-4 py-3 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-link">
+            <h2 id="loki-otsikko" className="inline text-xl font-semibold">
+              Muutosloki
+            </h2>
+          </summary>
+          <div className="border-t border-border px-4 py-4">
+            <p className="leading-relaxed text-muted">
+              Merkinnät kuvaavat julkaistuja muutoksia palveluun.
+            </p>
+            {KEHITYSLOKI.map((merkinta) => (
+              <article key={merkinta.pvm} className="mt-6">
+                <h3 className="text-lg font-semibold">
+                  <time dateTime={merkinta.pvm}>{muotoilePvm(merkinta.pvm)}</time>
+                  {" · "}
+                  {merkinta.otsikko}
+                </h3>
+                {merkinta.johdanto ? (
+                  <p className="mt-2 leading-relaxed">{merkinta.johdanto}</p>
+                ) : null}
+                <ul className="mt-2 list-disc space-y-1 pl-5 leading-relaxed">
+                  {merkinta.kohdat.map((kohta) => (
+                    <li key={kohta}>{kohta}</li>
+                  ))}
+                </ul>
+              </article>
+            ))}
+          </div>
+        </details>
       </section>
 
       <section className="mt-10" aria-labelledby="ajot-otsikko">
@@ -196,78 +202,90 @@ export default async function TietoaPalvelustaSivu() {
           <p className="mt-3">Ei kirjattuja ajoja.</p>
         ) : (
           <>
-            <h3 className="mt-6 text-lg font-semibold">Viimeisin ajo sovittimittain</h3>
-            <table className="mt-3 w-full border-collapse text-left text-sm">
-              <caption className="sr-only">Kunkin sovittimen viimeisin lähdeajo</caption>
-              <thead>
-                <tr className="border-b border-border">
-                  <th scope="col" className="py-2 pr-3 font-medium">
-                    Sovitin
-                  </th>
-                  <th scope="col" className="py-2 pr-3 font-medium">
-                    Tila
-                  </th>
-                  <th scope="col" className="py-2 pr-3 font-medium">
-                    Alkoi
-                  </th>
-                  <th scope="col" className="py-2 font-medium">
-                    Osumia
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {[...viimeisimmat.values()]
-                  .sort((a, b) => a.sovitin.localeCompare(b.sovitin, "fi"))
-                  .map((ajo) => (
-                    <tr key={ajo.sovitin} className="border-b border-border">
-                      <td className="py-2 pr-3">
-                        {LAHDEAJO_SOVITIN_NIMET[ajo.sovitin] ?? ajo.sovitin}
-                      </td>
-                      <td className="py-2 pr-3">
-                        {LAHDEAJO_TILA_NIMET[ajo.tila] ?? ajo.tila}
-                      </td>
-                      <td className="py-2 pr-3">{muotoileAika(ajo.alkoi_pvm)}</td>
-                      <td className="py-2">{ajo.osumia}</td>
+            <details className="mt-6 rounded border border-border">
+              <summary className="cursor-pointer px-4 py-3 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-link">
+                <h3 className="inline text-lg font-semibold">Viimeisin ajo sovittimittain</h3>
+              </summary>
+              <div className="border-t border-border px-4 py-3">
+                <table className="w-full border-collapse text-left text-sm">
+                  <caption className="sr-only">Kunkin sovittimen viimeisin lähdeajo</caption>
+                  <thead>
+                    <tr className="border-b border-border">
+                      <th scope="col" className="py-2 pr-3 font-medium">
+                        Sovitin
+                      </th>
+                      <th scope="col" className="py-2 pr-3 font-medium">
+                        Tila
+                      </th>
+                      <th scope="col" className="py-2 pr-3 font-medium">
+                        Alkoi
+                      </th>
+                      <th scope="col" className="py-2 font-medium">
+                        Osumia
+                      </th>
                     </tr>
-                  ))}
-              </tbody>
-            </table>
+                  </thead>
+                  <tbody>
+                    {[...viimeisimmat.values()]
+                      .sort((a, b) => a.sovitin.localeCompare(b.sovitin, "fi"))
+                      .map((ajo) => (
+                        <tr key={ajo.sovitin} className="border-b border-border">
+                          <td className="py-2 pr-3">
+                            {LAHDEAJO_SOVITIN_NIMET[ajo.sovitin] ?? ajo.sovitin}
+                          </td>
+                          <td className="py-2 pr-3">
+                            {LAHDEAJO_TILA_NIMET[ajo.tila] ?? ajo.tila}
+                          </td>
+                          <td className="py-2 pr-3">{muotoileAika(ajo.alkoi_pvm)}</td>
+                          <td className="py-2">{ajo.osumia}</td>
+                        </tr>
+                      ))}
+                  </tbody>
+                </table>
+              </div>
+            </details>
 
-            <h3 className="mt-8 text-lg font-semibold">Kaikki kirjatut ajot</h3>
-            {katkaistu ? (
-              <p className="mt-2 text-sm text-muted">
-                Näytetään 500 uusinta riviä.
-              </p>
-            ) : null}
-            <ul className="mt-3 divide-y divide-border border-y border-border">
-              {ajot.map((ajo) => (
-                <li key={ajo.id} className="py-3">
-                  <p>
-                    {LAHDEAJO_SOVITIN_NIMET[ajo.sovitin] ?? ajo.sovitin}
-                    {" · "}
-                    {LAHDEAJO_TILA_NIMET[ajo.tila] ?? ajo.tila}
-                    {ajo.http_tila != null ? ` · HTTP ${ajo.http_tila}` : ""}
-                    {` · ${ajo.osumia} osumaa`}
+            <details className="mt-4 rounded border border-border">
+              <summary className="cursor-pointer px-4 py-3 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-link">
+                <h3 className="inline text-lg font-semibold">Kaikki kirjatut ajot</h3>
+              </summary>
+              <div className="border-t border-border px-4 py-3">
+                {katkaistu ? (
+                  <p className="mb-2 text-sm text-muted">
+                    Näytetään 500 uusinta riviä.
                   </p>
-                  <p className="mt-1 text-sm text-muted">
-                    {muotoileAika(ajo.alkoi_pvm)}
-                    {ajo.paattyi_pvm ? ` – ${muotoileAika(ajo.paattyi_pvm)}` : ""}
-                    {ajo.virhe ? ` · ${ajo.virhe}` : ""}
-                  </p>
-                  {ajo.kysely_url ? (
-                    <p className="mt-1 text-sm">
-                      <a
-                        href={ajo.kysely_url}
-                        className="text-link underline"
-                        rel="noopener noreferrer"
-                      >
-                        {ajo.kysely_url}
-                      </a>
-                    </p>
-                  ) : null}
-                </li>
-              ))}
-            </ul>
+                ) : null}
+                <ul className="divide-y divide-border border-y border-border">
+                  {ajot.map((ajo) => (
+                    <li key={ajo.id} className="py-3">
+                      <p>
+                        {LAHDEAJO_SOVITIN_NIMET[ajo.sovitin] ?? ajo.sovitin}
+                        {" · "}
+                        {LAHDEAJO_TILA_NIMET[ajo.tila] ?? ajo.tila}
+                        {ajo.http_tila != null ? ` · HTTP ${ajo.http_tila}` : ""}
+                        {` · ${ajo.osumia} osumaa`}
+                      </p>
+                      <p className="mt-1 text-sm text-muted">
+                        {muotoileAika(ajo.alkoi_pvm)}
+                        {ajo.paattyi_pvm ? ` – ${muotoileAika(ajo.paattyi_pvm)}` : ""}
+                        {ajo.virhe ? ` · ${ajo.virhe}` : ""}
+                      </p>
+                      {ajo.kysely_url ? (
+                        <p className="mt-1 text-sm">
+                          <a
+                            href={ajo.kysely_url}
+                            className="text-link underline"
+                            rel="noopener noreferrer"
+                          >
+                            {ajo.kysely_url}
+                          </a>
+                        </p>
+                      ) : null}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </details>
           </>
         )}
       </section>
