@@ -1,10 +1,13 @@
 import type { Metadata } from "next";
 import { AvoinDataLinkki } from "@/komponentit/avoin-data-linkki";
 import { RyhtiKattavuus } from "@/komponentit/ryhti-kattavuus";
+import { ENERGIA_MAAKUNTA_TUOTANTO } from "@/lib/energiateollisuus-tuotanto";
+import { KEHITYSLOKI } from "@/lib/kehitysloki";
 import {
   LAHDEAJO_SOVITIN_NIMET,
   LAHDEAJO_TILA_NIMET,
   muotoileAika,
+  muotoilePvm,
 } from "@/lib/naytto";
 import { haeJulkisetLahdeajot } from "@/lib/supabase/kyselyt";
 import { ESIVERSIO_TEKSTI, OSALLISTUMINEN_TEKSTI } from "@/lib/esiversio";
@@ -12,7 +15,7 @@ import { ESIVERSIO_TEKSTI, OSALLISTUMINEN_TEKSTI } from "@/lib/esiversio";
 export const metadata: Metadata = {
   title: "Tietoa palvelusta – Datakeskushankkeiden kansallinen rekisteri",
   description:
-    "Mikä rekisteri on, kuka sen tuottaa, mistä tiedot tulevat ja milloin lähteitä on viimeksi haettu.",
+    "Mikä rekisteri on, mistä tiedot tulevat, mitä palveluun on muutettu ja milloin lähteitä on viimeksi haettu.",
 };
 
 export const revalidate = 60;
@@ -74,13 +77,30 @@ export default async function TietoaPalvelustaSivu() {
         <p className="mt-3 leading-relaxed">
           Rakenteinen viranomaistieto haetaan rajapinnoista, ei kielimallilla.
           Mallia käytetään vain luonnollisen kielen dokumenttien lukemiseen.
-          Ristiriidat, linkit ja dokumenttien muuttuminen tarkistetaan koodilla.
+          Linkit, dokumenttien muuttuminen, ristiriidat ja vanhentuneet lähteet
+          tarkistetaan koodilla. Havainto menee jonoon.
         </p>
         <ul className="mt-3 list-disc space-y-2 pl-5 leading-relaxed">
           <li>Ryhti (SYKE): kaavakohteet, kun aineisto on toimitettu.</li>
           <li>PRH YTJ, avoin data, CC BY 4.0: organisaatioiden Y-tunnukset.</li>
           <li>Maanmittauslaitos, CC BY 4.0: geokoodaus ja taustakartta.</li>
-          <li>Kuntien julkiset esityslistat ja kuulutukset, kun osoite on tiedossa.</li>
+          <li>Tilastokeskus, maakuntarajat (1:4 500 000), CC BY 4.0.</li>
+          <li>
+            {ENERGIA_MAAKUNTA_TUOTANTO.lahde_nimi}: maakuntien sähköntuotanto
+            kartan vertailussa.
+          </li>
+          <li>
+            Fingrid, avoin data, CC BY 4.0: valtakunnallinen sähköntuotanto.
+            Luku tallennetaan ja päivitetään kerran tunnissa.
+          </li>
+          <li>
+            OpenStreetMap: nimettyjen sähköasemien sijainnit karttakerroksena.
+            Sijainti ei ole Fingridin virallinen liityntätieto.
+          </li>
+          <li>
+            Kuntien julkiset esityslistat ja kuulutukset sekä ympäristöhallinnon
+            YVA-sivut, kun osoite on tiedossa.
+          </li>
         </ul>
         <RyhtiKattavuus luokka="mt-4" />
       </section>
@@ -99,6 +119,8 @@ export default async function TietoaPalvelustaSivu() {
             Creative Commons Attribution 4.0 (CC BY 4.0)
           </a>
           . Viittaa lähteeseen: Datakeskushankkeiden kansallinen rekisteri.
+          Aineisto kootaan lataushetkellä ja pidetään välimuistissa viisi
+          minuuttia.
         </p>
         <ul className="mt-3 list-disc space-y-2 pl-5 leading-relaxed">
           <li>
@@ -131,6 +153,32 @@ export default async function TietoaPalvelustaSivu() {
           Yksittäisen hankkeen JSON: <code className="text-foreground">/hankkeet/[id]/json</code>.
           Asiakirjalista: <code className="text-foreground">/hankkeet/[id]/asiakirjat</code>.
         </p>
+      </section>
+
+      <section className="mt-10" aria-labelledby="loki-otsikko">
+        <h2 id="loki-otsikko" className="text-xl font-semibold">
+          Kehitysloki
+        </h2>
+        <p className="mt-3 leading-relaxed text-muted">
+          Merkinnät kuvaavat julkaistuja muutoksia palveluun.
+        </p>
+        {KEHITYSLOKI.map((merkinta) => (
+          <article key={merkinta.pvm} className="mt-6">
+            <h3 className="text-lg font-semibold">
+              <time dateTime={merkinta.pvm}>{muotoilePvm(merkinta.pvm)}</time>
+              {" · "}
+              {merkinta.otsikko}
+            </h3>
+            {merkinta.johdanto ? (
+              <p className="mt-2 leading-relaxed">{merkinta.johdanto}</p>
+            ) : null}
+            <ul className="mt-2 list-disc space-y-1 pl-5 leading-relaxed">
+              {merkinta.kohdat.map((kohta) => (
+                <li key={kohta}>{kohta}</li>
+              ))}
+            </ul>
+          </article>
+        ))}
       </section>
 
       <section className="mt-10" aria-labelledby="ajot-otsikko">
