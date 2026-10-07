@@ -5,6 +5,7 @@ import { LUOTTAMUS_NIMET } from "@/lib/naytto";
 import { haeHanke, haeHankeOhjaus } from "@/lib/supabase/kyselyt";
 import { haeYllapitaja } from "@/lib/supabase/palvelin";
 import { LUOTTAMUSTASOT } from "@/lib/supabase/tietokanta";
+import { SisaltoKaare } from "@/komponentit/sisalto-kaare";
 import { supabasePalvelinAvainAsetettu } from "@/lib/supabase/yllapito-asiakas";
 
 export default async function KuvaEhdotusSivu({
@@ -26,13 +27,14 @@ export default async function KuvaEhdotusSivu({
 
   return (
     <main id="sisalto" className="mx-auto w-full max-w-3xl flex-1 px-4 py-10">
+      <SisaltoKaare>
       <p className="text-sm">
         <a href={`/hankkeet/${hanke.id}`} className="text-link underline">
           {hanke.nimi}
         </a>
       </p>
       <h1 className="mt-4 text-3xl font-semibold tracking-tight">Lisää valokuva</h1>
-      <p className="mt-3 max-w-prose leading-relaxed text-muted">
+      <p className="mt-3 leading-relaxed text-muted">
         Kuva haetaan antamastasi osoitteesta. Rekisteri ei tallenna kuvatiedostoa.
         Merkitse kuvateksti ja valokuvaaja lähteen mukaan.
         {julkaiseSuoraan
@@ -63,7 +65,7 @@ export default async function KuvaEhdotusSivu({
       ) : null}
 
       {query.valmis ? null : (
-        <form action={lahetaKuva} className="mt-6 space-y-4">
+        <form action={lahetaKuva} className="sisalto-levea mt-6 space-y-4">
           <input type="hidden" name="hanke_id" value={hanke.id} />
           <p className="flex flex-col gap-1">
             <label htmlFor="kuva_url" className="text-sm font-medium">
@@ -171,6 +173,7 @@ export default async function KuvaEhdotusSivu({
           />
         </form>
       )}
+      </SisaltoKaare>
     </main>
   );
 }

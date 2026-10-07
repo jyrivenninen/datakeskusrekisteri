@@ -1,4 +1,5 @@
 import { HankkeetSuodatin } from "@/komponentit/hankkeet-suodatin";
+import { SisaltoKaare } from "@/komponentit/sisalto-kaare";
 import { HankeLuetteloOsio } from "@/komponentit/hanke-luettelo-jarjestys";
 import { HankeLaskurit } from "@/komponentit/hanke-laskurit";
 import { KarttaViive } from "@/komponentit/kartta-viive";
@@ -65,6 +66,7 @@ export default async function Etusivu({
 
   return (
     <main id="sisalto" className="sivuleveys flex-1 py-10">
+      <SisaltoKaare>
       <h1 className="text-3xl font-semibold tracking-tight">
         Datakeskushankkeiden kansallinen rekisteri
       </h1>
@@ -102,40 +104,42 @@ export default async function Etusivu({
             sivulla.
           </p>
         ) : (
-          <table className="mt-4 w-full border-collapse text-left text-sm">
-            <caption className="sr-only">Tulevat vaikuttamisen määräajat</caption>
-            <thead>
-              <tr className="border-b border-border">
-                <th scope="col" className="py-2 pr-3 font-medium">
-                  Päättyy
-                </th>
-                <th scope="col" className="py-2 pr-3 font-medium">
-                  Tyyppi
-                </th>
-                <th scope="col" className="py-2 font-medium">
-                  Hanke
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {maaraajat.map((maaraaika) => (
-                <tr key={maaraaika.id} className="border-b border-border">
-                  <td className="py-2 pr-3">{muotoilePvm(maaraaika.paattyy_pvm)}</td>
-                  <td className="py-2 pr-3">{MAARAAJA_NIMET[maaraaika.tyyppi]}</td>
-                  <td className="py-2">
-                    <a href={`/hankkeet/${maaraaika.hanke.id}`} className="text-link underline">
-                      {maaraaika.hanke.nimi}
-                    </a>
-                    <span className="text-muted"> ({maaraaika.hanke.kunta})</span>
-                  </td>
+          <div className="sisalto-levea">
+            <table className="mt-4 w-full border-collapse text-left text-sm">
+              <caption className="sr-only">Tulevat vaikuttamisen määräajat</caption>
+              <thead>
+                <tr className="border-b border-border">
+                  <th scope="col" className="py-2 pr-3 font-medium">
+                    Päättyy
+                  </th>
+                  <th scope="col" className="py-2 pr-3 font-medium">
+                    Tyyppi
+                  </th>
+                  <th scope="col" className="py-2 font-medium">
+                    Hanke
+                  </th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {maaraajat.map((maaraaika) => (
+                  <tr key={maaraaika.id} className="border-b border-border">
+                    <td className="py-2 pr-3">{muotoilePvm(maaraaika.paattyy_pvm)}</td>
+                    <td className="py-2 pr-3">{MAARAAJA_NIMET[maaraaika.tyyppi]}</td>
+                    <td className="py-2">
+                      <a href={`/hankkeet/${maaraaika.hanke.id}`} className="text-link underline">
+                        {maaraaika.hanke.nimi}
+                      </a>
+                      <span className="text-muted"> ({maaraaika.hanke.kunta})</span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         )}
       </section>
 
-      <section className="mt-10" aria-labelledby="hankkeet-otsikko">
+      <section className="sisalto-levea mt-10" aria-labelledby="hankkeet-otsikko">
         <h2 id="hankkeet-otsikko" className="text-xl font-semibold">
           Hankkeet
         </h2>
@@ -144,6 +148,7 @@ export default async function Etusivu({
           Kokoluokka osuu hankkeeseen, jos hanketason teho tai jokin merkitty
           YVA-vaihtoehto osuu luokkaan.
         </p>
+        <div className="sisalto-levea">
         <HankkeetSuodatin
           key={hankkeetSuodatusPolku(suodatus)}
           suodatus={suodatus}
@@ -165,7 +170,7 @@ export default async function Etusivu({
           tai maakunnan sähköntuotanto (Energiateollisuus {ENERGIA_MAAKUNTA_TUOTANTO.vuosi}).
           Lähizoomissa näkyy hankealue ja sähkönsiirtoreitti, jos merkitty.
         </p>
-        <div className="mt-4 h-[calc(100dvh-17rem)] min-h-[22rem] max-sm:h-[min(72dvh,34rem)]">
+        <div className="sisalto-levea sisalto-levea-taysi mt-4 h-[calc(100dvh-17rem)] min-h-[22rem] max-sm:h-[min(72dvh,34rem)]">
           <KarttaViive
             merkit={merkit}
             sovitaSuomeen
@@ -208,7 +213,7 @@ export default async function Etusivu({
               ) : null}
             </div>
           ) : (
-            <ul className="mt-4 divide-y divide-border border-y border-border">
+            <ul className="sisalto-levea mt-4 divide-y divide-border border-y border-border">
               {jarjestetytHankkeet.map((hanke) => {
                 const teho = hankeVaihtelvalit(hanke, hanke.vaihtoehdot).teho;
                 return (
@@ -238,7 +243,9 @@ export default async function Etusivu({
             </ul>
           )}
         </HankeLuetteloOsio>
+        </div>
       </section>
+      </SisaltoKaare>
     </main>
   );
 }

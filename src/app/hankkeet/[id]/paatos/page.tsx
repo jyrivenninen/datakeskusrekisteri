@@ -5,6 +5,7 @@ import { LUOTTAMUS_NIMET } from "@/lib/naytto";
 import { haeHanke, haeHankeOhjaus } from "@/lib/supabase/kyselyt";
 import { haeYllapitaja } from "@/lib/supabase/palvelin";
 import { LUOTTAMUSTASOT } from "@/lib/supabase/tietokanta";
+import { SisaltoKaare } from "@/komponentit/sisalto-kaare";
 import { supabasePalvelinAvainAsetettu } from "@/lib/supabase/yllapito-asiakas";
 
 export default async function PaatosSivu({
@@ -26,13 +27,14 @@ export default async function PaatosSivu({
 
   return (
     <main id="sisalto" className="mx-auto w-full max-w-3xl flex-1 px-4 py-10">
+      <SisaltoKaare>
       <p className="text-sm">
         <a href={`/hankkeet/${hanke.id}`} className="text-link underline">
           {hanke.nimi}
         </a>
       </p>
       <h1 className="mt-4 text-3xl font-semibold tracking-tight">Ilmoita viranomaispäätös</h1>
-      <p className="mt-3 max-w-prose leading-relaxed text-muted">
+      <p className="mt-3 leading-relaxed text-muted">
         Merkitse päätös, sen päivä ja päättävä elin lähteineen. Päätöksen päivä on
         asiakirjan tai viranomaisen ilmoittama päivä, ei rekisterin tarkistuspäivä.
         {julkaiseSuoraan
@@ -56,7 +58,7 @@ export default async function PaatosSivu({
         </p>
       ) : null}
 
-      <form action={lahetaPaatos} className="mt-8 space-y-6">
+      <form action={lahetaPaatos} className="sisalto-levea mt-8 space-y-6">
         <input type="hidden" name="hanke_id" value={hanke.id} />
 
         <div>
@@ -171,6 +173,7 @@ export default async function PaatosSivu({
           odottaa="Lähetetään…"
         />
       </form>
+      </SisaltoKaare>
     </main>
   );
 }

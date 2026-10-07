@@ -4,6 +4,7 @@ import { LomakeLahetysNappi } from "@/komponentit/lomake-lahetysnappi";
 import { LOMAKE_KENTAT } from "@/lib/ehdotus";
 import { haeJulkaistutHankkeet } from "@/lib/supabase/kyselyt";
 import { haeYllapitaja } from "@/lib/supabase/palvelin";
+import { SisaltoKaare } from "@/komponentit/sisalto-kaare";
 import { supabasePalvelinAvainAsetettu } from "@/lib/supabase/yllapito-asiakas";
 
 export default async function IlmoitusSivu({
@@ -19,6 +20,7 @@ export default async function IlmoitusSivu({
 
   return (
     <main id="sisalto" className="mx-auto w-full max-w-3xl flex-1 px-4 py-10">
+      <SisaltoKaare>
       <h1 className="text-3xl font-semibold tracking-tight">Ilmoita hanke tai täydennys</h1>
       <p className="mt-4 leading-relaxed text-muted">
         {julkaiseSuoraan
@@ -64,7 +66,7 @@ export default async function IlmoitusSivu({
         </a>
       </p>
 
-      <form action={lahetaIlmoitus} className="mt-6 space-y-4">
+      <form action={lahetaIlmoitus} className="sisalto-levea mt-6 space-y-4">
         <input type="hidden" name="tyyppi" value={tyyppi} />
 
         {tyyppi === "taydennys" ? (
@@ -156,6 +158,7 @@ export default async function IlmoitusSivu({
           odottaa={julkaiseSuoraan ? "Julkaistaan…" : "Lähetetään…"}
         />
       </form>
+      </SisaltoKaare>
     </main>
   );
 }

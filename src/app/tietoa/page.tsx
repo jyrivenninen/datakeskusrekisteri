@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { AvoinDataLinkki } from "@/komponentit/avoin-data-linkki";
+import { SisaltoKaare } from "@/komponentit/sisalto-kaare";
 import { RyhtiKattavuus } from "@/komponentit/ryhti-kattavuus";
 import { ENERGIA_MAAKUNTA_TUOTANTO } from "@/lib/energiateollisuus-tuotanto";
 import { KEHITYSLOKI } from "@/lib/kehitysloki";
@@ -29,6 +30,7 @@ export default async function TietoaPalvelustaSivu() {
 
   return (
     <main id="sisalto" className="sivuleveys flex-1 py-10">
+      <SisaltoKaare>
       <h1 className="text-3xl font-semibold tracking-tight">Tietoa palvelusta</h1>
 
       <section className="mt-8" aria-labelledby="mika-otsikko">
@@ -151,7 +153,7 @@ export default async function TietoaPalvelustaSivu() {
           Aineisto kootaan lataushetkellä ja pidetään välimuistissa viisi
           minuuttia.
         </p>
-        <ul className="mt-3 list-disc space-y-2 pl-5 leading-relaxed">
+        <ul className="sisalto-levea mt-3 list-disc space-y-2 pl-5 leading-relaxed">
           <li>
             <AvoinDataLinkki
               href="/data/hankkeet.json"
@@ -230,7 +232,7 @@ export default async function TietoaPalvelustaSivu() {
         ) : ajot.length === 0 ? (
           <p className="mt-3">Ei kirjattuja ajoja.</p>
         ) : (
-          <>
+          <div className="sisalto-levea">
             <details className="mt-6 rounded border border-border">
               <summary className="cursor-pointer px-4 py-3 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-link">
                 <h3 className="inline text-lg font-semibold">Viimeisin ajo sovittimittain</h3>
@@ -284,7 +286,7 @@ export default async function TietoaPalvelustaSivu() {
                     Näytetään 500 uusinta riviä.
                   </p>
                 ) : null}
-                <ul className="divide-y divide-border border-y border-border">
+                <ul className="sisalto-levea divide-y divide-border border-y border-border">
                   {ajot.map((ajo) => (
                     <li key={ajo.id} className="py-3">
                       <p>
@@ -315,9 +317,10 @@ export default async function TietoaPalvelustaSivu() {
                 </ul>
               </div>
             </details>
-          </>
+          </div>
         )}
       </section>
+      </SisaltoKaare>
     </main>
   );
 }

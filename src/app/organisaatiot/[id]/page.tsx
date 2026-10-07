@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { HANKE_ORGANISAATIO_ROOLI_NIMET, ORGANISAATIO_TYYPPI_NIMET } from "@/lib/naytto";
 import { VaiheMerkki } from "@/komponentit/vaihe-merkki";
 import { haeOrganisaatio } from "@/lib/supabase/kyselyt";
+import { SisaltoKaare } from "@/komponentit/sisalto-kaare";
 import { haeYllapitaja } from "@/lib/supabase/palvelin";
 
 export const revalidate = 60;
@@ -35,8 +36,10 @@ export default async function OrganisaatioSivu({
   if (virhe) {
     return (
       <main id="sisalto" className="mx-auto w-full max-w-3xl flex-1 px-4 py-10">
+        <SisaltoKaare>
         <h1 className="text-2xl font-semibold">Organisaatiota ei voitu ladata</h1>
         <p className="mt-3">{virhe}</p>
+        </SisaltoKaare>
       </main>
     );
   }
@@ -47,6 +50,7 @@ export default async function OrganisaatioSivu({
 
   return (
     <main id="sisalto" className="mx-auto w-full max-w-3xl flex-1 px-4 py-10">
+      <SisaltoKaare>
       {yllapitaja ? (
         <p className="text-sm">
           <a href="/hakemisto" className="text-link underline">
@@ -57,7 +61,7 @@ export default async function OrganisaatioSivu({
       <h1 className="mt-4 text-3xl font-semibold tracking-tight">{organisaatio.nimi}</h1>
       <p className="mt-2 text-muted">{ORGANISAATIO_TYYPPI_NIMET[organisaatio.tyyppi]}</p>
 
-      <dl className="mt-8 divide-y divide-border border-y border-border">
+      <dl className="sisalto-levea mt-8 divide-y divide-border border-y border-border">
         <div className="py-4">
           <dt className="font-medium">Y-tunnus</dt>
           <dd className="mt-1">
@@ -95,7 +99,7 @@ export default async function OrganisaatioSivu({
         {hankkeet.length === 0 ? (
           <p className="mt-3">Ei merkittyjä hankkeita.</p>
         ) : (
-          <ul className="mt-4 divide-y divide-border border-y border-border">
+          <ul className="sisalto-levea mt-4 divide-y divide-border border-y border-border">
             {hankkeet.map((hanke) => (
               <li key={hanke.id} className="py-3">
                 <a href={`/hankkeet/${hanke.id}`} className="text-link underline">
@@ -111,6 +115,7 @@ export default async function OrganisaatioSivu({
           </ul>
         )}
       </section>
+      </SisaltoKaare>
     </main>
   );
 }

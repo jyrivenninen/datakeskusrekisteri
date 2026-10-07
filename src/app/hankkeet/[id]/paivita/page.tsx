@@ -12,6 +12,7 @@ import { HANKE_KENTTA_NIMET, LUOTTAMUS_NIMET, VAIHE_NIMET } from "@/lib/naytto";
 import { haeHanke, haeHankeOhjaus, type HankeListalla } from "@/lib/supabase/kyselyt";
 import { haeYllapitaja } from "@/lib/supabase/palvelin";
 import { HANKE_VAIHEET, LUOTTAMUSTASOT } from "@/lib/supabase/tietokanta";
+import { SisaltoKaare } from "@/komponentit/sisalto-kaare";
 import { supabasePalvelinAvainAsetettu } from "@/lib/supabase/yllapito-asiakas";
 
 function nykyinenHankeArvo(hanke: HankeListalla, kentta: PaivitettavaHankeKentta): string {
@@ -67,13 +68,14 @@ export default async function KenttapaivitysSivu({
 
   return (
     <main id="sisalto" className="mx-auto w-full max-w-3xl flex-1 px-4 py-10">
+      <SisaltoKaare>
       <p className="text-sm">
         <a href={`/hankkeet/${hanke.id}`} className="text-link underline">
           {hanke.nimi}
         </a>
       </p>
       <h1 className="mt-4 text-3xl font-semibold tracking-tight">Päivitä kenttä</h1>
-      <p className="mt-3 max-w-prose leading-relaxed text-muted">
+      <p className="mt-3 leading-relaxed text-muted">
         {vaihtoehto ? `Vaihtoehto ${vaihtoehto.tunnus} · ` : null}
         {kenttaNimi}. Lähde merkitään samaan tapaan kuin muissakin rekisterin tiedoissa.
         {julkaiseSuoraan
@@ -104,7 +106,7 @@ export default async function KenttapaivitysSivu({
       ) : null}
 
       {query.valmis ? null : (
-        <form action={lahetaKenttapaivitys} className="mt-6 space-y-4">
+        <form action={lahetaKenttapaivitys} className="sisalto-levea mt-6 space-y-4">
           <input type="hidden" name="hanke_id" value={hanke.id} />
           <input type="hidden" name="kentta" value={kentta} />
           {vaihtoehto ? (
@@ -217,7 +219,7 @@ export default async function KenttapaivitysSivu({
       )}
 
       {query.valmis || vaihtoehtoTunnus || !tarkistusKenttaLomakkeesta(kentta) || nykyinen ? null : (
-        <form action={lahetaKenttaTarkistus} className="mt-10 space-y-4 border-t border-border pt-8">
+        <form action={lahetaKenttaTarkistus} className="sisalto-levea mt-10 space-y-4 border-t border-border pt-8">
           <input type="hidden" name="hanke_id" value={hanke.id} />
           <input type="hidden" name="kentta" value={kentta} />
           <h2 className="text-lg font-semibold">Ei julkista lähdettä</h2>
@@ -245,7 +247,7 @@ export default async function KenttapaivitysSivu({
       )}
 
       {query.valmis || vaihtoehtoTunnus || !tyhjennysKenttaLomakkeesta(kentta) || !nykyinen ? null : (
-        <form action={lahetaKenttaTyhjennys} className="mt-10 space-y-4 border-t border-border pt-8">
+        <form action={lahetaKenttaTyhjennys} className="sisalto-levea mt-10 space-y-4 border-t border-border pt-8">
           <input type="hidden" name="hanke_id" value={hanke.id} />
           <input type="hidden" name="kentta" value={kentta} />
           <h2 className="text-lg font-semibold">Poista virheellinen arvo</h2>
@@ -297,6 +299,7 @@ export default async function KenttapaivitysSivu({
           />
         </form>
       )}
+      </SisaltoKaare>
     </main>
   );
 }

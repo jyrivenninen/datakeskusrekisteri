@@ -18,6 +18,7 @@ import {
   EhdotusTila,
   ehdotusLuokkaRiviLuokka,
 } from "@/komponentit/ehdotus-tila";
+import { SisaltoKaare } from "@/komponentit/sisalto-kaare";
 import { YllapitoOhjeet } from "@/komponentit/yllapito-ohjeet";
 import {
   haeHankkeetDuplikaattiKohteet,
@@ -165,6 +166,7 @@ export default async function YllapitoSivu({
 
   return (
     <main id="sisalto" className="sivuleveys flex-1 py-10">
+      <SisaltoKaare>
       <div className="flex flex-wrap items-center justify-between gap-4">
         <h1 className="text-3xl font-semibold">Ylläpito</h1>
         <form action={kirjauduUlos}>
@@ -198,7 +200,7 @@ export default async function YllapitoSivu({
           <summary className="cursor-pointer px-4 py-3 font-medium focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-link">
             Lähdeajot ({ajot?.length ?? 0})
           </summary>
-          <ul className="divide-y divide-border border-t border-border px-4">
+          <ul className="sisalto-levea divide-y divide-border border-t border-border px-4">
             {(ajot ?? []).map((ajo) => (
               <li key={ajo.id} className="py-3">
                 <p>
@@ -219,7 +221,7 @@ export default async function YllapitoSivu({
         <h2 id="palaute-otsikko" className="text-xl font-semibold">
           Yhteydenotot
         </h2>
-        <ul className="mt-4 divide-y divide-border border-y border-border">
+        <ul className="sisalto-levea mt-4 divide-y divide-border border-y border-border">
           {odottavatPalautteet.length === 0 ? (
             <li className="py-4">Ei odottavia yhteydenottoja.</li>
           ) : (
@@ -239,7 +241,7 @@ export default async function YllapitoSivu({
             <summary className="cursor-pointer px-4 py-3 font-medium focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-link">
               Käsitellyt yhteydenotot ({kasitellytPalautteet.length})
             </summary>
-            <ul className="divide-y divide-border border-t border-border px-4">
+            <ul className="sisalto-levea divide-y divide-border border-t border-border px-4">
               {kasitellytPalautteet.map((palaute) => {
                 const kasittely = kasittelySelite(palaute.kasittelija, palaute.kasitelty_pvm);
                 return (
@@ -267,7 +269,7 @@ export default async function YllapitoSivu({
             Luonnokset, joita ei ole vielä julkaistu julkiselle sivustolle. Tarkista tiedot ennen
             julkaisua tai merkitse duplikaatiksi, jos sama hanke on jo rekisterissä.
           </p>
-          <ul className="mt-4 divide-y divide-border border-y border-border">
+          <ul className="sisalto-levea mt-4 divide-y divide-border border-y border-border">
             {julkaisemattomat.map((hanke) => {
               const kohteet = duplikaattiKohteet.filter((kohde) => kohde.id !== hanke.id);
               return (
@@ -364,7 +366,7 @@ export default async function YllapitoSivu({
             Duplikaatit ja yhdistämisen jälkeen piilotetut hankkeet. Rivejä ei poisteta
             tietokannasta.
           </p>
-          <ul className="mt-4 divide-y divide-border border-y border-border">
+          <ul className="sisalto-levea mt-4 divide-y divide-border border-y border-border">
             {poistetut.map((hanke) => (
               <li key={hanke.id} className="py-4">
                 <p className="font-medium">
@@ -399,7 +401,7 @@ export default async function YllapitoSivu({
         </section>
       ) : null}
       {odottavia > 0 && massahyvaksynta ? (
-        <form action={hyvaksyKaikkiOdottavatToiminto} className="mt-6 space-y-3">
+        <form action={hyvaksyKaikkiOdottavatToiminto} className="sisalto-levea mt-6 space-y-3">
           <div className="flex flex-wrap items-start gap-3">
             <input
               id="vahvista-kaikki"
@@ -462,7 +464,7 @@ export default async function YllapitoSivu({
             Tarkista, onko tieto yhä ajantasainen. Agentti ajaa viikoittain (
             <code>npm run agentti:vanhentuneet</code>).
           </p>
-          <ul className="mt-4 divide-y divide-border border-y border-border">
+          <ul className="sisalto-levea mt-4 divide-y divide-border border-y border-border">
             {vanhentuneetNaytto.map((rivi) => (
               <li key={`${rivi.laji}-${rivi.hanke_id}-${rivi.kentta}`} className="py-3">
                 <p className="font-medium">
@@ -503,7 +505,7 @@ export default async function YllapitoSivu({
         <h2 id="ehdotukset-otsikko" className="text-xl font-semibold">
           Muutosehdotukset
         </h2>
-      <ul className="mt-4 divide-y divide-border border-y border-border">
+      <ul className="sisalto-levea mt-4 divide-y divide-border border-y border-border">
         {odottavat.length === 0 ? (
           <li className="py-4">Ei odottavia ehdotuksia.</li>
         ) : (
@@ -515,12 +517,13 @@ export default async function YllapitoSivu({
           <summary className="cursor-pointer px-4 py-3 font-medium focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-link">
             Käsitellyt ({kasitellyt.length})
           </summary>
-          <ul className="divide-y divide-border border-t border-border px-4">
+          <ul className="sisalto-levea divide-y divide-border border-t border-border px-4">
             {kasitellyt.map((ehdotus) => ehdotusRivi(ehdotus))}
           </ul>
         </details>
         ) : null}
       </section>
+      </SisaltoKaare>
     </main>
   );
 }

@@ -1,4 +1,5 @@
 import { kirjauduSisaan } from "@/app/toiminnot";
+import { SisaltoKaare } from "@/komponentit/sisalto-kaare";
 
 export default async function KirjauduSivu({
   searchParams,
@@ -8,6 +9,7 @@ export default async function KirjauduSivu({
   const params = await searchParams;
   return (
     <main id="sisalto" className="mx-auto w-full max-w-md flex-1 px-4 py-10">
+      <SisaltoKaare>
       <h1 className="text-2xl font-semibold">Ylläpitäjän kirjautuminen</h1>
       <p className="mt-3 text-sm text-muted">
         Kirjautuminen on vain rekisterin ylläpitäjille.
@@ -17,7 +19,7 @@ export default async function KirjauduSivu({
           {params.virhe}
         </p>
       ) : null}
-      <form action={kirjauduSisaan} className="mt-6 space-y-4">
+      <form action={kirjauduSisaan} className="sisalto-levea mt-6 space-y-4">
         <input type="hidden" name="seuraava" value={params.seuraava ?? "/yllapito"} />
         <p className="flex flex-col gap-1">
           <label htmlFor="sahkoposti" className="text-sm font-medium">
@@ -52,6 +54,7 @@ export default async function KirjauduSivu({
           Kirjaudu
         </button>
       </form>
+      </SisaltoKaare>
     </main>
   );
 }
