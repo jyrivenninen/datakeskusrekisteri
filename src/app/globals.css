@@ -26,7 +26,10 @@
     --foreground: #f5f5f4;
     --muted: #d6d3d1;
     --border: #78716c;
-    --link: #93c5fd;
+    /* Linkit: vähintään 4,5:1 taustaa (#1c1917) ja pintaa (#292524) vasten */
+    --link: #bae6fd;
+    --link-hover: #e0f2fe;
+    --link-visited: #ddd6fe;
     --surface: #292524;
   }
 }
@@ -286,4 +289,106 @@ form[aria-busy="true"] input[type="checkbox"] {
   .kartta-merkki--nuppineula:active .kartta-merkki-nuppineula {
     transform: translate(-50%, -100%);
   }
+}
+
+/* --- Linkit (kontrasti + alleviivaus) --- */
+:where(a.text-link, button.text-link) {
+  color: var(--link);
+  text-decoration: underline;
+  text-underline-offset: 0.15em;
+  text-decoration-thickness: from-font;
+}
+
+:where(a.text-link:visited, button.text-link:visited) {
+  color: var(--link-visited, var(--link));
+}
+
+@media (prefers-color-scheme: dark) {
+  :where(a.text-link:visited, button.text-link:visited) {
+    color: var(--link-visited);
+  }
+}
+
+:where(a.text-link:hover, button.text-link:hover) {
+  color: var(--link-hover, var(--link));
+}
+
+@media (prefers-color-scheme: dark) {
+  :where(a.text-link:hover, button.text-link:hover) {
+    color: var(--link-hover);
+  }
+}
+
+:where(a.text-link:focus-visible, button.text-link:focus-visible) {
+  color: var(--link-hover, var(--link));
+  outline: 2px solid var(--link);
+  outline-offset: 2px;
+}
+
+/* --- Leipätekstin rivipituus (#sisalto) --- */
+#sisalto {
+  --teksti-max-leveys: 70ch;
+}
+
+#sisalto :where(h1, h2, h3, h4, h5, h6, p, dl, blockquote, article, figcaption) {
+  max-width: var(--teksti-max-leveys);
+  margin-inline: auto;
+  width: 100%;
+}
+
+#sisalto :where(ul, ol) {
+  max-width: var(--teksti-max-leveys);
+  margin-inline: auto;
+  width: 100%;
+}
+
+#sisalto :where(table, form, .faktakortti, .maplibregl-map) {
+  max-width: none;
+  margin-inline: unset;
+}
+
+#sisalto table {
+  width: 100%;
+}
+
+#sisalto :where(th, td, table *) {
+  max-width: none;
+  margin-inline: unset;
+}
+
+#sisalto :where(
+  ul.divide-y,
+  ul.grid,
+  div.grid:has(.faktakortti),
+  div:has(> .maplibregl-map),
+  section[aria-labelledby="avoin-data-otsikko"] ul
+) {
+  max-width: none;
+  margin-inline: unset;
+  width: 100%;
+}
+
+#sisalto :where(ul.divide-y, ul.grid) :where(h1, h2, h3, h4, h5, h6, p, dl, blockquote) {
+  max-width: none;
+  margin-inline: unset;
+}
+
+#sisalto ul.grid :where(li, figure, figcaption, figcaption p) {
+  max-width: none;
+  margin-inline: unset;
+}
+
+/* --- Muutosloki: tiiviimpi tyhjä tila --- */
+#sisalto section[aria-labelledby="loki-otsikko"] details > summary {
+  padding-block: 0.5rem;
+  padding-inline: 1rem;
+}
+
+#sisalto section[aria-labelledby="loki-otsikko"] details > div {
+  padding-block: 0.625rem;
+  padding-inline: 1rem;
+}
+
+#sisalto section[aria-labelledby="loki-otsikko"] article {
+  margin-top: 1rem;
 }
