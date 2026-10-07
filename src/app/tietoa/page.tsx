@@ -62,11 +62,6 @@ export default async function TietoaPalvelustaSivu() {
             Ilmoitus lomakkeella tai agentin ehdottama havainto ei siirry
             rekisteriin ennen kuin ylläpitäjä on tarkistanut lähteen.
           </p>
-          <p>
-            <a href="/yhteistyokumppanit" className="text-link underline">
-              Yhteistyökumppaneita
-            </a>
-          </p>
         </div>
       </section>
 
