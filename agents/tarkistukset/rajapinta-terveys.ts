@@ -54,7 +54,7 @@ const PINGIT: PingKohde[] = [
   },
   {
     nimi: "avoindata-ckan",
-    url: "https://avoindata.fi/data/api/3/action/status_show",
+    url: "https://avoindata.suomi.fi/data/api/3/action/status_show",
     odotettuMin: 200,
     odotettuMax: 299,
   },
@@ -165,12 +165,17 @@ async function main() {
     }
 
     const rssVastaus = await fetch(RSS_URL, {
-      headers: { "User-Agent": USER_AGENT, Accept: "application/rss+xml, application/xml" },
+      headers: {
+        "User-Agent": USER_AGENT,
+        // Ilman */* palvelin voi vastata 406 Not Acceptable (Syke/Azure).
+        Accept: "application/rss+xml, application/xml, text/xml, */*",
+      },
       signal: AbortSignal.timeout(20_000),
     });
     const rssTeksti = await rssVastaus.text();
     if (!rssVastaus.ok) {
       virheet.push(`syke-rss: HTTP ${rssVastaus.status}`);
+      console.log(`FAIL syke-rss: ${rssVastaus.status}`);
     } else {
       ok += 1;
       const kohteet = puraRssKohteet(rssTeksti);
