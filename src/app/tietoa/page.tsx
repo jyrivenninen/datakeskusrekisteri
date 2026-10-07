@@ -65,6 +65,40 @@ export default async function TietoaPalvelustaSivu() {
         </div>
       </section>
 
+      <section className="mt-10" aria-labelledby="yllapito-otsikko">
+        <h2 id="yllapito-otsikko" className="text-xl font-semibold">
+          Kuka ylläpitää
+        </h2>
+        <div className="mt-3 space-y-3 leading-relaxed">
+          <p>
+            Palvelun on rakentanut ja sitä ylläpitää Jyri Venninen yksityishenkilönä.
+            Verkkotunnus on rekisteröity henkilökohtaisesti.
+          </p>
+          <p>
+            Palvelu sai alkunsa Jokelan datakeskushankkeesta Tuusulassa. Ylläpitäjä asuu
+            Tuusulassa ja seuraa hanketta oman kuntansa asukkaana. Tämä ei vaikuta
+            siihen, mitä hankkeita rekisteriin otetaan tai miten ne esitetään.
+          </p>
+          <p>
+            Ylläpito on omakustanteista. Kuluja ovat verkkotunnus, palvelinpalvelut ja
+            kielimallirajapintojen käyttö. Palvelulla ei ole ulkopuolista rahoitusta,
+            mainoksia eikä maksettua sisältöä.
+          </p>
+          <p>
+            Palvelulle ollaan perustamassa yhdistystä, jonka sääntöihin tulee määräykset
+            rahoituksen avoimuudesta ja riippumattomuudesta. Tämä tieto päivitetään, kun
+            yhdistys on merkitty yhdistysrekisteriin.
+          </p>
+          <p>
+            Yhteydenotot:{" "}
+            <a href="/yhteys" className="text-link underline">
+              Ota yhteyttä
+            </a>
+            .
+          </p>
+        </div>
+      </section>
+
       <section className="mt-10" aria-labelledby="aineistot-otsikko">
         <h2 id="aineistot-otsikko" className="text-xl font-semibold">
           Aineistot ja rajapinnat

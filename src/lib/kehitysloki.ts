@@ -9,6 +9,13 @@ export type KehityslokiMerkinta = {
 
 export const KEHITYSLOKI: KehityslokiMerkinta[] = [
   {
+    pvm: "2026-10-07",
+    otsikko: "Ylläpitäjä- ja rahoitustiedot",
+    kohdat: [
+      "Tietoa-sivulle julkaistiin osio Kuka ylläpitää: ylläpitäjä, rahoitus ja suunniteltu yhdistys.",
+    ],
+  },
+  {
     pvm: "2026-10-01",
     otsikko: "Avoin data ja sivun lataus",
     johdanto:

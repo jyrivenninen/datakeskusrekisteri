@@ -67,9 +67,11 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
               <a href="/yhteys" className="text-link underline">
                 Yhteys
               </a>
-              <a href="/yllapito" className="text-link underline">
-                Ylläpito
-              </a>
+              {yllapitaja ? (
+                <a href="/yllapito" className="text-link underline">
+                  Ylläpito
+                </a>
+              ) : null}
             </nav>
           </div>
         </header>
