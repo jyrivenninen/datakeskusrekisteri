@@ -2,7 +2,6 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { kirjauduUlos } from "@/app/toiminnot";
 import { KuittausLista } from "@/komponentit/kuittaus-lista";
-import { SisaltoKaare } from "@/komponentit/sisalto-kaare";
 import {
   jarjestaKuittausRivit,
   parsiKuittausSuodatus,
@@ -69,7 +68,6 @@ export default async function KuittausSivu({
 
   return (
     <main id="sisalto" className="sivuleveys flex-1 py-10">
-      <SisaltoKaare>
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
           <p className="text-sm">
@@ -86,7 +84,7 @@ export default async function KuittausSivu({
         </form>
       </div>
 
-      <p className="mt-4 text-sm text-muted">
+      <p className="mt-4 max-w-prose text-sm text-muted">
         Agentti on julkaissut nämä kentät automaattisesti (koneen ehdottama). Kuittaus merkitsee
         tiedon nähdyksi ilman arvon uudelleentarkistusta. Luottamus (vahvistettu / epävarma /
         ristiriitainen) voi muuttua erikseen. Kuittaus vaatii suodattimen — valitse ensin rajaus,
@@ -128,7 +126,6 @@ export default async function KuittausSivu({
           Näytetään {suodatetut.length} riviä {kaikkiRivit.length}:sta
         </p>
       ) : null}
-      </SisaltoKaare>
     </main>
   );
 }

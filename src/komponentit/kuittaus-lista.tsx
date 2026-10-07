@@ -164,7 +164,7 @@ export function KuittausLista({
   );
 
   return (
-    <div className="sisalto-levea mt-6 space-y-6">
+    <div className="mt-6 space-y-6">
       <form
         className="space-y-4 rounded border border-border bg-surface p-4"
         onSubmit={(e) => {

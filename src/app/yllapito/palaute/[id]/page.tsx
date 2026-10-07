@@ -2,7 +2,6 @@ import { notFound, redirect } from "next/navigation";
 import { merkitsePalauteKasitellyksi } from "@/app/toiminnot";
 import { PALAUTE_AIHE_NIMET, PALAUTE_TILA_NIMET, muotoileAika } from "@/lib/naytto";
 import { haeKirjautunutKayttaja } from "@/lib/supabase/palvelin";
-import { SisaltoKaare } from "@/komponentit/sisalto-kaare";
 import type { Palaute } from "@/lib/supabase/tietokanta";
 
 async function vaadiYllapitaja() {
@@ -34,7 +33,6 @@ export default async function PalauteSivu({
 
   return (
     <main id="sisalto" className="mx-auto w-full max-w-3xl flex-1 px-4 py-10">
-      <SisaltoKaare>
       <p className="text-sm">
         <a href="/yllapito" className="text-link underline">
           Ylläpito
@@ -53,7 +51,7 @@ export default async function PalauteSivu({
           {query.virhe}
         </p>
       ) : null}
-      <dl className="sisalto-levea mt-6 divide-y divide-border border-y border-border">
+      <dl className="mt-6 divide-y divide-border border-y border-border">
         <div className="py-3">
           <dt className="font-medium">Viesti</dt>
           <dd className="mt-1 whitespace-pre-wrap">{palaute.viesti}</dd>
@@ -75,7 +73,7 @@ export default async function PalauteSivu({
         ) : null}
       </dl>
       {odottaa ? (
-        <form action={merkitsePalauteKasitellyksi} className="sisalto-levea mt-8 space-y-3">
+        <form action={merkitsePalauteKasitellyksi} className="mt-8 space-y-3">
           <input type="hidden" name="id" value={palaute.id} />
           <label htmlFor="huomautus" className="block text-sm font-medium">
             Merkintä (vapaaehtoinen)
@@ -94,7 +92,6 @@ export default async function PalauteSivu({
           </button>
         </form>
       ) : null}
-      </SisaltoKaare>
     </main>
   );
 }

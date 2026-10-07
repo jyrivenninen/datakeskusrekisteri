@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import { SisaltoKaare } from "@/komponentit/sisalto-kaare";
 import { ORGANISAATIO_TYYPPI_NIMET, onOrganisaatioTyyppi } from "@/lib/naytto";
 import { haeJulkaistutOrganisaatiot } from "@/lib/supabase/kyselyt";
 import { vaadiYllapitaja } from "@/lib/supabase/palvelin";
@@ -24,14 +23,13 @@ export default async function HakemistoSivu({
 
   return (
     <main id="sisalto" className="sivuleveys flex-1 py-10">
-      <SisaltoKaare>
       <h1 className="text-3xl font-semibold tracking-tight">Hakemisto</h1>
       <p className="mt-4 leading-relaxed text-muted">
         Julkaistut organisaatiot. Henkilönimiä tai suoria yhteystietoja ei
         julkaista. Hakemisto on toistaiseksi vain ylläpitäjille.
       </p>
 
-      <form method="get" className="sisalto-levea mt-6 flex flex-col gap-2 sm:max-w-xs">
+      <form method="get" className="mt-6 flex flex-col gap-2 sm:max-w-xs">
         <label htmlFor="tyyppi" className="text-sm font-medium">
           Organisaation tyyppi
         </label>
@@ -62,7 +60,7 @@ export default async function HakemistoSivu({
         ) : organisaatiot.length === 0 ? (
           <p className="mt-3">Ei julkaistuja organisaatioita valitulla suodattimella.</p>
         ) : (
-          <ul className="sisalto-levea mt-4 divide-y divide-border border-y border-border">
+          <ul className="mt-4 divide-y divide-border border-y border-border">
             {organisaatiot.map((organisaatio) => (
               <li key={organisaatio.id} className="py-4">
                 <h3 className="font-semibold">
@@ -82,7 +80,6 @@ export default async function HakemistoSivu({
           </ul>
         )}
       </section>
-      </SisaltoKaare>
     </main>
   );
 }

@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import { lahetaPalaute } from "@/app/toiminnot";
 import { LomakeLahetysNappi } from "@/komponentit/lomake-lahetysnappi";
 import { PALAUTE_AIHE_NIMET } from "@/lib/naytto";
-import { SisaltoKaare } from "@/komponentit/sisalto-kaare";
 import { PALAUTE_AIHEET } from "@/lib/supabase/tietokanta";
 
 export const metadata: Metadata = {
@@ -19,9 +18,8 @@ export default async function YhteysSivu({
 
   return (
     <main id="sisalto" className="mx-auto w-full max-w-3xl flex-1 px-4 py-10">
-      <SisaltoKaare>
       <h1 className="text-3xl font-semibold tracking-tight">Ota yhteyttä</h1>
-      <p className="mt-4 leading-relaxed text-muted">
+      <p className="mt-4 max-w-prose leading-relaxed text-muted">
         Voit jättää palautetta, kysymyksen tai muun viestin ylläpidolle. Viesti
         ei näy julkisella sivustolla, eikä siitä lähde sähköpostia. Lomake ei
         kerää nimeä eikä yhteystietoja. Hanketiedot merkitään lähteineen{" "}
@@ -42,7 +40,7 @@ export default async function YhteysSivu({
         </p>
       ) : null}
 
-      <form action={lahetaPalaute} className="sisalto-levea mt-6 space-y-4">
+      <form action={lahetaPalaute} className="mt-6 space-y-4">
         <p className="absolute left-[-10000px] h-px w-px overflow-hidden">
           <label htmlFor="organisaation_www">Jätä tyhjäksi</label>
           <input id="organisaation_www" name="organisaation_www" tabIndex={-1} autoComplete="off" />
@@ -81,7 +79,6 @@ export default async function YhteysSivu({
         </p>
         <LomakeLahetysNappi valmis="Lähetä" odottaa="Lähetetään…" />
       </form>
-      </SisaltoKaare>
     </main>
   );
 }

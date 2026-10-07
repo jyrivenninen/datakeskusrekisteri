@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import { VAIHE_NIMET } from "@/lib/naytto";
-import { SisaltoKaare } from "@/komponentit/sisalto-kaare";
 import { haeYllapitaja } from "@/lib/supabase/palvelin";
 
 export const metadata: Metadata = {
@@ -17,7 +16,6 @@ export default async function YvaOpasSivu() {
   const { user: yllapitaja } = await haeYllapitaja();
   return (
     <main id="sisalto" className="mx-auto w-full max-w-3xl flex-1 px-4 py-10">
-      <SisaltoKaare>
       <p className="text-sm">
         <a href="/" className="text-link underline">
           Etusivu
@@ -26,13 +24,13 @@ export default async function YvaOpasSivu() {
       <h1 className="mt-4 text-3xl font-semibold tracking-tight">
         Näin teet YVA-mielipiteen
       </h1>
-      <p className="mt-4 leading-relaxed text-muted">
+      <p className="mt-4 max-w-prose leading-relaxed text-muted">
         Tämä sivu kuvaa ympäristövaikutusten arviointimenettelyn (YVA) julkiset
         vaiheet ja sen, milloin mielipiteen voi jättää. Teksti ei ole
         oikeudellista neuvontaa. Määräajat ja toimitusosoite ovat kunkin hankkeen
         kuulutuksessa.
       </p>
-      <p className="mt-3 text-sm leading-relaxed">
+      <p className="mt-3 max-w-prose text-sm leading-relaxed">
         Lähteet:{" "}
         <a href={YM_YVA_OSALLISTU} className="text-link underline" rel="noopener noreferrer">
           ymparisto.fi, hankkeiden YVA-menettely
@@ -77,7 +75,7 @@ export default async function YvaOpasSivu() {
             muutoksenhakuoikeus.
           </li>
         </ol>
-        <p className="mt-4 leading-relaxed">
+        <p className="mt-4 max-w-prose leading-relaxed">
           Yhteysviranomainen on 1.1.2026 alkaen Lupa- ja valvontavirasto.
           Sitä ennen tehtävää hoiti ELY-keskus. Ydinenergiahankkeissa
           yhteysviranomainen on työ- ja elinkeinoministeriö.
@@ -88,11 +86,11 @@ export default async function YvaOpasSivu() {
         <h2 id="vaiheet-otsikko" className="text-xl font-semibold">
           Mitä tässä rekisterin vaiheessa voi vielä tehdä
         </h2>
-        <p className="mt-3 leading-relaxed">
+        <p className="mt-3 max-w-prose leading-relaxed">
           Rekisterin vaihe on tiivistelmä. Tarkista hankesivun määräajat ja
           kuulutus.
         </p>
-        <dl className="sisalto-levea mt-4 divide-y divide-border border-y border-border">
+        <dl className="mt-4 divide-y divide-border border-y border-border">
           <div className="py-4">
             <dt className="font-medium">{VAIHE_NIMET.esiselvitys}</dt>
             <dd className="mt-1 leading-relaxed">
@@ -150,7 +148,7 @@ export default async function YvaOpasSivu() {
         <h2 id="laatiminen-otsikko" className="text-xl font-semibold">
           Mielipiteen laatiminen
         </h2>
-        <p className="mt-3 leading-relaxed">
+        <p className="mt-3 max-w-prose leading-relaxed">
           Ymparisto.fi: toimita vapaamuotoinen kirjallinen mielipide
           yhteysviranomaiselle määräaikaan mennessä. Kirjoita jäsennellysti ja
           perustele. Henkilötiedot poistetaan julkaistavista lausunnoista ja
@@ -175,11 +173,11 @@ export default async function YvaOpasSivu() {
         <h2 id="malli-otsikko" className="text-xl font-semibold">
           Mallipohja
         </h2>
-        <p className="mt-3 leading-relaxed">
+        <p className="mt-3 max-w-prose leading-relaxed">
           Kopioi teksti, täydennä kuulutuksen tiedot ja poista kohdat, jotka
           eivät koske sinua. Älä lähetä mallia sellaisenaan.
         </p>
-        <pre className="sisalto-levea mt-4 overflow-x-auto whitespace-pre-wrap rounded border border-border bg-surface p-4 text-sm leading-relaxed">
+        <pre className="mt-4 overflow-x-auto whitespace-pre-wrap rounded border border-border bg-surface p-4 text-sm leading-relaxed">
           {`Vastaanottaja: [yhteysviranomainen, kuulutuksen osoite]
 Diaarinumero: [kuulutuksesta]
 Asiakirja: YVA-ohjelma / YVA-selostus
@@ -221,7 +219,6 @@ Allekirjoitus`}
           </>
         ) : null}
       </p>
-      </SisaltoKaare>
     </main>
   );
 }

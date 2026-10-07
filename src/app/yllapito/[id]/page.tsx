@@ -1,7 +1,6 @@
 import { notFound, redirect } from "next/navigation";
 import { hyvaksyEhdotusToiminto, hylkaaEhdotusToiminto, julkaiseHankeToiminto, korjaaLinkkiLahdeToiminto } from "@/app/toiminnot";
 import { EhdotusLuokka, EhdotusTila } from "@/komponentit/ehdotus-tila";
-import { SisaltoKaare } from "@/komponentit/sisalto-kaare";
 import {
   ehdotusPoistetulleHankkeelle,
   ehdotuksenHankeIdt,
@@ -225,7 +224,6 @@ export default async function EhdotusSivu({
 
   return (
     <main id="sisalto" className="mx-auto w-full max-w-3xl flex-1 px-4 py-10">
-      <SisaltoKaare>
       <p className="text-sm">
         <a href="/yllapito" className="text-link underline">
           Ylläpito
@@ -278,7 +276,7 @@ export default async function EhdotusSivu({
                     <span className="text-muted"> · ei julkaistu julkisesti</span>
                   ) : null}
                   {piilossa && !duplikaatti && supabasePalvelinAvainAsetettu() ? (
-                    <form action={julkaiseHankeToiminto} className="sisalto-levea mt-2">
+                    <form action={julkaiseHankeToiminto} className="mt-2">
                       <input type="hidden" name="hanke_id" value={hankeId} />
                       <input type="hidden" name="paluu" value={`/yllapito/${id}`} />
                       <button
@@ -315,7 +313,7 @@ export default async function EhdotusSivu({
             Hyväksyntä merkitsee havainnon käsitellyksi. Voit valita asiakirjat
             julkaistavaksi hankkeen alle.
           </p>
-          <dl className="sisalto-levea mt-4 divide-y divide-border border-y border-border">
+          <dl className="mt-4 divide-y divide-border border-y border-border">
             <div className="py-3">
               <dt className="font-medium">Kunta</dt>
               <dd className="mt-1">{kunta.kunta_nimi}</dd>
@@ -401,7 +399,7 @@ export default async function EhdotusSivu({
             hanketta. Ryhdistä puuttuva kaava ei ole todiste siitä, ettei
             hanketta ole.
           </p>
-          <dl className="sisalto-levea mt-4 divide-y divide-border border-y border-border">
+          <dl className="mt-4 divide-y divide-border border-y border-border">
             <div className="py-3">
               <dt className="font-medium">Kokoelma</dt>
               <dd className="mt-1">{ryhti.kokoelma_nimi}</dd>
@@ -462,7 +460,7 @@ export default async function EhdotusSivu({
           {ryhtiHanke ? (
             <div className="mt-6 space-y-4 rounded border border-border bg-surface p-4">
               <h3 className="font-medium">Vertailu hankkeeseen</h3>
-              <dl className="sisalto-levea grid gap-3 text-sm sm:grid-cols-2">
+              <dl className="grid gap-3 text-sm sm:grid-cols-2">
                 <div>
                   <dt className="text-muted">Hankkeen kaavatunnus</dt>
                   <dd className="mt-0.5 font-medium">{ryhtiHanke.kaavatunnus ?? "—"}</dd>
@@ -543,7 +541,7 @@ export default async function EhdotusSivu({
                 </ul>
               ) : null}
               {ryhtiHylkaysEhdotus ? (
-                <form action={hylkaaEhdotusToiminto} className="sisalto-levea space-y-2 border-t border-border pt-4">
+                <form action={hylkaaEhdotusToiminto} className="space-y-2 border-t border-border pt-4">
                   <input type="hidden" name="id" value={ehdotus.id} />
                   <p className="text-sm font-medium">Ei liity hankkeeseen</p>
                   <label htmlFor="ryhti-hylkays-perustelu" className="sr-only">
@@ -577,7 +575,7 @@ export default async function EhdotusSivu({
               ? "Hyväksyntä tallentaa Y-tunnuksen organisaatiolle. Lähde on PRH:n YTJ-tietue (CC BY 4.0), ei rajapinnan juurta."
               : "Hyväksyntä merkitsee havainnon käsitellyksi. Se ei päivitä organisaatiota. Lähde: PRH avoin data (YTJ), CC BY 4.0."}
           </p>
-          <dl className="sisalto-levea mt-4 divide-y divide-border border-y border-border">
+          <dl className="mt-4 divide-y divide-border border-y border-border">
             <div className="py-3">
               <dt className="font-medium">Y-tunnus</dt>
               <dd className="mt-1">{ytj.y_tunnus}</dd>
@@ -633,7 +631,7 @@ export default async function EhdotusSivu({
             Hyväksyntä merkitsee havainnon käsitellyksi. Se ei päivitä
             hankkeen sijaintia. Lähde: Maanmittauslaitos, CC BY 4.0.
           </p>
-          <dl className="sisalto-levea mt-4 divide-y divide-border border-y border-border">
+          <dl className="mt-4 divide-y divide-border border-y border-border">
             {mml.nimi ? (
               <div className="py-3">
                 <dt className="font-medium">Kohde aineistossa</dt>
@@ -678,7 +676,7 @@ export default async function EhdotusSivu({
             Hyväksyntä merkitsee havainnon käsitellyksi; se ei muuta kentän arvoa
             eikä luottamusta.
           </p>
-          <dl className="sisalto-levea mt-4 divide-y divide-border border-y border-border">
+          <dl className="mt-4 divide-y divide-border border-y border-border">
             <div className="py-3">
               <dt className="font-medium">Kenttä</dt>
               <dd className="mt-1">{lahteenvahvistus.kentta_nimi}</dd>
@@ -738,7 +736,7 @@ export default async function EhdotusSivu({
             valinnaisesti lähdeasiakirjasta. Kaikki lisätyt kentät on merkitty
             luottamuksella Epävarma.
           </p>
-          <dl className="sisalto-levea mt-4 divide-y divide-border border-y border-border">
+          <dl className="mt-4 divide-y divide-border border-y border-border">
             <div className="py-3">
               <dt className="font-medium">Käsitelty</dt>
               <dd className="mt-1">{esikasittelu.kasitelty_pvm.slice(0, 19).replace("T", " ")}</dd>
@@ -805,7 +803,7 @@ export default async function EhdotusSivu({
             hankekenttiä. Tiiviste on uutettusta tekstistä, ei PDF-tiedoston
             raakabinääristä.
           </p>
-          <dl className="sisalto-levea mt-4 divide-y divide-border border-y border-border">
+          <dl className="mt-4 divide-y divide-border border-y border-border">
             <div className="py-3">
               <dt className="font-medium">Otsikko</dt>
               <dd className="mt-1">{dokumentti.otsikko}</dd>
@@ -889,7 +887,7 @@ export default async function EhdotusSivu({
           {ristiriita.ei_uudelleen ? (
             <p className="mt-2 text-sm">Sama havainto ei nouse uudelleen.</p>
           ) : null}
-          <dl className="sisalto-levea mt-4 divide-y divide-border border-y border-border">
+          <dl className="mt-4 divide-y divide-border border-y border-border">
             <div className="py-3">
               <dt className="font-medium">Sääntö</dt>
               <dd className="mt-1">
@@ -910,7 +908,7 @@ export default async function EhdotusSivu({
             Merkitse käsitellyksi vain, jos linkki toimii selaimessa tai arvo on jo korjattu
             muualla.
           </p>
-          <dl className="sisalto-levea mt-4 divide-y divide-border border-y border-border">
+          <dl className="mt-4 divide-y divide-border border-y border-border">
             <div className="py-3">
               <dt className="font-medium">Kenttä</dt>
               <dd className="mt-1">
@@ -975,7 +973,7 @@ export default async function EhdotusSivu({
                   pysyy ennallaan; vain lähde päivittyy.
                 </p>
                 {supabasePalvelinAvainAsetettu() ? (
-                  <form action={korjaaLinkkiLahdeToiminto} className="sisalto-levea mt-3 space-y-2">
+                  <form action={korjaaLinkkiLahdeToiminto} className="mt-3 space-y-2">
                     <input type="hidden" name="id" value={ehdotus.id} />
                     <label htmlFor="uusi_lahde_url" className="block text-sm font-medium">
                       Uusi lähde-URL
@@ -1028,7 +1026,7 @@ export default async function EhdotusSivu({
       ) : null}
 
       {Object.keys(sisalto.kentat ?? {}).length > 0 ? (
-        <dl className="sisalto-levea mt-6 divide-y divide-border border-y border-border">
+        <dl className="mt-6 divide-y divide-border border-y border-border">
         {Object.entries(sisalto.kentat ?? {}).map(([kentta, tieto]) => (
           <div key={kentta} className="py-3">
             <dt className="font-medium">
@@ -1141,7 +1139,7 @@ export default async function EhdotusSivu({
           <h2 id="paatos-otsikko" className="text-xl font-semibold">
             Viranomaispäätös
           </h2>
-          <dl className="sisalto-levea mt-4 divide-y divide-border border-y border-border">
+          <dl className="mt-4 divide-y divide-border border-y border-border">
             <div className="py-3">
               <dt className="font-medium">{PAATOS_KENTTA_NIMET.kuvaus}</dt>
               <dd className="mt-1">{sisalto.paatos.kuvaus}</dd>
@@ -1193,7 +1191,7 @@ export default async function EhdotusSivu({
           <h2 id="maaraaja-otsikko" className="text-xl font-semibold">
             Määräaika
           </h2>
-          <dl className="sisalto-levea mt-4 divide-y divide-border border-y border-border">
+          <dl className="mt-4 divide-y divide-border border-y border-border">
             <div className="py-3">
               <dt className="font-medium">{MAARAAJA_KENTTA_NIMET.tyyppi}</dt>
               <dd className="mt-1">
@@ -1294,7 +1292,7 @@ export default async function EhdotusSivu({
           {Object.entries(sisalto.vaihtoehdot).map(([tunnus, kentat]) => (
             <div key={tunnus} className="mt-4">
               <h3 className="font-medium">{tunnus}</h3>
-              <dl className="sisalto-levea mt-2 divide-y divide-border border-y border-border">
+              <dl className="mt-2 divide-y divide-border border-y border-border">
                 {Object.entries(kentat).map(([kentta, tieto]) => (
                   <div key={kentta} className="py-3">
                     <dt className="font-medium">{HANKE_KENTTA_NIMET[kentta] ?? kentta}</dt>
@@ -1334,7 +1332,7 @@ export default async function EhdotusSivu({
 
       {odottaa ? (
         <div className="mt-8 flex flex-col gap-6">
-          <form action={hyvaksyEhdotusToiminto} className="sisalto-levea space-y-3">
+          <form action={hyvaksyEhdotusToiminto} className="space-y-3">
             <input type="hidden" name="id" value={ehdotus.id} />
             {ristiriita ? (
               <div className="space-y-3">
@@ -1466,7 +1464,7 @@ export default async function EhdotusSivu({
               {hyvaksyTeksti}
             </button>
           </form>
-          <form action={hylkaaEhdotusToiminto} className="sisalto-levea space-y-2">
+          <form action={hylkaaEhdotusToiminto} className="space-y-2">
             <input type="hidden" name="id" value={ehdotus.id} />
             {ristiriita ? (
               <p className="max-w-prose text-sm text-muted">
@@ -1489,7 +1487,6 @@ export default async function EhdotusSivu({
           </form>
         </div>
       ) : null}
-      </SisaltoKaare>
     </main>
   );
 }

@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import { notFound, permanentRedirect } from "next/navigation";
 import { AvattavaKortti, Korttiruudukko } from "@/komponentit/avattava-kortti";
-import { SisaltoKaare } from "@/komponentit/sisalto-kaare";
 import { KarttaViive } from "@/komponentit/kartta-viive";
 import { HankeGalleria } from "@/komponentit/hanke-galleria";
 import { VaiheMerkki } from "@/komponentit/vaihe-merkki";
@@ -243,10 +242,8 @@ export default async function HankeSivu({
   if (virhe) {
     return (
       <main id="sisalto" className="sivuleveys flex-1 py-10">
-        <SisaltoKaare>
-          <h1 className="text-2xl font-semibold">Hanketta ei voitu ladata</h1>
-          <p className="mt-3">{virhe}</p>
-        </SisaltoKaare>
+        <h1 className="text-2xl font-semibold">Hanketta ei voitu ladata</h1>
+        <p className="mt-3">{virhe}</p>
       </main>
     );
   }
@@ -284,7 +281,6 @@ export default async function HankeSivu({
 
   return (
     <main id="sisalto" className="sivuleveys flex-1 py-10">
-      <SisaltoKaare>
       <p className="text-sm">
         <a href="/" className="text-link underline">
           Etusivu
@@ -297,18 +293,18 @@ export default async function HankeSivu({
         <VaiheMerkki vaihe={hanke.vaihe} />
       </p>
       {hanke.vanhin_vahvistettu_pvm ? (
-        <p className="mt-3 text-sm leading-relaxed text-muted">
+        <p className="mt-3 max-w-prose text-sm leading-relaxed text-muted">
           Vanhin kenttäkohtainen tarkistus {muotoilePvm(hanke.vanhin_vahvistettu_pvm)}.
           Päivä on sen lähteen tarkistus, joka on vanhin. Yhden kentän uusi
           tarkistus ei siirrä tätä päivää. Se ei ole viranomaispäätöksen päivä.
         </p>
       ) : (
-        <p className="mt-3 text-sm leading-relaxed text-muted">
+        <p className="mt-3 max-w-prose text-sm leading-relaxed text-muted">
           Kenttäkohtaisia tarkistuspäiviä ei ole merkitty.
         </p>
       )}
       {hanke.viimeisin_paatos ? (
-        <p className="mt-3 text-sm leading-relaxed">
+        <p className="mt-3 max-w-prose text-sm leading-relaxed">
           Viimeisin merkitty päätös: {hanke.viimeisin_paatos.kuvaus} ·{" "}
           {muotoilePvm(hanke.viimeisin_paatos.pvm)} ·{" "}
           {hanke.viimeisin_paatos.paattava_organisaatio?.nimi ?? "—"}
@@ -324,9 +320,7 @@ export default async function HankeSivu({
         <h2 id="kartta-otsikko" className="sr-only">
           Sijainti kartalla
         </h2>
-        <div className="sisalto-levea sisalto-levea-taysi">
-          <KarttaViive merkit={merkit} />
-        </div>
+        <KarttaViive merkit={merkit} />
         {alue ? (
           <p className="mt-2 text-sm text-muted">
             Sininen alue on merkitty{" "}
@@ -362,14 +356,12 @@ export default async function HankeSivu({
             Lisää valokuva
           </a>
         </p>
-        <div className="sisalto-levea">
-          <HankeGalleria
-            kuvat={kuvat}
-            lahteet={kuvaLahteet}
-            hankeId={hanke.id}
-            yllapito={voiPoistaaKuvia}
-          />
-        </div>
+        <HankeGalleria
+          kuvat={kuvat}
+          lahteet={kuvaLahteet}
+          hankeId={hanke.id}
+          yllapito={voiPoistaaKuvia}
+        />
       </section>
 
       <section className="mt-8" aria-labelledby="tiedot-otsikko">
@@ -380,7 +372,7 @@ export default async function HankeSivu({
           Kenttä avaa lähteen ja päivityslomakkeen. Vihreä valo on vahvistettu, keltainen
           epävarma, punainen puuttuu.
         </p>
-        <div className="sisalto-levea mt-6 space-y-8">
+        <div className="mt-6 space-y-8">
           {hankeRyhmat(hanke).map((ryhma) => (
             <section key={ryhma.id} aria-labelledby={ryhma.id}>
               <h3 id={ryhma.id} className="text-base font-semibold">
@@ -410,7 +402,6 @@ export default async function HankeSivu({
           <h2 id="kunnat-otsikko" className="text-xl font-semibold">
             Kunnat
           </h2>
-          <div className="sisalto-levea">
           <Korttiruudukko>
             {kunnat.map((rivi) => (
               <AvattavaKortti
@@ -425,7 +416,6 @@ export default async function HankeSivu({
               />
             ))}
           </Korttiruudukko>
-          </div>
         </section>
       ) : null}
 
@@ -434,7 +424,6 @@ export default async function HankeSivu({
           <h2 id="menettelyt-otsikko" className="text-xl font-semibold">
             Menettelyt
           </h2>
-          <div className="sisalto-levea">
           <Korttiruudukko>
             {menettelyt.map((rivi) => (
               <AvattavaKortti
@@ -449,7 +438,6 @@ export default async function HankeSivu({
               />
             ))}
           </Korttiruudukko>
-          </div>
         </section>
       ) : null}
 
@@ -458,7 +446,6 @@ export default async function HankeSivu({
           <h2 id="paatokset-otsikko" className="text-xl font-semibold">
             Päätökset
           </h2>
-          <div className="sisalto-levea">
           <Korttiruudukko>
             {paatokset.map((rivi) => (
               <AvattavaKortti
@@ -473,7 +460,6 @@ export default async function HankeSivu({
               />
             ))}
           </Korttiruudukko>
-          </div>
         </section>
       ) : null}
 
@@ -486,7 +472,6 @@ export default async function HankeSivu({
             Luvut on merkitty vaihtoehdoittain. Hankkeen omat kentät voivat olla
             yhteenveto tai tyhjiä, jos lähde antaa vain vaihtoehtokohtaiset arvot.
           </p>
-          <div className="sisalto-levea">
           <Korttiruudukko>
             {vaihtoehdot.map((vaihtoehto) => (
               <AvattavaKortti
@@ -542,7 +527,6 @@ export default async function HankeSivu({
               />
             ))}
           </Korttiruudukko>
-          </div>
         </section>
       ) : null}
 
@@ -551,7 +535,6 @@ export default async function HankeSivu({
           <h2 id="roolit-otsikko" className="text-xl font-semibold">
             Organisaatiot hankkeessa
           </h2>
-          <div className="sisalto-levea">
           <Korttiruudukko>
             {organisaatioroolit.map((rivi) => (
               <AvattavaKortti
@@ -577,7 +560,6 @@ export default async function HankeSivu({
               />
             ))}
           </Korttiruudukko>
-          </div>
         </section>
       ) : null}
 
@@ -595,7 +577,7 @@ export default async function HankeSivu({
         {asiakirjat.length === 0 ? (
           <p className="mt-3">Ei merkittyjä asiakirjoja.</p>
         ) : (
-          <ul className="sisalto-levea mt-4 grid gap-3 sm:grid-cols-2">
+          <ul className="mt-4 grid gap-3 sm:grid-cols-2">
             {asiakirjat.map((asiakirja) => (
               <li key={asiakirja.id} className="rounded border border-border bg-surface p-4">
                 <p className="font-medium">
@@ -647,7 +629,6 @@ export default async function HankeSivu({
         {maaraajat.length === 0 ? (
           <p className="mt-3">Ei merkittyjä määräaikoja.</p>
         ) : (
-          <div className="sisalto-levea">
           <Korttiruudukko>
             {maaraajat.map((maaraaika) => {
               const menettely = menettelyt.find((rivi) => rivi.id === maaraaika.menettely_id);
@@ -665,7 +646,6 @@ export default async function HankeSivu({
               );
             })}
           </Korttiruudukko>
-          </div>
         )}
       </section>
 
@@ -674,7 +654,6 @@ export default async function HankeSivu({
           <h2 id="johdot-otsikko" className="text-xl font-semibold">
             Sähkönsiirto
           </h2>
-          <div className="sisalto-levea">
           <Korttiruudukko>
             {johdot.map((johto) => (
               <AvattavaKortti
@@ -696,7 +675,6 @@ export default async function HankeSivu({
               />
             ))}
           </Korttiruudukko>
-          </div>
         </section>
       ) : null}
 
@@ -709,7 +687,6 @@ export default async function HankeSivu({
           Asiakirjalista (JSON)
         </a>
       </p>
-      </SisaltoKaare>
     </main>
   );
 }

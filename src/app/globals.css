@@ -325,47 +325,57 @@ form[aria-busy="true"] input[type="checkbox"] {
   outline-offset: 2px;
 }
 
-/* --- Leipätekstin rivipituus: yksi keskussarake, leveät ulosmurtautuvat --- */
-#sisalto:not(.kartta-koko-naytto) {
-  container-type: inline-size;
-  container-name: sisalto;
-  display: grid;
-  grid-template-columns: 1fr min(70ch, 100%) 1fr;
+/* --- Leipätekstin rivipituus (#sisalto) --- */
+#sisalto {
+  --teksti-max-leveys: 70ch;
+}
+
+#sisalto :where(h1, h2, h3, h4, h5, h6, p, dl, blockquote, article, figcaption) {
+  max-width: var(--teksti-max-leveys);
+  margin-inline: auto;
   width: 100%;
 }
 
-#sisalto-sisaltokaare {
-  display: contents;
-}
-
-#sisalto-sisaltokaare > * {
-  grid-column: 2;
-  min-width: 0;
-}
-
-#sisalto-sisaltokaare > .sisalto-levea {
-  grid-column: 1 / -1;
-  display: grid;
-  grid-template-columns: 1fr min(70ch, 100%) 1fr;
+#sisalto :where(ul, ol) {
+  max-width: var(--teksti-max-leveys);
+  margin-inline: auto;
   width: 100%;
 }
 
-#sisalto-sisaltokaare > .sisalto-levea > * {
-  grid-column: 2;
-  min-width: 0;
+#sisalto :where(table, form, .faktakortti, .maplibregl-map) {
+  max-width: none;
+  margin-inline: unset;
 }
 
-#sisalto-sisaltokaare > .sisalto-levea > .sisalto-levea,
-#sisalto-sisaltokaare > .sisalto-levea.sisalto-levea-taysi > * {
-  grid-column: 1 / -1;
+#sisalto table {
+  width: 100%;
 }
 
-/* Leveä lohko kapean vanhemman sisällä: täysi #sisalto-leveys */
-#sisalto-sisaltokaare > :not(.sisalto-levea) .sisalto-levea {
-  width: 100cqw;
-  max-width: 100%;
-  margin-inline: calc((100cqw - 100%) / -2);
-  box-sizing: border-box;
+#sisalto :where(th, td, table *) {
+  max-width: none;
+  margin-inline: unset;
+}
+
+#sisalto :where(
+  ul.divide-y,
+  ul.grid,
+  div.grid:has(.faktakortti),
+  div:has(> .maplibregl-map),
+  section[aria-labelledby="avoin-data-otsikko"] ul
+) {
+  max-width: none;
+  margin-inline: unset;
+  width: 100%;
+}
+
+#sisalto :where(ul.divide-y, ul.grid) :where(h1, h2, h3, h4, h5, h6, p, dl, blockquote) {
+  max-width: none;
+  margin-inline: unset;
+}
+
+#sisalto ul.grid :where(li, figure, figcaption, figcaption p) {
+  max-width: none;
+  margin-inline: unset;
 }
 
 /* --- Muutosloki: tiiviimpi tyhjä tila --- */
