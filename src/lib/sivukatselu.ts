@@ -1,4 +1,5 @@
 import type { NextRequest } from "next/server";
+import { pyyntoNayttaaKirjautuneelta } from "@/lib/supabase/istunto";
 
 const BOT_KUVIO =
   /bot|crawler|spider|slurp|facebookexternalhit|preview|headless|curl|wget|python-requests|go-http-client/i;
@@ -6,6 +7,7 @@ const BOT_KUVIO =
 /** Kirjataanko tämä GET-pyyntö sivulataukseksi. */
 export function pitaaKirjataSivukatselu(request: NextRequest): boolean {
   if (request.method !== "GET") return false;
+  if (pyyntoNayttaaKirjautuneelta(request)) return false;
   const polku = request.nextUrl.pathname;
   if (!polku.startsWith("/")) return false;
   if (polku.startsWith("/_next") || polku.startsWith("/api")) return false;

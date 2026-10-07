@@ -183,7 +183,7 @@ export default async function YllapitoSivu({
         </h2>
         <p className="mt-1 text-sm text-muted">
           Kevyt oma laskuri: tallennetaan vain polku ja aika. Ylläpito- ja kirjautumissivuja ei lasketa.
-          Botit suodatetaan User-Agentin perusteella.
+          Kirjautuneen ylläpitäjän selaus ei näy tilastoissa. Botit suodatetaan User-Agentin perusteella.
         </p>
         <SivukatseluYhteenveto yhteenveto={sivukatselu} />
       </section>

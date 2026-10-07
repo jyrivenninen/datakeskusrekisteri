@@ -1,6 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 
-function onAuthEvaste(request: NextRequest): boolean {
+/** Supabase Auth -eväste (ei kutsu getUser:ia — turvallinen Edgessä). */
+export function pyyntoNayttaaKirjautuneelta(request: NextRequest): boolean {
   return request.cookies.getAll().some((evaste) => evaste.name.includes("auth-token"));
 }
 
@@ -11,7 +12,7 @@ function onAuthEvaste(request: NextRequest): boolean {
 export function paivitaIstunto(request: NextRequest) {
   if (
     request.nextUrl.pathname.startsWith("/yllapito") &&
-    !onAuthEvaste(request)
+    !pyyntoNayttaaKirjautuneelta(request)
   ) {
     const osoite = request.nextUrl.clone();
     osoite.pathname = "/kirjaudu";
