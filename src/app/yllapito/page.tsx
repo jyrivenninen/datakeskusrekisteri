@@ -18,7 +18,9 @@ import {
   EhdotusTila,
   ehdotusLuokkaRiviLuokka,
 } from "@/komponentit/ehdotus-tila";
+import { SivukatseluYhteenveto } from "@/komponentit/sivukatselu-yhteenveto";
 import { YllapitoOhjeet } from "@/komponentit/yllapito-ohjeet";
+import { haeSivukatseluYhteenveto } from "@/lib/supabase/sivukatselu-kysely";
 import {
   haeHankkeetDuplikaattiKohteet,
   haeHankkeetYllapitoon,
@@ -119,6 +121,7 @@ export default async function YllapitoSivu({
   const duplikaattiKohteet = supabasePalvelinAvainAsetettu()
     ? await haeHankkeetDuplikaattiKohteet()
     : [];
+  const sivukatselu = await haeSivukatseluYhteenveto(supabase);
   const poistettuKohdeIdt = [
     ...new Set(
       poistetut
@@ -174,6 +177,16 @@ export default async function YllapitoSivu({
         </form>
       </div>
       <YllapitoOhjeet massahyvaksynta={massahyvaksynta} />
+      <section className="mt-8 rounded border border-border bg-surface px-4 py-4" aria-labelledby="katselu-otsikko">
+        <h2 id="katselu-otsikko" className="text-lg font-semibold">
+          Sivulataukset
+        </h2>
+        <p className="mt-1 text-sm text-muted">
+          Kevyt oma laskuri: tallennetaan vain polku ja aika. Ylläpito- ja kirjautumissivuja ei lasketa.
+          Botit suodatetaan User-Agentin perusteella.
+        </p>
+        <SivukatseluYhteenveto yhteenveto={sivukatselu} />
+      </section>
       {hyvaksyttyLkm === 1 ? (
         <p className="mt-4">Ehdotus käsiteltiin.</p>
       ) : hyvaksyttyLkm > 1 ? (
