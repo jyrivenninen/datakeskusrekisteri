@@ -1487,7 +1487,9 @@ export default async function EhdotusSivu({
               <dl className="mt-2 divide-y divide-border border-y border-border">
                 {Object.entries(kentat).map(([kentta, tieto]) => (
                   <div key={kentta} className="py-3">
-                    <dt className="font-medium">{HANKE_KENTTA_NIMET[kentta] ?? kentta}</dt>
+                    <dt className="font-medium">
+                      {kentta === "tunnus" ? "Kuvaus" : (HANKE_KENTTA_NIMET[kentta] ?? kentta)}
+                    </dt>
                     <dd className="mt-1">
                       {tieto.arvo}
                       {tieto.luottamus ? (

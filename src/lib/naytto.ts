@@ -209,6 +209,7 @@ type JononSisalto = {
   huomio?: string;
   vaatii_lukeminen?: boolean;
   rakentamisvaiheet?: readonly unknown[] | null;
+  vaihtoehdot?: Record<string, unknown> | null;
 };
 
 /** Hyväksy-painike ei julkaise: lähde on lukematta tai kenttä valitaan sanan mukaan. */
@@ -233,7 +234,8 @@ export function massaHyvaksyntaOhitettavaSisalto(
   sisalto: JononSisalto | null | undefined,
 ): boolean {
   if (ehdotuksenHyvaksyntaEstetty(sisalto)) return true;
-  return Boolean(sisalto?.rakentamisvaiheet && sisalto.rakentamisvaiheet.length > 0);
+  if (sisalto?.rakentamisvaiheet && sisalto.rakentamisvaiheet.length > 0) return true;
+  return Boolean(sisalto?.vaihtoehdot && Object.keys(sisalto.vaihtoehdot).length > 0);
 }
 
 export const RISTIRIITA_SAANTO_NIMET: Record<string, string> = {

@@ -496,12 +496,13 @@ export async function hyvaksyMuutosehdotus(
   const vaihtoehtoRivit = Object.entries(vaihtoehdot).map(([tunnus, kentatVe]) => {
     const rivinKentat: Record<string, string> = {};
     const rivinLahteet = [];
-    const ensimmainen = Object.values(kentatVe)[0];
-    if (!ensimmainen) {
+    const tunnusLahde = kentatVe.tunnus ?? Object.values(kentatVe)[0];
+    if (!tunnusLahde) {
       throw new Error(`Vaihtoehdolta ${tunnus} puuttuvat kentät.`);
     }
-    rivinLahteet.push(lahdeRivi("tunnus", ensimmainen, "epavarma"));
+    rivinLahteet.push(lahdeRivi("tunnus", tunnusLahde, "epavarma"));
     for (const [kentta, tieto] of Object.entries(kentatVe)) {
+      if (kentta === "tunnus") continue;
       if (!sallitut.has(kentta)) {
         throw new Error(`Vaihtoehdon kenttä ei ole sallittu: ${kentta}`);
       }
