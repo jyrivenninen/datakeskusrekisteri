@@ -93,6 +93,16 @@ export type EhdotusSisalto = {
     lainaus?: string | null;
     merkitse_ei_lahdetta?: boolean;
   };
+  lahde_metatiedot?: {
+    dokumentti_id: string;
+    url: string;
+    esiintymia: number;
+    ehdotettu_lahde_tyyppi: string;
+    ehdotettu_sitovuustaso: string;
+    nykyinen_lahde_tyyppi: string;
+    nykyinen_sitovuustaso: string;
+    otsikko_automaattinen: boolean;
+  };
   paatos?: {
     kuvaus: string;
     pvm: string;

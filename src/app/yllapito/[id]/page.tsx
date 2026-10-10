@@ -1,5 +1,18 @@
 import { notFound, redirect } from "next/navigation";
-import { hyvaksyEhdotusToiminto, hylkaaEhdotusToiminto, julkaiseHankeToiminto, korjaaLinkkiLahdeToiminto } from "@/app/toiminnot";
+import {
+  hyvaksyEhdotusToiminto,
+  hylkaaEhdotusToiminto,
+  julkaiseHankeToiminto,
+  korjaaLinkkiLahdeToiminto,
+  tallennaLahdeMetatiedotToiminto,
+} from "@/app/toiminnot";
+import {
+  LAHDE_TYYPPI_NIMET,
+  LAHDE_TYYPIT,
+  SITOVUUSTASO_NIMET,
+  SITOVUUSTASOT,
+} from "@/lib/lahde-metatiedot";
+import { puraDomain } from "@/lib/lahde-tyyppi-domain";
 import { EhdotusLuokka, EhdotusTila } from "@/komponentit/ehdotus-tila";
 import {
   ehdotusPoistetulleHankkeelle,
@@ -77,6 +90,8 @@ export default async function EhdotusSivu({
   const esikasittelu = sisalto.esikasittelu;
   const tiivistys = sisalto.tiivistys;
   const ristiriita = sisalto.ristiriita;
+  const lahdeMetatiedot = sisalto.lahde_metatiedot;
+  const lahdeMetatiedotUrl = lahdeMetatiedot?.url ?? ehdotus.lahde_url ?? null;
   const hankeIdt = ehdotuksenHankeIdt(ehdotus.hanke_id, ristiriita);
   let hankkeet = await haeHankkeetYllapitoon(hankeIdt);
   if (hankkeet.length === 0 && hankeIdt.length > 0) {
@@ -302,6 +317,84 @@ export default async function EhdotusSivu({
         <p className="mt-4">
           <strong>Käsittelyn perustelu:</strong> {ehdotus.perustelu}
         </p>
+      ) : null}
+
+      {lahdeMetatiedot && lahdeMetatiedotUrl ? (
+        <section className="mt-6" aria-labelledby="lahde-metatiedot-otsikko">
+          <h2 id="lahde-metatiedot-otsikko" className="text-xl font-semibold">
+            Lähde-URL ja dokumentti
+          </h2>
+          <p className="mt-2 max-w-prose text-sm text-muted">
+            Ehdotus koskee dokumenttirekisterin riviä (URL-tasoinen lähdetyyppi). Hyväksyntä
+            päivittää <code className="text-xs">dokumentit.lahde_tyyppi</code> ja{" "}
+            <code className="text-xs">sitovuustaso</code>. Voit korjata arvot ennen tallennusta.
+          </p>
+          <dl className="mt-4 divide-y divide-border border-y border-border">
+            <div className="py-3">
+              <dt className="font-medium">URL</dt>
+              <dd className="mt-1 break-all">
+                <a
+                  href={lahdeMetatiedotUrl}
+                  className="text-link underline"
+                  rel="noopener noreferrer"
+                >
+                  {lahdeMetatiedotUrl}
+                </a>
+              </dd>
+            </div>
+            {puraDomain(lahdeMetatiedotUrl) ? (
+              <div className="py-3">
+                <dt className="font-medium">Verkkotunnus</dt>
+                <dd className="mt-1 font-mono text-sm">{puraDomain(lahdeMetatiedotUrl)}</dd>
+              </div>
+            ) : null}
+            <div className="py-3">
+              <dt className="font-medium">Esiintymiä lähteissä</dt>
+              <dd className="mt-1">{lahdeMetatiedot.esiintymia ?? "—"}</dd>
+            </div>
+            <div className="py-3">
+              <dt className="font-medium">Dokumentti-ID</dt>
+              <dd className="mt-1 font-mono text-sm">{lahdeMetatiedot.dokumentti_id}</dd>
+            </div>
+            <div className="py-3">
+              <dt className="font-medium">Nykyinen tyyppi / sitovuus</dt>
+              <dd className="mt-1">
+                {LAHDE_TYYPPI_NIMET[
+                  lahdeMetatiedot.nykyinen_lahde_tyyppi as keyof typeof LAHDE_TYYPPI_NIMET
+                ] ?? lahdeMetatiedot.nykyinen_lahde_tyyppi}{" "}
+                ·{" "}
+                {SITOVUUSTASO_NIMET[
+                  lahdeMetatiedot.nykyinen_sitovuustaso as keyof typeof SITOVUUSTASO_NIMET
+                ] ?? lahdeMetatiedot.nykyinen_sitovuustaso}
+              </dd>
+            </div>
+            <div className="py-3">
+              <dt className="font-medium">Ehdotettu tyyppi / sitovuus</dt>
+              <dd className="mt-1">
+                {LAHDE_TYYPPI_NIMET[
+                  lahdeMetatiedot.ehdotettu_lahde_tyyppi as keyof typeof LAHDE_TYYPPI_NIMET
+                ] ?? lahdeMetatiedot.ehdotettu_lahde_tyyppi}{" "}
+                ·{" "}
+                {SITOVUUSTASO_NIMET[
+                  lahdeMetatiedot.ehdotettu_sitovuustaso as keyof typeof SITOVUUSTASO_NIMET
+                ] ?? lahdeMetatiedot.ehdotettu_sitovuustaso}
+              </dd>
+            </div>
+            {lahdeMetatiedot.otsikko_automaattinen ? (
+              <div className="py-3">
+                <dt className="font-medium">Otsikko</dt>
+                <dd className="mt-1 text-sm text-muted">
+                  Automaattinen (otsikko = URL). Korjaa otsikko hyväksyntälomakkeessa tarvittaessa.
+                </dd>
+              </div>
+            ) : null}
+          </dl>
+          <p className="mt-3 text-sm">
+            <a href="/yllapito/lahde-tyypit" className="text-link underline">
+              Avaa läpikäyntinäkymä
+            </a>
+          </p>
+        </section>
       ) : null}
 
       {kunta ? (
@@ -1332,6 +1425,75 @@ export default async function EhdotusSivu({
 
       {odottaa ? (
         <div className="mt-8 flex flex-col gap-6">
+          {ehdotus.tyyppi === "lahde_tyyppi_havainto" && lahdeMetatiedot ? (
+            <form action={tallennaLahdeMetatiedotToiminto} className="space-y-4 rounded border border-border bg-surface p-4">
+              <input type="hidden" name="dokumentti_id" value={lahdeMetatiedot.dokumentti_id} />
+              <input type="hidden" name="ehdotus_id" value={ehdotus.id} />
+              <input type="hidden" name="paluu" value={`/yllapito/${id}`} />
+              <p className="max-w-prose text-sm text-muted">
+                Tallennus päivittää dokumentin metatiedot ja merkitsee tämän ehdotuksen hyväksytyksi.
+              </p>
+              <div className="grid gap-3 sm:grid-cols-2">
+                <div>
+                  <label htmlFor="lahde_tyyppi" className="block text-sm font-medium">
+                    Lähdetyyppi
+                  </label>
+                  <select
+                    id="lahde_tyyppi"
+                    name="lahde_tyyppi"
+                    defaultValue={lahdeMetatiedot.ehdotettu_lahde_tyyppi}
+                    className="mt-1 w-full rounded border border-border bg-background px-2 py-2 text-sm"
+                  >
+                    {LAHDE_TYYPIT.map((t) => (
+                      <option key={t} value={t}>
+                        {LAHDE_TYYPPI_NIMET[t]}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label htmlFor="sitovuustaso" className="block text-sm font-medium">
+                    Sitovuustaso
+                  </label>
+                  <select
+                    id="sitovuustaso"
+                    name="sitovuustaso"
+                    defaultValue={lahdeMetatiedot.ehdotettu_sitovuustaso}
+                    className="mt-1 w-full rounded border border-border bg-background px-2 py-2 text-sm"
+                  >
+                    {SITOVUUSTASOT.map((s) => (
+                      <option key={s} value={s}>
+                        {SITOVUUSTASO_NIMET[s]}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+              {lahdeMetatiedot.otsikko_automaattinen ? (
+                <div>
+                  <label htmlFor="otsikko" className="block text-sm font-medium">
+                    Otsikko (valinnainen korjaus)
+                  </label>
+                  <input
+                    id="otsikko"
+                    name="otsikko"
+                    type="text"
+                    placeholder={lahdeMetatiedotUrl ?? ""}
+                    className="mt-1 w-full rounded border border-border bg-background px-2 py-2 text-sm"
+                  />
+                </div>
+              ) : null}
+              {supabasePalvelinAvainAsetettu() ? (
+                <button
+                  type="submit"
+                  className="rounded border border-foreground bg-foreground px-4 py-2 text-sm font-medium text-background"
+                >
+                  {hyvaksyTeksti}
+                </button>
+              ) : null}
+            </form>
+          ) : null}
+          {ehdotus.tyyppi !== "lahde_tyyppi_havainto" ? (
           <form action={hyvaksyEhdotusToiminto} className="space-y-3">
             <input type="hidden" name="id" value={ehdotus.id} />
             {ristiriita ? (
@@ -1464,6 +1626,7 @@ export default async function EhdotusSivu({
               {hyvaksyTeksti}
             </button>
           </form>
+          ) : null}
           <form action={hylkaaEhdotusToiminto} className="space-y-2">
             <input type="hidden" name="id" value={ehdotus.id} />
             {ristiriita ? (

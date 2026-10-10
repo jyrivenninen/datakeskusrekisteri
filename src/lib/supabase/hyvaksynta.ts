@@ -231,6 +231,12 @@ export async function hyvaksyMuutosehdotus(
     throw new Error("Ehdotus on jo käsitelty.");
   }
 
+  if (ehdotus.tyyppi === "lahde_tyyppi_havainto") {
+    throw new Error(
+      "Lähdetyypitys hyväksytään ehdotussivun lomakkeella tai läpikäynnissä, ei yleisellä hyväksynnällä.",
+    );
+  }
+
   if (ehdotus.hanke_id) {
     const { data: hanke, error: hankeVirhe } = await supabase
       .from("hankkeet")
@@ -597,6 +603,29 @@ export async function merkitseHankeDuplikaatiksi(
     p_kohde: kohdeId,
     p_kasittelija: kasittelija,
     p_perustelu: perustelu,
+  });
+  if (error) throw new Error(error.message);
+}
+
+export async function julkaiseDokumenttiLahdeMetatiedot(
+  opts: {
+    dokumenttiId: string;
+    lahdeTyyppi: string;
+    sitovuustaso: string;
+    otsikko: string;
+    ehdotusId: string | null;
+  },
+  kasittelija: string,
+) {
+  const supabase = luoYllapitoAsiakas();
+  const otsikko = opts.otsikko.trim();
+  const { error } = await supabase.rpc("julkaise_dokumentti_lahde_metatiedot", {
+    p_dokumentti_id: opts.dokumenttiId,
+    p_lahde_tyyppi: opts.lahdeTyyppi,
+    p_sitovuustaso: opts.sitovuustaso,
+    p_otsikko: otsikko || null,
+    p_ehdotus_id: opts.ehdotusId,
+    p_kasittelija: kasittelija,
   });
   if (error) throw new Error(error.message);
 }

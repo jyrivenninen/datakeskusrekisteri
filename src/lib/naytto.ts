@@ -108,6 +108,7 @@ export const MUUTOSEHDOTUS_TYYPPI_NIMET: Record<string, string> = {
   kentta_tyhjennys: "Kentän tyhjennys",
   paatos: "Viranomaispäätös",
   maaraaja: "Määräaika",
+  lahde_tyyppi_havainto: "Lähdetyypin ehdotus",
 };
 
 export const MAARAAJA_KENTTA_NIMET: Record<string, string> = {
@@ -157,6 +158,7 @@ export function onHavaintoTyyppi(tyyppi: string): boolean {
 }
 
 export function ehdotusLuokkaAvain(tyyppi: string): EhdotusLuokkaAvain {
+  if (tyyppi === "lahde_tyyppi_havainto") return "havainto";
   if (onHavaintoTyyppi(tyyppi)) return "havainto";
   if (KENTTA_LUOKKA_TYYPIT.has(tyyppi)) return "kentta";
   return "taydennys";
@@ -180,6 +182,7 @@ export function hyvaksyPainikeTeksti(
   }
   if (tyyppi === "kentta_tarkistus") return "Hyväksy merkintä";
   if (tyyppi === "kentta_tyhjennys") return "Hyväksy tyhjennys";
+  if (tyyppi === "lahde_tyyppi_havainto") return "Tallenna dokumentin metatiedot";
   return "Hyväksy ja julkaise";
 }
 
@@ -194,6 +197,7 @@ export function ehdotusPoistetulleHankkeelle(
 /** Massakäsittely ohittaa: vaatii yksittäisen tarkistuksen tai erillisen perustelun. */
 export function massaHyvaksyntaOhitettava(tyyppi: string): boolean {
   return (
+    tyyppi === "lahde_tyyppi_havainto" ||
     tyyppi === "ristiriita_havainto" ||
     tyyppi === "paatos" ||
     tyyppi === "maaraaja" ||

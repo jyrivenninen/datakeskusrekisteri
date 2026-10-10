@@ -20,7 +20,8 @@ import {
 import { ehdotusPoistetulleHankkeelle, kasittelijaMerkinta, massaHyvaksyntaOhitettava } from "@/lib/naytto";
 import { LUOTTAMUSTASOT, PALAUTE_AIHEET, type Luottamus } from "@/lib/supabase/tietokanta";
 import { haeKirjautunutKayttaja, haeYllapitaja, luoPalvelinAsiakas, vaadiYllapitaja as vaadiYllapitajaSivu } from "@/lib/supabase/palvelin";
-import { hylkaaMuutosehdotus, hyvaksyMuutosehdotus, julkaiseHanke, kuitaaHankeKentat, merkitseHankeDuplikaatiksi, paivitaKenttaLahdeUrl, paivitaKuittausLuottamus, piilotaHankeKuva, yhdistaHankkeetEhdotuksesta } from "@/lib/supabase/hyvaksynta";
+import { hylkaaMuutosehdotus, hyvaksyMuutosehdotus, julkaiseDokumenttiLahdeMetatiedot, julkaiseHanke, kuitaaHankeKentat, merkitseHankeDuplikaatiksi, paivitaKenttaLahdeUrl, paivitaKuittausLuottamus, piilotaHankeKuva, yhdistaHankkeetEhdotuksesta } from "@/lib/supabase/hyvaksynta";
+import { LAHDE_TYYPIT, SITOVUUSTASOT } from "@/lib/lahde-metatiedot";
 import { haeKuittausNakyma } from "@/lib/supabase/kuittaus-kysely";
 import { onKuittausTaydennys, ryhmitteleKuittausKentat } from "@/lib/kuittaus";
 import {
@@ -1212,6 +1213,56 @@ export async function lahetaPalaute(formData: FormData): Promise<void> {
   });
   if (error) palauteVirhe(error.message);
   redirect("/yhteys?valmis=1");
+}
+
+export async function tallennaLahdeMetatiedotToiminto(formData: FormData): Promise<void> {
+  const { kasittelija } = await vaadiYllapitaja();
+  const dokumenttiId = String(formData.get("dokumentti_id") ?? "").trim();
+  const lahdeTyyppi = String(formData.get("lahde_tyyppi") ?? "").trim();
+  const sitovuustaso = String(formData.get("sitovuustaso") ?? "").trim();
+  const otsikko = String(formData.get("otsikko") ?? "");
+  const ehdotusIdRaw = String(formData.get("ehdotus_id") ?? "").trim();
+  const ehdotusId = ehdotusIdRaw || null;
+  const paluu = String(formData.get("paluu") ?? "/yllapito/lahde-tyypit").trim();
+
+  if (!dokumenttiId) {
+    redirect(`${paluu}?virhe=${encodeURIComponent("Dokumentti puuttuu.")}`);
+  }
+  if (!(LAHDE_TYYPIT as readonly string[]).includes(lahdeTyyppi)) {
+    redirect(`${paluu}?virhe=${encodeURIComponent("Valitse kelvollinen lähdetyyppi.")}`);
+  }
+  if (!(SITOVUUSTASOT as readonly string[]).includes(sitovuustaso)) {
+    redirect(`${paluu}?virhe=${encodeURIComponent("Valitse kelvollinen sitovuustaso.")}`);
+  }
+  if (!supabasePalvelinAvainAsetettu()) {
+    redirect(`${paluu}?virhe=${encodeURIComponent("Tallennus vaatii palvelinavaimen.")}`);
+  }
+
+  try {
+    await julkaiseDokumenttiLahdeMetatiedot(
+      {
+        dokumenttiId,
+        lahdeTyyppi,
+        sitovuustaso,
+        otsikko,
+        ehdotusId,
+      },
+      kasittelija,
+    );
+  } catch (syy) {
+    const viesti = syy instanceof Error ? syy.message : "Tallennus epäonnistui.";
+    redirect(`${paluu}?virhe=${encodeURIComponent(viesti)}`);
+  }
+
+  revalidatePath("/yllapito/lahde-tyypit");
+  revalidatePath("/yllapito");
+  revalidatePath("/hankkeet", "layout");
+  if (paluu.startsWith("/yllapito/") && paluu !== "/yllapito/lahde-tyypit") {
+    revalidatePath(paluu.split("?")[0] ?? paluu);
+  }
+  const erotin = paluu.includes("?") ? "&" : "?";
+  const onnistui = paluu.includes("/yllapito/") && !paluu.includes("lahde-tyypit") ? "julkaistu" : "kasitelty";
+  redirect(`${paluu}${erotin}${onnistui}=1`);
 }
 
 export async function merkitsePalauteKasitellyksi(formData: FormData): Promise<void> {

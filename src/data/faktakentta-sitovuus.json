@@ -1,0 +1,17 @@
+[
+  { "taulu": "hankkeet", "kentta": "teho_mw", "luokka": "sitovuus_merkittaa" },
+  { "taulu": "hankkeet", "kentta": "it_teho_mw", "luokka": "sitovuus_merkittaa" },
+  { "taulu": "hankkeet", "kentta": "pinta_ala_ha", "luokka": "sitovuus_merkittaa" },
+  { "taulu": "hankkeet", "kentta": "generaattorit_lkm", "luokka": "sitovuus_merkittaa" },
+  { "taulu": "hankkeet", "kentta": "sahkonkaytto_twh_a", "luokka": "sitovuus_merkittaa" },
+  { "taulu": "hankkeet", "kentta": "vaihe", "luokka": "sitovuus_merkittaa" },
+  { "taulu": "hankkeet", "kentta": "kaavatunnus", "luokka": "sitovuus_merkittaa" },
+  { "taulu": "hankkeet", "kentta": "kortteli", "luokka": "sitovuus_merkittaa" },
+  { "taulu": "hankkeet", "kentta": "nimi", "luokka": "sitovuus_ei_merkittava" },
+  { "taulu": "hankkeet", "kentta": "kunta", "luokka": "sitovuus_ei_merkittava" },
+  { "taulu": "hankkeet", "kentta": "maakunta", "luokka": "sitovuus_ei_merkittava" },
+  { "taulu": "hankkeet", "kentta": "sijainti", "luokka": "sitovuus_ei_merkittava" },
+  { "taulu": "hankkeet", "kentta": "toimija_organisaatio_id", "luokka": "sitovuus_ei_merkittava" },
+  { "taulu": "maaraajat", "kentta": "*", "luokka": "sitovuus_merkittaa" },
+  { "taulu": "paatokset", "kentta": "*", "luokka": "sitovuus_merkittaa" }
+]

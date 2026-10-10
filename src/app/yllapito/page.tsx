@@ -1,5 +1,6 @@
 import Link from "next/link";
 import type { EhdotusSisalto } from "@/lib/ehdotus";
+import { LAHDE_TYYPPI_NIMET, type LahdeTyyppi } from "@/lib/lahde-metatiedot";
 import { haeKirjautunutKayttaja } from "@/lib/supabase/palvelin";
 import { redirect } from "next/navigation";
 import { hyvaksyKaikkiOdottavatToiminto, julkaiseHankeToiminto, kirjauduUlos, merkitseHankeDuplikaatiksiToiminto } from "@/app/toiminnot";
@@ -64,7 +65,7 @@ export default async function YllapitoSivu({
   const params = await searchParams;
   const { data: ehdotukset } = await supabase
     .from("muutosehdotukset")
-    .select("id, tyyppi, tila, luotu_pvm, ehdottaja_tunniste, hanke_id, kasittelija, kasitelty_pvm, huomautus, sisalto")
+    .select("id, tyyppi, tila, luotu_pvm, ehdottaja_tunniste, hanke_id, kasittelija, kasitelty_pvm, huomautus, lahde_url, sisalto")
     .order("luotu_pvm", { ascending: false });
   const hankeIdt = [
     ...new Set(
@@ -136,6 +137,8 @@ export default async function YllapitoSivu({
     const kasittely = kasittelySelite(ehdotus.kasittelija, ehdotus.kasitelty_pvm);
     const sisalto = ehdotus.sisalto as EhdotusSisalto | null;
     const kuntaDokumentit = sisalto?.kunta?.dokumentit?.length ?? 0;
+    const lahdeMeta = sisalto?.lahde_metatiedot;
+    const lahdeMetaUrl = lahdeMeta?.url ?? ehdotus.lahde_url ?? null;
     return (
       <li
         key={ehdotus.id}
@@ -158,6 +161,20 @@ export default async function YllapitoSivu({
             ? ` · ${kuntaDokumentit} ehdotettua asiakirjaa`
             : ""}
         </p>
+        {ehdotus.tyyppi === "lahde_tyyppi_havainto" && lahdeMetaUrl ? (
+          <p className="mt-1 break-all text-sm">
+            <span className="font-medium">URL:</span> {lahdeMetaUrl}
+            {lahdeMeta?.ehdotettu_lahde_tyyppi ? (
+              <span className="text-muted">
+                {" "}
+                · ehdotus:{" "}
+                {LAHDE_TYYPPI_NIMET[lahdeMeta.ehdotettu_lahde_tyyppi as LahdeTyyppi] ??
+                  lahdeMeta.ehdotettu_lahde_tyyppi}
+                {lahdeMeta.esiintymia != null ? ` · ${lahdeMeta.esiintymia} viittausta` : ""}
+              </span>
+            ) : null}
+          </p>
+        ) : null}
         {ehdotus.huomautus ? (
           <p className="mt-1 text-sm">{ehdotus.huomautus}</p>
         ) : null}
@@ -177,6 +194,13 @@ export default async function YllapitoSivu({
         </form>
       </div>
       <YllapitoOhjeet massahyvaksynta={massahyvaksynta} />
+      <p className="mt-6 text-sm">
+        <Link href="/yllapito/lahde-tyypit" className="font-medium text-link underline">
+          Lähdetyyppien läpikäynti
+        </Link>
+        {" — "}
+        URL-tasoinen lahde_tyyppi ja sitovuustaso (domain-ehdotukset ja käsin täydennys).
+      </p>
       <section className="mt-8 rounded border border-border bg-surface px-4 py-4" aria-labelledby="katselu-otsikko">
         <h2 id="katselu-otsikko" className="text-lg font-semibold">
           Sivulataukset

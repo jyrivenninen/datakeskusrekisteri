@@ -38,6 +38,9 @@ yarn-error.log*
 # vercel
 .vercel
 
+# Paikalliset assetit (ei repoon)
+/lokaali/
+
 # typescript
 *.tsbuildinfo
 next-env.d.ts

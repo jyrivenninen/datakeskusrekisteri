@@ -13,6 +13,7 @@
  */
 import { createHash } from "node:crypto";
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
+import { verkkotunnusYtjWebsite } from "../../src/lib/lahde-tyyppi-domain";
 import { robotsSallii } from "../tarkistukset/robots";
 import { lataaPaikallinenYmparisto } from "../ymparisto";
 
@@ -51,6 +52,7 @@ type YtjYritys = {
   names?: YtjNimi[];
   mainBusinessLine?: YtjToimiala;
   addresses?: YtjOsoite[];
+  website?: { url?: string; registrationDate?: string };
   lastModified?: string;
 };
 
@@ -204,7 +206,7 @@ async function main() {
 
   const { data: organisaatiot, error: orgVirhe } = await supabase
     .from("organisaatiot")
-    .select("id, nimi, y_tunnus, tyyppi")
+    .select("id, nimi, y_tunnus, tyyppi, verkkotunnus")
     .eq("julkaistu", true);
   if (orgVirhe) throw new Error(orgVirhe.message);
 
@@ -242,9 +244,19 @@ async function main() {
     (odottavat ?? []).map((r) => r.lahde_url).filter((u): u is string => Boolean(u)),
   );
   const jonossaOrg = new Set<string>();
+  const jonossaVerkkotunnusOrg = new Set<string>();
   for (const rivi of odottavat ?? []) {
-    const sisalto = rivi.sisalto as { ytj?: { organisaatio_id?: string; y_tunnus?: string } };
+    const sisalto = rivi.sisalto as {
+      ytj?: {
+        organisaatio_id?: string;
+        y_tunnus?: string;
+        ehdota_verkkotunnus?: boolean;
+      };
+    };
     if (sisalto.ytj?.organisaatio_id) jonossaOrg.add(sisalto.ytj.organisaatio_id);
+    if (sisalto.ytj?.ehdota_verkkotunnus && sisalto.ytj.organisaatio_id) {
+      jonossaVerkkotunnusOrg.add(sisalto.ytj.organisaatio_id);
+    }
     if (sisalto.ytj?.y_tunnus) kaytossa.add(sisalto.ytj.y_tunnus);
   }
 
@@ -366,7 +378,21 @@ async function main() {
         havainnot.push("YTJ-tietue muuttui edelliseen hakuun verrattuna.");
       }
 
-      const ehdotusTarvitaan = havainnot.length > 0 && !jonossa.has(tietue);
+      const ytjVerkkotunnus = yritys ? verkkotunnusYtjWebsite(yritys.website?.url) : null;
+      const nykyinenTunnus = merkkijono(org.verkkotunnus)?.toLowerCase() ?? null;
+      const ehdotaVerkkotunnus =
+        Boolean(ytjVerkkotunnus) &&
+        nykyinenTunnus !== ytjVerkkotunnus &&
+        !jonossaVerkkotunnusOrg.has(org.id);
+
+      if (ehdotaVerkkotunnus && ytjVerkkotunnus) {
+        havainnot.push(
+          `YTJ:ssä verkkosivu ${yritys?.website?.url ?? ytjVerkkotunnus}. Ehdotettu verkkotunnus: ${ytjVerkkotunnus}.`,
+        );
+      }
+
+      const ehdotusTarvitaan =
+        (havainnot.length > 0 || ehdotaVerkkotunnus) && !jonossa.has(tietue);
 
       if (!kuiva && (uusiTiiviste || muuttunut)) {
         const { error: tiivisteVirhe } = await supabase.from("rajapinta_tiivisteet").upsert(
@@ -402,11 +428,15 @@ async function main() {
               kotipaikka: paikka,
               muuttunut,
               ei_loydy: yritys == null,
+              ehdota_verkkotunnus: ehdotaVerkkotunnus,
+              verkkotunnus_ehdotus: ehdotaVerkkotunnus ? ytjVerkkotunnus : null,
+              website_ytj: yritys?.website?.url ?? null,
             },
           },
         });
         if (lisaysVirhe) throw new Error(lisaysVirhe.message);
         jonossa.add(tietue);
+        if (ehdotaVerkkotunnus) jonossaVerkkotunnusOrg.add(org.id);
         kirjattu += 1;
       } else if (kuiva && ehdotusTarvitaan) {
         kirjattu += 1;

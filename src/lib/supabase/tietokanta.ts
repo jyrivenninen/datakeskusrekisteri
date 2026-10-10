@@ -5,6 +5,8 @@
  * Hanketietoja ei tallenneta tähän tiedostoon.
  */
 
+import type { LahdeTyyppi, Sitovuustaso } from "@/lib/lahde-metatiedot";
+
 export const HANKE_VAIHEET = [
   "esiselvitys",
   "yva_vireilla",
@@ -152,6 +154,7 @@ export type Organisaatio = {
   y_tunnus: string | null;
   tyyppi: OrganisaatioTyyppi;
   verkko_osoite: string | null;
+  verkkotunnus: string | null;
   julkaistu: boolean;
   luotu_pvm: string;
   paivitetty_pvm: string;
@@ -324,6 +327,9 @@ export const DOKUMENTTI_KIELET = ["fi", "sv", "en"] as const;
 
 export type DokumenttiKieli = (typeof DOKUMENTTI_KIELET)[number];
 
+export type { LahdeTyyppi, Sitovuustaso } from "@/lib/lahde-metatiedot";
+export { LAHDE_TYYPIT, SITOVUUSTASOT } from "@/lib/lahde-metatiedot";
+
 export type Paatos = {
   id: string;
   hanke_id: string;
@@ -354,6 +360,10 @@ export type Dokumentti = {
   tunnus: string | null;
   sivumaara: number | null;
   menettely_id: string | null;
+  lahde_tyyppi: LahdeTyyppi;
+  sitovuustaso: Sitovuustaso;
+  otsikko_automaattinen: boolean;
+  lahde_metatiedot_kasitelty_pvm: string | null;
   julkaistu: boolean;
   luotu_pvm: string;
   paivitetty_pvm: string;
@@ -386,6 +396,7 @@ export type KenttaLahde = {
   merkitty: Merkinta;
   merkitty_pvm: string;
   luotu_pvm: string;
+  tekninen_lahde: boolean;
 };
 
 export const KENTTA_TARKISTUS_TULOKSET = ["ei_julkista_lahdetta"] as const;
