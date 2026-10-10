@@ -32,6 +32,7 @@ import {
   RISTIRIITA_SAANTO_NIMET,
   VAIHE_NIMET,
 } from "@/lib/naytto";
+import { kuuluuHavaintojonoon } from "@/lib/seuraava-ehdotus";
 import {
   kuntaNimetKoodeista,
   RYHTI_HAKUEHTO_NIMET,
@@ -63,7 +64,12 @@ export default async function EhdotusSivu({
   searchParams,
 }: {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ virhe?: string; julkaistu?: string }>;
+  searchParams: Promise<{
+    virhe?: string;
+    julkaistu?: string;
+    kasitelty?: string;
+    edellinen?: string;
+  }>;
 }) {
   const { id } = await params;
   const query = await searchParams;
@@ -257,6 +263,18 @@ export default async function EhdotusSivu({
       {kasittely ? <p className="mt-2 text-muted">{kasittely}</p> : null}
       {query.julkaistu ? (
         <p className="mt-4">Hanke julkaistiin julkiselle sivustolle.</p>
+      ) : null}
+      {query.edellinen === "hyvaksytty" ? (
+        <p className="mt-4 text-sm">Edellinen ehdotus hyväksyttiin. Seuraava odottava havainto.</p>
+      ) : null}
+      {query.edellinen === "hylatty" ? (
+        <p className="mt-4 text-sm">Edellinen ehdotus hylättiin. Seuraava odottava havainto.</p>
+      ) : null}
+      {query.edellinen === "kasitelty" ? (
+        <p className="mt-4 text-sm">Edellinen ehdotus tallennettiin. Seuraava odottava havainto.</p>
+      ) : null}
+      {query.kasitelty === "1" ? (
+        <p className="mt-4 text-sm">Metatiedot tallennettiin.</p>
       ) : null}
       {query.virhe ? (
         <p className="mt-4" role="alert">
@@ -1068,6 +1086,7 @@ export default async function EhdotusSivu({
                 {supabasePalvelinAvainAsetettu() ? (
                   <form action={korjaaLinkkiLahdeToiminto} className="mt-3 space-y-2">
                     <input type="hidden" name="id" value={ehdotus.id} />
+                    <input type="hidden" name="seuraava_jonoon" value="1" />
                     <label htmlFor="uusi_lahde_url" className="block text-sm font-medium">
                       Uusi lähde-URL
                     </label>
@@ -1423,6 +1442,13 @@ export default async function EhdotusSivu({
         </p>
       ) : null}
 
+      {odottaa && kuuluuHavaintojonoon(ehdotus.tyyppi) ? (
+        <p className="mt-6 max-w-prose text-sm text-muted">
+          Kun käsittelet tämän, siirryt automaattisesti seuraavaan odottavaan havaintoon (jos
+          jonossa on vielä sellaisia).
+        </p>
+      ) : null}
+
       {odottaa ? (
         <div className="mt-8 flex flex-col gap-6">
           {ehdotus.tyyppi === "lahde_tyyppi_havainto" && lahdeMetatiedot ? (
@@ -1430,6 +1456,7 @@ export default async function EhdotusSivu({
               <input type="hidden" name="dokumentti_id" value={lahdeMetatiedot.dokumentti_id} />
               <input type="hidden" name="ehdotus_id" value={ehdotus.id} />
               <input type="hidden" name="paluu" value={`/yllapito/${id}`} />
+              <input type="hidden" name="seuraava_jonoon" value="1" />
               <p className="max-w-prose text-sm text-muted">
                 Tallennus päivittää dokumentin metatiedot ja merkitsee tämän ehdotuksen hyväksytyksi.
               </p>
@@ -1496,6 +1523,9 @@ export default async function EhdotusSivu({
           {ehdotus.tyyppi !== "lahde_tyyppi_havainto" ? (
           <form action={hyvaksyEhdotusToiminto} className="space-y-3">
             <input type="hidden" name="id" value={ehdotus.id} />
+            {kuuluuHavaintojonoon(ehdotus.tyyppi) ? (
+              <input type="hidden" name="seuraava_jonoon" value="1" />
+            ) : null}
             {ristiriita ? (
               <div className="space-y-3">
                 <p className="max-w-prose text-sm text-muted">
@@ -1629,6 +1659,9 @@ export default async function EhdotusSivu({
           ) : null}
           <form action={hylkaaEhdotusToiminto} className="space-y-2">
             <input type="hidden" name="id" value={ehdotus.id} />
+            {kuuluuHavaintojonoon(ehdotus.tyyppi) ? (
+              <input type="hidden" name="seuraava_jonoon" value="1" />
+            ) : null}
             {ristiriita ? (
               <p className="max-w-prose text-sm text-muted">
                 Hylkäys poistaa rivin jonosta, mutta sama havainto voi nousta

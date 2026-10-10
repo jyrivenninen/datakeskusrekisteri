@@ -59,6 +59,7 @@ export default async function YllapitoSivu({
     poistettu?: string;
     virhe?: string;
     palaute?: string;
+    jono_loppui?: string;
   }>;
 }) {
   const { supabase, massahyvaksynta } = await vaadiYllapitaja();
@@ -211,13 +212,21 @@ export default async function YllapitoSivu({
         </p>
         <SivukatseluYhteenveto yhteenveto={sivukatselu} />
       </section>
-      {hyvaksyttyLkm === 1 ? (
+      {hyvaksyttyLkm === 1 && !params.jono_loppui ? (
         <p className="mt-4">Ehdotus käsiteltiin.</p>
       ) : hyvaksyttyLkm > 1 ? (
         <p className="mt-4">{hyvaksyttyLkm} ehdotusta käsiteltiin.</p>
       ) : null}
       {params.palaute ? <p className="mt-4">Yhteydenotto merkittiin käsitellyksi.</p> : null}
-      {params.hylatty ? <p className="mt-4">Ehdotus hylättiin.</p> : null}
+      {params.hylatty ? (
+        <p className="mt-4">
+          Ehdotus hylättiin.
+          {params.jono_loppui ? " Odottavia havaintoja ei enää ollut jonossa." : ""}
+        </p>
+      ) : null}
+      {params.hyvaksytty && params.jono_loppui ? (
+        <p className="mt-4">Viimeinen odottava havainto käsiteltiin — jono on tyhjä.</p>
+      ) : null}
       {params.kuitattu ? (
         <p className="mt-4">
           {kuitattuLkm > 1
