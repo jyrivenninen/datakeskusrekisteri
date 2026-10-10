@@ -10,6 +10,8 @@ export type DokumenttiNouto = {
   tila: number;
   teksti: string;
   tiiviste: string;
+  /** SHA-256 alkuperäistiedoston tavuista */
+  sisalto_tiiviste: string;
   merkkimaara: number;
   ms: number;
 };
@@ -80,6 +82,7 @@ export async function noudaDokumenttiTeksti(
     tila: vastaus.status,
     teksti,
     tiiviste: tiiviste(teksti),
+    sisalto_tiiviste: createHash("sha256").update(puskuri).digest("hex"),
     merkkimaara: teksti.length,
     ms: Date.now() - alku,
   };

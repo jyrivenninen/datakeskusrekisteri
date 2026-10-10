@@ -6,13 +6,17 @@ import { HankeGalleria } from "@/komponentit/hanke-galleria";
 import { VaiheMerkki } from "@/komponentit/vaihe-merkki";
 import { lomakeKenttaKortista, VAIHTOEHTO_KENTAT } from "@/lib/ehdotus";
 import {
+  naytaDokumenttiOtsikko,
+  rakennaDokumenttiLinkkiTekstit,
+} from "@/lib/lahde-metatiedot";
+import {
   DOKUMENTTI_KIELI_NIMET,
   DOKUMENTTI_LAJI_NIMET,
   DOKUMENTTI_MUOTO_NIMET,
   JOHTO_TYYPPI_NIMET,
   HANKE_KENTTA_NIMET,
   HANKE_KUNTA_ROOLI_NIMET,
-  HANKE_ORGANISAATIO_ROOLI_NIMET,
+  hankeOrganisaatioRooliNimi,
   MAARAAJA_NIMET,
   MENETTELY_LAJI_NIMET,
   MENETTELY_TILA_NIMET,
@@ -64,11 +68,13 @@ function Faktakortti({
   hankeId,
   rivi,
   lahteet,
+  linkkiTekstit,
   tarkistus,
 }: {
   hankeId: string;
   rivi: KenttaRivi;
   lahteet: KenttaLahde[];
+  linkkiTekstit?: ReadonlyMap<string, string>;
   tarkistus?: KenttaTarkistus | null;
 }) {
   const naytettavat = kentanLahteet(lahteet, rivi.lahdeKentta ?? rivi.kentta);
@@ -80,6 +86,7 @@ function Faktakortti({
       arvo={kenttaArvoksi(rivi)}
       tila={kentanTila(!tyhja, naytettavat)}
       lahteet={naytettavat}
+      linkkiTekstit={linkkiTekstit}
       tarkistus={
         tyhja && tarkistus?.tulos === "ei_julkista_lahdetta"
           ? `Tarkistettu ${muotoilePvm(tarkistus.vahvistettu_pvm)}: julkista lähdettä ei ole.`
@@ -252,6 +259,8 @@ export default async function HankeSivu({
     notFound();
   }
 
+  const linkkiTekstit = rakennaDokumenttiLinkkiTekstit(asiakirjat);
+
   const alue = hanke.sijainti_alue?.type === "Polygon" ? hanke.sijainti_alue : null;
   const karttajohdot = johdot
     .map((johto) =>
@@ -385,6 +394,7 @@ export default async function HankeSivu({
                     hankeId={hanke.id}
                     rivi={rivi}
                     lahteet={lahteet}
+                    linkkiTekstit={linkkiTekstit}
                     tarkistus={tarkistukset.find(
                       (riviTarkistus) =>
                         riviTarkistus.kentta === (rivi.lahdeKentta ?? rivi.kentta),
@@ -413,6 +423,7 @@ export default async function HankeSivu({
                   kuntaLahteet.filter((lahde) => lahde.rivi_id === rivi.id),
                 )}
                 lahteet={kuntaLahteet.filter((lahde) => lahde.rivi_id === rivi.id)}
+                linkkiTekstit={linkkiTekstit}
               />
             ))}
           </Korttiruudukko>
@@ -435,6 +446,7 @@ export default async function HankeSivu({
                   menettelyLahteet.filter((lahde) => lahde.rivi_id === rivi.id),
                 )}
                 lahteet={menettelyLahteet.filter((lahde) => lahde.rivi_id === rivi.id)}
+                linkkiTekstit={linkkiTekstit}
               />
             ))}
           </Korttiruudukko>
@@ -457,6 +469,7 @@ export default async function HankeSivu({
                   paatosLahteet.filter((lahde) => lahde.rivi_id === rivi.id),
                 )}
                 lahteet={paatosLahteet.filter((lahde) => lahde.rivi_id === rivi.id)}
+                linkkiTekstit={linkkiTekstit}
               />
             ))}
           </Korttiruudukko>
@@ -510,6 +523,7 @@ export default async function HankeSivu({
                   vaihtoehtoLahteet.filter((lahde) => lahde.rivi_id === vaihtoehto.id),
                 )}
                 lahteet={vaihtoehtoLahteet.filter((lahde) => lahde.rivi_id === vaihtoehto.id)}
+                linkkiTekstit={linkkiTekstit}
                 toiminnot={
                   <ul className="flex flex-col gap-1">
                     {VAIHTOEHTO_KENTAT.map((kentta) => (
@@ -539,7 +553,7 @@ export default async function HankeSivu({
             {organisaatioroolit.map((rivi) => (
               <AvattavaKortti
                 key={rivi.id}
-                nimi={HANKE_ORGANISAATIO_ROOLI_NIMET[rivi.rooli]}
+                nimi={hankeOrganisaatioRooliNimi(rivi.rooli, rivi.rooli_meta?.nimi)}
                 arvo={
                   rivi.organisaatio ? (
                     <a
@@ -557,6 +571,7 @@ export default async function HankeSivu({
                   organisaatiorooliLahteet.filter((lahde) => lahde.rivi_id === rivi.id),
                 )}
                 lahteet={organisaatiorooliLahteet.filter((lahde) => lahde.rivi_id === rivi.id)}
+                linkkiTekstit={linkkiTekstit}
               />
             ))}
           </Korttiruudukko>
@@ -578,11 +593,18 @@ export default async function HankeSivu({
           <p className="mt-3">Ei merkittyjä asiakirjoja.</p>
         ) : (
           <ul className="mt-4 grid gap-3 sm:grid-cols-2">
-            {asiakirjat.map((asiakirja) => (
+            {asiakirjat.map((asiakirja) => {
+              const otsikko = naytaDokumenttiOtsikko(asiakirja);
+              return (
               <li key={asiakirja.id} className="rounded border border-border bg-surface p-4">
                 <p className="font-medium">
-                  <a href={asiakirja.url} className="text-link underline" rel="noopener noreferrer">
-                    {asiakirja.otsikko}
+                  <a
+                    href={asiakirja.url}
+                    className="text-link underline"
+                    rel="noopener noreferrer"
+                    title={otsikko !== asiakirja.url ? asiakirja.url : undefined}
+                  >
+                    {otsikko}
                   </a>
                 </p>
                 <p className="mt-1 text-sm text-muted">
@@ -612,7 +634,8 @@ export default async function HankeSivu({
                   </p>
                 )}
               </li>
-            ))}
+              );
+            })}
           </ul>
         )}
       </section>
@@ -642,6 +665,7 @@ export default async function HankeSivu({
                     maaraajaLahteet.filter((lahde) => lahde.rivi_id === maaraaika.id),
                   )}
                   lahteet={maaraajaLahteet.filter((lahde) => lahde.rivi_id === maaraaika.id)}
+                  linkkiTekstit={linkkiTekstit}
                 />
               );
             })}
@@ -672,6 +696,7 @@ export default async function HankeSivu({
                   johtoLahteet.filter((lahde) => lahde.rivi_id === johto.id),
                 )}
                 lahteet={johtoLahteet.filter((lahde) => lahde.rivi_id === johto.id)}
+                linkkiTekstit={linkkiTekstit}
               />
             ))}
           </Korttiruudukko>

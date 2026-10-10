@@ -141,7 +141,9 @@ export async function haeAvoinDataHankkeet(juuriUrl: string): Promise<{
         (alku, loppu) =>
           supabase
             .from("hanke_organisaatiot")
-            .select("*, organisaatio:organisaatiot(id, nimi)")
+            .select(
+              "*, organisaatio:organisaatiot(id, nimi), rooli_meta:hanke_organisaatio_roolit(nimi)",
+            )
             .eq("julkaistu", true)
             .order("id")
             .range(alku, loppu) as PromiseLike<Sivutettu<HankeOrganisaatioNakyma>>,

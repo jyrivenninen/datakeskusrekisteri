@@ -1,3 +1,4 @@
+import { lahdeUrlKieltoViesti } from "@/lib/lahde-url-kielto";
 import { HANKE_VAIHEET, type HankeVaihe, type LahdeLaji, type Luottamus } from "@/lib/supabase/tietokanta";
 
 export type EhdotettuKentta = {
@@ -102,6 +103,10 @@ export type EhdotusSisalto = {
     nykyinen_lahde_tyyppi: string;
     nykyinen_sitovuustaso: string;
     otsikko_automaattinen: boolean;
+    ehdotettu_otsikko?: string;
+    ehdotettu_julkaisija?: string;
+    ehdotettu_julkaistu_pvm?: string;
+    lahde_selvitys?: string;
   };
   paatos?: {
     kuvaus: string;
@@ -373,6 +378,8 @@ export function rakennaSisalto(
   if (!onHttpsUrl(lahdeUrl)) {
     return { sisalto: { kentat: {} }, virhe: "Lähteen osoitteen pitää alkaa http:// tai https://." };
   }
+  const kielto = lahdeUrlKieltoViesti(lahdeUrl);
+  if (kielto) return { sisalto: { kentat: {} }, virhe: kielto };
   const { sivu, virhe: sivuVirhe } = sivunumero(lahdeSivu);
   if (sivuVirhe) return { sisalto: { kentat: {} }, virhe: sivuVirhe };
 
@@ -408,6 +415,10 @@ export function rakennaIlmoitusSisalto(
       virhe: "Yhteisen lähteen osoitteen pitää alkaa http:// tai https://.",
     };
   }
+  if (yhteinenUrl) {
+    const kielto = lahdeUrlKieltoViesti(yhteinenUrl);
+    if (kielto) return { sisalto: { kentat: {} }, virhe: kielto };
+  }
   const yhteinenSivu = sivunumero(yhteinenLahdeSivu);
   if (yhteinenSivu.virhe) return { sisalto: { kentat: {} }, virhe: yhteinenSivu.virhe };
 
@@ -426,6 +437,10 @@ export function rakennaIlmoitusSisalto(
         sisalto: { kentat: {} },
         virhe: `Kentän lähteen osoitteen pitää alkaa http:// tai https://.`,
       };
+    }
+    if (omaUrl) {
+      const kielto = lahdeUrlKieltoViesti(omaUrl);
+      if (kielto) return { sisalto: { kentat: {} }, virhe: kielto };
     }
     const lahdeUrl = omaUrl || yhteinenUrl;
     if (!lahdeUrl) {
@@ -549,6 +564,20 @@ export function rakennaKuvaEhdotus(
       virhe: "Lähteen osoitteen pitää alkaa http:// tai https://.",
     };
   }
+  const kielto = lahdeUrlKieltoViesti(lahde);
+  if (kielto) {
+    return {
+      kuva: {
+        kuva_url: "",
+        kuvateksti: "",
+        kuvaaja: "",
+        lahde_url: "",
+        lahde_sivu: null,
+        lainaus: null,
+      },
+      virhe: kielto,
+    };
+  }
   if (!teksti) {
     return {
       kuva: {
@@ -661,6 +690,10 @@ export function rakennaPaatosSisalto(
       paatos: { kuvaus: "", pvm: "", lahteet: [] },
       virhe: "Lähteen osoitteen pitää alkaa http:// tai https://.",
     };
+  }
+  const paatosKielto = lahdeUrlKieltoViesti(lahdeUrl);
+  if (paatosKielto) {
+    return { paatos: { kuvaus: "", pvm: "", lahteet: [] }, virhe: paatosKielto };
   }
   const lahteet = [];
   for (const kentta of PAATOS_KENTAT) {

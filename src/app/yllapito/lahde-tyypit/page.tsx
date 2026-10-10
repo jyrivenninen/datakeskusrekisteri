@@ -2,7 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { LahdeTyyppiLapikayntiLista } from "@/komponentit/lahde-tyyppi-lapikaynti-lista";
 import type { LahdeTyyppi, Sitovuustaso } from "@/lib/lahde-metatiedot";
-import { yhdistaLapikayntiData } from "@/lib/lahde-tyyppi-lapikaynti";
+import { enitenViitatutUrlit, yhdistaLapikayntiData } from "@/lib/lahde-tyyppi-lapikaynti";
 import { haeKirjautunutKayttaja } from "@/lib/supabase/palvelin";
 import type { EhdotusSisalto } from "@/lib/ehdotus";
 
@@ -21,10 +21,11 @@ async function vaadiYllapitaja() {
 export default async function LahdeTyypitLapikayntiSivu({
   searchParams,
 }: {
-  searchParams: Promise<{ virhe?: string; kasitelty?: string }>;
+  searchParams: Promise<{ virhe?: string; kasitelty?: string; nayta?: string }>;
 }) {
   const supabase = await vaadiYllapitaja();
   const params = await searchParams;
+  const top100Suodatin = params.nayta === "top100";
 
   const urlMaara = new Map<string, number>();
   const sivuKoko = 1000;
@@ -73,6 +74,15 @@ export default async function LahdeTyypitLapikayntiSivu({
     .eq("tila", "odottaa");
   if (ehdotusVirhe) throw new Error(ehdotusVirhe.message);
 
+  const top100 = enitenViitatutUrlit(urlMaara, 100);
+  let top100Viittauksia = 0;
+  for (const u of top100) top100Viittauksia += urlMaara.get(u) ?? 0;
+  const viittauksiaYhteensa = [...urlMaara.values()].reduce((a, b) => a + b, 0);
+  const top100OsuusProsentti =
+    viittauksiaYhteensa > 0
+      ? Math.round((top100Viittauksia / viittauksiaYhteensa) * 1000) / 10
+      : 0;
+
   const { rivit, yhteenveto } = yhdistaLapikayntiData({
     dokumentit,
     urlMaara,
@@ -80,6 +90,7 @@ export default async function LahdeTyypitLapikayntiSivu({
       id: e.id,
       sisalto: e.sisalto as EhdotusSisalto,
     })),
+    rajaaUrlit: top100Suodatin ? top100 : null,
   });
 
   return (
@@ -94,6 +105,27 @@ export default async function LahdeTyypitLapikayntiSivu({
         Aseta URL-tasoinen lähdetyyppi ja sitovuustaso. Domain-agentin ehdotukset näkyvät ensin;
         ehdotuksettomat URL:t on järjestetty viittausten mukaan. Otsikon voi korjata samalla, jos
         rivi on merkitty automaattiseksi.
+      </p>
+      <p className="mt-2 text-sm">
+        <strong className="font-medium">Edistyminen viittauksilla:</strong>{" "}
+        {yhteenveto.viittaus_prosentti} % kaikista lähdeviittauksista on käsitelty. Top 100
+        viitatuinta URL:ia kattaa {top100OsuusProsentti} % viittauksista (
+        {top100Viittauksia.toLocaleString("fi-FI")} /{" "}
+        {viittauksiaYhteensa.toLocaleString("fi-FI")}).
+      </p>
+      <p className="mt-3 flex flex-wrap gap-3 text-sm">
+        <Link
+          href="/yllapito/lahde-tyypit"
+          className={!top100Suodatin ? "font-medium text-link underline" : "text-muted underline"}
+        >
+          Kaikki käsittelemättömät
+        </Link>
+        <Link
+          href="/yllapito/lahde-tyypit?nayta=top100"
+          className={top100Suodatin ? "font-medium text-link underline" : "text-muted underline"}
+        >
+          Top 100 viitatuinta (käsittelemättömät)
+        </Link>
       </p>
 
       {params.virhe ? (

@@ -1,14 +1,15 @@
 import type { LahdeTyyppi } from "@/lib/lahde-metatiedot";
+import { onMenetelmaGeokoodausUrl } from "@/lib/lahde-geokoodaus-url";
 
+/** @deprecated hankkeen_oma vain ylläpidon käsin; kontekstia ei enää käytetä. */
 export type LahdeTyyppiEhdotusKonteksti = {
-  /** Toimijan verkkotunnukset (esim. organisaatio.verkko_osoite → host). */
   toimijaTunnukset?: readonly string[];
 };
 
 /** Domain/polku-pohjainen ehdotus (ei kielimallia). null = ei ehdotusta. */
 export function ehdotaLahdeTyyppiUrlille(
   url: string,
-  konteksti?: LahdeTyyppiEhdotusKonteksti,
+  _konteksti?: LahdeTyyppiEhdotusKonteksti,
 ): LahdeTyyppi | null {
   let parsed: URL;
   try {
@@ -21,11 +22,11 @@ export function ehdotaLahdeTyyppiUrlille(
   const polku = parsed.pathname.toLowerCase();
   const koko = `${host}${polku}`;
 
+  if (onMenetelmaGeokoodausUrl(url)) return "menetelma";
   if (onMenetelma(host)) return "menetelma";
   if (onRekisteri(host, polku, koko)) return "rekisteri";
   if (onMedia(host)) return "media";
   if (onViranomaisasiakirja(host, polku, koko)) return "viranomaisasiakirja";
-  if (onHankkeenOma(host, konteksti?.toimijaTunnukset)) return "hankkeen_oma";
   if (onKoostepalvelu(host)) return "muu";
 
   return null;
@@ -79,13 +80,6 @@ export function organisaationVerkkoTunnukset(org: {
   const osoite = verkkoTunnusOrganisaatiosta(org.verkko_osoite);
   if (osoite) tunnukset.add(osoite);
   return [...tunnukset];
-}
-
-function onHankkeenOma(host: string, tunnukset: readonly string[] | undefined): boolean {
-  if (!tunnukset?.length) return false;
-  return tunnukset.some(
-    (t) => host === t || host.endsWith(`.${t}`),
-  );
 }
 
 function onRekisteri(host: string, polku: string, koko: string): boolean {

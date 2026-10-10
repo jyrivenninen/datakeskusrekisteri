@@ -170,8 +170,14 @@ export function LahdeTyyppiLapikayntiLista({
         aria-live="polite"
       >
         <p>
-          <strong className="font-medium">Edistyminen:</strong> {yhteenveto.kasitelty} käsitelty,{" "}
-          {yhteenveto.jaljella} jäljellä ({edistyminen} %). Jonossa domain-ehdotuksia:{" "}
+          <strong className="font-medium">Lähdeviittaukset:</strong>{" "}
+          {yhteenveto.viittauksia_kasitelty.toLocaleString("fi-FI")} /{" "}
+          {yhteenveto.viittauksia_yhteensa.toLocaleString("fi-FI")} käsitelty (
+          {yhteenveto.viittaus_prosentti} % kaikista kentta_lahteet-viittauksista).
+        </p>
+        <p className="mt-1">
+          <strong className="font-medium">Dokumentti-URL:t:</strong> {yhteenveto.kasitelty} käsitelty,{" "}
+          {yhteenveto.jaljella} jäljellä ({edistyminen} % uniikeista URL:ista). Jonossa ehdotuksia:{" "}
           {yhteenveto.odottavia_ehdotuksia}.
         </p>
         <p className="mt-1 text-muted">
@@ -198,9 +204,14 @@ export function LahdeTyyppiLapikayntiLista({
               >
                 <div className="flex flex-wrap items-start gap-2 text-sm">
                   <span className="font-mono text-xs text-muted">#{indeksi + 1}</span>
+                  {rivi.lahde_selvitys === "grok_2026-10-10" ? (
+                    <span className="rounded bg-amber-100 px-1.5 py-0.5 text-xs font-medium text-amber-950 dark:bg-amber-950 dark:text-amber-50">
+                      Grok-selvitys
+                    </span>
+                  ) : null}
                   {rivi.on_ehdotus ? (
                     <span className="rounded bg-violet-100 px-1.5 py-0.5 text-xs font-medium text-violet-950 dark:bg-violet-950 dark:text-violet-50">
-                      Domain-ehdotus
+                      {rivi.lahde_selvitys ? "Metatietoehdotus" : "Domain-ehdotus"}
                     </span>
                   ) : (
                     <span className="rounded bg-neutral-200 px-1.5 py-0.5 text-xs text-neutral-800 dark:bg-neutral-800 dark:text-neutral-200">

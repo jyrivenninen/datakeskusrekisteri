@@ -39,10 +39,26 @@ function odota(ms: number) {
   return new Promise((r) => setTimeout(r, ms));
 }
 
-const EI_JONOON_TILAT = new Set([401, 403, 408, 425, 429, 500, 502, 503, 504]);
+/** Bot-suojaus / rate limit — ei merkitä linkki_rikki-havainnoksi. */
+export const LINKKI_ESTETTY_TILAT = new Set([401, 403, 408, 425, 429, 500, 502, 503, 504]);
+
+export type LinkkiTarkistusTila = "toimii" | "estetty" | "kuollut";
+
+export function luokitteleLinkkiTarkistus(t: {
+  http_tila: number | null;
+  virhe: string | null;
+}): LinkkiTarkistusTila {
+  if (t.http_tila != null && LINKKI_ESTETTY_TILAT.has(t.http_tila)) return "estetty";
+  if (t.http_tila === 404 || t.http_tila === 410) return "kuollut";
+  if (t.virhe) {
+    return /timeout|aborted|ETIMEDOUT|ECONNRESET/i.test(t.virhe) ? "estetty" : "kuollut";
+  }
+  if (t.http_tila != null && t.http_tila >= 400) return "kuollut";
+  return "toimii";
+}
 
 function eiKirjataJonoon(tila: number | null): boolean {
-  return tila != null && EI_JONOON_TILAT.has(tila);
+  return tila != null && LINKKI_ESTETTY_TILAT.has(tila);
 }
 
 function onRikki(t: Tarkistus): boolean {
@@ -76,7 +92,7 @@ async function pyynto(url: string, method: "HEAD" | "GET", osittainen = false): 
   });
 }
 
-async function tarkistaOsoite(url: string): Promise<Tarkistus> {
+export async function tarkistaOsoite(url: string): Promise<Tarkistus> {
   const alku = Date.now();
   try {
     let vastaus = await pyynto(url, "HEAD");
@@ -260,9 +276,10 @@ async function main() {
       `${tulos.http_tila ?? "virhe"} ${tulos.vaste_ms}ms ${rivi.lahde_url}${tulos.virhe ? ` (${tulos.virhe})` : ""}`,
     );
 
-    if (eiKirjataJonoon(tulos.http_tila)) {
+    const luokka = luokitteleLinkkiTarkistus(tulos);
+    if (luokka === "estetty") {
       ohitettuEiJonoon += 1;
-      console.log(`HTTP ${tulos.http_tila}, ei jonoon: ${rivi.lahde_url}`);
+      console.log(`estetty (HTTP ${tulos.http_tila ?? "virhe"}), ei jonoon: ${rivi.lahde_url}`);
       continue;
     }
 
@@ -307,7 +324,14 @@ async function main() {
   );
 }
 
-main().catch((syy) => {
-  console.error(syy instanceof Error ? syy.message : syy);
-  process.exit(1);
-});
+function suoritetaankoLinkitAgentti(): boolean {
+  const polku = (process.argv[1] ?? "").replace(/\\/g, "/");
+  return polku.endsWith("/agents/tarkistukset/linkit.ts") || polku.endsWith("/linkit.ts");
+}
+
+if (suoritetaankoLinkitAgentti()) {
+  main().catch((syy) => {
+    console.error(syy instanceof Error ? syy.message : syy);
+    process.exit(1);
+  });
+}

@@ -65,7 +65,15 @@ export const MENETTELY_TILAT = ["ei_alkanut", "vireilla", "paattynyt"] as const;
 
 export type MenettelyTila = (typeof MENETTELY_TILAT)[number];
 
+/** Legacy-tyypitys; uudet roolit tulevat hanke_organisaatio_roolit-taulusta. */
 export const HANKE_ORGANISAATIO_ROOLIT = [
+  "hankeyhtio",
+  "emoyhtio",
+  "operaattori",
+  "kiinteistonomistaja",
+  "maanomistaja",
+  "konsultti",
+  "hallinnoija",
   "toimija",
   "yva_konsultti",
   "yhteysviranomainen",
@@ -73,7 +81,7 @@ export const HANKE_ORGANISAATIO_ROOLIT = [
   "muu",
 ] as const;
 
-export type HankeOrganisaatioRooli = (typeof HANKE_ORGANISAATIO_ROOLIT)[number];
+export type HankeOrganisaatioRooli = (typeof HANKE_ORGANISAATIO_ROOLIT)[number] | string;
 
 export type MaaraajaTyyppi = (typeof MAARAAJA_TYYPIT)[number];
 
@@ -288,6 +296,11 @@ export type HankeOrganisaatio = {
   hanke_id: string;
   organisaatio_id: string;
   rooli: HankeOrganisaatioRooli;
+  voimassa_alkaen: string | null;
+  voimassa_paattyen: string | null;
+  lahde_dokumentti_id: string | null;
+  lahde_url: string | null;
+  lahde_kohta: string | null;
   julkaistu: boolean;
   luotu_pvm: string;
   paivitetty_pvm: string;

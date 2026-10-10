@@ -55,6 +55,28 @@ export function naytaDokumenttiOtsikko(dokumentti: {
   return dokumentti.otsikko;
 }
 
+/** Hankkeen dokumenttirekisteri → linkkiteksti kenttälähteille (avain = dokumentin url). */
+export function rakennaDokumenttiLinkkiTekstit(
+  dokumentit: ReadonlyArray<{
+    url: string;
+    otsikko: string;
+    otsikko_automaattinen: boolean;
+  }>,
+): ReadonlyMap<string, string> {
+  const map = new Map<string, string>();
+  for (const d of dokumentit) {
+    map.set(d.url, naytaDokumenttiOtsikko(d));
+  }
+  return map;
+}
+
+export function naytaLahdeLinkkiTeksti(
+  lahdeUrl: string,
+  linkkiTekstit?: ReadonlyMap<string, string>,
+): string {
+  return linkkiTekstit?.get(lahdeUrl) ?? lahdeUrl;
+}
+
 /** Lomakkeen oletus sitovuustaso tyypin perusteella (vain UI-esitäyttö, ei tietokantatriggeriä). */
 export function oletusSitovuustaso(tyyppi: LahdeTyyppi): Sitovuustaso {
   switch (tyyppi) {

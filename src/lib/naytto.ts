@@ -329,13 +329,28 @@ export const MENETTELY_TILA_NIMET: Record<MenettelyTila, string> = {
   paattynyt: "Päättynyt",
 };
 
-export const HANKE_ORGANISAATIO_ROOLI_NIMET: Record<HankeOrganisaatioRooli, string> = {
+export const HANKE_ORGANISAATIO_ROOLI_NIMET: Record<string, string> = {
+  hankeyhtio: "Hankeyhtiö",
+  emoyhtio: "Emoyhtiö",
+  operaattori: "Operaattori",
+  kiinteistonomistaja: "Kiinteistön omistaja",
+  maanomistaja: "Maanomistaja",
+  konsultti: "Konsultti",
+  hallinnoija: "Hallinnoija",
   toimija: "Hankkeesta vastaava",
   yva_konsultti: "YVA-konsultti",
   yhteysviranomainen: "Yhteysviranomainen",
   kaavoittaja: "Kaavoittaja",
   muu: "Muu",
 };
+
+export function hankeOrganisaatioRooliNimi(
+  rooli: string,
+  tietokannasta?: string | null,
+): string {
+  if (tietokannasta && tietokannasta.trim() !== "") return tietokannasta;
+  return HANKE_ORGANISAATIO_ROOLI_NIMET[rooli] ?? rooli;
+}
 
 export const DOKUMENTTI_LAJI_NIMET: Record<DokumenttiLaji, string> = {
   verkkosivu: "Verkkosivu",

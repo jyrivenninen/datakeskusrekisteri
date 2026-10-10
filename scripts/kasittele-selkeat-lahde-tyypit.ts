@@ -15,10 +15,17 @@ const KASITTELIJA = "yllapito:selkeat-domain-ehdotukset";
 /** Automaattihyväksyntä vain näille; muu ja hankkeen_oma jäävät ihmiselle. */
 const VARMA_TYYPIT = new Set<LahdeTyyppi>(["rekisteri", "media", "menetelma"]);
 
+/** Ei virallinen asiakirja vaikka domain-sääntö olisi erehtynyt. */
+function epaselvaViranomaisasiakirjaUrl(url: string): boolean {
+  const host = puraDomain(url) ?? "";
+  if (host.includes("uusisuomi")) return true;
+  if (host.includes("seinajoki.fi") && url.includes("/miksi-seinajoki/")) return true;
+  return false;
+}
+
 function varmaViranomaisasiakirja(url: string): boolean {
-  const host = puraDomain(url);
-  if (!host) return false;
-  return host === "ymparisto.fi" || host.endsWith(".ymparisto.fi");
+  if (epaselvaViranomaisasiakirjaUrl(url)) return false;
+  return ehdotaLahdeTyyppiUrlille(url) === "viranomaisasiakirja";
 }
 
 function onVarmaEhdotus(url: string, ehdotettu: LahdeTyyppi): boolean {

@@ -40,6 +40,7 @@ import {
 } from "@/lib/kuittaus-suodatus";
 import { haeHankkeetYllapitoon, luoYllapitoAsiakas, poistetutHankeIdt, supabasePalvelinAvainAsetettu } from "@/lib/supabase/yllapito-asiakas";
 import { ESIVERSIO_EVASTE } from "@/lib/esiversio";
+import { lahdeUrlKieltoViesti } from "@/lib/lahde-url-kielto";
 
 function ilmoitusPaluu(tyyppi: string, virhe: string): never {
   const q = new URLSearchParams({ virhe });
@@ -93,6 +94,10 @@ export async function lahetaIlmoitus(formData: FormData): Promise<void> {
 
   const ehdotuksenLahde =
     lahdeUrl.trim() || Object.values(sisalto.kentat)[0]?.lahde_url || null;
+  if (ehdotuksenLahde) {
+    const kielto = lahdeUrlKieltoViesti(ehdotuksenLahde);
+    if (kielto) ilmoitusPaluu(tyyppi, kielto);
+  }
   const { user: yllapitaja, nimi: yllapitajaNimi } = await haeYllapitaja();
   const julkaiseSuoraan = Boolean(yllapitaja && supabasePalvelinAvainAsetettu());
 

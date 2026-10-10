@@ -15,6 +15,7 @@ export function AvattavaKortti({
   arvo,
   tila,
   lahteet,
+  linkkiTekstit,
   toiminnot,
   tarkistus,
 }: {
@@ -22,6 +23,7 @@ export function AvattavaKortti({
   arvo: ReactNode;
   tila: KentanTila;
   lahteet: KenttaLahde[];
+  linkkiTekstit?: ReadonlyMap<string, string>;
   toiminnot?: ReactNode;
   tarkistus?: string | null;
 }) {
@@ -38,7 +40,7 @@ export function AvattavaKortti({
       </summary>
       <div className="border-t border-border px-3 pb-3">
         <p className="sr-only">Lähteet ja tarkenteet: {nimi}</p>
-        <Lahdeluettelo lahteet={lahteet} />
+        <Lahdeluettelo lahteet={lahteet} linkkiTekstit={linkkiTekstit} />
         {tarkistus ? <p className="mt-3 text-sm text-muted">{tarkistus}</p> : null}
         {toiminnot ? <div className="mt-3 text-sm">{toiminnot}</div> : null}
       </div>

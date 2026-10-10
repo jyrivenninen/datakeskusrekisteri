@@ -243,6 +243,9 @@ async function main() {
           teksti_katkelma: teksti.slice(0, TEKSTI_KATKELMA) || null,
         });
         if (tiivisteVirhe) throw new Error(tiivisteVirhe.message);
+
+        const sisaltoTiiviste = createHash("sha256").update(nouto.tavuja).digest("hex");
+        await supabase.from("dokumentit").update({ sisalto_tiiviste: sisaltoTiiviste }).eq("id", dok.id);
       }
 
       if (muuttui && !jonossa.has(dok.url)) {

@@ -254,6 +254,7 @@ export async function haeKuntaMaakuntaKartta(): Promise<Map<string, string>> {
 
 export type HankeOrganisaatioNakyma = HankeOrganisaatio & {
   organisaatio: Pick<Organisaatio, "id" | "nimi"> | null;
+  rooli_meta: { nimi: string } | null;
 };
 
 export type OrganisaationHanke = HankeListalla & {
@@ -399,7 +400,7 @@ export async function haeHanke(id: string): Promise<{
         .order("laji"),
       supabase
         .from("hanke_organisaatiot")
-        .select("*, organisaatio:organisaatiot(id, nimi)")
+        .select("*, organisaatio:organisaatiot(id, nimi), rooli_meta:hanke_organisaatio_roolit(nimi)")
         .eq("hanke_id", id)
         .eq("julkaistu", true)
         .order("rooli"),
