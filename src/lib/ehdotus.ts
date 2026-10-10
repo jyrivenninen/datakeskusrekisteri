@@ -210,6 +210,17 @@ export type EhdotusSisalto = {
     koskee_kenttia: string[];
     perustelu: string;
   };
+  asiakirjat?: Array<{
+    url: string;
+    otsikko: string;
+    laji: string;
+    muoto?: string | null;
+    lainaus: string;
+  }>;
+  julkaisija?: string;
+  julkaisija_lainaus?: string;
+  lahde_tyyppi?: string;
+  sitovuustaso?: string;
 };
 
 const NUMEERISET = new Set([

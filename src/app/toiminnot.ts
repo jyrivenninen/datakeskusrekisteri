@@ -1214,6 +1214,7 @@ export async function hyvaksyKaikkiOdottavatToiminto(formData: FormData): Promis
           vaatii_lukeminen?: boolean;
           rakentamisvaiheet?: unknown[];
           vaihtoehdot?: Record<string, unknown>;
+          asiakirjat?: unknown[];
         } | null,
       )
     ) {
@@ -1242,7 +1243,7 @@ export async function hyvaksyKaikkiOdottavatToiminto(formData: FormData): Promis
   const jonoon: string[] = [...epaonnistuneet];
   if (ohitettu > 0) {
     jonoon.unshift(
-      `${ohitettu} riviä jäi jonoon (ristiriitahavainto, kenttämuutos, päätös, tehon kenttävalinta, rakentamisvaihe, YVA-vaihtoehto tai poistettu hanke): käsittele yksitellen.`,
+      `${ohitettu} riviä jäi jonoon (ristiriitahavainto, kenttämuutos, päätös, tehon kenttävalinta, rakentamisvaihe, YVA-vaihtoehto, asiakirja tai poistettu hanke): käsittele yksitellen.`,
     );
   }
   if (jonoon.length > 0) {

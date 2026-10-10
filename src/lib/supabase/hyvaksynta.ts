@@ -446,6 +446,14 @@ export async function hyvaksyMuutosehdotus(
     if (vaiheVirhe) throw new Error(vaiheVirhe.message);
     return;
   }
+  if (Array.isArray(sisalto.asiakirjat) && sisalto.asiakirjat.length > 0) {
+    const { error: asiakirjaVirhe } = await supabase.rpc("julkaise_hanke_asiakirjat", {
+      p_ehdotus_id: ehdotusId,
+      p_kasittelija: kasittelija,
+    });
+    if (asiakirjaVirhe) throw new Error(asiakirjaVirhe.message);
+    return;
+  }
 
   if (Object.keys(kentat).length === 0 && Object.keys(vaihtoehdot).length === 0) {
     throw new Error("Ehdotuksessa ei ole kenttiä.");

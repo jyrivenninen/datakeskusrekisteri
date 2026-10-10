@@ -1517,6 +1517,38 @@ export default async function EhdotusSivu({
         </section>
       ) : null}
 
+      {sisalto.asiakirjat && sisalto.asiakirjat.length > 0 ? (
+        <section className="mt-8" aria-labelledby="asiakirjat-otsikko">
+          <h2 id="asiakirjat-otsikko" className="text-xl font-semibold">
+            Asiakirjat
+          </h2>
+          <p className="mt-2 text-sm text-muted">
+            {sisalto.asiakirjat.length} asiakirjaa. Lähdetyyppi{" "}
+            {sisalto.lahde_tyyppi ?? "—"}. Julkaisija {sisalto.julkaisija ?? "—"}.
+          </p>
+          <ul className="mt-4 divide-y divide-border border-y border-border">
+            {sisalto.asiakirjat.map((asiakirja) => (
+              <li key={asiakirja.url} className="py-3">
+                <p className="font-medium">{asiakirja.otsikko}</p>
+                <p className="mt-1 text-sm text-muted">
+                  {({
+                    kuulutus: "Kuulutus",
+                    yva_ohjelma: "YVA-ohjelma",
+                    yva_selostus: "YVA-selostus",
+                    muu: "Muu",
+                  } as Record<string, string>)[asiakirja.laji] ?? asiakirja.laji}
+                </p>
+                <p className="mt-1 text-sm">
+                  <a href={asiakirja.url} className="text-link underline" rel="noopener noreferrer">
+                    {asiakirja.url}
+                  </a>
+                </p>
+              </li>
+            ))}
+          </ul>
+        </section>
+      ) : null}
+
       {odottaa && !supabasePalvelinAvainAsetettu() ? (
         <p className="mt-6 text-sm">
           Hyväksyntä vaatii palvelinavaimen <code>SUPABASE_SERVICE_ROLE_KEY</code>. Lisää se
