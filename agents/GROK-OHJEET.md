@@ -647,6 +647,9 @@ Täytä lisäksi kaikki löydetyt kentät **joihin on lähde**:
 | `teho_mw` | koko laitoksen sähköteho MW. Erittelemätön megawattiluku vain tähän |
 | `pinta_ala_ha`, `sahkonkaytto_twh_a` | vain dokumentoidusti |
 | `generaattorit_lkm`, `generaattorit_kaytossa_max_lkm`, `generaattori_polttoaineteho_mw` | erikseen lähteestä |
+| `generaattori_yksikkoteho_mwe` | yhden generaattorin sähköteho MWe. Ei ole yhteenlaskettu polttoaineteho |
+| `diesel_vuosikulutus_maara`, `diesel_vuosikulutus_yksikko` | vuosikulutus ja yksikkö `litra` tai `m3` erikseen |
+| `varavoima_paastot_t_co2e` | t CO2e/a. Lainaus on pakollinen ja siitä pitää ilmetä, kuka luvun on laskenut |
 | `kaavatunnus`, `kortteli` | kaavasta |
 | `sijainti_lat`, `sijainti_lon`, `sijainti_alue_tyyppi` | vain jos koordinaatit lähteestä; `sijainti_alue_tyyppi`: `kaava_alue` / `tontti` / `arvio` |
 
@@ -659,11 +662,17 @@ luku on `it_teho_mw`. Muuten `teho_mw`. Generaattorin polttoaineteho ei ole kump
 Jos julkaistulla vaihtoehdolla, VE0 pois lukien, on luku jossakin kentässä
 (`teho_mw`, `it_teho_mw`, `pinta_ala_ha`, `sahkonkaytto_twh_a`,
 `generaattorit_lkm`, `generaattori_polttoaineteho_mw`,
-`polttoainevarasto_maara`), sama hanketason kenttä jätetään tyhjäksi.
+`generaattori_yksikkoteho_mwe`, `diesel_vuosikulutus_maara`,
+`varavoima_paastot_t_co2e`, `polttoainevarasto_maara`), sama hanketason kenttä jätetään tyhjäksi.
 Kenttä, jota yhdelläkään vaihtoehdolla ei ole, säilyy hankkeella.
 Polttoainevarasto merkitään vain vaihtoehdolle: luku `polttoainevarasto_maara`
 ja yksikkö `polttoainevarasto_yksikko` (`m3`, `litra` tai `mw`). Yksikkö on
 pakollinen, kun luku on merkitty.
+
+`generaattori_yksikkoteho_mwe` on yhden generaattorin sähköteho. Älä merkitse
+siihen generaattoreiden yhteenlaskettua polttoainetehoa. Dieselin vuosikulutuksen
+yksikkö on `litra` tai `m3`. Varavoiman päästöluvun lainauksesta pitää ilmetä
+luvun laskija. Korvattu lähde ei täytä kenttää: älä aseta lähteen tilaa itse.
 
 `vaihe`-arvot: `esiselvitys`, `yva_vireilla`, `yva_paattynyt`, `kaavoitus`,
 `lupamenettely`, `rakenteilla`, `toiminnassa`, `peruttu`.

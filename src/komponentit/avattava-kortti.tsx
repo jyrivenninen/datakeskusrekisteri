@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { Lahdeluettelo } from "@/komponentit/lahdeluettelo";
+import { Lahdeluettelo, type KorvaavaDokumentti } from "@/komponentit/lahdeluettelo";
 import { Liikennevalo } from "@/komponentit/liikennevalo";
 import type { KentanTila } from "@/lib/naytto";
 import type { KenttaLahde } from "@/lib/supabase/tietokanta";
@@ -16,6 +16,8 @@ export function AvattavaKortti({
   tila,
   lahteet,
   linkkiTekstit,
+  korvaavat,
+  naytaKentta = false,
   toiminnot,
   tarkistus,
 }: {
@@ -24,6 +26,8 @@ export function AvattavaKortti({
   tila: KentanTila;
   lahteet: KenttaLahde[];
   linkkiTekstit?: ReadonlyMap<string, string>;
+  korvaavat?: ReadonlyMap<string, KorvaavaDokumentti>;
+  naytaKentta?: boolean;
   toiminnot?: ReactNode;
   tarkistus?: string | null;
 }) {
@@ -40,7 +44,12 @@ export function AvattavaKortti({
       </summary>
       <div className="border-t border-border px-3 pb-3">
         <p className="sr-only">Lähteet ja tarkenteet: {nimi}</p>
-        <Lahdeluettelo lahteet={lahteet} linkkiTekstit={linkkiTekstit} />
+        <Lahdeluettelo
+          lahteet={lahteet}
+          linkkiTekstit={linkkiTekstit}
+          korvaavat={korvaavat}
+          naytaKentta={naytaKentta}
+        />
         {tarkistus ? <p className="mt-3 text-sm text-muted">{tarkistus}</p> : null}
         {toiminnot ? <div className="mt-3 text-sm">{toiminnot}</div> : null}
       </div>

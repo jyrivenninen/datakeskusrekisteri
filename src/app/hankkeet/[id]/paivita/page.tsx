@@ -88,8 +88,31 @@ export default async function KenttapaivitysSivu({
         ) : null}
         {vaihtoehto ? (
           <> Luku merkitään tälle vaihtoehdolle. Samaa lukua ei merkitä hankkeen yhteiseen kenttään.</>
-        ) : ["teho_mw", "it_teho_mw", "pinta_ala_ha", "sahkonkaytto_twh_a", "generaattorit_lkm", "generaattori_polttoaineteho_mw"].includes(kentta) ? (
+        ) : [
+            "teho_mw",
+            "it_teho_mw",
+            "pinta_ala_ha",
+            "sahkonkaytto_twh_a",
+            "generaattorit_lkm",
+            "generaattori_polttoaineteho_mw",
+            "generaattori_yksikkoteho_mwe",
+            "diesel_vuosikulutus_maara",
+            "varavoima_paastot_t_co2e",
+          ].includes(kentta) ? (
           <> {HANKETASON_VAIHTOEHTO_OHJE}</>
+        ) : null}
+        {kentta === "generaattori_yksikkoteho_mwe" ? (
+          <>
+            {" "}
+            Sähköteho generaattoria kohden. Ei ole sama kuin generaattoreiden
+            yhteenlaskettu polttoaineteho.
+          </>
+        ) : null}
+        {kentta === "varavoima_paastot_t_co2e" ? (
+          <>
+            {" "}
+            Lainaus on pakollinen. Siitä pitää ilmetä, kuka luvun on laskenut.
+          </>
         ) : null}
         {julkaiseSuoraan
           ? " Ylläpitäjänä päivitys julkaistaan heti."
@@ -159,6 +182,28 @@ export default async function KenttapaivitysSivu({
             )}
           </p>
 
+          {kentta === "diesel_vuosikulutus_maara" ? (
+            <p className="flex flex-col gap-1">
+              <label htmlFor="yksikko" className="text-sm font-medium">
+                Yksikkö (pakollinen)
+              </label>
+              <select
+                id="yksikko"
+                name="yksikko"
+                required
+                defaultValue={
+                  vaihtoehto?.diesel_vuosikulutus_yksikko ??
+                  hanke.diesel_vuosikulutus_yksikko ??
+                  "litra"
+                }
+                className="rounded border border-border bg-surface px-2 py-2"
+              >
+                <option value="litra">litra</option>
+                <option value="m3">m³</option>
+              </select>
+            </p>
+          ) : null}
+
           {kentta === "polttoainevarasto_maara" ? (
             <p className="flex flex-col gap-1">
               <label htmlFor="yksikko" className="text-sm font-medium">
@@ -210,6 +255,7 @@ export default async function KenttapaivitysSivu({
               id="lainaus"
               name="lainaus"
               rows={3}
+              required={kentta === "varavoima_paastot_t_co2e"}
               className="rounded border border-border bg-surface px-2 py-2"
             />
           </p>

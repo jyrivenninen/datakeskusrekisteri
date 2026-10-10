@@ -23,7 +23,13 @@ const KENTTA_KUVAUKSET: Record<string, string> = {
   sahkonkaytto_twh_a: "Sähkönkäyttö TWh/a",
   generaattorit_lkm: "Varavoimageneraattorien lukumäärä",
   generaattorit_kaytossa_max_lkm: "Generaattoreita yhtä aikaa enintään",
-  generaattori_polttoaineteho_mw: "Generaattorin polttoaineteho MW",
+  generaattori_polttoaineteho_mw: "Generaattoreiden yhteenlaskettu polttoaineteho MW",
+  generaattori_yksikkoteho_mwe:
+    "Yhden generaattorin sähköteho MWe. Ei ole yhteenlaskettu polttoaineteho.",
+  diesel_vuosikulutus_maara: "Dieselin vuosikulutus, pelkkä luku",
+  diesel_vuosikulutus_yksikko: "Dieselin vuosikulutuksen yksikkö: litra tai m3",
+  varavoima_paastot_t_co2e:
+    "Varavoiman kasvihuonekaasupäästöt t CO2e/a. Lainauksesta pitää ilmetä, kuka luvun on laskenut.",
 };
 
 function rajaaTeksti(teksti: string): string {

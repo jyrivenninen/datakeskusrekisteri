@@ -22,6 +22,7 @@ export async function haeKuittausNakyma(): Promise<KuittausNakymaTulos | null> {
     .from("kentta_lahteet")
     .select("rivi_id, kentta, luottamus, merkitty, lainaus, lahde_url")
     .eq("taulu", "hankkeet")
+    .eq("tila", "voimassa")
     .eq("merkitty", "koneen_ehdottama");
 
   const kuittausHankeIdt = [

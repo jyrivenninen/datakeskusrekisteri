@@ -1,24 +1,51 @@
 import { naytaLahdeLinkkiTeksti } from "@/lib/lahde-metatiedot";
 import type { KenttaLahde } from "@/lib/supabase/tietokanta";
-import { LUOTTAMUS_NIMET, MERKINTA_NIMET, muotoilePvm } from "@/lib/naytto";
+import { HANKE_KENTTA_NIMET, LUOTTAMUS_NIMET, MERKINTA_NIMET, muotoilePvm } from "@/lib/naytto";
+
+export type KorvaavaDokumentti = { otsikko: string; url: string };
 
 export function Lahdeluettelo({
   lahteet,
   linkkiTekstit,
+  korvaavat,
+  naytaKentta = false,
 }: {
   lahteet: KenttaLahde[];
   linkkiTekstit?: ReadonlyMap<string, string>;
+  korvaavat?: ReadonlyMap<string, KorvaavaDokumentti>;
+  naytaKentta?: boolean;
 }) {
   if (lahteet.length === 0) {
     return <p className="mt-3 text-sm text-muted">Lähdettä ei ole merkitty.</p>;
   }
 
+  const jarjestys = [...lahteet].sort((a, b) => {
+    const aKorvattu = a.tila === "korvattu" ? 1 : 0;
+    const bKorvattu = b.tila === "korvattu" ? 1 : 0;
+    return aKorvattu - bKorvattu;
+  });
+
   return (
     <ul className="mt-3 space-y-2 text-sm">
-      {lahteet.map((lahde) => {
+      {jarjestys.map((lahde) => {
         const teksti = naytaLahdeLinkkiTeksti(lahde.lahde_url, linkkiTekstit);
+        const korvattu = lahde.tila === "korvattu";
+        const korvaava = lahde.korvaava_dokumentti_id
+          ? korvaavat?.get(lahde.korvaava_dokumentti_id)
+          : undefined;
         return (
-        <li key={lahde.id} className="rounded border border-border bg-background px-3 py-2">
+        <li
+          key={lahde.id}
+          className={
+            korvattu
+              ? "rounded border border-dashed border-muted bg-background px-3 py-2"
+              : "rounded border border-border bg-background px-3 py-2"
+          }
+        >
+          {korvattu ? <p className="font-medium">Korvattu</p> : null}
+          {naytaKentta ? (
+            <p className="text-muted">{HANKE_KENTTA_NIMET[lahde.kentta] ?? lahde.kentta}</p>
+          ) : null}
           <p>
             <a
               href={lahde.lahde_url}
@@ -30,10 +57,22 @@ export function Lahdeluettelo({
             </a>
             {lahde.lahde_sivu != null ? ` (s. ${lahde.lahde_sivu})` : ""}
           </p>
-          <p className="mt-1 text-muted">
-            {LUOTTAMUS_NIMET[lahde.luottamus]} · {MERKINTA_NIMET[lahde.merkitty]} ·
-            tarkistettu {muotoilePvm(lahde.vahvistettu_pvm)}
-          </p>
+          {korvattu ? (
+            <p className="mt-1 text-muted">tarkistettu {muotoilePvm(lahde.vahvistettu_pvm)}</p>
+          ) : (
+            <p className="mt-1 text-muted">
+              {LUOTTAMUS_NIMET[lahde.luottamus]} · {MERKINTA_NIMET[lahde.merkitty]} ·
+              tarkistettu {muotoilePvm(lahde.vahvistettu_pvm)}
+            </p>
+          )}
+          {korvattu && korvaava ? (
+            <p className="mt-1">
+              Korvaava asiakirja:{" "}
+              <a href={korvaava.url} className="text-link underline" rel="noopener noreferrer">
+                {korvaava.otsikko}
+              </a>
+            </p>
+          ) : null}
           {lahde.lainaus ? (
             <blockquote className="mt-1 border-l-2 border-border pl-3 text-foreground">
               {lahde.lainaus}

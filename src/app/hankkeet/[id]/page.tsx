@@ -24,8 +24,10 @@ import {
   hankeTehoMw,
   muotoileLuku,
   muotoilePvm,
+  dieselVuosikulutusTeksti,
   polttoainevarastoTeksti,
 } from "@/lib/naytto";
+import type { KorvaavaDokumentti } from "@/komponentit/lahdeluettelo";
 import { haeHanke, haeHankeOhjaus, haeKuntaMaakuntaKartta } from "@/lib/supabase/kyselyt";
 import { hankeOgKuvaus, kortinMetatiedot, SIVUSTON_KUVAUS, SIVUSTON_OTSIKKO } from "@/lib/sivuston-metatiedot";
 import { haeYllapitaja } from "@/lib/supabase/palvelin";
@@ -68,12 +70,14 @@ function Faktakortti({
   rivi,
   lahteet,
   linkkiTekstit,
+  korvaavat,
   tarkistus,
 }: {
   hankeId: string;
   rivi: KenttaRivi;
   lahteet: KenttaLahde[];
   linkkiTekstit?: ReadonlyMap<string, string>;
+  korvaavat?: ReadonlyMap<string, KorvaavaDokumentti>;
   tarkistus?: KenttaTarkistus | null;
 }) {
   const naytettavat = kentanLahteet(lahteet, rivi.lahdeKentta ?? rivi.kentta);
@@ -86,6 +90,7 @@ function Faktakortti({
       tila={kentanTila(!tyhja, naytettavat)}
       lahteet={naytettavat}
       linkkiTekstit={linkkiTekstit}
+      korvaavat={korvaavat}
       tarkistus={
         rivi.kentta === "maakunta" && naytettavat.length === 0 && !tyhja
           ? "Johdettu kunnasta. Kentälle ei vaadita omaa lähdettä."
@@ -186,6 +191,27 @@ function hankeRyhmat(
               ? muotoileLuku(hanke.generaattori_polttoaineteho_mw)
               : null,
         },
+        {
+          kentta: "generaattori_yksikkoteho_mwe",
+          arvo:
+            hanke.generaattori_yksikkoteho_mwe != null
+              ? muotoileLuku(hanke.generaattori_yksikkoteho_mwe)
+              : null,
+        },
+        {
+          kentta: "diesel_vuosikulutus_maara",
+          arvo: dieselVuosikulutusTeksti(
+            hanke.diesel_vuosikulutus_maara,
+            hanke.diesel_vuosikulutus_yksikko,
+          ),
+        },
+        {
+          kentta: "varavoima_paastot_t_co2e",
+          arvo:
+            hanke.varavoima_paastot_t_co2e != null
+              ? muotoileLuku(hanke.varavoima_paastot_t_co2e)
+              : null,
+        },
       ],
     },
   ];
@@ -275,6 +301,12 @@ export default async function HankeSivu({
   const kuntaMaakunnat = await haeKuntaMaakuntaKartta();
   const ratkaistuMaakunta = ratkaiseMaakunta(hanke.maakunta, hanke.kunta, kuntaMaakunnat);
   const linkkiTekstit = rakennaDokumenttiLinkkiTekstit(asiakirjat);
+  const korvaavat = new Map(
+    asiakirjat.map((asiakirja) => [
+      asiakirja.id,
+      { otsikko: asiakirja.otsikko, url: asiakirja.url },
+    ]),
+  );
   const tehoKentta =
     hanke.it_teho_mw != null ? "it_teho_mw" : hanke.teho_mw != null ? "teho_mw" : null;
   const tehoMw = hankeTehoMw(hanke);
@@ -428,6 +460,7 @@ export default async function HankeSivu({
                     rivi={rivi}
                     lahteet={lahteet}
                     linkkiTekstit={linkkiTekstit}
+                    korvaavat={korvaavat}
                     tarkistus={tarkistukset.find(
                       (riviTarkistus) =>
                         riviTarkistus.kentta === (rivi.lahdeKentta ?? rivi.kentta),
@@ -547,6 +580,21 @@ export default async function HankeSivu({
                     vaihtoehto.generaattori_polttoaineteho_mw != null
                       ? `generaattorin polttoaineteho ${muotoileLuku(vaihtoehto.generaattori_polttoaineteho_mw)} MW`
                       : null,
+                    vaihtoehto.generaattori_yksikkoteho_mwe != null
+                      ? `yksikköteho ${muotoileLuku(vaihtoehto.generaattori_yksikkoteho_mwe)} MWe`
+                      : null,
+                    dieselVuosikulutusTeksti(
+                      vaihtoehto.diesel_vuosikulutus_maara,
+                      vaihtoehto.diesel_vuosikulutus_yksikko,
+                    )
+                      ? `dieselin vuosikulutus ${dieselVuosikulutusTeksti(
+                          vaihtoehto.diesel_vuosikulutus_maara,
+                          vaihtoehto.diesel_vuosikulutus_yksikko,
+                        )}`
+                      : null,
+                    vaihtoehto.varavoima_paastot_t_co2e != null
+                      ? `varavoiman päästöt ${muotoileLuku(vaihtoehto.varavoima_paastot_t_co2e)} t CO2e/a`
+                      : null,
                     polttoainevarastoTeksti(
                       vaihtoehto.polttoainevarasto_maara,
                       vaihtoehto.polttoainevarasto_yksikko,
@@ -562,9 +610,15 @@ export default async function HankeSivu({
                 )}
                 lahteet={vaihtoehtoLahteet.filter((lahde) => lahde.rivi_id === vaihtoehto.id)}
                 linkkiTekstit={linkkiTekstit}
+                korvaavat={korvaavat}
+                naytaKentta
                 toiminnot={
                   <ul className="flex flex-col gap-1">
-                    {VAIHTOEHTO_KENTAT.filter((kentta) => kentta !== "polttoainevarasto_yksikko").map((kentta) => (
+                    {VAIHTOEHTO_KENTAT.filter(
+                      (kentta) =>
+                        kentta !== "polttoainevarasto_yksikko" &&
+                        kentta !== "diesel_vuosikulutus_yksikko",
+                    ).map((kentta) => (
                       <li key={kentta}>
                         <a
                           href={paivitaLinkki(hanke.id, kentta, vaihtoehto.tunnus)}

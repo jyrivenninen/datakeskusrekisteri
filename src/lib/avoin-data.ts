@@ -36,6 +36,8 @@ export type AvoinDataLahde = {
   merkitty: KenttaLahde["merkitty"];
   merkitty_pvm: string;
   lainaus: string | null;
+  tila: KenttaLahde["tila"];
+  korvaava_dokumentti_id: string | null;
 };
 
 function serialisoiLahde(lahde: KenttaLahde): AvoinDataLahde {
@@ -49,6 +51,8 @@ function serialisoiLahde(lahde: KenttaLahde): AvoinDataLahde {
     merkitty: lahde.merkitty,
     merkitty_pvm: lahde.merkitty_pvm,
     lainaus: lahde.lainaus,
+    tila: lahde.tila,
+    korvaava_dokumentti_id: lahde.korvaava_dokumentti_id,
   };
 }
 

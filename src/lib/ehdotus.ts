@@ -237,6 +237,9 @@ const NUMEERISET = new Set([
   "generaattorit_lkm",
   "generaattorit_kaytossa_max_lkm",
   "generaattori_polttoaineteho_mw",
+  "generaattori_yksikkoteho_mwe",
+  "diesel_vuosikulutus_maara",
+  "varavoima_paastot_t_co2e",
   "polttoainevarasto_maara",
   "sijainti_lat",
   "sijainti_lon",
@@ -255,6 +258,9 @@ export const LOMAKE_KENTAT = [
   "generaattorit_lkm",
   "generaattorit_kaytossa_max_lkm",
   "generaattori_polttoaineteho_mw",
+  "generaattori_yksikkoteho_mwe",
+  "diesel_vuosikulutus_maara",
+  "varavoima_paastot_t_co2e",
 ] as const;
 
 /** Hankesivun kortista päivitettävät hanketason kentät. */
@@ -272,6 +278,9 @@ export const PAIVITETTAVAT_HANKE_KENTAT = [
   "generaattorit_lkm",
   "generaattorit_kaytossa_max_lkm",
   "generaattori_polttoaineteho_mw",
+  "generaattori_yksikkoteho_mwe",
+  "diesel_vuosikulutus_maara",
+  "varavoima_paastot_t_co2e",
   "kaavatunnus",
   "kortteli",
   "sijainti_lat",
@@ -553,6 +562,10 @@ export const VAIHTOEHTO_KENTAT = [
   "generaattorit_lkm",
   "generaattorit_kaytossa_max_lkm",
   "generaattori_polttoaineteho_mw",
+  "generaattori_yksikkoteho_mwe",
+  "diesel_vuosikulutus_maara",
+  "diesel_vuosikulutus_yksikko",
+  "varavoima_paastot_t_co2e",
   "polttoainevarasto_maara",
   "polttoainevarasto_yksikko",
 ] as const;

@@ -152,6 +152,7 @@ export async function haeJulkaistutHankkeet(
         .from("kentta_lahteet")
         .select("rivi_id, vahvistettu_pvm")
         .eq("taulu", "hankkeet")
+        .eq("tila", "voimassa")
         .in("rivi_id", idt);
       const vanhimmat = new Map<string, string>();
       for (const rivi of vahvistukset ?? []) {

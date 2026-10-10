@@ -150,6 +150,10 @@ export const HANKE_FAKTAKENTAT_EHDOLLISET = [
   "generaattorit_lkm",
   "generaattorit_kaytossa_max_lkm",
   "generaattori_polttoaineteho_mw",
+  "generaattori_yksikkoteho_mwe",
+  "diesel_vuosikulutus_maara",
+  "diesel_vuosikulutus_yksikko",
+  "varavoima_paastot_t_co2e",
   "toimija_organisaatio_id",
   "yva_diaarinumero",
   "kaavatunnus",
@@ -198,6 +202,10 @@ export type Hanke = {
   generaattorit_lkm: number | null;
   generaattorit_kaytossa_max_lkm: number | null;
   generaattori_polttoaineteho_mw: number | null;
+  generaattori_yksikkoteho_mwe: number | null;
+  diesel_vuosikulutus_maara: number | null;
+  diesel_vuosikulutus_yksikko: string | null;
+  varavoima_paastot_t_co2e: number | null;
   toimija_organisaatio_id: string | null;
   yva_diaarinumero: string | null;
   julkaistu: boolean;
@@ -285,6 +293,10 @@ export type HankeVaihtoehto = {
   generaattorit_lkm: number | null;
   generaattorit_kaytossa_max_lkm: number | null;
   generaattori_polttoaineteho_mw: number | null;
+  generaattori_yksikkoteho_mwe: number | null;
+  diesel_vuosikulutus_maara: number | null;
+  diesel_vuosikulutus_yksikko: string | null;
+  varavoima_paastot_t_co2e: number | null;
   polttoainevarasto_maara: number | null;
   polttoainevarasto_yksikko: string | null;
   sijainti_alue: SijaintiAlue | null;
@@ -415,6 +427,8 @@ export type KenttaLahde = {
   merkitty_pvm: string;
   luotu_pvm: string;
   tekninen_lahde: boolean;
+  tila: "voimassa" | "korvattu";
+  korvaava_dokumentti_id: string | null;
 };
 
 export const KENTTA_TARKISTUS_TULOKSET = ["ei_julkista_lahdetta"] as const;

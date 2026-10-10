@@ -72,14 +72,19 @@ export const KENTAN_TILA_NIMET: Record<KentanTila, string> = {
 /** Kentän tila: varmennettu vaatii ihmisen kuittauksen (merkitty). */
 export function kentanTila(
   arvoOn: boolean,
-  lahteet: ReadonlyArray<{ luottamus: Luottamus; merkitty: Merkinta }>,
+  lahteet: ReadonlyArray<{
+    luottamus: Luottamus;
+    merkitty: Merkinta;
+    tila?: string | null;
+  }>,
 ): KentanTila {
+  const voimassa = lahteet.filter((lahde) => lahde.tila !== "korvattu");
   if (!arvoOn) return "puuttuu";
-  if (lahteet.length === 0) return "vahvistamaton";
-  if (lahteet.some((lahde) => lahde.luottamus === "ristiriitainen")) {
+  if (voimassa.length === 0) return "vahvistamaton";
+  if (voimassa.some((lahde) => lahde.luottamus === "ristiriitainen")) {
     return "vahvistamaton";
   }
-  if (lahteet.some((lahde) => lahde.merkitty === "ihmisen_vahvistama")) {
+  if (voimassa.some((lahde) => lahde.merkitty === "ihmisen_vahvistama")) {
     return "vahvistettu";
   }
   return "vahvistamaton";
@@ -236,6 +241,7 @@ export function massaHyvaksyntaOhitettavaSisalto(
 ): boolean {
   if (ehdotuksenHyvaksyntaEstetty(sisalto)) return true;
   if (sisalto?.rakentamisvaiheet && sisalto.rakentamisvaiheet.length > 0) return true;
+  if (sisalto?.huomio === "paatelma-luvut") return true;
   if (sisalto?.vaihtoehdot && Object.keys(sisalto.vaihtoehdot).length > 0) return true;
   return Boolean(sisalto?.asiakirjat && sisalto.asiakirjat.length > 0);
 }
@@ -327,6 +333,10 @@ export const HANKE_KENTTA_NIMET: Record<string, string> = {
   generaattorit_lkm: "Varavoimageneraattorit (kpl)",
   generaattorit_kaytossa_max_lkm: "Generaattoreita yhtä aikaa enintään (kpl)",
   generaattori_polttoaineteho_mw: "Generaattorin polttoaineteho (MW)",
+  generaattori_yksikkoteho_mwe: "Generaattorin yksikköteho (MWe)",
+  diesel_vuosikulutus_maara: "Dieselin vuosikulutus",
+  diesel_vuosikulutus_yksikko: "Dieselin vuosikulutuksen yksikkö",
+  varavoima_paastot_t_co2e: "Varavoiman kasvihuonekaasupäästöt (t CO2e/a)",
   polttoainevarasto_maara: "Polttoainevarasto",
   polttoainevarasto_yksikko: "Polttoainevaraston yksikkö",
   toimija_organisaatio_id: "Hankkeesta vastaava",
@@ -495,10 +505,11 @@ export function viimeisinPaatos<T extends { pvm: string; luotu_pvm: string }>(
 }
 
 export function vanhinVahvistettuPvm(
-  lahteet: ReadonlyArray<{ vahvistettu_pvm: string }>,
+  lahteet: ReadonlyArray<{ vahvistettu_pvm: string; tila?: string | null }>,
 ): string | null {
   let vanhin: string | null = null;
   for (const lahde of lahteet) {
+    if (lahde.tila === "korvattu") continue;
     const pvm = lahde.vahvistettu_pvm.slice(0, 10);
     if (!pvm) continue;
     if (!vanhin || pvm < vanhin) vanhin = pvm;
@@ -578,6 +589,20 @@ const POLTTOAINEVARASTO_YKSIKOT: Record<string, string> = {
   litra: "l",
   mw: "MW",
 };
+
+const TILAVUUS_YKSIKOT: Record<string, string> = {
+  litra: "l",
+  m3: "m³",
+};
+
+export function dieselVuosikulutusTeksti(
+  maara: number | string | null,
+  yksikko: string | null,
+): string | null {
+  if (maara == null || !yksikko) return null;
+  const nimi = TILAVUUS_YKSIKOT[yksikko] ?? yksikko;
+  return `${muotoileLuku(maara)} ${nimi}/a`;
+}
 
 export function polttoainevarastoTeksti(
   maara: number | string | null,

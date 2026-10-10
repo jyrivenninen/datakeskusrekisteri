@@ -37,6 +37,10 @@ const TAYDENNETTAVAT = [
   "generaattorit_lkm",
   "generaattorit_kaytossa_max_lkm",
   "generaattori_polttoaineteho_mw",
+  "generaattori_yksikkoteho_mwe",
+  "diesel_vuosikulutus_maara",
+  "diesel_vuosikulutus_yksikko",
+  "varavoima_paastot_t_co2e",
 ] as const;
 
 type EhdotettuKentta = {

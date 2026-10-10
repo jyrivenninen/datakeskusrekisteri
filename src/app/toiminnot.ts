@@ -236,6 +236,20 @@ export async function lahetaKenttapaivitys(formData: FormData): Promise<void> {
     }
     lomakeKentat.polttoainevarasto_yksikko = yksikko;
   }
+  if (kentta === "diesel_vuosikulutus_maara") {
+    if (!["litra", "m3"].includes(yksikko)) {
+      paivitysPaluu(hankeId, kentta, vaihtoehto, "Dieselin vuosikulutuksen yksikkö puuttuu.");
+    }
+    lomakeKentat.diesel_vuosikulutus_yksikko = yksikko;
+  }
+  if (kentta === "varavoima_paastot_t_co2e" && lainaus.trim() === "") {
+    paivitysPaluu(
+      hankeId,
+      kentta,
+      vaihtoehto,
+      "Varavoiman päästöluku vaatii lainauksen, josta ilmenee kuka luvun on laskenut.",
+    );
+  }
   const { sisalto: pohja, virhe } = rakennaSisalto(
     lomakeKentat,
     lahdeUrl,
