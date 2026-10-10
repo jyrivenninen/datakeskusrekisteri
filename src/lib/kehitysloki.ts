@@ -10,6 +10,15 @@ export type KehityslokiMerkinta = {
 export const KEHITYSLOKI: KehityslokiMerkinta[] = [
   {
     pvm: "2026-10-10",
+    otsikko: "Sähkönkäytön skannaus (2b)",
+    kohdat: [
+      "Prioriteettijono ja regex-poiminta TWh/GWh:lle linkitetyistä asiakirjoista (npm run sahkonkaytto:skannaa).",
+      "Ympäristö.fi-sivulta löydetyt PDF-liitteet skannataan samassa ajossa.",
+      "Löydökset voidaan viedä muutosehdotusjonoon (--jonoon) tai merkitä tyhjäksi (--tyhja-jono).",
+    ],
+  },
+  {
+    pvm: "2026-10-10",
     otsikko: "Asiakirjojen siivous ja oncloudos-otsikot",
     kohdat: [
       "YVA-sivujen lyhyet alias-URL:t (Sarvenmaa, Pyhäjoki) linkitetty kanoniseen fi-polkuun.",
