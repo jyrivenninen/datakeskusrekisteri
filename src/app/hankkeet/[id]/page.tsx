@@ -1,15 +1,12 @@
 import type { Metadata } from "next";
 import { notFound, permanentRedirect } from "next/navigation";
-import { AsiakirjaRivi } from "@/komponentit/asiakirja-kortti";
+import { AsiakirjaTaulukko } from "@/komponentit/asiakirja-kortti";
 import { AvattavaKortti, Korttiruudukko } from "@/komponentit/avattava-kortti";
 import { KarttaViive } from "@/komponentit/kartta-viive";
 import { HankeGalleria } from "@/komponentit/hanke-galleria";
 import { VaiheMerkki } from "@/komponentit/vaihe-merkki";
 import { lomakeKenttaKortista, VAIHTOEHTO_KENTAT } from "@/lib/ehdotus";
-import {
-  naytaDokumenttiOtsikko,
-  rakennaDokumenttiLinkkiTekstit,
-} from "@/lib/lahde-metatiedot";
+import { rakennaDokumenttiLinkkiTekstit } from "@/lib/lahde-metatiedot";
 import {
   JOHTO_TYYPPI_NIMET,
   HANKE_KENTTA_NIMET,
@@ -581,9 +578,9 @@ export default async function HankeSivu({
           Asiakirjat
         </h2>
         <p className="mt-2 text-sm text-muted">
-          Luettelo kokoaa julkaistuun hanketietoon viittaavat lähde-URL:t. Harmaalla
-          metatiedot ja arvio viimeisestä hausta. Geokoodaus- ja karttahaut eivät
-          näy tässä. Tekoälyn tiivistelmää ei tallenneta.{" "}
+          Luettelo kokoaa julkaistuun hanketietoon viittaavat lähde-URL:t sarakkeittain.
+          Geokoodaus- ja karttahaut eivät näy tässä. Tekoälyn tiivistelmää ei
+          tallenneta.{" "}
           <a href={`/hankkeet/${hanke.id}/asiakirjat`} className="text-link underline">
             Koneluettava luettelo
           </a>
@@ -591,22 +588,7 @@ export default async function HankeSivu({
         {asiakirjat.length === 0 ? (
           <p className="mt-3">Ei merkittyjä asiakirjoja.</p>
         ) : (
-          <ul className="mt-3 divide-y divide-border border-y border-border">
-            {asiakirjat.map((asiakirja) => {
-              const otsikko = naytaDokumenttiOtsikko(asiakirja);
-              return (
-                <li key={asiakirja.id} className="px-1 first:pt-0">
-                  <AsiakirjaRivi
-                    url={asiakirja.url}
-                    otsikko={otsikko}
-                    otsikkoOnUrl={otsikko === asiakirja.url}
-                    meta={asiakirja.meta_teksti}
-                    kattaa={asiakirja.kattaa}
-                  />
-                </li>
-              );
-            })}
-          </ul>
+          <AsiakirjaTaulukko asiakirjat={asiakirjat} />
         )}
       </section>
 

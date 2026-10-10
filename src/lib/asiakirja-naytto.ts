@@ -59,3 +59,23 @@ export function asiakirjaMetataInfo(d: {
   if (d.viimeisin_haku_pvm) osat.push(`Haettu ${muotoilePvm(d.viimeisin_haku_pvm)}`);
   return osat.join(" · ");
 }
+
+/** Sarake: laji, muoto, kieli, julkaisija (ei haettu-päivää). */
+export function asiakirjaTyyppiSarake(d: {
+  laji: Dokumentti["laji"];
+  muoto: Dokumentti["muoto"];
+  kieli: Dokumentti["kieli"];
+  julkaisija: string | null;
+  julkaistu_pvm: string | null;
+}): string {
+  const osat: string[] = [DOKUMENTTI_LAJI_NIMET[d.laji]];
+  if (d.muoto) osat.push(DOKUMENTTI_MUOTO_NIMET[d.muoto]);
+  if (d.kieli) osat.push(DOKUMENTTI_KIELI_NIMET[d.kieli]);
+  if (d.julkaisija) osat.push(d.julkaisija);
+  if (d.julkaistu_pvm) osat.push(muotoilePvm(d.julkaistu_pvm));
+  return osat.join(" · ");
+}
+
+export function asiakirjaHaettuSarake(viimeisin_haku_pvm: string | null): string {
+  return viimeisin_haku_pvm ? muotoilePvm(viimeisin_haku_pvm) : "—";
+}

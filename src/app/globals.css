@@ -145,14 +145,6 @@ dialog.esiversio-ilmoitus::backdrop {
   content: "Avaa lähteet";
 }
 
-.asiakirja-kentat > summary::before {
-  content: "▸ ";
-}
-
-.asiakirja-kentat[open] > summary::before {
-  content: "▾ ";
-}
-
 .faktakortti[open] > .faktakortti-yhteenveto::after {
   content: "Piilota lähteet";
 }
