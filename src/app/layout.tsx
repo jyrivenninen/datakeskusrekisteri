@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { cookies } from "next/headers";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 import { ESIVERSIO_EVASTE } from "@/lib/esiversio";
 import { EsiversioIlmoitus } from "@/komponentit/esiversio-ilmoitus";
 import { haeYllapitaja } from "@/lib/supabase/palvelin";
@@ -121,6 +122,7 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
             </nav>
           </div>
         </footer>
+        <SpeedInsights />
       </body>
     </html>
   );
