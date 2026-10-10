@@ -1,4 +1,4 @@
-import { notFound, redirect } from "next/navigation";
+import { redirect } from "next/navigation";
 import {
   hyvaksyEhdotusToiminto,
   hylkaaEhdotusToiminto,
