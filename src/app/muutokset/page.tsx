@@ -24,6 +24,7 @@ export const metadata: Metadata = {
     polku: "/muutokset",
   }),
   alternates: {
+    canonical: "/muutokset",
     types: {
       "application/rss+xml": "/muutokset/rss",
       "application/json": "/muutokset/json",

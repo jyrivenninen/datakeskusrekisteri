@@ -34,6 +34,9 @@ export function kortinMetatiedot(opts: {
       title: opts.otsikko,
       description: opts.kuvaus,
     },
+    alternates: {
+      canonical: opts.polku,
+    },
   };
 }
 

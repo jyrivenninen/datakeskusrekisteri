@@ -1,7 +1,15 @@
+import type { Metadata } from "next";
 import { KarttaViive } from "@/komponentit/kartta-viive";
 import { aktiivisetEhdot, hankkeetSuodatusPolku, onAktiivinenSuodatus } from "@/lib/haku";
 import { haeKarttaSivuData } from "@/lib/kartta-sivu";
+import { kortinMetatiedot, SIVUSTON_OTSIKKO } from "@/lib/sivuston-metatiedot";
 import { parsiSuodatus } from "@/lib/supabase/kyselyt";
+
+export const metadata: Metadata = kortinMetatiedot({
+  otsikko: `Kartta – ${SIVUSTON_OTSIKKO}`,
+  kuvaus: "Suomen datakeskushankkeet kartalla. Sijainti, vaihe ja teho lähteineen.",
+  polku: "/kartta",
+});
 
 export const revalidate = 60;
 

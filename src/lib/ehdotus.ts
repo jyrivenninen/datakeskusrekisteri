@@ -20,6 +20,19 @@ export type EhdotettuKuva = {
   luottamus?: Luottamus;
 };
 
+export type RakentamisvaiheEhdotus = {
+  jarjestys: number;
+  nimi: string;
+  it_teho_mw?: number | null;
+  teho_mw?: number | null;
+  tila: "suunniteltu" | "rakenteilla" | "kaytossa";
+  lahde_url: string;
+  lahde_sivu?: number | null;
+  lainaus: string;
+  luottamus?: Luottamus;
+  lahde_laji?: LahdeLaji;
+};
+
 export type EhdotusSisalto = {
   kentat: Record<string, EhdotettuKentta>;
   vaihtoehdot?: Record<string, Record<string, EhdotettuKentta>>;
@@ -126,6 +139,10 @@ export type EhdotusSisalto = {
       merkitty: "koneen_ehdottama" | "ihmisen_vahvistama";
     }>;
   };
+  rakentamisvaiheet?: RakentamisvaiheEhdotus[];
+  tyhjenna_kentat?: Array<"teho_mw" | "it_teho_mw">;
+  vaatii_lukeminen?: boolean;
+  huomio?: string;
   maaraaja?: {
     tyyppi: string;
     alkaa_pvm?: string | null;

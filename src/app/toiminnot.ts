@@ -23,6 +23,7 @@ import {
   kasittelijaMerkinta,
   lueMegawatti,
   massaHyvaksyntaOhitettava,
+  massaHyvaksyntaOhitettavaSisalto,
 } from "@/lib/naytto";
 import {
   haeSeuraavaOdottavaHavaintoId,
@@ -1184,7 +1185,7 @@ export async function hyvaksyKaikkiOdottavatToiminto(formData: FormData): Promis
   const { supabase } = await haeKirjautunutKayttaja();
   const { data: odottavat, error } = await supabase
     .from("muutosehdotukset")
-    .select("id, tyyppi, hanke_id")
+    .select("id, tyyppi, hanke_id, sisalto")
     .eq("tila", "odottaa")
     .order("luotu_pvm", { ascending: true });
   if (error) {
@@ -1205,7 +1206,16 @@ export async function hyvaksyKaikkiOdottavatToiminto(formData: FormData): Promis
   let ohitettu = 0;
   const epaonnistuneet: string[] = [];
   for (const rivi of odottavat ?? []) {
-    if (massaHyvaksyntaOhitettava(rivi.tyyppi)) {
+    if (
+      massaHyvaksyntaOhitettava(rivi.tyyppi) ||
+      massaHyvaksyntaOhitettavaSisalto(
+        rivi.sisalto as {
+          huomio?: string;
+          vaatii_lukeminen?: boolean;
+          rakentamisvaiheet?: unknown[];
+        } | null,
+      )
+    ) {
       ohitettu += 1;
       continue;
     }
@@ -1231,7 +1241,7 @@ export async function hyvaksyKaikkiOdottavatToiminto(formData: FormData): Promis
   const jonoon: string[] = [...epaonnistuneet];
   if (ohitettu > 0) {
     jonoon.unshift(
-      `${ohitettu} riviä jäi jonoon (ristiriitahavainto, kenttämuutos, päätös tai poistettu hanke): käsittele yksitellen.`,
+      `${ohitettu} riviä jäi jonoon (ristiriitahavainto, kenttämuutos, päätös, tehon kenttävalinta, rakentamisvaihe tai poistettu hanke): käsittele yksitellen.`,
     );
   }
   if (jonoon.length > 0) {

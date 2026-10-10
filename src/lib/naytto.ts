@@ -205,6 +205,37 @@ export function massaHyvaksyntaOhitettava(tyyppi: string): boolean {
   );
 }
 
+type JononSisalto = {
+  huomio?: string;
+  vaatii_lukeminen?: boolean;
+  rakentamisvaiheet?: readonly unknown[] | null;
+};
+
+/** Hyväksy-painike ei julkaise: lähde on lukematta tai kenttä valitaan sanan mukaan. */
+export function ehdotuksenHyvaksyntaEstetty(
+  sisalto: JononSisalto | null | undefined,
+): boolean {
+  if (!sisalto) return false;
+  if (sisalto.vaatii_lukeminen) return true;
+  if (sisalto.huomio === "erittelemattoman tehon kenttavalinta") return true;
+  if (sisalto.huomio === "wikipedia-it-teho") return true;
+  if (
+    sisalto.huomio === "rakentamisvaihe" &&
+    !(sisalto.rakentamisvaiheet && sisalto.rakentamisvaiheet.length > 0)
+  ) {
+    return true;
+  }
+  return false;
+}
+
+/** Massahyväksyntä ohittaa myös vaiheet ja erittelemättömän tehon: ne luetaan yksitellen. */
+export function massaHyvaksyntaOhitettavaSisalto(
+  sisalto: JononSisalto | null | undefined,
+): boolean {
+  if (ehdotuksenHyvaksyntaEstetty(sisalto)) return true;
+  return Boolean(sisalto?.rakentamisvaiheet && sisalto.rakentamisvaiheet.length > 0);
+}
+
 export const RISTIRIITA_SAANTO_NIMET: Record<string, string> = {
   ytunnus_nimet: "Sama Y-tunnus, eri nimet",
   nimi_ytunnukset: "Sama nimi, eri Y-tunnukset",

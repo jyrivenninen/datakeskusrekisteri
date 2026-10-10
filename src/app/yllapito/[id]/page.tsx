@@ -15,6 +15,7 @@ import {
 import { puraDomain } from "@/lib/lahde-tyyppi-domain";
 import { EhdotusLuokka, EhdotusTila } from "@/komponentit/ehdotus-tila";
 import {
+  ehdotuksenHyvaksyntaEstetty,
   ehdotusPoistetulleHankkeelle,
   ehdotuksenHankeIdt,
   HANKE_KENTTA_NIMET,
@@ -25,6 +26,7 @@ import {
   DOKUMENTTI_LAJI_NIMET,
   DOKUMENTTI_MUOTO_NIMET,
   hyvaksyPainikeTeksti,
+  muotoileLuku,
   kasittelySelite,
   MAARAAJA_KENTTA_NIMET,
   MAARAAJA_NIMET,
@@ -49,6 +51,12 @@ import {
   poistetutHankeIdt,
   supabasePalvelinAvainAsetettu,
 } from "@/lib/supabase/yllapito-asiakas";
+
+const RAKENTAMISVAIHE_TILA: Record<string, string> = {
+  suunniteltu: "Suunniteltu",
+  rakenteilla: "Rakenteilla",
+  kaytossa: "Käytössä",
+};
 
 async function vaadiYllapitaja() {
   const { user, supabase } = await haeKirjautunutKayttaja();
@@ -102,6 +110,8 @@ export default async function EhdotusSivu({
     );
   }
   const sisalto = ehdotus.sisalto as EhdotusSisalto;
+  const rakentamisvaiheet = sisalto.rakentamisvaiheet ?? [];
+  const hyvaksyntaEstetty = ehdotuksenHyvaksyntaEstetty(sisalto);
   const odottaa = ehdotus.tila === "odottaa";
   const hyvaksyTeksti = hyvaksyPainikeTeksti(ehdotus.tyyppi, {
     ytjEhdotaTunnus: Boolean(sisalto.ytj?.ehdota_tunnus),
@@ -355,6 +365,51 @@ export default async function EhdotusSivu({
         <p className="mt-4">
           <strong>Huomautus:</strong> {ehdotus.huomautus}
         </p>
+      ) : null}
+      {rakentamisvaiheet.length > 0 ? (
+        <section className="mt-6" aria-labelledby="rakentamisvaiheet-otsikko">
+          <h2 id="rakentamisvaiheet-otsikko" className="text-xl font-semibold">
+            Hyväksyntä luo rakentamisvaiheen
+          </h2>
+          <ul className="mt-3 space-y-4">
+            {rakentamisvaiheet.map((vaihe) => (
+              <li key={vaihe.jarjestys} className="rounded border border-border p-4">
+                <p className="font-medium">
+                  {vaihe.jarjestys}. {vaihe.nimi}
+                </p>
+                <p className="mt-1 text-sm">
+                  {RAKENTAMISVAIHE_TILA[vaihe.tila] ?? vaihe.tila}
+                  {vaihe.it_teho_mw != null
+                    ? ` · IT-teho ${muotoileLuku(vaihe.it_teho_mw)} MW`
+                    : ""}
+                  {vaihe.teho_mw != null
+                    ? ` · Teho ${muotoileLuku(vaihe.teho_mw)} MW`
+                    : ""}
+                  {vaihe.luottamus
+                    ? ` · ${LUOTTAMUS_NIMET[vaihe.luottamus]}`
+                    : ""}
+                </p>
+                <blockquote className="mt-2 border-l-2 border-border pl-3 text-sm">
+                  {vaihe.lainaus}
+                </blockquote>
+                <p className="mt-2 text-sm">
+                  <a href={vaihe.lahde_url} className="text-link underline">
+                    {vaihe.lahde_url}
+                  </a>
+                </p>
+              </li>
+            ))}
+          </ul>
+          {(sisalto.tyhjenna_kentat ?? []).length > 0 ? (
+            <p className="mt-3 text-sm">
+              Hankkeelta tyhjennetään:{" "}
+              {(sisalto.tyhjenna_kentat ?? [])
+                .map((kentta) => HANKE_KENTTA_NIMET[kentta] ?? kentta)
+                .join(", ")}
+              .
+            </p>
+          ) : null}
+        </section>
       ) : null}
       {ehdotus.perustelu ? (
         <p className="mt-4">
@@ -1545,7 +1600,18 @@ export default async function EhdotusSivu({
               ) : null}
             </form>
           ) : null}
-          {ehdotus.tyyppi !== "lahde_tyyppi_havainto" ? (
+          {hyvaksyntaEstetty && odottaa ? (
+            <p className="max-w-prose text-sm">
+              {sisalto.vaatii_lukeminen
+                ? "Hyväksyntä ei luo vaihetta. Lähde on luettava ja lainaus kirjattava ennen kuin luvut jaetaan vaiheisiin."
+                : sisalto.huomio === "erittelemattoman tehon kenttavalinta"
+                  ? "Hyväksyntä ei valitse kenttää. Käy rivi yksitellen ja tyhjennä toinen kenttä vasta, kun lähteen sana on luettu. Massahyväksyntä ohittaa nämä rivit."
+                  : sisalto.huomio === "wikipedia-it-teho"
+                    ? "Hyväksyntä ei poista Wikipedia-lähdettä."
+                    : "Hyväksyntä ei luo vaihetta, koska ehdotuksessa ei ole vaiheen tietoja."}
+            </p>
+          ) : null}
+          {ehdotus.tyyppi !== "lahde_tyyppi_havainto" && !hyvaksyntaEstetty ? (
           <form action={hyvaksyEhdotusToiminto} className="space-y-3">
             <input type="hidden" name="id" value={ehdotus.id} />
             {kuuluuHavaintojonoon(ehdotus.tyyppi) ? (

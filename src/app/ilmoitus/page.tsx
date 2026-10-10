@@ -1,10 +1,18 @@
+import type { Metadata } from "next";
 import { lahetaIlmoitus } from "@/app/toiminnot";
 import { IlmoitusKenttalohko } from "@/komponentit/ilmoitus-kenttalohko";
 import { LomakeLahetysNappi } from "@/komponentit/lomake-lahetysnappi";
 import { LOMAKE_KENTAT } from "@/lib/ehdotus";
+import { kortinMetatiedot, SIVUSTON_OTSIKKO } from "@/lib/sivuston-metatiedot";
 import { haeJulkaistutHankkeet } from "@/lib/supabase/kyselyt";
 import { haeYllapitaja } from "@/lib/supabase/palvelin";
 import { supabasePalvelinAvainAsetettu } from "@/lib/supabase/yllapito-asiakas";
+
+export const metadata: Metadata = kortinMetatiedot({
+  otsikko: `Ilmoita hanke – ${SIVUSTON_OTSIKKO}`,
+  kuvaus: "Ilmoita datakeskushanke tai täydennä julkaistua tietoa. Ilmoitus tarkistetaan ennen julkaisua.",
+  polku: "/ilmoitus",
+});
 
 export default async function IlmoitusSivu({
   searchParams,

@@ -25,6 +25,7 @@ export const metadata: Metadata = {
   }),
   metadataBase: new URL(SIVUSTON_OSOITE),
   alternates: {
+    canonical: "/",
     types: {
       "application/rss+xml": [
         { url: "/muutokset/rss", title: "Viimeksi päivitetty" },

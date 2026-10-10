@@ -435,6 +435,18 @@ export async function hyvaksyMuutosehdotus(
     return;
   }
 
+  if (sisalto.vaatii_lukeminen) {
+    throw new Error("Ehdotus vaatii lähteen lukemista ennen hyväksyntää.");
+  }
+  if (Array.isArray(sisalto.rakentamisvaiheet) && sisalto.rakentamisvaiheet.length > 0) {
+    const { error: vaiheVirhe } = await supabase.rpc("julkaise_rakentamisvaiheet", {
+      p_ehdotus_id: ehdotusId,
+      p_kasittelija: kasittelija,
+    });
+    if (vaiheVirhe) throw new Error(vaiheVirhe.message);
+    return;
+  }
+
   if (Object.keys(kentat).length === 0 && Object.keys(vaihtoehdot).length === 0) {
     throw new Error("Ehdotuksessa ei ole kenttiä.");
   }

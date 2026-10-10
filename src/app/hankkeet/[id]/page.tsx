@@ -213,6 +213,7 @@ export async function generateMetadata({
       tyyppi: "article",
     }),
     alternates: {
+      canonical: `/hankkeet/${hanke.id}`,
       types: {
         "application/json": `/hankkeet/${hanke.id}/json`,
       },
