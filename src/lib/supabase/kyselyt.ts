@@ -1,5 +1,10 @@
 import { createHash } from "node:crypto";
 import { asiakirjaMetataInfo, viimeisinAsiakirjaHakuPvm } from "@/lib/asiakirja-naytto";
+import {
+  asiakirjanKayttoMonelle,
+  kanoninenDokumenttiUrl,
+  yhdistaSamannimisetAsiakirjat,
+} from "@/lib/asiakirja-yhdistys";
 import { piilotaJulkinenAsiakirjaUrl } from "@/lib/lahde-geokoodaus-url";
 import { naytaDokumenttiOtsikko } from "@/lib/lahde-metatiedot";
 import { luoPalvelinAsiakas } from "@/lib/supabase/palvelin";
@@ -265,11 +270,7 @@ export type OrganisaationHanke = HankeListalla & {
   roolit: HankeOrganisaatioRooli[];
 };
 
-export type AsiakirjanKaytto = {
-  taulu: KenttaLahde["taulu"];
-  kentta: string;
-  sivut: number[];
-};
+export type { AsiakirjanKaytto } from "@/lib/asiakirja-yhdistys";
 
 export type HankeAsiakirja = Dokumentti & {
   kattaa: AsiakirjanKaytto[];
@@ -313,6 +314,8 @@ function stubDokumenttiRivi(hankeId: string, url: string): Dokumentti {
     julkaistu: true,
     luotu_pvm: nyt,
     paivitetty_pvm: nyt,
+    sisalto_tiiviste: null,
+    kanoninen_dokumentti_id: null,
   };
 }
 
@@ -343,12 +346,28 @@ export function kokoaHankeAsiakirjat(
   hankeId: string,
 ): HankeAsiakirja[] {
   const urlLahteet = hankkeenFaktalahdeUrllit(kaikkiLahteet);
+  const byId = new Map<string, Dokumentti>();
   const byUrl = new Map<string, Dokumentti>();
-  for (const d of dokumentit) byUrl.set(d.url, d);
-
-  const urlit = new Set(urlLahteet);
   for (const d of dokumentit) {
-    if (d.hanke_id === hankeId && !piilotaJulkinenAsiakirjaUrl(d.url)) urlit.add(d.url);
+    byId.set(d.id, d);
+    byUrl.set(d.url, d);
+  }
+
+  function kanoninenAvain(url: string): string {
+    const d = byUrl.get(url);
+    if (!d) return url;
+    return kanoninenDokumenttiUrl(d, byId);
+  }
+
+  const urlit = new Set<string>();
+  for (const url of urlLahteet) {
+    if (piilotaJulkinenAsiakirjaUrl(url)) continue;
+    urlit.add(kanoninenAvain(url));
+  }
+  for (const d of dokumentit) {
+    if (d.hanke_id !== hankeId || piilotaJulkinenAsiakirjaUrl(d.url)) continue;
+    if (d.kanoninen_dokumentti_id) continue;
+    urlit.add(kanoninenDokumenttiUrl(d, byId));
   }
 
   const jarjestetty = [...urlit].sort((a, b) =>
@@ -358,12 +377,22 @@ export function kokoaHankeAsiakirjat(
     ),
   );
 
-  return jarjestetty.map((url) => {
+  const rivit = jarjestetty.map((url) => {
     const dokumentti = byUrl.get(url) ?? stubDokumenttiRivi(hankeId, url);
+    const aliasDokumentit = dokumentit.filter(
+      (d) => kanoninenDokumenttiUrl(d, byId) === url || d.url === url,
+    );
     const viimeisin_haku_pvm = viimeisinAsiakirjaHakuPvm(dokumentti, kaikkiLahteet);
+    const kattaa =
+      aliasDokumentit.length > 1
+        ? asiakirjanKayttoMonelle(
+            kaikkiLahteet,
+            aliasDokumentit.map((d) => ({ id: d.id, url: d.url })),
+          )
+        : asiakirjanKaytto(kaikkiLahteet, dokumentti);
     return {
       ...dokumentti,
-      kattaa: asiakirjanKaytto(kaikkiLahteet, dokumentti),
+      kattaa,
       viimeisin_haku_pvm,
       meta_teksti: asiakirjaMetataInfo({
         laji: dokumentti.laji,
@@ -375,6 +404,8 @@ export function kokoaHankeAsiakirjat(
       }),
     };
   });
+
+  return yhdistaSamannimisetAsiakirjat(rivit, kaikkiLahteet);
 }
 
 export function asiakirjanKaytto(lahteet: KenttaLahde[], dokumentti: Dokumentti): AsiakirjanKaytto[] {

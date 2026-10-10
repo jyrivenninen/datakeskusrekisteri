@@ -380,6 +380,8 @@ export type Dokumentti = {
   julkaistu: boolean;
   luotu_pvm: string;
   paivitetty_pvm: string;
+  sisalto_tiiviste: string | null;
+  kanoninen_dokumentti_id: string | null;
 };
 
 export type KenttaLahde = {

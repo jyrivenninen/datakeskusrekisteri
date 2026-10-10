@@ -10,9 +10,13 @@ export type KehityslokiMerkinta = {
 export const KEHITYSLOKI: KehityslokiMerkinta[] = [
   {
     pvm: "2026-10-10",
-    otsikko: "Yksityisyys ja lomakeviestit",
+    otsikko: "Asiakirjat, yksityisyys ja lähdehygienia",
     kohdat: [
-      "Tietoa-sivun Yksityisyys-osion teksti täsmennetty evästeistä, sivulatauksista ja karttalaatoista.",
+      "Hankesivun Asiakirjat-lista näyttää kaikki faktalähde-URL:t taulukkona (otsikko, tyyppi, haettu, kentät). Geokoodaus- ja OpenStreetMap-haut jätetään pois.",
+      "Asiakirjan otsikossa ei näytetä vahingossa poimittuja yhteystietoja (esim. PDF:n puhelinnumerot).",
+      "Sama asiakirja eri URL:llä yhdistyy yhdeksi riviksi; alias merkitään dokumenttirekisterissä kanoniseen riviin.",
+      "Tietoa-sivulle lisätty huomio kuntien päätösjärjestelmien ja rakennuslupien kattavuudesta.",
+      "Yksityisyys-osion teksti täsmennetty evästeistä, sivulatauksista ja karttalaatoista.",
       "Yli 12 kuukautta vanhat lomakeviestit poistetaan kuukausittain ajastetulla ajolla (GitHub Actions, loki lahdeajot-taulussa).",
     ],
   },
