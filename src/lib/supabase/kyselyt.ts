@@ -1,4 +1,5 @@
 import { createHash } from "node:crypto";
+import { piilotaJulkinenAsiakirjaUrl } from "@/lib/lahde-geokoodaus-url";
 import { naytaDokumenttiOtsikko } from "@/lib/lahde-metatiedot";
 import { luoPalvelinAsiakas } from "@/lib/supabase/palvelin";
 import { supabaseYmparistoAsetettu } from "@/lib/supabase/ymparisto";
@@ -280,6 +281,7 @@ export function hankkeenFaktalahdeUrllit(lahteet: KenttaLahde[]): string[] {
     if (lahde.tekninen_lahde) continue;
     if (lahde.taulu === "dokumentit") continue;
     const url = lahde.lahde_url.trim();
+    if (piilotaJulkinenAsiakirjaUrl(url)) continue;
     if (url.startsWith("http://") || url.startsWith("https://")) urls.add(url);
   }
   return [...urls].sort((a, b) => a.localeCompare(b, "fi"));
@@ -343,7 +345,7 @@ export function kokoaHankeAsiakirjat(
 
   const urlit = new Set(urlLahteet);
   for (const d of dokumentit) {
-    if (d.hanke_id === hankeId) urlit.add(d.url);
+    if (d.hanke_id === hankeId && !piilotaJulkinenAsiakirjaUrl(d.url)) urlit.add(d.url);
   }
 
   const jarjestetty = [...urlit].sort((a, b) =>

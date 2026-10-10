@@ -24,3 +24,28 @@ export function onMenetelmaGeokoodausUrl(url: string): boolean {
     return false;
   }
 }
+
+/** OpenStreetMap / Nominatim -haut (menetelmälähde, ei asiakirja). */
+export function onOpenStreetMapMenetelmaUrl(url: string): boolean {
+  try {
+    const host = new URL(url).hostname.toLowerCase();
+    if (host === "nominatim.openstreetmap.org" || host.endsWith(".nominatim.openstreetmap.org")) {
+      return true;
+    }
+    if (host === "openstreetmap.org" || host.endsWith(".openstreetmap.org")) {
+      return true;
+    }
+    return false;
+  } catch {
+    return false;
+  }
+}
+
+/** Ei näytetä hankesivun Asiakirjat-listassa (lähde säilyy kenttätiedoissa). */
+export function piilotaJulkinenAsiakirjaUrl(url: string): boolean {
+  return (
+    onMmlGeokoodausUrl(url) ||
+    onMenetelmaGeokoodausUrl(url) ||
+    onOpenStreetMapMenetelmaUrl(url)
+  );
+}
