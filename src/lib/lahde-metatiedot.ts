@@ -8,6 +8,8 @@
  * Älä johda toista toisesta automaattisesti.
  */
 
+import { turvallinenDokumenttiOtsikko } from "./dokumentti-otsikko";
+
 export const LAHDE_TYYPIT = [
   "paatos",
   "viranomaisasiakirja",
@@ -51,8 +53,7 @@ export function naytaDokumenttiOtsikko(dokumentti: {
   otsikko: string;
   otsikko_automaattinen: boolean;
 }): string {
-  if (dokumentti.otsikko_automaattinen) return dokumentti.url;
-  return dokumentti.otsikko;
+  return turvallinenDokumenttiOtsikko(dokumentti);
 }
 
 /** Hankkeen dokumenttirekisteri → linkkiteksti kenttälähteille (avain = dokumentin url). */
