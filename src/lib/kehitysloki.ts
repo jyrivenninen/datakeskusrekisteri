@@ -10,6 +10,15 @@ export type KehityslokiMerkinta = {
 export const KEHITYSLOKI: KehityslokiMerkinta[] = [
   {
     pvm: "2026-10-10",
+    otsikko: "Asiakirjojen siivous ja oncloudos-otsikot",
+    kohdat: [
+      "YVA-sivujen lyhyet alias-URL:t (Sarvenmaa, Pyhäjoki) linkitetty kanoniseen fi-polkuun.",
+      "Rikkinäiset lähde-URL:t (404/500) siirretty ennen dokumenttirivien poistoa; Järviseudun sanomat ja WFS-otsikot korjattu.",
+      "Dynasty/oncloudos-liitteille otsikko voidaan johtaa emo-asiakirjasta, kun PDF on kartta ilman tekstikerrosta.",
+    ],
+  },
+  {
+    pvm: "2026-10-10",
     otsikko: "Asiakirjat, yksityisyys ja lähdehygienia",
     kohdat: [
       "Hankesivun Asiakirjat-lista näyttää kaikki faktalähde-URL:t taulukkona (otsikko, tyyppi, haettu, kentät). Geokoodaus- ja OpenStreetMap-haut jätetään pois.",

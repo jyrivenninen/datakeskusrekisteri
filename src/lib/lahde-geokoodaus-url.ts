@@ -41,11 +41,23 @@ export function onOpenStreetMapMenetelmaUrl(url: string): boolean {
   }
 }
 
+/** Helsingin avoin WFS (menetelmä/kartta-aineisto, ei julkaistu asiakirja). */
+export function onHelsinkiAvoinWfsUrl(url: string): boolean {
+  try {
+    const u = new URL(url);
+    const host = u.hostname.toLowerCase();
+    return host === "kartta.hel.fi" && u.pathname.toLowerCase().includes("/geoserver/");
+  } catch {
+    return false;
+  }
+}
+
 /** Ei näytetä hankesivun Asiakirjat-listassa (lähde säilyy kenttätiedoissa). */
 export function piilotaJulkinenAsiakirjaUrl(url: string): boolean {
   return (
     onMmlGeokoodausUrl(url) ||
     onMenetelmaGeokoodausUrl(url) ||
-    onOpenStreetMapMenetelmaUrl(url)
+    onOpenStreetMapMenetelmaUrl(url) ||
+    onHelsinkiAvoinWfsUrl(url)
   );
 }

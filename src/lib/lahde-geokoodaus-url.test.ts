@@ -29,6 +29,15 @@ test("piilottaa Nominatim-URL:t", () => {
   );
 });
 
+test("piilottaa Helsingin WFS-rajapinnan", () => {
+  assert.equal(
+    piilotaJulkinenAsiakirjaUrl(
+      "https://kartta.hel.fi/ws/geoserver/avoindata/wfs?service=WFS&version=2.0.0&request=GetFeature&typeNames=avoindata:Kaavayksikot",
+    ),
+    true,
+  );
+});
+
 test("ei piilota tavallista YVA-sivua", () => {
   assert.equal(
     piilotaJulkinenAsiakirjaUrl(
