@@ -1,12 +1,14 @@
 import type { Metadata } from "next";
 import { VAIHE_NIMET } from "@/lib/naytto";
 import { haeYllapitaja } from "@/lib/supabase/palvelin";
+import { kortinMetatiedot, SIVUSTON_OTSIKKO } from "@/lib/sivuston-metatiedot";
 
-export const metadata: Metadata = {
-  title: "Näin teet YVA-mielipiteen – Datakeskushankkeiden kansallinen rekisteri",
-  description:
+export const metadata: Metadata = kortinMetatiedot({
+  otsikko: `Näin teet YVA-mielipiteen – ${SIVUSTON_OTSIKKO}`,
+  kuvaus:
     "Ympäristövaikutusten arviointimenettelyn vaiheet, kuulutusajat ja mallipohja kirjalliseen mielipiteeseen.",
-};
+  polku: "/opas/yva-mielipide",
+});
 
 const YM_YVA_OSALLISTU =
   "https://www.ymparisto.fi/fi/osallistu-ja-vaikuta/ymparistovaikutusten-arviointi/hankkeiden-ymparistovaikutusten-arviointimenettely-yva";

@@ -76,6 +76,16 @@ export default async function KenttapaivitysSivu({
       <p className="mt-3 max-w-prose leading-relaxed text-muted">
         {vaihtoehto ? `Vaihtoehto ${vaihtoehto.tunnus} · ` : null}
         {kenttaNimi}. Lähde merkitään samaan tapaan kuin muissakin rekisterin tiedoissa.
+        {kentta === "it_teho_mw" || kentta === "teho_mw" ? (
+          <>
+            {" "}
+            IT-teho on datakeskuksen IT-kuorma megawatteina. Teho on koko laitoksen
+            sähköteho megawatteina. IT-teho on aina pienempi tai yhtä suuri kuin teho,
+            kun molemmat on merkitty. Jos lähde antaa vain yhden erittelemättömän
+            megawattiluvun, merkitse se vain toiseen kenttään. Jos lähde sanoo IT
+            capacity tai IT load, luku on IT-teho. Muuten teho.
+          </>
+        ) : null}
         {julkaiseSuoraan
           ? " Ylläpitäjänä päivitys julkaistaan heti."
           : " Ilmoitus ei julkaise tietoja suoraan. Ylläpitäjä tarkistaa lähteen."}

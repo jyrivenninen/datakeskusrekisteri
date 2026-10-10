@@ -133,6 +133,7 @@ export function rakennaMuutoksetRss(
   });
 
   const uusin = rivit[0]?.hyvaksytty_pvm;
+  const kuva = `${juuri}/muutokset/opengraph-image`;
   return [
     '<?xml version="1.0" encoding="UTF-8"?>',
     '<rss version="2.0">',
@@ -141,6 +142,11 @@ export function rakennaMuutoksetRss(
     `<link>${xmlTeksti(kanava)}</link>`,
     "<description>Hyväksytyt muutokset julkaistuun hanketietoon.</description>",
     "<language>fi</language>",
+    "<image>",
+    `<url>${xmlTeksti(kuva)}</url>`,
+    "<title>Datakeskusrekisteri: viimeksi päivitetty</title>",
+    `<link>${xmlTeksti(kanava)}</link>`,
+    "</image>",
     uusin ? `<lastBuildDate>${xmlTeksti(new Date(uusin).toUTCString())}</lastBuildDate>` : "",
     ...osat,
     "</channel>",
@@ -167,6 +173,7 @@ export function rakennaMuutoksetJson(
       html: `${juuri}/muutokset`,
       json: `${juuri}/muutokset/json`,
       rss: `${juuri}/muutokset/rss`,
+      kuva: `${juuri}/muutokset/opengraph-image`,
     },
     muutokset: rivit.map((rivi) => ({
       id: rivi.id,

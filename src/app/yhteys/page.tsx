@@ -3,11 +3,13 @@ import { lahetaPalaute } from "@/app/toiminnot";
 import { LomakeLahetysNappi } from "@/komponentit/lomake-lahetysnappi";
 import { PALAUTE_AIHE_NIMET } from "@/lib/naytto";
 import { PALAUTE_AIHEET } from "@/lib/supabase/tietokanta";
+import { kortinMetatiedot, SIVUSTON_OTSIKKO } from "@/lib/sivuston-metatiedot";
 
-export const metadata: Metadata = {
-  title: "Ota yhteyttä – Datakeskushankkeiden kansallinen rekisteri",
-  description: "Viesti ylläpidolle. Ei julkaista.",
-};
+export const metadata: Metadata = kortinMetatiedot({
+  otsikko: `Ota yhteyttä – ${SIVUSTON_OTSIKKO}`,
+  kuvaus: "Viesti ylläpidolle. Ei julkaista.",
+  polku: "/yhteys",
+});
 
 export default async function YhteysSivu({
   searchParams,

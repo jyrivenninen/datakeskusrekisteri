@@ -3,6 +3,7 @@ import { notFound, permanentRedirect } from "next/navigation";
 import { AsiakirjaTaulukko } from "@/komponentit/asiakirja-kortti";
 import { AvattavaKortti, Korttiruudukko } from "@/komponentit/avattava-kortti";
 import { KarttaViive } from "@/komponentit/kartta-viive";
+import { ratkaiseMaakunta } from "@/lib/maakunta";
 import { HankeGalleria } from "@/komponentit/hanke-galleria";
 import { VaiheMerkki } from "@/komponentit/vaihe-merkki";
 import { lomakeKenttaKortista, VAIHTOEHTO_KENTAT } from "@/lib/ehdotus";
@@ -17,13 +18,15 @@ import {
   MENETTELY_TILA_NIMET,
   SIJAINTI_ALUE_TYYPPI_NIMET,
   VAIHE_NIMET,
+  VAIHE_VARIT,
   kentanTila,
   kenttaNayttonimi,
   hankeTehoMw,
   muotoileLuku,
   muotoilePvm,
 } from "@/lib/naytto";
-import { haeHanke, haeHankeOhjaus } from "@/lib/supabase/kyselyt";
+import { haeHanke, haeHankeOhjaus, haeKuntaMaakuntaKartta } from "@/lib/supabase/kyselyt";
+import { hankeOgKuvaus, kortinMetatiedot, SIVUSTON_KUVAUS, SIVUSTON_OTSIKKO } from "@/lib/sivuston-metatiedot";
 import { haeYllapitaja } from "@/lib/supabase/palvelin";
 import { supabasePalvelinAvainAsetettu } from "@/lib/supabase/yllapito-asiakas";
 import type { Hanke, KenttaLahde, KenttaTarkistus } from "@/lib/supabase/tietokanta";
@@ -83,9 +86,11 @@ function Faktakortti({
       lahteet={naytettavat}
       linkkiTekstit={linkkiTekstit}
       tarkistus={
-        tyhja && tarkistus?.tulos === "ei_julkista_lahdetta"
-          ? `Tarkistettu ${muotoilePvm(tarkistus.vahvistettu_pvm)}: julkista lähdettä ei ole.`
-          : null
+        rivi.kentta === "maakunta" && naytettavat.length === 0 && !tyhja
+          ? "Johdettu kunnasta. Kentälle ei vaadita omaa lähdettä."
+          : tyhja && tarkistus?.tulos === "ei_julkista_lahdetta"
+            ? `Tarkistettu ${muotoilePvm(tarkistus.vahvistettu_pvm)}: julkista lähdettä ei ole.`
+            : null
       }
       toiminnot={
         lomakeKentta ? (
@@ -98,7 +103,10 @@ function Faktakortti({
   );
 }
 
-function hankeRyhmat(hanke: Hanke & { toimija: { id: string; nimi: string } | null }): {
+function hankeRyhmat(
+  hanke: Hanke & { toimija: { id: string; nimi: string } | null },
+  maakunta: string | null,
+): {
   id: string;
   otsikko: string;
   rivit: KenttaRivi[];
@@ -110,7 +118,7 @@ function hankeRyhmat(hanke: Hanke & { toimija: { id: string; nimi: string } | nu
       rivit: [
         { kentta: "nimi", arvo: hanke.nimi },
         { kentta: "kunta", arvo: hanke.kunta },
-        { kentta: "maakunta", arvo: hanke.maakunta },
+        { kentta: "maakunta", arvo: maakunta },
         { kentta: "vaihe", arvo: VAIHE_NIMET[hanke.vaihe] },
         {
           kentta: "toimija_organisaatio_id",
@@ -191,11 +199,19 @@ export async function generateMetadata({
   const ohjaus = await haeHankeOhjaus(id);
   const { hanke } = await haeHanke(ohjaus && ohjaus !== id ? ohjaus : id);
   if (!hanke) {
-    return { title: "Hanketta ei löytynyt" };
+    return kortinMetatiedot({
+      otsikko: "Hanketta ei löytynyt",
+      kuvaus: SIVUSTON_KUVAUS,
+      polku: `/hankkeet/${id}`,
+    });
   }
   return {
-    title: `${hanke.nimi} – Datakeskushankkeiden kansallinen rekisteri`,
-    description: `Julkaistut tiedot hankkeesta ${hanke.nimi}, ${hanke.kunta}.`,
+    ...kortinMetatiedot({
+      otsikko: `${hanke.nimi} – ${SIVUSTON_OTSIKKO}`,
+      kuvaus: hankeOgKuvaus(hanke),
+      polku: `/hankkeet/${hanke.id}`,
+      tyyppi: "article",
+    }),
     alternates: {
       types: {
         "application/json": `/hankkeet/${hanke.id}/json`,
@@ -254,7 +270,13 @@ export default async function HankeSivu({
     notFound();
   }
 
+  const kuntaMaakunnat = await haeKuntaMaakuntaKartta();
+  const ratkaistuMaakunta = ratkaiseMaakunta(hanke.maakunta, hanke.kunta, kuntaMaakunnat);
   const linkkiTekstit = rakennaDokumenttiLinkkiTekstit(asiakirjat);
+  const tehoKentta =
+    hanke.it_teho_mw != null ? "it_teho_mw" : hanke.teho_mw != null ? "teho_mw" : null;
+  const tehoMw = hankeTehoMw(hanke);
+  const tehoLahteet = tehoKentta ? kentanLahteet(lahteet, tehoKentta) : [];
 
   const alue = hanke.sijainti_alue?.type === "Polygon" ? hanke.sijainti_alue : null;
   const karttajohdot = johdot
@@ -293,7 +315,7 @@ export default async function HankeSivu({
       <h1 className="mt-4 text-3xl font-semibold tracking-tight">{hanke.nimi}</h1>
       <p className="mt-2 text-muted">
         {hanke.kunta}
-        {hanke.maakunta ? `, ${hanke.maakunta}` : ""} ·{" "}
+        {ratkaistuMaakunta.maakunta ? `, ${ratkaistuMaakunta.maakunta}` : ""} ·{" "}
         <VaiheMerkki vaihe={hanke.vaihe} />
       </p>
       {hanke.vanhin_vahvistettu_pvm ? (
@@ -324,7 +346,21 @@ export default async function HankeSivu({
         <h2 id="kartta-otsikko" className="sr-only">
           Sijainti kartalla
         </h2>
-        <KarttaViive merkit={merkit} />
+        <KarttaViive
+          merkit={merkit}
+          hankeSelite={{
+            kunta: hanke.kunta,
+            maakunta: ratkaistuMaakunta.maakunta,
+            tehoOtsikko: tehoKentta === "it_teho_mw" ? "IT-teho" : "Teho",
+            tehoTeksti: tehoMw != null ? `${muotoileLuku(tehoMw)} MW` : "Ei merkitty",
+            tehoLahteet: tehoLahteet.map((lahde) => ({
+              url: lahde.lahde_url,
+              nimi: linkkiTekstit.get(lahde.lahde_url) ?? lahde.lahde_url,
+            })),
+            vaiheNimi: VAIHE_NIMET[hanke.vaihe],
+            vaiheVari: VAIHE_VARIT[hanke.vaihe],
+          }}
+        />
         {alue ? (
           <p className="mt-2 text-sm text-muted">
             Sininen alue on merkitty{" "}
@@ -377,7 +413,7 @@ export default async function HankeSivu({
           epävarma, punainen puuttuu.
         </p>
         <div className="mt-6 space-y-8">
-          {hankeRyhmat(hanke).map((ryhma) => (
+          {hankeRyhmat(hanke, ratkaistuMaakunta.maakunta).map((ryhma) => (
             <section key={ryhma.id} aria-labelledby={ryhma.id}>
               <h3 id={ryhma.id} className="text-base font-semibold">
                 {ryhma.otsikko}

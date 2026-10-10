@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { onYhteystietoOtsikko, turvallinenDokumenttiOtsikko } from "./dokumentti-otsikko";
+import { onYhteystietoOtsikko, puraHtmlEntiteetit, turvallinenDokumenttiOtsikko } from "./dokumentti-otsikko";
 
 test("tunnistaa puhelinnumeron otsikosta", () => {
   assert.equal(onYhteystietoOtsikko("040 505 6342 Email."), true);
@@ -16,6 +16,19 @@ test("korvaa yhteystiedon URL-tiedostonimellä", () => {
       otsikko_automaattinen: false,
     }),
     "26 08 07 Keminmaa DataCenter YVA ohjelma 0",
+  );
+});
+
+test("purkaa HTML-entiteetit otsikosta", () => {
+  assert.equal(puraHtmlEntiteetit("Yhti&#246;t &amp; &#xE4;"), "Yhtiöt & ä");
+  assert.equal(puraHtmlEntiteetit("P&ouml;yt&auml;kirja"), "Pöytäkirja");
+  assert.equal(
+    turvallinenDokumenttiOtsikko({
+      url: "https://example.fi/a.pdf",
+      otsikko: "Yhti&#246;t",
+      otsikko_automaattinen: false,
+    }),
+    "Yhtiöt",
   );
 });
 

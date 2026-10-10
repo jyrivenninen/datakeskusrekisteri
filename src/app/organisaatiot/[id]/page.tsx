@@ -4,6 +4,7 @@ import { hankeOrganisaatioRooliNimi, ORGANISAATIO_TYYPPI_NIMET } from "@/lib/nay
 import { VaiheMerkki } from "@/komponentit/vaihe-merkki";
 import { haeOrganisaatio } from "@/lib/supabase/kyselyt";
 import { haeYllapitaja } from "@/lib/supabase/palvelin";
+import { kortinMetatiedot, SIVUSTON_KUVAUS, SIVUSTON_OTSIKKO } from "@/lib/sivuston-metatiedot";
 
 export const revalidate = 60;
 
@@ -15,12 +16,17 @@ export async function generateMetadata({
   const { id } = await params;
   const { organisaatio } = await haeOrganisaatio(id);
   if (!organisaatio) {
-    return { title: "Organisaatiota ei löytynyt" };
+    return kortinMetatiedot({
+      otsikko: "Organisaatiota ei löytynyt",
+      kuvaus: SIVUSTON_KUVAUS,
+      polku: `/organisaatiot/${id}`,
+    });
   }
-  return {
-    title: `${organisaatio.nimi} – Datakeskushankkeiden kansallinen rekisteri`,
-    description: `Julkaistut tiedot organisaatiosta ${organisaatio.nimi}.`,
-  };
+  return kortinMetatiedot({
+    otsikko: `${organisaatio.nimi} – ${SIVUSTON_OTSIKKO}`,
+    kuvaus: `Julkaistut tiedot organisaatiosta ${organisaatio.nimi}.`,
+    polku: `/organisaatiot/${organisaatio.id}`,
+  });
 }
 
 export default async function OrganisaatioSivu({

@@ -404,6 +404,21 @@ export function hankeTehoMw(hanke: Pick<Hanke, "it_teho_mw" | "teho_mw">): numbe
   return null;
 }
 
+/** IT-kuorma ei voi ylittää laitoksen tehoa, kun molemmat on merkitty. */
+export function itTehoYlittaaTehon(
+  itTehoMw: number | null,
+  tehoMw: number | null,
+): boolean {
+  return itTehoMw != null && tehoMw != null && itTehoMw > tehoMw;
+}
+
+export function lueMegawatti(arvo: string): number | null {
+  const teksti = arvo.trim().replace(/\s/g, "").replace(",", ".");
+  if (!teksti) return null;
+  const luku = Number(teksti);
+  return Number.isFinite(luku) ? luku : null;
+}
+
 export function hankeKokoLuokka(hanke: Pick<Hanke, "it_teho_mw" | "teho_mw">): KokoLuokka {
   const teho = hankeTehoMw(hanke);
   if (teho == null) return "ei_ilmoitettu";

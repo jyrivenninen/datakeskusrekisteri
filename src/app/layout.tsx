@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import { cookies } from "next/headers";
 import { ESIVERSIO_EVASTE } from "@/lib/esiversio";
 import { EsiversioIlmoitus } from "@/komponentit/esiversio-ilmoitus";
+import { kortinMetatiedot, SIVUSTON_KUVAUS, SIVUSTON_OSOITE, SIVUSTON_OTSIKKO } from "@/lib/sivuston-metatiedot";
 import { haeYllapitaja } from "@/lib/supabase/palvelin";
 import "./globals.css";
 
@@ -17,9 +18,12 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Datakeskushankkeiden kansallinen rekisteri",
-  description:
-    "Avoin hanketietokanta ja prosessiopas Suomessa vireillä olevista datakeskushankkeista, niiden etenemisestä ja määräajoista.",
+  ...kortinMetatiedot({
+    otsikko: SIVUSTON_OTSIKKO,
+    kuvaus: SIVUSTON_KUVAUS,
+    polku: "/",
+  }),
+  metadataBase: new URL(SIVUSTON_OSOITE),
   alternates: {
     types: {
       "application/rss+xml": [

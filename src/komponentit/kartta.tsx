@@ -750,6 +750,72 @@ function piirraLiityntapisteet(
   }
 }
 
+export type HankeKarttaSelite = {
+  kunta: string;
+  maakunta: string | null;
+  tehoOtsikko: string;
+  tehoTeksti: string;
+  tehoLahteet: { url: string; nimi: string }[];
+  vaiheNimi: string;
+  vaiheVari: string;
+};
+
+function HankeKarttaPaneeli({ selite }: { selite: HankeKarttaSelite }) {
+  return (
+    <>
+      <h3 id="kartta-selite-otsikko" className="text-sm font-semibold">
+        Tämä hanke
+      </h3>
+      <p className="mt-2 text-sm">
+        {selite.kunta}
+        {selite.maakunta ? `, ${selite.maakunta}` : ""}
+      </p>
+      <p className="mt-3 text-sm">
+        <span className="text-muted">{selite.tehoOtsikko}</span>
+        <span className="mt-0.5 block font-semibold tabular-nums">{selite.tehoTeksti}</span>
+      </p>
+      {selite.tehoLahteet.length > 0 ? (
+        <ul className="mt-2 space-y-1 text-xs">
+          {selite.tehoLahteet.map((lahde) => (
+            <li key={lahde.url}>
+              <a href={lahde.url} className="text-link underline">
+                {lahde.nimi}
+              </a>
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <p className="mt-2 text-xs text-muted">Tehon lähdettä ei ole merkitty.</p>
+      )}
+      <ul className="mt-4 space-y-3 border-t border-border pt-3 text-sm">
+        <li className="flex items-start gap-2">
+          <span
+            className="mt-0.5 inline-block size-3 shrink-0 rounded-full border-2 border-white shadow-[0_0_0_1px_rgba(0,0,0,0.25)]"
+            style={{ backgroundColor: selite.vaiheVari }}
+            aria-hidden="true"
+          />
+          <span>
+            Pisteen väri on hankkeen vaihe: {selite.vaiheNimi}.
+          </span>
+        </li>
+        <li className="flex items-start gap-2">
+          <span
+            className="mt-0.5 inline-block size-3 shrink-0 rounded-full"
+            style={{ background: "radial-gradient(circle, #fde047, #f59e0b)" }}
+            aria-hidden="true"
+          />
+          <span>Keltainen hehku kuvaa pisteen tehoa. Suurempi hehku tarkoittaa suurempaa megawattilukua.</span>
+        </li>
+      </ul>
+      <p className="mt-4 border-t border-border pt-3 text-sm">
+        <a href="/kartta" className="text-link underline">
+          Koko kartta
+        </a>
+      </p>
+    </>
+  );
+}
+
 export function Kartta({
   merkit,
   luokka,
@@ -761,6 +827,7 @@ export function Kartta({
   asettelu = "upotettu",
   sovitaIkkunaan = false,
   taydennNayttoHref,
+  hankeSelite = null,
 }: {
   merkit: Karttamerkki[];
   luokka?: string;
@@ -782,6 +849,8 @@ export function Kartta({
   sovitaIkkunaan?: boolean;
   /** Linkki koko näytön kartalle; näytetään vain upotetussa tilassa. */
   taydennNayttoHref?: string;
+  /** Hankesivun paneeli. Etusivun suodattimet ja maakuntasummat jäävät pois. */
+  hankeSelite?: HankeKarttaSelite | null;
 }) {
   const kehys = useRef<HTMLDivElement>(null);
   const karttaRef = useRef<MapLibre | null>(null);
@@ -795,14 +864,14 @@ export function Kartta({
   const aktivisetVaiheetRef = useRef<Set<HankeVaihe>>(kaikkiVaiheetAktiviset());
   const naytaTehoHalotRef = useRef(true);
   const naytaJohdonmukaisuusRef = useRef(false);
-  const naytaMaakunnatRef = useRef(true);
+  const naytaMaakunnatRef = useRef(hankeSelite == null);
   const maakuntaTilaRef = useRef<MaakuntaTila>("hankkeet");
   const avain = process.env.NEXT_PUBLIC_MML_API_AVAIN;
   const merkitAvain = JSON.stringify(merkit);
   const [aktivisetVaiheet, setAktivisetVaiheet] = useState<Set<HankeVaihe>>(kaikkiVaiheetAktiviset);
   const [naytaTehoHalot, setNaytaTehoHalot] = useState(true);
   const [naytaJohdonmukaisuus, setNaytaJohdonmukaisuus] = useState(false);
-  const [naytaMaakunnat, setNaytaMaakunnat] = useState(true);
+  const [naytaMaakunnat, setNaytaMaakunnat] = useState(hankeSelite == null);
   const [maakuntaTila, setMaakuntaTila] = useState<MaakuntaTila>("hankkeet");
   const [naytaLiityntapisteet, setNaytaLiityntapisteet] = useState(false);
 
@@ -1139,6 +1208,10 @@ export function Kartta({
         }
         aria-labelledby="kartta-selite-otsikko"
       >
+        {hankeSelite ? (
+          <HankeKarttaPaneeli selite={hankeSelite} />
+        ) : (
+        <>
         <h3 id="kartta-selite-otsikko" className="text-sm font-semibold">
           Vaihe
         </h3>
@@ -1508,6 +1581,8 @@ export function Kartta({
             </p>
           </div>
         ) : null}
+        </>
+        )}
       </aside>
     </div>
   );

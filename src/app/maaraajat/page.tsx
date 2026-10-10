@@ -5,11 +5,13 @@ import { MAARAAJA_NIMET, muotoilePvm } from "@/lib/naytto";
 import { maaraajatPolku, parsiSivu, sivujaYhteensa, MUUTOS_SIVU_KOKO } from "@/lib/muutos-naytto";
 import { parsiSuodatus } from "@/lib/suodatus";
 import { haeJulkaistutHankkeet, haeTulevatMaaraajat } from "@/lib/supabase/kyselyt";
+import { kortinMetatiedot, SIVUSTON_OTSIKKO } from "@/lib/sivuston-metatiedot";
 
-export const metadata: Metadata = {
-  title: "Tulevat määräajat – Datakeskushankkeiden kansallinen rekisteri",
-  description: "Julkaistujen datakeskushankkeiden tulevat vaikuttamisen määräajat.",
-};
+export const metadata: Metadata = kortinMetatiedot({
+  otsikko: `Tulevat määräajat – ${SIVUSTON_OTSIKKO}`,
+  kuvaus: "Julkaistujen datakeskushankkeiden tulevat vaikuttamisen määräajat.",
+  polku: "/maaraajat",
+});
 
 export default async function MaaraajatSivu({
   searchParams,

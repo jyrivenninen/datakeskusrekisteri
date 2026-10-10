@@ -19,7 +19,9 @@ import {
 } from "@/lib/ehdotus";
 import {
   ehdotusPoistetulleHankkeelle,
+  itTehoYlittaaTehon,
   kasittelijaMerkinta,
+  lueMegawatti,
   massaHyvaksyntaOhitettava,
 } from "@/lib/naytto";
 import {
@@ -175,6 +177,32 @@ function paivitysPaluu(
   redirect(`/hankkeet/${hankeId}/paivita?${q.toString()}`);
 }
 
+async function tehoSuhdeVirhe(
+  hankeId: string,
+  kentta: string,
+  arvo: string,
+  vaihtoehto: string,
+): Promise<string | null> {
+  const uusi = lueMegawatti(arvo);
+  if (uusi == null) return null;
+  const supabase = await luoPalvelinAsiakas();
+  const kysely = vaihtoehto
+    ? supabase
+        .from("hanke_vaihtoehdot")
+        .select("teho_mw, it_teho_mw")
+        .eq("hanke_id", hankeId)
+        .eq("tunnus", vaihtoehto)
+        .maybeSingle()
+    : supabase.from("hankkeet").select("teho_mw, it_teho_mw").eq("id", hankeId).maybeSingle();
+  const { data } = await kysely;
+  const nykyinenIt = data?.it_teho_mw != null ? Number(data.it_teho_mw) : null;
+  const nykyinenTeho = data?.teho_mw != null ? Number(data.teho_mw) : null;
+  const itTeho = kentta === "it_teho_mw" ? uusi : nykyinenIt;
+  const teho = kentta === "teho_mw" ? uusi : nykyinenTeho;
+  if (!itTehoYlittaaTehon(itTeho, teho)) return null;
+  return "IT-teho ei voi olla suurempi kuin laitoksen teho. Jos lähde antaa vain yhden erittelemättömän megawattiluvun, merkitse se vain toiseen kenttään.";
+}
+
 export async function lahetaKenttapaivitys(formData: FormData): Promise<void> {
   const hankeId = String(formData.get("hanke_id") ?? "").trim();
   const kentta = String(formData.get("kentta") ?? "").trim();
@@ -208,6 +236,11 @@ export async function lahetaKenttapaivitys(formData: FormData): Promise<void> {
   if (virhe) paivitysPaluu(hankeId, kentta, vaihtoehto, virhe);
   if (Object.keys(pohja.kentat).length === 0) {
     paivitysPaluu(hankeId, kentta, vaihtoehto, "Anna kentän arvo ja lähde.");
+  }
+
+  if (kentta === "teho_mw" || kentta === "it_teho_mw") {
+    const suhdeVirhe = await tehoSuhdeVirhe(hankeId, kentta, arvo, vaihtoehto);
+    if (suhdeVirhe) paivitysPaluu(hankeId, kentta, vaihtoehto, suhdeVirhe);
   }
 
   const luottamus: Luottamus | undefined = (LUOTTAMUSTASOT as readonly string[]).includes(

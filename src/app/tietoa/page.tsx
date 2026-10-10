@@ -11,12 +11,14 @@ import {
 } from "@/lib/naytto";
 import { haeJulkisetLahdeajot } from "@/lib/supabase/kyselyt";
 import { ESIVERSIO_TEKSTI, OSALLISTUMINEN_TEKSTI } from "@/lib/esiversio";
+import { kortinMetatiedot, SIVUSTON_OTSIKKO } from "@/lib/sivuston-metatiedot";
 
-export const metadata: Metadata = {
-  title: "Tietoa palvelusta – Datakeskushankkeiden kansallinen rekisteri",
-  description:
+export const metadata: Metadata = kortinMetatiedot({
+  otsikko: `Tietoa palvelusta – ${SIVUSTON_OTSIKKO}`,
+  kuvaus:
     "Mikä rekisteri on, mistä tiedot tulevat, mitä palveluun on muutettu ja milloin lähteitä on viimeksi haettu.",
-};
+  polku: "/tietoa",
+});
 
 export const revalidate = 60;
 

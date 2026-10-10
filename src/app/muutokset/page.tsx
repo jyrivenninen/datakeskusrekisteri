@@ -15,11 +15,14 @@ import {
   haeJulkaistutHankkeet,
   haeJulkaistutMuutokset,
 } from "@/lib/supabase/kyselyt";
+import { kortinMetatiedot, SIVUSTON_OTSIKKO } from "@/lib/sivuston-metatiedot";
 
 export const metadata: Metadata = {
-  title: "Muutokset – Datakeskushankkeiden kansallinen rekisteri",
-  description:
-    "Hyväksytyt muutokset julkaistuun hanketietoon. Jokaisella rivillä on lähde.",
+  ...kortinMetatiedot({
+    otsikko: `Muutokset – ${SIVUSTON_OTSIKKO}`,
+    kuvaus: "Hyväksytyt muutokset julkaistuun hanketietoon. Jokaisella rivillä on lähde.",
+    polku: "/muutokset",
+  }),
   alternates: {
     types: {
       "application/rss+xml": "/muutokset/rss",

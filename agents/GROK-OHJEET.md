@@ -640,14 +640,21 @@ Täytä lisäksi kaikki löydetyt kentät **joihin on lähde**:
 
 | Kenttä | Huomio |
 |--------|--------|
-| `maakunta` | johdettavissa kunnasta, jos viranomaislähde puuttuu → jätä tyhjä |
+| `maakunta` | johdetaan kunnasta; älä merkitse kentälle omaa lähdettä |
 | `toimija_nimi` | Y-tunnus vain jos YTJ:stä varmistettu |
 | `yva_diaarinumero` | viranomaislähde |
-| `it_teho_mw` / `teho_mw` | IT-teho ensisijainen; älä sekoita generaattoritehoon |
+| `it_teho_mw` | datakeskuksen IT-kuorma MW. Vain jos lähde sanoo IT capacity tai IT load |
+| `teho_mw` | koko laitoksen sähköteho MW. Erittelemätön megawattiluku vain tähän |
 | `pinta_ala_ha`, `sahkonkaytto_twh_a` | vain dokumentoidusti |
 | `generaattorit_lkm`, `generaattorit_kaytossa_max_lkm`, `generaattori_polttoaineteho_mw` | erikseen lähteestä |
 | `kaavatunnus`, `kortteli` | kaavasta |
 | `sijainti_lat`, `sijainti_lon`, `sijainti_alue_tyyppi` | vain jos koordinaatit lähteestä; `sijainti_alue_tyyppi`: `kaava_alue` / `tontti` / `arvio` |
+
+`it_teho_mw` on datakeskuksen IT-kuorma megawatteina. `teho_mw` on koko laitoksen
+sähköteho megawatteina. IT-teho on aina pienempi tai yhtä suuri kuin teho, kun
+molemmat on merkitty. Jos lähde antaa vain yhden erittelemättömän megawattiluvun,
+se merkitään vain toiseen kenttään. Jos lähde sanoo "IT capacity" tai "IT load",
+luku on `it_teho_mw`. Muuten `teho_mw`. Generaattorin polttoaineteho ei ole kumpikaan.
 
 `vaihe`-arvot: `esiselvitys`, `yva_vireilla`, `yva_paattynyt`, `kaavoitus`,
 `lupamenettely`, `rakenteilla`, `toiminnassa`, `peruttu`.

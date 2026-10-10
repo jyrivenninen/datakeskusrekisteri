@@ -62,5 +62,6 @@ test("rss pakenee merkinnät", () => {
   const xml = rakennaMuutoksetRss([rivi], "https://example.fi");
   assert.match(xml, /A &amp; B &lt;hanke&gt;/);
   assert.match(xml, /Otsikko &quot;1&quot;/);
+  assert.match(xml, /<url>https:\/\/example.fi\/muutokset\/opengraph-image<\/url>/);
   assert.doesNotMatch(xml, /A & B/);
 });

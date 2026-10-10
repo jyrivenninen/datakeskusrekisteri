@@ -3,11 +3,13 @@ import { ORGANISAATIO_TYYPPI_NIMET, onOrganisaatioTyyppi } from "@/lib/naytto";
 import { haeJulkaistutOrganisaatiot } from "@/lib/supabase/kyselyt";
 import { vaadiYllapitaja } from "@/lib/supabase/palvelin";
 import { ORGANISAATIO_TYYPIT } from "@/lib/supabase/tietokanta";
+import { kortinMetatiedot, SIVUSTON_OTSIKKO } from "@/lib/sivuston-metatiedot";
 
-export const metadata: Metadata = {
-  title: "Hakemisto – Datakeskushankkeiden kansallinen rekisteri",
-  description: "Julkaistut organisaatiot.",
-};
+export const metadata: Metadata = kortinMetatiedot({
+  otsikko: `Hakemisto – ${SIVUSTON_OTSIKKO}`,
+  kuvaus: "Julkaistut organisaatiot.",
+  polku: "/hakemisto",
+});
 
 export const revalidate = 60;
 
