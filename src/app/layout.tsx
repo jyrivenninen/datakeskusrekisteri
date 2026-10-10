@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { cookies } from "next/headers";
+import { Analytics } from "@vercel/analytics/next";
 import { ESIVERSIO_EVASTE } from "@/lib/esiversio";
 import { EsiversioIlmoitus } from "@/komponentit/esiversio-ilmoitus";
 import { haeYllapitaja } from "@/lib/supabase/palvelin";
@@ -85,6 +86,7 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
         </header>
         {esiversioKuitattu ? null : <EsiversioIlmoitus />}
         {children}
+        <Analytics />
         <footer className="mt-auto border-t border-border bg-surface">
           <div className="sivuleveys grid gap-8 py-10 sm:grid-cols-[1fr_auto]">
             <div>
