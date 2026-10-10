@@ -1,7 +1,28 @@
+"use client";
+
+import { useRouter } from "next/navigation";
+import { useState, useTransition } from "react";
 import { kuittaaEsiversio } from "@/app/toiminnot";
 import { ESIVERSIO_TEKSTI, OSALLISTUMINEN_TEKSTI } from "@/lib/esiversio";
 
 export function EsiversioIlmoitus() {
+  const router = useRouter();
+  const [suljettu, asetaSuljettu] = useState(false);
+  const [odottaa, aloitaSiirtyma] = useTransition();
+
+  if (suljettu) {
+    return null;
+  }
+
+  function kasitteleKuittaus(tapahtuma: React.FormEvent<HTMLFormElement>) {
+    tapahtuma.preventDefault();
+    asetaSuljettu(true);
+    aloitaSiirtyma(async () => {
+      await kuittaaEsiversio();
+      router.refresh();
+    });
+  }
+
   return (
     <dialog
       open
@@ -28,10 +49,11 @@ export function EsiversioIlmoitus() {
         </a>
         .
       </p>
-      <form action={kuittaaEsiversio} className="mt-6">
+      <form action={kuittaaEsiversio} onSubmit={kasitteleKuittaus} className="mt-6">
         <button
           type="submit"
-          className="rounded border border-foreground bg-foreground px-4 py-2 text-sm font-medium text-background"
+          disabled={odottaa}
+          className="rounded border border-foreground bg-foreground px-4 py-2 text-sm font-medium text-background disabled:opacity-70"
         >
           Ymmärrän
         </button>

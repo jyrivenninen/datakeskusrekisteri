@@ -1179,6 +1179,7 @@ export async function kuittaaEsiversio(): Promise<void> {
     sameSite: "lax",
     httpOnly: true,
   });
+  revalidatePath("/", "layout");
 }
 
 function palauteVirhe(viesti: string): never {
