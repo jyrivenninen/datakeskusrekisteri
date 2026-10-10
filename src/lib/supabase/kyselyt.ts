@@ -1,4 +1,5 @@
 import { createHash } from "node:crypto";
+import { asiakirjaMetataInfo, viimeisinAsiakirjaHakuPvm } from "@/lib/asiakirja-naytto";
 import { piilotaJulkinenAsiakirjaUrl } from "@/lib/lahde-geokoodaus-url";
 import { naytaDokumenttiOtsikko } from "@/lib/lahde-metatiedot";
 import { luoPalvelinAsiakas } from "@/lib/supabase/palvelin";
@@ -272,6 +273,8 @@ export type AsiakirjanKaytto = {
 
 export type HankeAsiakirja = Dokumentti & {
   kattaa: AsiakirjanKaytto[];
+  viimeisin_haku_pvm: string | null;
+  meta_teksti: string;
 };
 
 /** Julkaistun hankkeen faktalähde-URL:t (ei teknisiä eikä dokumentti-itseviittauksia). */
@@ -357,9 +360,19 @@ export function kokoaHankeAsiakirjat(
 
   return jarjestetty.map((url) => {
     const dokumentti = byUrl.get(url) ?? stubDokumenttiRivi(hankeId, url);
+    const viimeisin_haku_pvm = viimeisinAsiakirjaHakuPvm(dokumentti, kaikkiLahteet);
     return {
       ...dokumentti,
       kattaa: asiakirjanKaytto(kaikkiLahteet, dokumentti),
+      viimeisin_haku_pvm,
+      meta_teksti: asiakirjaMetataInfo({
+        laji: dokumentti.laji,
+        muoto: dokumentti.muoto,
+        kieli: dokumentti.kieli,
+        julkaisija: dokumentti.julkaisija,
+        julkaistu_pvm: dokumentti.julkaistu_pvm,
+        viimeisin_haku_pvm,
+      }),
     };
   });
 }

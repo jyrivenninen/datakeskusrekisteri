@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { notFound, permanentRedirect } from "next/navigation";
-import { AsiakirjaKortti } from "@/komponentit/asiakirja-kortti";
+import { AsiakirjaRivi } from "@/komponentit/asiakirja-kortti";
 import { AvattavaKortti, Korttiruudukko } from "@/komponentit/avattava-kortti";
 import { KarttaViive } from "@/komponentit/kartta-viive";
 import { HankeGalleria } from "@/komponentit/hanke-galleria";
@@ -581,9 +581,9 @@ export default async function HankeSivu({
           Asiakirjat
         </h2>
         <p className="mt-2 text-sm text-muted">
-          Luettelo kokoaa kaikki julkaistuun hanketietoon viittaavat lähde-URL:t
-          dokumenttirekisterin metatiedoilla. Metatiedot kertovat, mihin rekisterin
-          kenttiin URL:ia on käytetty. Tekoälyn tiivistelmää ei tallenneta.{" "}
+          Luettelo kokoaa julkaistuun hanketietoon viittaavat lähde-URL:t. Harmaalla
+          metatiedot ja arvio viimeisestä hausta. Geokoodaus- ja karttahaut eivät
+          näy tässä. Tekoälyn tiivistelmää ei tallenneta.{" "}
           <a href={`/hankkeet/${hanke.id}/asiakirjat`} className="text-link underline">
             Koneluettava luettelo
           </a>
@@ -591,22 +591,16 @@ export default async function HankeSivu({
         {asiakirjat.length === 0 ? (
           <p className="mt-3">Ei merkittyjä asiakirjoja.</p>
         ) : (
-          <ul className="mt-4 grid gap-2 sm:grid-cols-2">
+          <ul className="mt-3 divide-y divide-border border-y border-border">
             {asiakirjat.map((asiakirja) => {
               const otsikko = naytaDokumenttiOtsikko(asiakirja);
               return (
-                <li key={asiakirja.id}>
-                  <AsiakirjaKortti
+                <li key={asiakirja.id} className="px-1 first:pt-0">
+                  <AsiakirjaRivi
                     url={asiakirja.url}
                     otsikko={otsikko}
                     otsikkoOnUrl={otsikko === asiakirja.url}
-                    laji={asiakirja.laji}
-                    muoto={asiakirja.muoto}
-                    kieli={asiakirja.kieli}
-                    julkaisija={asiakirja.julkaisija}
-                    julkaistu_pvm={asiakirja.julkaistu_pvm}
-                    tunnus={asiakirja.tunnus}
-                    sivumaara={asiakirja.sivumaara}
+                    meta={asiakirja.meta_teksti}
                     kattaa={asiakirja.kattaa}
                   />
                 </li>
