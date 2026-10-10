@@ -9,6 +9,14 @@ export type KehityslokiMerkinta = {
 
 export const KEHITYSLOKI: KehityslokiMerkinta[] = [
   {
+    pvm: "2026-10-10",
+    otsikko: "Yksityisyys ja lomakeviestit",
+    kohdat: [
+      "Tietoa-sivun Yksityisyys-osion teksti täsmennetty evästeistä, sivulatauksista ja karttalaatoista.",
+      "Yli 12 kuukautta vanhat lomakeviestit poistetaan kuukausittain ajastetulla ajolla (GitHub Actions, loki lahdeajot-taulussa).",
+    ],
+  },
+  {
     pvm: "2026-10-07",
     otsikko: "Ylläpitäjä- ja rahoitustiedot",
     kohdat: [

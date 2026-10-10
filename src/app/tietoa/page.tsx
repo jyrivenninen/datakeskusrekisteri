@@ -65,6 +65,55 @@ export default async function TietoaPalvelustaSivu() {
         </div>
       </section>
 
+      <section className="mt-10" aria-labelledby="yksityisyys-otsikko">
+        <h2 id="yksityisyys" className="text-xl font-semibold">
+          Yksityisyys
+        </h2>
+        <div className="mt-3 space-y-3 leading-relaxed">
+          <p>
+            Palvelu ei kerää käyttäjistä henkilötietoja eikä käytä analytiikkapalveluita,
+            mainoksia tai seurantaevästeitä. Lomakkeet eivät kysy nimeä eivätkä
+            yhteystietoja. Sivusto käyttää yhtä evästettä, jolla muistetaan esiversiota
+            koskevan ilmoituksen kuittaus. Sivulatauksista tallennetaan vain sivun osoite
+            ilman kävijään liittyvää tietoa.
+          </p>
+          <p>
+            Rekisterin hanketiedoissa ei nimetä yksityishenkilöitä. Julkaistut tiedot koskevat
+            organisaatioita, hankkeita ja viranomaismenettelyjä. Lähdeasiakirjat ovat julkisia
+            viranomaisasiakirjoja, joihin viitataan linkillä. Niiden sisältöön palvelu ei vaikuta.
+          </p>
+          <p>
+            Palvelinalusta kirjaa tavanomaisia pyyntölokeja, joissa on muun muassa IP-osoite.
+            Lokeja käytetään vain palvelun toiminnan ja väärinkäytösten seurantaan, eikä niitä
+            yhdistetä muuhun tietoon. Karttanäkymän karttaruudut haetaan ulkopuoliselta
+            palvelimelta{" "}
+            <a
+              href="https://avoin-karttakuva.maanmittauslaitos.fi/"
+              className="text-link underline"
+              rel="noopener noreferrer"
+            >
+              Maanmittauslaitoksen Avoin karttakuva
+            </a>
+            -palvelusta, jolloin selaimen tekemä pyyntö näkyy sen lokeissa. Palvelu ei välitä
+            sinne muuta tietoa.
+          </p>
+          <p>
+            Lomakkeella lähetetyt viestit tallennetaan palvelun tietokantaan ja säilytetään enintään
+            kaksitoista kuukautta, minkä jälkeen ne poistetaan. Jos viestiin on kirjoitettu
+            henkilötietoja, ne poistetaan samalla. Lomake on tarkoitettu hanketietoja ja palvelua
+            koskeviin ilmoituksiin, eikä siihen pidä kirjoittaa arkaluonteisia tietoja.
+          </p>
+          <p>
+            Rekisterinpitäjä on Jyri Venninen yksityishenkilönä. Tieto päivitetään, kun toiminta
+            siirtyy perusteilla olevalle yhdistykselle. Yhteydenotot{" "}
+            <a href="/yhteys" className="text-link underline">
+              lomakkeen kautta
+            </a>
+            .
+          </p>
+        </div>
+      </section>
+
       <section className="mt-10" aria-labelledby="yllapito-otsikko">
         <h2 id="yllapito-otsikko" className="text-xl font-semibold">
           Kuka ylläpitää

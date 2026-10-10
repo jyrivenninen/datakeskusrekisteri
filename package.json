@@ -11,6 +11,7 @@
     "agentti:dokumentit": "tsx agents/tarkistukset/dokumentit.ts",
     "agentti:ristiriidat": "tsx agents/tarkistukset/ristiriidat.ts",
     "agentti:vanhentuneet": "tsx agents/tarkistukset/vanhentuneet.ts",
+    "agentti:palautteet-poisto": "tsx agents/tarkistukset/palautteet-poisto.ts",
     "agentti:hakemisto": "tsx agents/lahteet/hakemisto.ts",
     "agentti:ryhti": "tsx agents/lahteet/ryhti.ts",
     "agentti:ryhti-rakennukset": "tsx agents/lahteet/ryhti-rakennukset.ts",

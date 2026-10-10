@@ -1,0 +1,25 @@
+# Kuukausittainen lomakeviestien poisto (yli 12 kk). Ei kielimallia. Cron UTC.
+
+name: palautteet-poisto
+
+on:
+  schedule:
+    - cron: "30 6 1 * *"
+  workflow_dispatch:
+
+jobs:
+  palautteet-poisto:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+      - run: npm ci
+      - name: Poista vanhat palautteet
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: npx tsx agents/tarkistukset/palautteet-poisto.ts

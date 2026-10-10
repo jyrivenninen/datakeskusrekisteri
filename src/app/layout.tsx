@@ -92,6 +92,9 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
               <a href="/tietoa" className="text-link underline">
                 Tietoa palvelusta
               </a>
+              <a href="/tietoa#yksityisyys" className="text-link underline">
+                Yksityisyys
+              </a>
               <a href="/yhteys" className="text-link underline">
                 Ota yhteyttä
               </a>
