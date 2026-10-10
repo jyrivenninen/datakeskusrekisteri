@@ -583,8 +583,9 @@ export default async function HankeSivu({
           Asiakirjat
         </h2>
         <p className="mt-2 text-sm text-muted">
-          Metatiedot kertovat, mihin rekisterin kenttiin asiakirjaa on käytetty.
-          Tekoälyn tiivistelmää ei tallenneta.{" "}
+          Luettelo kokoaa kaikki julkaistuun hanketietoon viittaavat lähde-URL:t
+          dokumenttirekisterin metatiedoilla. Metatiedot kertovat, mihin rekisterin
+          kenttiin URL:ia on käytetty. Tekoälyn tiivistelmää ei tallenneta.{" "}
           <a href={`/hankkeet/${hanke.id}/asiakirjat`} className="text-link underline">
             Koneluettava luettelo
           </a>

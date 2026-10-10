@@ -7,8 +7,8 @@ import { rakennaAvoinDataHanke, type AvoinDataHanke } from "@/lib/avoin-data";
 import { vanhinVahvistettuPvm, viimeisinPaatos } from "@/lib/naytto";
 import { luoPalvelinAsiakas } from "@/lib/supabase/palvelin";
 import {
-  asiakirjanKaytto,
-  type HankeAsiakirja,
+  kokoaHankeAsiakirjat,
+  hankkeenFaktalahdeUrllit,
   type HankeOrganisaatioNakyma,
 } from "@/lib/supabase/kyselyt";
 import type { haeHanke } from "@/lib/supabase/kyselyt";
@@ -320,10 +320,13 @@ export async function haeAvoinDataHankkeet(juuriUrl: string): Promise<{
         ...kuvaLahteet,
         ...paatosLahteet,
       ];
-      const asiakirjat: HankeAsiakirja[] = hankeDokumentit.map((dokumentti) => ({
-        ...dokumentti,
-        kattaa: asiakirjanKaytto(kaikkiLahteet, dokumentti),
-      }));
+      const dokByUrl = new Map(dokumentit.map((d) => [d.url, d]));
+      const liittyvatUrllit = new Set(hankkeenFaktalahdeUrllit(kaikkiLahteet));
+      for (const d of hankeDokumentit) liittyvatUrllit.add(d.url);
+      const liittyvatDokumentit = [...liittyvatUrllit]
+        .map((url) => dokByUrl.get(url))
+        .filter((d): d is Dokumentti => d != null);
+      const asiakirjat = kokoaHankeAsiakirjat(kaikkiLahteet, liittyvatDokumentit, id);
 
       const kysely: HankeKysely = {
         hanke: {

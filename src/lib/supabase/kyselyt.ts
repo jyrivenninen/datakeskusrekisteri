@@ -1,3 +1,5 @@
+import { createHash } from "node:crypto";
+import { naytaDokumenttiOtsikko } from "@/lib/lahde-metatiedot";
 import { luoPalvelinAsiakas } from "@/lib/supabase/palvelin";
 import { supabaseYmparistoAsetettu } from "@/lib/supabase/ymparisto";
 import { unstable_noStore as noStore } from "next/cache";
@@ -271,6 +273,95 @@ export type HankeAsiakirja = Dokumentti & {
   kattaa: AsiakirjanKaytto[];
 };
 
+/** Julkaistun hankkeen faktalähde-URL:t (ei teknisiä eikä dokumentti-itseviittauksia). */
+export function hankkeenFaktalahdeUrllit(lahteet: KenttaLahde[]): string[] {
+  const urls = new Set<string>();
+  for (const lahde of lahteet) {
+    if (lahde.tekninen_lahde) continue;
+    if (lahde.taulu === "dokumentit") continue;
+    const url = lahde.lahde_url.trim();
+    if (url.startsWith("http://") || url.startsWith("https://")) urls.add(url);
+  }
+  return [...urls].sort((a, b) => a.localeCompare(b, "fi"));
+}
+
+function stubDokumenttiRivi(hankeId: string, url: string): Dokumentti {
+  const tunniste = createHash("sha256").update(url).digest("hex").slice(0, 12);
+  const nyt = "1970-01-01T00:00:00.000Z";
+  return {
+    id: `00000000-0000-4000-8000-${tunniste}`,
+    hanke_id: hankeId,
+    url,
+    otsikko: url,
+    laji: "verkkosivu",
+    muoto: null,
+    kieli: null,
+    julkaisija: null,
+    julkaistu_pvm: null,
+    tunnus: null,
+    sivumaara: null,
+    menettely_id: null,
+    lahde_tyyppi: "muu",
+    sitovuustaso: "epavirallinen",
+    otsikko_automaattinen: true,
+    lahde_metatiedot_kasitelty_pvm: null,
+    julkaistu: true,
+    luotu_pvm: nyt,
+    paivitetty_pvm: nyt,
+  };
+}
+
+async function haeDokumentitUrleille(
+  supabase: Awaited<ReturnType<typeof luoPalvelinAsiakas>>,
+  urls: string[],
+): Promise<Dokumentti[]> {
+  if (urls.length === 0) return [];
+  const koko = 80;
+  const tulos: Dokumentti[] = [];
+  for (let i = 0; i < urls.length; i += koko) {
+    const palanen = urls.slice(i, i + koko);
+    const { data, error } = await supabase
+      .from("dokumentit")
+      .select("*")
+      .in("url", palanen)
+      .eq("julkaistu", true);
+    if (error) throw new Error(error.message);
+    tulos.push(...((data ?? []) as Dokumentti[]));
+  }
+  return tulos;
+}
+
+/** Kaikki hankkeen julkaistuun tietoon liittyvät asiakirjat (URL-rekisteri + hanke_id). */
+export function kokoaHankeAsiakirjat(
+  kaikkiLahteet: KenttaLahde[],
+  dokumentit: Dokumentti[],
+  hankeId: string,
+): HankeAsiakirja[] {
+  const urlLahteet = hankkeenFaktalahdeUrllit(kaikkiLahteet);
+  const byUrl = new Map<string, Dokumentti>();
+  for (const d of dokumentit) byUrl.set(d.url, d);
+
+  const urlit = new Set(urlLahteet);
+  for (const d of dokumentit) {
+    if (d.hanke_id === hankeId) urlit.add(d.url);
+  }
+
+  const jarjestetty = [...urlit].sort((a, b) =>
+    naytaDokumenttiOtsikko(byUrl.get(a) ?? stubDokumenttiRivi(hankeId, a)).localeCompare(
+      naytaDokumenttiOtsikko(byUrl.get(b) ?? stubDokumenttiRivi(hankeId, b)),
+      "fi",
+    ),
+  );
+
+  return jarjestetty.map((url) => {
+    const dokumentti = byUrl.get(url) ?? stubDokumenttiRivi(hankeId, url);
+    return {
+      ...dokumentti,
+      kattaa: asiakirjanKaytto(kaikkiLahteet, dokumentti),
+    };
+  });
+}
+
 export function asiakirjanKaytto(lahteet: KenttaLahde[], dokumentti: Dokumentti): AsiakirjanKaytto[] {
   const kartta = new Map<string, AsiakirjanKaytto>();
   for (const lahde of lahteet) {
@@ -501,10 +592,15 @@ export async function haeHanke(id: string): Promise<{
     ];
     const paatosNakyma = (paatokset ?? []) as PaatosNakyma[];
 
-    const asiakirjat: HankeAsiakirja[] = ((dokumentit ?? []) as Dokumentti[]).map((dokumentti) => ({
-      ...dokumentti,
-      kattaa: asiakirjanKaytto(kaikkiLahteet, dokumentti),
-    }));
+    const perusDokumentit = (dokumentit ?? []) as Dokumentti[];
+    const faktUrllit = hankkeenFaktalahdeUrllit(kaikkiLahteet);
+    const puuttuvatUrllit = faktUrllit.filter(
+      (url) => !perusDokumentit.some((d) => d.url === url),
+    );
+    const urleista = await haeDokumentitUrleille(supabase, puuttuvatUrllit);
+    const yhdistetty = new Map<string, Dokumentti>();
+    for (const d of [...perusDokumentit, ...urleista]) yhdistetty.set(d.url, d);
+    const asiakirjat = kokoaHankeAsiakirjat(kaikkiLahteet, [...yhdistetty.values()], id);
 
     return {
       hanke: {
