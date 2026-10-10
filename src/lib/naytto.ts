@@ -435,12 +435,14 @@ export function vanhinVahvistettuPvm(
   return vanhin;
 }
 
+/** Näyttöaika suomen kalenterissa ja kellonajassa (Europe/Helsinki). */
 export function muotoileAika(arvo: string): string {
   const pvm = new Date(arvo);
   if (Number.isNaN(pvm.getTime())) return arvo;
   return new Intl.DateTimeFormat("fi-FI", {
     dateStyle: "short",
     timeStyle: "short",
+    timeZone: "Europe/Helsinki",
   }).format(pvm);
 }
 
@@ -469,6 +471,7 @@ export const LAHDEAJO_SOVITIN_NIMET: Record<string, string> = {
   "ytj-prh": "YTJ (PRH avoin data)",
   "mml-geokoodaus": "MML, geokoodaus",
   "hakemisto-kunta": "Kuntahakemisto",
+  "fingrid-tuotanto": "Fingrid-haku",
   ristiriidat: "Ristiriitatarkistus",
   dokumentit: "Dokumenttien muutosvahti",
   linkit: "Linkkitarkistus",

@@ -30,7 +30,13 @@ import {
   type MaakuntaYhteenveto,
 } from "@/lib/maakunta";
 import type { FingridLiityntapiste } from "@/lib/fingrid-liityntapisteet";
-import { muotoileLuku, muotoileVaihtelvali, VAIHE_NIMET, VAIHE_VARIT } from "@/lib/naytto";
+import {
+  muotoileAika,
+  muotoileLuku,
+  muotoileVaihtelvali,
+  VAIHE_NIMET,
+  VAIHE_VARIT,
+} from "@/lib/naytto";
 import { HANKE_VAIHEET, type HankeVaihe, type SijaintiAlue, type SijaintiViiva } from "@/lib/supabase/tietokanta";
 
 export type Karttamerkki = {
@@ -1488,7 +1494,7 @@ export function Kartta({
             </dl>
             <p className="mt-2 text-xs text-muted">
               Fingrid{" "}
-              {new Date(tuotantoVertailu.fingridPaivitetty).toLocaleString("fi-FI")}.
+              {muotoileAika(tuotantoVertailu.fingridPaivitetty)}.
               Luku päivitetään kerran tunnissa ja näytetään viimeisin tallennettu
               mittaus. Tuotanto on valtakunnallista eikä kata sijaintia.
             </p>

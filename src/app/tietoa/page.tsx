@@ -223,7 +223,9 @@ export default async function TietoaPalvelustaSivu() {
         <p className="mt-3 leading-relaxed text-muted">
           Ajo hakee tai tarkistaa lähteen. Se kirjoittaa ehdotuksen jonoon,
           ei julkaistuun hanketietoon. Osumien määrä on haun tulos, ei
-          hyväksyttyjen tietojen määrä.
+          hyväksyttyjen tietojen määrä. Ajat on merkitty suomen aikaa
+          (Europe/Helsinki). GitHubin ajastetut haut käynnistyvät UTC-merkityn
+          cronin mukaan (esim. tasatunti UTC ≈ klo 2/3 Suomessa talvi/kesä).
         </p>
         {virhe ? (
           <p className="mt-3">{virhe}</p>
