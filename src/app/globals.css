@@ -145,6 +145,29 @@ dialog.esiversio-ilmoitus::backdrop {
   content: "Avaa lähteet";
 }
 
+.asiakirja-kortti[open] {
+  grid-column: 1 / -1;
+}
+
+.asiakirja-kortti-yhteenveto {
+  display: block;
+  list-style: none;
+}
+
+.asiakirja-kortti-yhteenveto::-webkit-details-marker {
+  display: none;
+}
+
+.asiakirja-kortti-nuoli {
+  font-size: 0.75rem;
+  line-height: 1;
+  transition: transform 0.15s ease;
+}
+
+.asiakirja-kortti[open] .asiakirja-kortti-nuoli {
+  transform: rotate(-180deg);
+}
+
 .faktakortti[open] > .faktakortti-yhteenveto::after {
   content: "Piilota lähteet";
 }

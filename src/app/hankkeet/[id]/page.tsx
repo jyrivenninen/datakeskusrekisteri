@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { notFound, permanentRedirect } from "next/navigation";
+import { AsiakirjaKortti } from "@/komponentit/asiakirja-kortti";
 import { AvattavaKortti, Korttiruudukko } from "@/komponentit/avattava-kortti";
 import { KarttaViive } from "@/komponentit/kartta-viive";
 import { HankeGalleria } from "@/komponentit/hanke-galleria";
@@ -10,9 +11,6 @@ import {
   rakennaDokumenttiLinkkiTekstit,
 } from "@/lib/lahde-metatiedot";
 import {
-  DOKUMENTTI_KIELI_NIMET,
-  DOKUMENTTI_LAJI_NIMET,
-  DOKUMENTTI_MUOTO_NIMET,
   JOHTO_TYYPPI_NIMET,
   HANKE_KENTTA_NIMET,
   HANKE_KUNTA_ROOLI_NIMET,
@@ -593,48 +591,25 @@ export default async function HankeSivu({
         {asiakirjat.length === 0 ? (
           <p className="mt-3">Ei merkittyjä asiakirjoja.</p>
         ) : (
-          <ul className="mt-4 grid gap-3 sm:grid-cols-2">
+          <ul className="mt-4 grid gap-2 sm:grid-cols-2">
             {asiakirjat.map((asiakirja) => {
               const otsikko = naytaDokumenttiOtsikko(asiakirja);
               return (
-              <li key={asiakirja.id} className="rounded border border-border bg-surface p-4">
-                <p className="font-medium">
-                  <a
-                    href={asiakirja.url}
-                    className="text-link underline"
-                    rel="noopener noreferrer"
-                    title={otsikko !== asiakirja.url ? asiakirja.url : undefined}
-                  >
-                    {otsikko}
-                  </a>
-                </p>
-                <p className="mt-1 text-sm text-muted">
-                  {DOKUMENTTI_LAJI_NIMET[asiakirja.laji]}
-                  {asiakirja.muoto ? ` · ${DOKUMENTTI_MUOTO_NIMET[asiakirja.muoto]}` : ""}
-                  {asiakirja.kieli ? ` · ${DOKUMENTTI_KIELI_NIMET[asiakirja.kieli]}` : ""}
-                  {asiakirja.julkaisija ? ` · ${asiakirja.julkaisija}` : ""}
-                  {asiakirja.julkaistu_pvm ? ` · ${muotoilePvm(asiakirja.julkaistu_pvm)}` : ""}
-                  {asiakirja.tunnus ? ` · ${asiakirja.tunnus}` : ""}
-                  {asiakirja.sivumaara != null ? ` · ${asiakirja.sivumaara} s.` : ""}
-                </p>
-                {asiakirja.kattaa.length > 0 ? (
-                  <p className="mt-2 text-sm">
-                    Käytetty kentissä:{" "}
-                    {asiakirja.kattaa
-                      .map((kaytto) => {
-                        const nimi = kenttaNayttonimi(kaytto.taulu, kaytto.kentta);
-                        const sivut =
-                          kaytto.sivut.length > 0 ? ` (s. ${kaytto.sivut.join(", ")})` : "";
-                        return `${nimi}${sivut}`;
-                      })
-                      .join("; ")}
-                  </p>
-                ) : (
-                  <p className="mt-2 text-sm text-muted">
-                    Ei vielä kytketty rekisterin faktakenttiin.
-                  </p>
-                )}
-              </li>
+                <li key={asiakirja.id}>
+                  <AsiakirjaKortti
+                    url={asiakirja.url}
+                    otsikko={otsikko}
+                    otsikkoOnUrl={otsikko === asiakirja.url}
+                    laji={asiakirja.laji}
+                    muoto={asiakirja.muoto}
+                    kieli={asiakirja.kieli}
+                    julkaisija={asiakirja.julkaisija}
+                    julkaistu_pvm={asiakirja.julkaistu_pvm}
+                    tunnus={asiakirja.tunnus}
+                    sivumaara={asiakirja.sivumaara}
+                    kattaa={asiakirja.kattaa}
+                  />
+                </li>
               );
             })}
           </ul>

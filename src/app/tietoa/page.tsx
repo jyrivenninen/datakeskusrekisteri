@@ -158,6 +158,14 @@ export default async function TietoaPalvelustaSivu() {
           Linkit, dokumenttien muuttuminen, ristiriidat ja vanhentuneet lähteet
           tarkistetaan koodilla. Havainto menee jonoon.
         </p>
+        <p className="mt-3 leading-relaxed">
+          Kuntien päätösjärjestelmät (CloudNC, Tweb ja vastaavat) eivät kata
+          kaikkia julkisia asiakirjoja eikä rakennuslupia. Aineisto voi alkaa
+          vasta vuosia sen jälkeen, kun kohde on jo toiminnassa, ja hakusanat
+          osuvat usein vain otsikkoihin. Ulkopuoliset lähdeselvitykset
+          kirjataan hankkeen hakuhistoriaan; virheelliseksi arvioidut linkit
+          eivät muutu automaattisesti kenttälähteiksi.
+        </p>
         <ul className="mt-3 list-disc space-y-2 pl-5 leading-relaxed">
           <li>Ryhti (SYKE): kaavakohteet, kun aineisto on toimitettu.</li>
           <li>PRH YTJ, avoin data, CC BY 4.0: organisaatioiden Y-tunnukset.</li>
