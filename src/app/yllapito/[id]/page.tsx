@@ -32,7 +32,10 @@ import {
   RISTIRIITA_SAANTO_NIMET,
   VAIHE_NIMET,
 } from "@/lib/naytto";
-import { kuuluuHavaintojonoon } from "@/lib/seuraava-ehdotus";
+import {
+  haeTurvallinenSeuraavaHavaintoPolku,
+  kuuluuHavaintojonoon,
+} from "@/lib/seuraava-ehdotus";
 import {
   kuntaNimetKoodeista,
   RYHTI_HAKUEHTO_NIMET,
@@ -69,6 +72,7 @@ export default async function EhdotusSivu({
     julkaistu?: string;
     kasitelty?: string;
     edellinen?: string;
+    vanhentunut?: string;
   }>;
 }) {
   const { id } = await params;
@@ -80,7 +84,23 @@ export default async function EhdotusSivu({
     .eq("id", id)
     .maybeSingle();
 
-  if (!ehdotus) notFound();
+  if (!ehdotus) {
+    const viestiAvain =
+      query.edellinen === "hylatty"
+        ? "hylatty"
+        : query.edellinen === "kasitelty"
+          ? "kasitelty"
+          : "hyvaksytty";
+    const polku = await haeTurvallinenSeuraavaHavaintoPolku(supabase, null, viestiAvain);
+    if (polku) {
+      const url = new URL(polku, "https://local.invalid");
+      url.searchParams.set("vanhentunut", "1");
+      redirect(`${url.pathname}?${url.searchParams.toString()}`);
+    }
+    redirect(
+      `/yllapito?virhe=${encodeURIComponent("Ehdotusta ei löytynyt tai se on jo käsitelty.")}`,
+    );
+  }
   const sisalto = ehdotus.sisalto as EhdotusSisalto;
   const odottaa = ehdotus.tila === "odottaa";
   const hyvaksyTeksti = hyvaksyPainikeTeksti(ehdotus.tyyppi, {
@@ -272,6 +292,11 @@ export default async function EhdotusSivu({
       ) : null}
       {query.edellinen === "kasitelty" ? (
         <p className="mt-4 text-sm">Edellinen ehdotus tallennettiin. Seuraava odottava havainto.</p>
+      ) : null}
+      {query.vanhentunut === "1" ? (
+        <p className="mt-4 text-sm text-muted">
+          Edellinen linkki oli vanhentunut (ehdotus käsitelty). Näytetään seuraava odottava havainto.
+        </p>
       ) : null}
       {query.kasitelty === "1" ? (
         <p className="mt-4 text-sm">Metatiedot tallennettiin.</p>

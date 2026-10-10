@@ -24,8 +24,8 @@ import {
 } from "@/lib/naytto";
 import {
   haeSeuraavaOdottavaHavaintoId,
+  haeTurvallinenSeuraavaHavaintoPolku,
   kuuluuHavaintojonoon,
-  yllapitoSeuraavaHavaintoPolku,
 } from "@/lib/seuraava-ehdotus";
 import { LUOTTAMUSTASOT, PALAUTE_AIHEET, type Luottamus } from "@/lib/supabase/tietokanta";
 import { haeKirjautunutKayttaja, haeYllapitaja, luoPalvelinAsiakas, vaadiYllapitaja as vaadiYllapitajaSivu } from "@/lib/supabase/palvelin";
@@ -685,12 +685,12 @@ async function vaadiYllapitaja() {
 
 async function redirectHavaintojononJalkeen(
   supabase: Awaited<ReturnType<typeof vaadiYllapitaja>>["supabase"],
-  kasiteltyId: string,
+  seuraavaId: string | null,
   viestiAvain: "hyvaksytty" | "hylatty" | "kasitelty",
 ): Promise<never> {
-  const seuraavaId = await haeSeuraavaOdottavaHavaintoId(supabase, kasiteltyId);
-  if (seuraavaId) {
-    redirect(yllapitoSeuraavaHavaintoPolku(seuraavaId, viestiAvain));
+  const polku = await haeTurvallinenSeuraavaHavaintoPolku(supabase, seuraavaId, viestiAvain);
+  if (polku) {
+    redirect(polku);
   }
   redirect(`/yllapito?${viestiAvain}=1&jono_loppui=1`);
 }
@@ -702,6 +702,7 @@ export async function hyvaksyEhdotusToiminto(formData: FormData): Promise<void> 
   const seuraavaJonoon =
     String(formData.get("seuraava_jonoon") ?? "1").trim() !== "0";
   let kasiteltavaTyyppi: string | null = null;
+  let seuraavaId: string | null = null;
   if (seuraavaJonoon) {
     const { data: nykyinen } = await supabase
       .from("muutosehdotukset")
@@ -709,6 +710,9 @@ export async function hyvaksyEhdotusToiminto(formData: FormData): Promise<void> 
       .eq("id", id)
       .maybeSingle();
     kasiteltavaTyyppi = nykyinen?.tyyppi ?? null;
+    if (kasiteltavaTyyppi && kuuluuHavaintojonoon(kasiteltavaTyyppi)) {
+      seuraavaId = await haeSeuraavaOdottavaHavaintoId(supabase, id);
+    }
   }
   try {
     if (toiminto === "yhdista") {
@@ -741,7 +745,7 @@ export async function hyvaksyEhdotusToiminto(formData: FormData): Promise<void> 
     kasiteltavaTyyppi &&
     kuuluuHavaintojonoon(kasiteltavaTyyppi)
   ) {
-    return redirectHavaintojononJalkeen(supabase, id, "hyvaksytty");
+    return redirectHavaintojononJalkeen(supabase, seuraavaId, "hyvaksytty");
   }
   redirect("/yllapito?hyvaksytty=1");
 }
@@ -809,6 +813,7 @@ export async function korjaaLinkkiLahdeToiminto(formData: FormData): Promise<voi
   const { kasittelija, supabase } = await vaadiYllapitaja();
   const id = String(formData.get("id") ?? "").trim();
   const uusiUrl = String(formData.get("uusi_lahde_url") ?? "").trim();
+  const seuraavaId = await haeSeuraavaOdottavaHavaintoId(supabase, id);
   if (!id || !uusiUrl) {
     redirect(`/yllapito/${id}?virhe=${encodeURIComponent("Anna uusi lähde-URL.")}`);
   }
@@ -878,7 +883,7 @@ export async function korjaaLinkkiLahdeToiminto(formData: FormData): Promise<voi
     revalidatePath(`/hankkeet/${hankeId}`);
   }
   revalidatePath(`/yllapito/${id}`);
-  return redirectHavaintojononJalkeen(supabase, id, "hyvaksytty");
+  return redirectHavaintojononJalkeen(supabase, seuraavaId, "hyvaksytty");
 }
 
 export async function kuitaaKentatToiminto(formData: FormData): Promise<void> {
@@ -1207,6 +1212,7 @@ export async function hylkaaEhdotusToiminto(formData: FormData): Promise<void> {
   const seuraavaJonoon =
     String(formData.get("seuraava_jonoon") ?? "1").trim() !== "0";
   let kasiteltavaTyyppi: string | null = null;
+  let seuraavaId: string | null = null;
   if (seuraavaJonoon) {
     const { data: nykyinen } = await supabase
       .from("muutosehdotukset")
@@ -1214,6 +1220,9 @@ export async function hylkaaEhdotusToiminto(formData: FormData): Promise<void> {
       .eq("id", id)
       .maybeSingle();
     kasiteltavaTyyppi = nykyinen?.tyyppi ?? null;
+    if (kasiteltavaTyyppi && kuuluuHavaintojonoon(kasiteltavaTyyppi)) {
+      seuraavaId = await haeSeuraavaOdottavaHavaintoId(supabase, id);
+    }
   }
   try {
     await hylkaaMuutosehdotus(id, kasittelija, perustelu);
@@ -1228,7 +1237,7 @@ export async function hylkaaEhdotusToiminto(formData: FormData): Promise<void> {
     kasiteltavaTyyppi &&
     kuuluuHavaintojonoon(kasiteltavaTyyppi)
   ) {
-    return redirectHavaintojononJalkeen(supabase, id, "hylatty");
+    return redirectHavaintojononJalkeen(supabase, seuraavaId, "hylatty");
   }
   redirect("/yllapito?hylatty=1");
 }
@@ -1287,6 +1296,10 @@ export async function tallennaLahdeMetatiedotToiminto(formData: FormData): Promi
   const paluu = String(formData.get("paluu") ?? "/yllapito/lahde-tyypit").trim();
   const seuraavaJonoon =
     String(formData.get("seuraava_jonoon") ?? "1").trim() !== "0";
+  let seuraavaId: string | null = null;
+  if (ehdotusId && seuraavaJonoon) {
+    seuraavaId = await haeSeuraavaOdottavaHavaintoId(supabase, ehdotusId);
+  }
 
   if (!dokumenttiId) {
     redirect(`${paluu}?virhe=${encodeURIComponent("Dokumentti puuttuu.")}`);
@@ -1329,7 +1342,7 @@ export async function tallennaLahdeMetatiedotToiminto(formData: FormData): Promi
     seuraavaJonoon &&
     /^\/yllapito\/[0-9a-f-]{36}$/i.test(paluuPolku)
   ) {
-    return redirectHavaintojononJalkeen(supabase, ehdotusId, "kasitelty");
+    return redirectHavaintojononJalkeen(supabase, seuraavaId, "kasitelty");
   }
   const erotin = paluu.includes("?") ? "&" : "?";
   redirect(`${paluu}${erotin}kasitelty=1`);
