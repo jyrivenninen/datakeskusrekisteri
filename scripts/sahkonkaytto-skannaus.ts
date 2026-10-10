@@ -12,7 +12,7 @@
  * --malli: regex epäonnistui mutta energiasanoja → esikasittelijän mallikysely
  */
 import { writeFileSync } from "node:fs";
-import { createClient } from "@supabase/supabase-js";
+import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import { noudaDokumenttiTeksti } from "../agents/dokumentti-teksti";
 import { poimiKentatDokumentista } from "../agents/esikasittelu/dokumentti";
 import { lataaPaikallinenYmparisto } from "../agents/ymparisto";
@@ -131,7 +131,7 @@ async function skannaaUrl(url: string): Promise<{
 }
 
 async function onkoOdottavaTaydennys(
-  sb: ReturnType<typeof createClient>,
+  sb: SupabaseClient,
   hankeId: string,
 ): Promise<boolean> {
   const { count } = await sb
@@ -145,7 +145,7 @@ async function onkoOdottavaTaydennys(
 }
 
 async function lisaaTaydennysJonoon(
-  sb: ReturnType<typeof createClient>,
+  sb: SupabaseClient,
   hankeId: string,
   nimi: string,
   osuma: SahkonkayttoOsuma,
@@ -188,7 +188,7 @@ async function lisaaTaydennysJonoon(
 }
 
 async function lisaaTyhjaTarkistusJonoon(
-  sb: ReturnType<typeof createClient>,
+  sb: SupabaseClient,
   hankeId: string,
   nimi: string,
   kuiva: boolean,

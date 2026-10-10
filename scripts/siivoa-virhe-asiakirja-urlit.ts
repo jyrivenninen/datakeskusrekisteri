@@ -3,7 +3,7 @@
  *
  * Aja: npx tsx scripts/siivoa-virhe-asiakirja-urlit.ts [--kuiva]
  */
-import { createClient } from "@supabase/supabase-js";
+import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import { lataaPaikallinenYmparisto } from "../agents/ymparisto";
 import { onHelsinkiAvoinWfsUrl } from "../src/lib/lahde-geokoodaus-url";
 
@@ -45,7 +45,7 @@ const POISTETTAVAT_URLIT = new Set(Object.keys(LAHDE_SIIRROT));
 type KenttaRivi = { taulu: string; rivi_id: string; kentta: string };
 
 async function korvaaLahdeUrlit(
-  sb: ReturnType<typeof createClient>,
+  sb: SupabaseClient,
   vanha: string,
   uusi: string,
   kuiva: boolean,
@@ -77,7 +77,7 @@ async function korvaaLahdeUrlit(
 }
 
 async function paivitaDokumenttiOtsikko(
-  sb: ReturnType<typeof createClient>,
+  sb: SupabaseClient,
   url: string,
   otsikko: string,
   kuiva: boolean,
@@ -103,7 +103,7 @@ async function paivitaDokumenttiOtsikko(
   if (error) throw error;
 }
 
-async function paivitaHelWfsOtsikot(sb: ReturnType<typeof createClient>, kuiva: boolean) {
+async function paivitaHelWfsOtsikot(sb: SupabaseClient, kuiva: boolean) {
   const { data, error } = await sb
     .from("dokumentit")
     .select("id, url, otsikko, lahde_tyyppi, sitovuustaso")
@@ -119,7 +119,7 @@ async function paivitaHelWfsOtsikot(sb: ReturnType<typeof createClient>, kuiva: 
   }
 }
 
-async function poistaDokumenttiJosOrpo(sb: ReturnType<typeof createClient>, url: string, kuiva: boolean) {
+async function poistaDokumenttiJosOrpo(sb: SupabaseClient, url: string, kuiva: boolean) {
   const { data: dok } = await sb.from("dokumentit").select("id").eq("url", url).maybeSingle();
   if (!dok?.id) return;
   const { count: idRefs } = await sb
@@ -145,7 +145,7 @@ async function poistaDokumenttiJosOrpo(sb: ReturnType<typeof createClient>, url:
   console.log("Poistettu dokumentti:", url);
 }
 
-async function asetaYvaAliasit(sb: ReturnType<typeof createClient>, kuiva: boolean) {
+async function asetaYvaAliasit(sb: SupabaseClient, kuiva: boolean) {
   const parit: Array<{ alias: string; kanoninen: string }> = [
     {
       alias: "https://www.ymparisto.fi/Sarvenmaan-datakeskus-YVA",

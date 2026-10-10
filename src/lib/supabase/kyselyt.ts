@@ -4,6 +4,7 @@ import {
   asiakirjanKayttoMonelle,
   kanoninenDokumenttiUrl,
   yhdistaSamannimisetAsiakirjat,
+  type AsiakirjanKaytto,
 } from "@/lib/asiakirja-yhdistys";
 import { piilotaJulkinenAsiakirjaUrl } from "@/lib/lahde-geokoodaus-url";
 import { naytaDokumenttiOtsikko } from "@/lib/lahde-metatiedot";

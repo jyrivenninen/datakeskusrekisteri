@@ -32,7 +32,7 @@ export function asiakirjanKayttoMonelle(
     const osuu =
       (lahde.dokumentti_id != null && dokumenttiIdt.has(lahde.dokumentti_id)) ||
       urlit.has(lahde.lahde_url);
-    if (!osu) continue;
+    if (!osuu) continue;
 
     const avain = `${lahde.taulu}:${lahde.kentta}`;
     const aiempi = kartta.get(avain);

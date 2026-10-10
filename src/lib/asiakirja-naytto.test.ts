@@ -21,6 +21,8 @@ const perusDok: Dokumentti = {
   otsikko_automaattinen: false,
   lahde_metatiedot_kasitelty_pvm: null,
   julkaistu: true,
+  sisalto_tiiviste: null,
+  kanoninen_dokumentti_id: null,
   luotu_pvm: "2026-01-01T00:00:00.000Z",
   paivitetty_pvm: "2026-03-15T00:00:00.000Z",
 };
