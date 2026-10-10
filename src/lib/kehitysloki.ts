@@ -10,6 +10,15 @@ export type KehityslokiMerkinta = {
 export const KEHITYSLOKI: KehityslokiMerkinta[] = [
   {
     pvm: "2026-10-10",
+    otsikko: "Määräajat ja viimeksi päivitetty",
+    kohdat: [
+      "Etusivulla määräajat ja hyväksytyt hankemuutokset kahdessa palstassa.",
+      "Omat sivut /maaraajat ja /muutokset. Muutosrivi linkittää lähdeasiakirjaan.",
+      "Syötteet /muutokset/rss ja /muutokset/json (CC BY 4.0).",
+    ],
+  },
+  {
+    pvm: "2026-10-10",
     otsikko: "Sähkönkäytön skannaus (2b)",
     kohdat: [
       "Prioriteettijono ja regex-poiminta TWh/GWh:lle linkitetyistä asiakirjoista (npm run sahkonkaytto:skannaa).",

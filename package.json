@@ -35,7 +35,7 @@
     "kunta:kartoitus": "tsx scripts/kartoita-kuntalahteet.ts",
     "test:rls": "npx supabase db query --linked -f supabase/tests/rls-oikeudet.sql",
     "test:rls:jwt": "tsx supabase/tests/rls-oikeudet.ts",
-    "test": "tsx --test src/lib/haku.test.ts src/lib/avoin-data.test.ts src/lib/hanke-jarjestys.test.ts src/lib/geopackage.test.ts src/lib/dokumentti-otsikko.test.ts src/lib/lahde-geokoodaus-url.test.ts src/lib/oncloudos-otsikko.test.ts src/lib/sahkonkaytto-poiminta.test.ts src/lib/asiakirja-naytto.test.ts src/lib/asiakirja-yhdistys.test.ts",
+    "test": "tsx --test src/lib/haku.test.ts src/lib/avoin-data.test.ts src/lib/hanke-jarjestys.test.ts src/lib/geopackage.test.ts src/lib/dokumentti-otsikko.test.ts src/lib/lahde-geokoodaus-url.test.ts src/lib/oncloudos-otsikko.test.ts src/lib/sahkonkaytto-poiminta.test.ts src/lib/asiakirja-naytto.test.ts src/lib/asiakirja-yhdistys.test.ts src/lib/muutos-naytto.test.ts",
     "sahkonkaytto:skannaa": "tsx scripts/sahkonkaytto-skannaus.ts"
   },
   "dependencies": {

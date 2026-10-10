@@ -31,6 +31,7 @@ import type {
 import { hankeOsuvatKokoLuokkaan } from "@/lib/hanke-vaihtelvali";
 import { hankkeSopiiHakuun } from "@/lib/haku";
 import type { HankeSuodatus } from "@/lib/suodatus";
+import type { JulkaistuMuutosNakyma } from "@/lib/muutos-naytto";
 import { vanhinVahvistettuPvm, viimeisinPaatos, tanaanSuomessa } from "@/lib/naytto";
 import { normalisoiKuntaNimi } from "@/lib/maakunta";
 
@@ -57,8 +58,10 @@ export type { HankeSuodatus } from "@/lib/suodatus";
 export { parsiSuodatus } from "@/lib/suodatus";
 
 export type TulevaMaaraaika = Maaraaja & {
-  hanke: Pick<Hanke, "id" | "nimi" | "kunta">;
+  hanke: Pick<Hanke, "id" | "nimi" | "kunta" | "vaihe">;
 };
+
+export type { JulkaistuMuutosNakyma };
 
 function virheViesti(syy: unknown): string {
   if (syy instanceof Error) return syy.message;
@@ -685,31 +688,99 @@ export async function haeHanke(id: string): Promise<{
   }
 }
 
-export async function haeTulevatMaaraajat(): Promise<{
+export async function haeTulevatMaaraajat(opts?: {
+  raja?: number;
+  alku?: number;
+  kunta?: string;
+  vaihe?: HankeVaihe;
+}): Promise<{
   maaraajat: TulevaMaaraaika[];
+  maara: number;
   virhe: string | null;
 }> {
   noStore();
   if (!supabaseYmparistoAsetettu()) {
-    return { maaraajat: [], virhe: "Määräaikoja ei juuri nyt voitu hakea." };
+    return { maaraajat: [], maara: 0, virhe: "Määräaikoja ei juuri nyt voitu hakea." };
   }
 
   try {
     const supabase = await luoPalvelinAsiakas();
     const tanaan = tanaanSuomessa();
-    const { data, error } = await supabase
+    const alku = opts?.alku ?? 0;
+    const raja = opts?.raja ?? 20;
+    let kysely = supabase
       .from("maaraajat")
-      .select("*, hanke:hankkeet!inner(id, nimi, kunta)")
+      .select("*, hanke:hankkeet!inner(id, nimi, kunta, vaihe)", { count: "exact" })
       .eq("julkaistu", true)
       .gte("paattyy_pvm", tanaan)
       .or(`alkaa_pvm.is.null,alkaa_pvm.lte.${tanaan}`)
-      .order("paattyy_pvm", { ascending: true })
-      .limit(20);
+      .order("paattyy_pvm", { ascending: true });
+    if (opts?.kunta) kysely = kysely.eq("hanke.kunta", opts.kunta);
+    if (opts?.vaihe) kysely = kysely.eq("hanke.vaihe", opts.vaihe);
+    const { data, error, count } = await kysely.range(alku, alku + raja - 1);
 
-    if (error) return { maaraajat: [], virhe: error.message };
-    return { maaraajat: (data ?? []) as TulevaMaaraaika[], virhe: null };
+    if (error) return { maaraajat: [], maara: 0, virhe: error.message };
+    return {
+      maaraajat: (data ?? []) as TulevaMaaraaika[],
+      maara: count ?? 0,
+      virhe: null,
+    };
   } catch (syy) {
-    return { maaraajat: [], virhe: virheViesti(syy) };
+    return { maaraajat: [], maara: 0, virhe: virheViesti(syy) };
+  }
+}
+
+const MUUTOS_SARAKKEET =
+  "id, kentta, uusi_arvo, hyvaksytty_pvm, lahde_url, lahde_otsikko, hanke:hankkeet!inner(id, nimi, kunta, vaihe)";
+
+export async function haeJulkaistutMuutokset(opts?: {
+  raja?: number;
+  alku?: number;
+  kunta?: string;
+  vaihe?: HankeVaihe;
+}): Promise<{
+  muutokset: JulkaistuMuutosNakyma[];
+  maara: number;
+  virhe: string | null;
+}> {
+  noStore();
+  if (!supabaseYmparistoAsetettu()) {
+    return { muutokset: [], maara: 0, virhe: "Muutoksia ei juuri nyt voitu hakea." };
+  }
+
+  try {
+    const supabase = await luoPalvelinAsiakas();
+    const alku = opts?.alku ?? 0;
+    const raja = opts?.raja ?? 20;
+    let kysely = supabase
+      .from("julkaistut_muutokset")
+      .select(MUUTOS_SARAKKEET, { count: "exact" })
+      .order("hyvaksytty_pvm", { ascending: false })
+      .order("id", { ascending: false });
+    if (opts?.kunta) kysely = kysely.eq("hanke.kunta", opts.kunta);
+    if (opts?.vaihe) kysely = kysely.eq("hanke.vaihe", opts.vaihe);
+    const { data, error, count } = await kysely.range(alku, alku + raja - 1);
+    if (error) return { muutokset: [], maara: 0, virhe: error.message };
+    return {
+      muutokset: (data ?? []) as unknown as JulkaistuMuutosNakyma[],
+      maara: count ?? 0,
+      virhe: null,
+    };
+  } catch (syy) {
+    return { muutokset: [], maara: 0, virhe: virheViesti(syy) };
+  }
+}
+
+export async function haeKaikkiJulkaistutMuutokset(): Promise<{
+  muutokset: JulkaistuMuutosNakyma[];
+  virhe: string | null;
+}> {
+  const rivit: JulkaistuMuutosNakyma[] = [];
+  for (let alku = 0; ; alku += 1000) {
+    const { muutokset, virhe } = await haeJulkaistutMuutokset({ raja: 1000, alku });
+    if (virhe) return { muutokset: [], virhe };
+    rivit.push(...muutokset);
+    if (muutokset.length < 1000) return { muutokset: rivit, virhe: null };
   }
 }
 

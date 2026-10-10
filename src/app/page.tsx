@@ -1,3 +1,4 @@
+import { AjankohtaKohta, AjankohtaLista } from "@/komponentit/ajankohta-lista";
 import { HankkeetSuodatin } from "@/komponentit/hankkeet-suodatin";
 import { HankeLuetteloOsio } from "@/komponentit/hanke-luettelo-jarjestys";
 import { HankeLaskurit } from "@/komponentit/hanke-laskurit";
@@ -16,7 +17,14 @@ import { haeKarttaTaydennys, kokoaKarttaSivuData } from "@/lib/kartta-sivu";
 import { ENERGIA_MAAKUNTA_TUOTANTO } from "@/lib/energiateollisuus-tuotanto";
 import { MAARAAJA_NIMET, muotoilePvm, muotoileVaihtelvali } from "@/lib/naytto";
 import {
+  ETUSIVU_RIVEJA,
+  muotoilePvmLyhyt,
+  muutosYlarivi,
+  yhteensaLause,
+} from "@/lib/muutos-naytto";
+import {
   haeJulkaistutHankkeet,
+  haeJulkaistutMuutokset,
   haeTulevatMaaraajat,
   parsiSuodatus,
   rajaaHankelista,
@@ -43,12 +51,14 @@ export default async function Etusivu({
   const [
     { user: yllapitaja },
     lista,
-    { maaraajat, virhe: maaraajaVirhe },
+    { maaraajat, maara: maaraajaMaara, virhe: maaraajaVirhe },
+    { muutokset, maara: muutosMaara, virhe: muutosVirhe },
     taydennys,
   ] = await Promise.all([
     haeYllapitaja(),
     haeJulkaistutHankkeet(),
-    haeTulevatMaaraajat(),
+    haeTulevatMaaraajat({ raja: ETUSIVU_RIVEJA }),
+    haeJulkaistutMuutokset({ raja: ETUSIVU_RIVEJA }),
     haeKarttaTaydennys(),
   ]);
   const { hankkeet, johdot, virhe: hankeVirhe } = await rajaaHankelista(lista, suodatus);
@@ -90,49 +100,74 @@ export default async function Etusivu({
         ) : null}
       </p>
 
-      <section className="mt-10" aria-labelledby="maaraajat-otsikko">
-        <h2 id="maaraajat-otsikko" className="text-xl font-semibold">
-          Tulevat määräajat
-        </h2>
-        {maaraajaVirhe ? (
-          <p className="mt-3 text-sm">{maaraajaVirhe}</p>
-        ) : maaraajat.length === 0 ? (
-          <p className="mt-3 leading-relaxed">
-            Ei tulevia määräaikoja. Päättyneet määräajat näkyvät hankkeen
-            sivulla.
-          </p>
-        ) : (
-          <table className="mt-4 w-full border-collapse text-left text-sm">
-            <caption className="sr-only">Tulevat vaikuttamisen määräajat</caption>
-            <thead>
-              <tr className="border-b border-border">
-                <th scope="col" className="py-2 pr-3 font-medium">
-                  Päättyy
-                </th>
-                <th scope="col" className="py-2 pr-3 font-medium">
-                  Tyyppi
-                </th>
-                <th scope="col" className="py-2 font-medium">
-                  Hanke
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {maaraajat.map((maaraaika) => (
-                <tr key={maaraaika.id} className="border-b border-border">
-                  <td className="py-2 pr-3">{muotoilePvm(maaraaika.paattyy_pvm)}</td>
-                  <td className="py-2 pr-3">{MAARAAJA_NIMET[maaraaika.tyyppi]}</td>
-                  <td className="py-2">
-                    <a href={`/hankkeet/${maaraaika.hanke.id}`} className="text-link underline">
-                      {maaraaika.hanke.nimi}
-                    </a>
-                    <span className="text-muted"> ({maaraaika.hanke.kunta})</span>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        )}
+      <section className="mt-10" aria-label="Ajankohtaista">
+        <div className="grid items-start gap-6 sm:grid-cols-[minmax(0,11fr)_minmax(0,9fr)] sm:gap-8">
+          <section aria-labelledby="maaraajat-otsikko">
+            <h2 id="maaraajat-otsikko" className="text-xl font-semibold">
+              Tulevat määräajat
+            </h2>
+            {maaraajaVirhe ? (
+              <p className="mt-3 text-sm">{maaraajaVirhe}</p>
+            ) : (
+              <AjankohtaLista>
+                {maaraajat.length === 0 ? (
+                  <li className="flex h-14 items-center text-sm leading-snug">
+                    Ei tulevia määräaikoja. Päättyneet näkyvät hankkeen sivulla.
+                  </li>
+                ) : (
+                  maaraajat.map((maaraaika, indeksi) => (
+                    <AjankohtaKohta
+                      key={maaraaika.id}
+                      piilotaKapealla={indeksi >= 3}
+                      ylarivi={`${muotoilePvmLyhyt(maaraaika.paattyy_pvm)} · ${MAARAAJA_NIMET[maaraaika.tyyppi]}`}
+                      href={`/hankkeet/${maaraaika.hanke.id}`}
+                      nimi={maaraaika.hanke.nimi}
+                      kunta={maaraaika.hanke.kunta}
+                    />
+                  ))
+                )}
+              </AjankohtaLista>
+            )}
+            {maaraajaMaara > 0 ? (
+              <p className="mt-3 text-sm">
+                {yhteensaLause(maaraajaMaara, "tuleva määräaika", "tulevaa määräaikaa")}{" "}
+                <a href="/maaraajat" className="text-link underline">
+                  Katso kaikki.
+                </a>
+              </p>
+            ) : null}
+          </section>
+
+          <section aria-labelledby="muutokset-otsikko">
+            <h2 id="muutokset-otsikko" className="text-xl font-semibold">
+              Viimeksi päivitetty
+            </h2>
+            {muutosVirhe ? (
+              <p className="mt-3 text-sm">{muutosVirhe}</p>
+            ) : (
+              <AjankohtaLista>
+                {muutokset.map((muutos, indeksi) => (
+                  <AjankohtaKohta
+                    key={muutos.id}
+                    piilotaKapealla={indeksi >= 3}
+                    ylarivi={`${muotoilePvmLyhyt(muutos.hyvaksytty_pvm)} · ${muutosYlarivi(muutos.kentta, muutos.uusi_arvo)}`}
+                    href={`/hankkeet/${muutos.hanke.id}`}
+                    nimi={muutos.hanke.nimi}
+                    kunta={muutos.hanke.kunta}
+                  />
+                ))}
+              </AjankohtaLista>
+            )}
+            {muutosMaara > 0 ? (
+              <p className="mt-3 text-sm">
+                {yhteensaLause(muutosMaara, "muutos", "muutosta")}{" "}
+                <a href="/muutokset" className="text-link underline">
+                  Katso kaikki.
+                </a>
+              </p>
+            ) : null}
+          </section>
+        </div>
       </section>
 
       <section className="mt-10" aria-labelledby="hankkeet-otsikko">

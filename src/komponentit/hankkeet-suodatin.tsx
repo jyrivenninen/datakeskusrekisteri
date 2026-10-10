@@ -33,9 +33,13 @@ function HakuKuvake() {
 export function HankkeetSuodatin({
   suodatus,
   kunnat,
+  toiminto = "/",
+  vainKuntaJaVaihe = false,
 }: {
   suodatus: HankeSuodatus;
   kunnat: string[];
+  toiminto?: string;
+  vainKuntaJaVaihe?: boolean;
 }) {
   const router = useRouter();
   const [hakuPaikallinen, setHakuPaikallinen] = useState(suodatus.q ?? "");
@@ -52,11 +56,23 @@ export function HankkeetSuodatin({
     };
   }, []);
 
+  const rakennaPolku = useCallback(
+    (uusi: HankeSuodatus) => {
+      if (!vainKuntaJaVaihe) return hankkeetSuodatusPolku(uusi);
+      const p = new URLSearchParams();
+      if (uusi.kunta) p.set("kunta", uusi.kunta);
+      if (uusi.vaihe) p.set("vaihe", uusi.vaihe);
+      const qs = p.toString();
+      return qs ? `${toiminto}?${qs}` : toiminto;
+    },
+    [toiminto, vainKuntaJaVaihe],
+  );
+
   const paivitaUrl = useCallback(
     (uusi: HankeSuodatus) => {
-      router.replace(hankkeetSuodatusPolku(uusi), { scroll: false });
+      router.replace(rakennaPolku(uusi), { scroll: false });
     },
-    [router],
+    [rakennaPolku, router],
   );
 
   const onHakuMuutos = (arvo: string) => {
@@ -81,6 +97,7 @@ export function HankkeetSuodatin({
 
   return (
     <div className="mt-4 rounded-xl border border-border bg-surface p-4 shadow-sm sm:p-5">
+      {vainKuntaJaVaihe ? null : (
       <div className="relative">
         <label htmlFor="haku" className="sr-only">
           Hae hankkeen nimellä tai kunnalla
@@ -108,13 +125,14 @@ export function HankkeetSuodatin({
           </button>
         ) : null}
       </div>
+      )}
 
       {ehdot.length > 0 ? (
         <ul className="mt-3 flex flex-wrap gap-2" aria-label="Aktiiviset suodattimet">
           {ehdot.map((ehto) => (
             <li key={ehto.avain}>
               <Link
-                href={hankkeetSuodatusPolku(ehto.poista)}
+                href={rakennaPolku(ehto.poista)}
                 scroll={false}
                 className="inline-flex min-h-11 items-center rounded-full border border-border bg-background px-3 py-1 text-sm hover:bg-muted/30 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-link"
               >
@@ -130,8 +148,12 @@ export function HankkeetSuodatin({
 
       <form
         method="get"
-        action="/"
-        className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4"
+        action={toiminto}
+        className={
+          vainKuntaJaVaihe
+            ? "mt-4 grid gap-3 sm:grid-cols-2"
+            : "mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4"
+        }
       >
         <input type="hidden" name="q" value={hakuPaikallinen} />
 
@@ -185,6 +207,8 @@ export function HankkeetSuodatin({
           </select>
         </p>
 
+        {vainKuntaJaVaihe ? null : (
+        <>
         <p className="flex flex-col gap-1 sm:col-span-1">
           <label htmlFor="koko" className="text-sm font-medium">
             Koko
@@ -223,8 +247,11 @@ export function HankkeetSuodatin({
             Näytä vain kuvalliset
           </label>
         </p>
+        </>
+        )}
 
         <noscript>
+          {vainKuntaJaVaihe ? null : (
           <p className="sm:col-span-2 lg:col-span-4">
             <label htmlFor="haku-noscript" className="text-sm font-medium">
               Haku
@@ -239,6 +266,7 @@ export function HankkeetSuodatin({
               className="mt-1 min-h-11 w-full rounded-lg border border-border bg-background px-3 py-2"
             />
           </p>
+          )}
           <button
             type="submit"
             className="min-h-11 rounded-lg border border-foreground bg-foreground px-4 py-2 text-sm font-medium text-background sm:col-span-2 lg:col-span-4"
@@ -251,7 +279,7 @@ export function HankkeetSuodatin({
       {aktiivinen ? (
         <p className="mt-4">
           <Link
-            href="/"
+            href={vainKuntaJaVaihe ? toiminto : "/"}
             scroll={false}
             className="inline-flex min-h-11 items-center text-sm font-medium text-link underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-link"
           >

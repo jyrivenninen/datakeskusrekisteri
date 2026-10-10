@@ -234,6 +234,18 @@ export default async function TietoaPalvelustaSivu() {
               — pisteet, hankealueet ja johtoreitit, EPSG:4326.
             </span>
           </li>
+          <li>
+            <AvoinDataLinkki
+              href="/muutokset/json"
+              nimi="Hyväksytyt muutokset (JSON)"
+              tiedosto="muutokset.json"
+            />
+          </li>
+          <li>
+            <a href="/muutokset/rss" className="text-link underline">
+              Hyväksytyt muutokset (RSS)
+            </a>
+          </li>
         </ul>
         <p className="mt-3 text-sm text-muted leading-relaxed">
           Yksittäisen hankkeen JSON: <code className="text-foreground">/hankkeet/[id]/json</code>.

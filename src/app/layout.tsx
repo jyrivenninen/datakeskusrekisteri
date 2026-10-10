@@ -20,6 +20,14 @@ export const metadata: Metadata = {
   title: "Datakeskushankkeiden kansallinen rekisteri",
   description:
     "Avoin hanketietokanta ja prosessiopas Suomessa vireillä olevista datakeskushankkeista, niiden etenemisestä ja määräajoista.",
+  alternates: {
+    types: {
+      "application/rss+xml": [
+        { url: "/muutokset/rss", title: "Viimeksi päivitetty" },
+      ],
+      "application/json": "/muutokset/json",
+    },
+  },
 };
 
 export default async function RootLayout({ children }: LayoutProps<"/">) {
@@ -103,6 +111,12 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
               </a>
               <a href="/opas/yva-mielipide" className="text-link underline">
                 YVA-opas
+              </a>
+              <a href="/maaraajat" className="text-link underline">
+                Määräajat
+              </a>
+              <a href="/muutokset" className="text-link underline">
+                Muutokset
               </a>
             </nav>
           </div>
