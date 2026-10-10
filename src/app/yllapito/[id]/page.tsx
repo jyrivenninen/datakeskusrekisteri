@@ -1272,6 +1272,29 @@ export default async function EhdotusSivu({
         </section>
       ) : null}
 
+      {sisalto.tyhjennykset && sisalto.tyhjennykset.length > 0 ? (
+        <section className="mt-6" aria-labelledby="tyhjennykset-otsikko">
+          <h2 id="tyhjennykset-otsikko" className="text-xl font-semibold">
+            Hanketason tyhjennys
+          </h2>
+          <p className="mt-2 text-sm text-muted">
+            Julkaistulla vaihtoehdolla on sama kenttä. Hyväksyntä tyhjentää nämä
+            hanketason kentät.
+          </p>
+          <ul className="mt-4 divide-y divide-border border-y border-border">
+            {sisalto.tyhjennykset.map((rivi) => (
+              <li key={rivi.kentta} className="py-3">
+                <p className="font-medium">{HANKE_KENTTA_NIMET[rivi.kentta] ?? rivi.kentta}</p>
+                <p className="mt-1 text-sm">{rivi.perustelu}</p>
+                {rivi.lainaus ? (
+                  <blockquote className="mt-2 border-l-2 pl-3 text-sm">{rivi.lainaus}</blockquote>
+                ) : null}
+              </li>
+            ))}
+          </ul>
+        </section>
+      ) : null}
+
       {tyhjennysNakyma ? (
         <section className="mt-6" aria-labelledby="tyhjennys-otsikko">
           <h2 id="tyhjennys-otsikko" className="text-xl font-semibold">

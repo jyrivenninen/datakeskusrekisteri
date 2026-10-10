@@ -278,6 +278,14 @@ export async function hyvaksyMuutosehdotus(
 
   if (ehdotus.tyyppi === "kentta_tyhjennys") {
     const alkuperainen = ehdotus.sisalto as EhdotusSisalto;
+    if (Array.isArray(alkuperainen.tyhjennykset) && alkuperainen.tyhjennykset.length > 0) {
+      const { error: rpcVirhe } = await supabase.rpc("julkaise_hanketason_tyhjennykset", {
+        p_ehdotus_id: ehdotusId,
+        p_kasittelija: kasittelija,
+      });
+      if (rpcVirhe) throw new Error(rpcVirhe.message);
+      return;
+    }
     const korjattu = normalisoiKenttaTyhjennysSisalto(
       alkuperainen,
       ehdotus.hanke_id!,

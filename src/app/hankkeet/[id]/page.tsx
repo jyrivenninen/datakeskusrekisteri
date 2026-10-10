@@ -24,6 +24,7 @@ import {
   hankeTehoMw,
   muotoileLuku,
   muotoilePvm,
+  polttoainevarastoTeksti,
 } from "@/lib/naytto";
 import { haeHanke, haeHankeOhjaus, haeKuntaMaakuntaKartta } from "@/lib/supabase/kyselyt";
 import { hankeOgKuvaus, kortinMetatiedot, SIVUSTON_KUVAUS, SIVUSTON_OTSIKKO } from "@/lib/sivuston-metatiedot";
@@ -514,8 +515,9 @@ export default async function HankeSivu({
             Arvioitavat vaihtoehdot
           </h2>
           <p className="mt-2 text-sm text-muted">
-            Luvut on merkitty vaihtoehdoittain. Hankkeen omat kentät voivat olla
-            yhteenveto tai tyhjiä, jos lähde antaa vain vaihtoehtokohtaiset arvot.
+            Luvut on merkitty vaihtoehdoittain. Jos julkaistulla vaihtoehdolla,
+            VE0 pois lukien, on luku, sama hanketason kenttä jätetään tyhjäksi.
+            Kenttä, jota yhdelläkään vaihtoehdolla ei ole, säilyy hankkeella.
           </p>
           <Korttiruudukko>
             {vaihtoehdot.map((vaihtoehto) => (
@@ -545,6 +547,10 @@ export default async function HankeSivu({
                     vaihtoehto.generaattori_polttoaineteho_mw != null
                       ? `generaattorin polttoaineteho ${muotoileLuku(vaihtoehto.generaattori_polttoaineteho_mw)} MW`
                       : null,
+                    polttoainevarastoTeksti(
+                      vaihtoehto.polttoainevarasto_maara,
+                      vaihtoehto.polttoainevarasto_yksikko,
+                    ),
                     vaihtoehto.sijainti_alue ? "alue merkitty" : null,
                   ]
                     .filter(Boolean)
@@ -558,7 +564,7 @@ export default async function HankeSivu({
                 linkkiTekstit={linkkiTekstit}
                 toiminnot={
                   <ul className="flex flex-col gap-1">
-                    {VAIHTOEHTO_KENTAT.map((kentta) => (
+                    {VAIHTOEHTO_KENTAT.filter((kentta) => kentta !== "polttoainevarasto_yksikko").map((kentta) => (
                       <li key={kentta}>
                         <a
                           href={paivitaLinkki(hanke.id, kentta, vaihtoehto.tunnus)}

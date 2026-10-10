@@ -285,6 +285,8 @@ export type HankeVaihtoehto = {
   generaattorit_lkm: number | null;
   generaattorit_kaytossa_max_lkm: number | null;
   generaattori_polttoaineteho_mw: number | null;
+  polttoainevarasto_maara: number | null;
+  polttoainevarasto_yksikko: string | null;
   sijainti_alue: SijaintiAlue | null;
   julkaistu: boolean;
   luotu_pvm: string;

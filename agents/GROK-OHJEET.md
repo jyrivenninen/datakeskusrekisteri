@@ -656,6 +656,15 @@ molemmat on merkitty. Jos lähde antaa vain yhden erittelemättömän megawattil
 se merkitään vain toiseen kenttään. Jos lähde sanoo "IT capacity" tai "IT load",
 luku on `it_teho_mw`. Muuten `teho_mw`. Generaattorin polttoaineteho ei ole kumpikaan.
 
+Jos julkaistulla vaihtoehdolla, VE0 pois lukien, on luku jossakin kentässä
+(`teho_mw`, `it_teho_mw`, `pinta_ala_ha`, `sahkonkaytto_twh_a`,
+`generaattorit_lkm`, `generaattori_polttoaineteho_mw`,
+`polttoainevarasto_maara`), sama hanketason kenttä jätetään tyhjäksi.
+Kenttä, jota yhdelläkään vaihtoehdolla ei ole, säilyy hankkeella.
+Polttoainevarasto merkitään vain vaihtoehdolle: luku `polttoainevarasto_maara`
+ja yksikkö `polttoainevarasto_yksikko` (`m3`, `litra` tai `mw`). Yksikkö on
+pakollinen, kun luku on merkitty.
+
 `vaihe`-arvot: `esiselvitys`, `yva_vireilla`, `yva_paattynyt`, `kaavoitus`,
 `lupamenettely`, `rakenteilla`, `toiminnassa`, `peruttu`.
 

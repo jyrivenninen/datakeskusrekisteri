@@ -8,7 +8,7 @@ import {
   tyhjennysKenttaLomakkeesta,
   type PaivitettavaHankeKentta,
 } from "@/lib/ehdotus";
-import { HANKE_KENTTA_NIMET, LUOTTAMUS_NIMET, VAIHE_NIMET } from "@/lib/naytto";
+import { HANKE_KENTTA_NIMET, HANKETASON_VAIHTOEHTO_OHJE, LUOTTAMUS_NIMET, VAIHE_NIMET } from "@/lib/naytto";
 import { haeHanke, haeHankeOhjaus, type HankeListalla } from "@/lib/supabase/kyselyt";
 import { haeYllapitaja } from "@/lib/supabase/palvelin";
 import { HANKE_VAIHEET, LUOTTAMUSTASOT } from "@/lib/supabase/tietokanta";
@@ -86,6 +86,11 @@ export default async function KenttapaivitysSivu({
             capacity tai IT load, luku on IT-teho. Muuten teho.
           </>
         ) : null}
+        {vaihtoehto ? (
+          <> Luku merkitään tälle vaihtoehdolle. Samaa lukua ei merkitä hankkeen yhteiseen kenttään.</>
+        ) : ["teho_mw", "it_teho_mw", "pinta_ala_ha", "sahkonkaytto_twh_a", "generaattorit_lkm", "generaattori_polttoaineteho_mw"].includes(kentta) ? (
+          <> {HANKETASON_VAIHTOEHTO_OHJE}</>
+        ) : null}
         {julkaiseSuoraan
           ? " Ylläpitäjänä päivitys julkaistaan heti."
           : " Ilmoitus ei julkaise tietoja suoraan. Ylläpitäjä tarkistaa lähteen."}
@@ -153,6 +158,25 @@ export default async function KenttapaivitysSivu({
               />
             )}
           </p>
+
+          {kentta === "polttoainevarasto_maara" ? (
+            <p className="flex flex-col gap-1">
+              <label htmlFor="yksikko" className="text-sm font-medium">
+                Yksikkö (pakollinen)
+              </label>
+              <select
+                id="yksikko"
+                name="yksikko"
+                required
+                defaultValue={vaihtoehto?.polttoainevarasto_yksikko ?? "m3"}
+                className="rounded border border-border bg-surface px-2 py-2"
+              >
+                <option value="m3">m³</option>
+                <option value="litra">litra</option>
+                <option value="mw">MW</option>
+              </select>
+            </p>
+          ) : null}
 
           <p className="flex flex-col gap-1">
             <label htmlFor="lahde_url" className="text-sm font-medium">

@@ -228,8 +228,16 @@ export async function lahetaKenttapaivitys(formData: FormData): Promise<void> {
     paivitysPaluu(hankeId, kentta, vaihtoehto, "Kenttä ei ole päivitettävissä tällä lomakkeella.");
   }
 
+  const yksikko = String(formData.get("yksikko") ?? "").trim();
+  const lomakeKentat: Record<string, string> = { [kentta]: arvo };
+  if (kentta === "polttoainevarasto_maara") {
+    if (!["m3", "litra", "mw"].includes(yksikko)) {
+      paivitysPaluu(hankeId, kentta, vaihtoehto, "Polttoainevaraston yksikkö puuttuu.");
+    }
+    lomakeKentat.polttoainevarasto_yksikko = yksikko;
+  }
   const { sisalto: pohja, virhe } = rakennaSisalto(
-    { [kentta]: arvo },
+    lomakeKentat,
     lahdeUrl,
     lahdeSivu,
     lainaus,

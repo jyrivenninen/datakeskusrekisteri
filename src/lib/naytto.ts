@@ -327,6 +327,8 @@ export const HANKE_KENTTA_NIMET: Record<string, string> = {
   generaattorit_lkm: "Varavoimageneraattorit (kpl)",
   generaattorit_kaytossa_max_lkm: "Generaattoreita yhtä aikaa enintään (kpl)",
   generaattori_polttoaineteho_mw: "Generaattorin polttoaineteho (MW)",
+  polttoainevarasto_maara: "Polttoainevarasto",
+  polttoainevarasto_yksikko: "Polttoainevaraston yksikkö",
   toimija_organisaatio_id: "Hankkeesta vastaava",
   toimija_nimi: "Hankkeesta vastaava",
   yva_diaarinumero: "YVA-diaarinumero",
@@ -566,6 +568,24 @@ export const PALAUTE_TILA_NIMET: Record<string, string> = {
 export function kenttaNayttonimi(taulu: string, kentta: string): string {
   if (HANKE_KENTTA_NIMET[kentta]) return HANKE_KENTTA_NIMET[kentta];
   return `${taulu}.${kentta}`;
+}
+
+export const HANKETASON_VAIHTOEHTO_OHJE =
+  "Jos julkaistulla vaihtoehdolla, VE0 pois lukien, on luku jossakin kentässä, sama hanketason kenttä jätetään tyhjäksi. Kenttä, jota yhdelläkään vaihtoehdolla ei ole, säilyy hankkeella.";
+
+const POLTTOAINEVARASTO_YKSIKOT: Record<string, string> = {
+  m3: "m³",
+  litra: "l",
+  mw: "MW",
+};
+
+export function polttoainevarastoTeksti(
+  maara: number | string | null,
+  yksikko: string | null,
+): string | null {
+  if (maara == null || !yksikko) return null;
+  const nimi = POLTTOAINEVARASTO_YKSIKOT[yksikko] ?? yksikko;
+  return `polttoainevarasto ${muotoileLuku(maara)} ${nimi}`;
 }
 
 export function muotoileLuku(arvo: number | string): string {

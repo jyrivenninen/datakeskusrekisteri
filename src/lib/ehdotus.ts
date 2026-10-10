@@ -107,6 +107,12 @@ export type EhdotusSisalto = {
     lainaus?: string | null;
     merkitse_ei_lahdetta?: boolean;
   };
+  tyhjennykset?: Array<{
+    kentta: string;
+    perustelu: string;
+    lahde_url?: string | null;
+    lainaus?: string | null;
+  }>;
   lahde_metatiedot?: {
     dokumentti_id: string;
     url: string;
@@ -231,6 +237,7 @@ const NUMEERISET = new Set([
   "generaattorit_lkm",
   "generaattorit_kaytossa_max_lkm",
   "generaattori_polttoaineteho_mw",
+  "polttoainevarasto_maara",
   "sijainti_lat",
   "sijainti_lon",
 ]);
@@ -546,6 +553,8 @@ export const VAIHTOEHTO_KENTAT = [
   "generaattorit_lkm",
   "generaattorit_kaytossa_max_lkm",
   "generaattori_polttoaineteho_mw",
+  "polttoainevarasto_maara",
+  "polttoainevarasto_yksikko",
 ] as const;
 
 export type VaihtoehtoKentta = (typeof VAIHTOEHTO_KENTAT)[number];
