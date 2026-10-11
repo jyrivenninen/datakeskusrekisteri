@@ -38,16 +38,22 @@ function LatausPyora() {
 export function HankeLuetteloOsio({
   suodatus,
   toiminto = "/",
+  otsikko = "Luettelo",
+  otsikkoTaso = "h3",
   children,
 }: {
   suodatus: HankeSuodatus;
   /** Polku johon järjestysparametri kirjoitetaan (oletus etusivu). */
   toiminto?: string;
+  /** Osiotason otsikko. Kuntasivulla «Hankkeet», etusivulla «Luettelo». */
+  otsikko?: string;
+  otsikkoTaso?: "h2" | "h3";
   children: ReactNode;
 }) {
   const router = useRouter();
   const [onLataus, aloitaSiirtyma] = useTransition();
   const jarjestys = parsiHankeJarjestys(suodatus.jarjestys);
+  const OtsikkoTag = otsikkoTaso;
 
   const paivitaJarjestys = useCallback(
     (arvo: HankeJarjestys) => {
@@ -71,10 +77,19 @@ export function HankeLuetteloOsio({
 
   return (
     <>
-      <div className="mt-10 flex flex-wrap items-center justify-between gap-3">
-        <h3 id="hankeluettelo-otsikko" className="text-lg font-semibold">
-          Luettelo
-        </h3>
+      <div
+        className={`flex flex-wrap items-center justify-between gap-3 ${
+          otsikkoTaso === "h2" ? "" : "mt-10"
+        }`}
+      >
+        <OtsikkoTag
+          id="hankeluettelo-otsikko"
+          className={
+            otsikkoTaso === "h2" ? "text-xl font-semibold" : "text-lg font-semibold"
+          }
+        >
+          {otsikko}
+        </OtsikkoTag>
         <div className="flex flex-wrap items-center gap-2">
           <label htmlFor="hanke-jarjestys" className="text-sm font-medium text-muted">
             Järjestys

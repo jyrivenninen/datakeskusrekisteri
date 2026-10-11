@@ -183,11 +183,13 @@ export default async function KuntaSivu({ params, searchParams }: Props) {
         )}
       </section>
 
-      <section className="mt-10" aria-labelledby="hankkeet-otsikko">
-        <h2 id="hankkeet-otsikko" className="text-xl font-semibold">
-          Hankkeet
-        </h2>
-        <HankeLuetteloOsio suodatus={suodatus} toiminto={polku}>
+      <section className="mt-10" aria-labelledby="hankeluettelo-otsikko">
+        <HankeLuetteloOsio
+          suodatus={suodatus}
+          toiminto={polku}
+          otsikko="Hankkeet"
+          otsikkoTaso="h2"
+        >
           {lista.virhe ? (
             <p className="mt-4 text-sm">{lista.virhe}</p>
           ) : (
