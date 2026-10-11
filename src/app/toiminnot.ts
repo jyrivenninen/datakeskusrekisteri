@@ -224,6 +224,14 @@ async function tehoSuhdeVirhe(
 }
 
 export async function lahetaKenttapaivitys(formData: FormData): Promise<void> {
+  const kommentti = String(formData.get("kommentti") ?? "").trim();
+  if (String(formData.get("toiminto") ?? "") === "tyhjennys") {
+    if (!String(formData.get("perustelu") ?? "").trim()) {
+      formData.set("perustelu", kommentti);
+    }
+    return lahetaKenttaTyhjennys(formData);
+  }
+
   const hankeId = String(formData.get("hanke_id") ?? "").trim();
   const kentta = String(formData.get("kentta") ?? "").trim();
   const vaihtoehto = String(formData.get("vaihtoehto") ?? "").trim();
@@ -231,7 +239,7 @@ export async function lahetaKenttapaivitys(formData: FormData): Promise<void> {
   const lahdeUrl = String(formData.get("lahde_url") ?? "");
   const lahdeSivu = String(formData.get("lahde_sivu") ?? "");
   const lainaus = String(formData.get("lainaus") ?? "");
-  const huomautus = String(formData.get("huomautus") ?? "").trim();
+  const huomautus = kommentti || String(formData.get("huomautus") ?? "").trim();
   const tunniste = String(formData.get("ehdottaja_tunniste") ?? "").trim() || "ilmoituslomake";
   const nykyinen = String(formData.get("nykyinen_arvo") ?? "").trim();
   const luottamusRaaka = String(formData.get("luottamus") ?? "").trim();
@@ -440,7 +448,10 @@ export async function lahetaKenttaTarkistus(formData: FormData): Promise<void> {
 export async function lahetaKenttaTyhjennys(formData: FormData): Promise<void> {
   const hankeId = String(formData.get("hanke_id") ?? "").trim();
   const kentta = String(formData.get("kentta") ?? "").trim();
-  const perustelu = String(formData.get("perustelu") ?? "").trim();
+  const perustelu = (
+    String(formData.get("perustelu") ?? "").trim() ||
+    String(formData.get("kommentti") ?? "").trim()
+  );
   const lahdeUrl = String(formData.get("lahde_url") ?? "").trim();
   const merkitse = String(formData.get("merkitse_ei_lahdetta") ?? "") === "kylla";
   const tunniste = String(formData.get("ehdottaja_tunniste") ?? "").trim() || "ilmoituslomake";
@@ -453,7 +464,12 @@ export async function lahetaKenttaTyhjennys(formData: FormData): Promise<void> {
     paivitysPaluu(hankeId, kentta, "", "Kenttää ei voi tyhjentää.");
   }
   if (perustelu.length < 12) {
-    paivitysPaluu(hankeId, kentta, "", "Perustelu vaaditaan (vähintään 12 merkkiä).");
+    paivitysPaluu(
+      hankeId,
+      kentta,
+      "",
+      "Kommentti vaaditaan, kun arvoa ehdotetaan tyhjennettäväksi (vähintään 12 merkkiä).",
+    );
   }
 
   const sisalto: EhdotusSisalto = {

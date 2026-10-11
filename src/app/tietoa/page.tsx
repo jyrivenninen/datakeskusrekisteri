@@ -267,7 +267,7 @@ export default async function TietoaPalvelustaSivu() {
               Merkinnät kuvaavat julkaistuja muutoksia palveluun.
             </p>
             {KEHITYSLOKI.map((merkinta) => (
-              <article key={merkinta.pvm} className="mt-6">
+              <article key={`${merkinta.pvm}-${merkinta.otsikko}`} className="mt-6">
                 <h3 className="text-lg font-semibold">
                   <time dateTime={merkinta.pvm}>{muotoilePvm(merkinta.pvm)}</time>
                   {" · "}

@@ -1,6 +1,8 @@
 import { notFound, permanentRedirect } from "next/navigation";
 import { lahetaKenttapaivitys, lahetaKenttaTarkistus, lahetaKenttaTyhjennys } from "@/app/toiminnot";
+import { KenttaPaivitysLomake } from "@/komponentit/kentta-paivitys-lomake";
 import { LomakeLahetysNappi } from "@/komponentit/lomake-lahetysnappi";
+import { PakollinenMerkki } from "@/komponentit/pakollinen-merkki";
 import {
   onPaivitettavaHankeKentta,
   onVaihtoehtoKentta,
@@ -8,17 +10,48 @@ import {
   tyhjennysKenttaLomakkeesta,
   type PaivitettavaHankeKentta,
 } from "@/lib/ehdotus";
-import { HANKE_KENTTA_NIMET, HANKETASON_VAIHTOEHTO_OHJE, LUOTTAMUS_NIMET, VAIHE_NIMET } from "@/lib/naytto";
+import { HANKE_KENTTA_NIMET, HANKETASON_VAIHTOEHTO_OHJE, LUOTTAMUS_NIMET, VAIHE_NIMET, muotoileLuku } from "@/lib/naytto";
 import { haeHanke, haeHankeOhjaus, type HankeListalla } from "@/lib/supabase/kyselyt";
 import { haeYllapitaja } from "@/lib/supabase/palvelin";
-import { HANKE_VAIHEET, LUOTTAMUSTASOT } from "@/lib/supabase/tietokanta";
+import { HANKE_VAIHEET, LUOTTAMUSTASOT, type HankeVaihe } from "@/lib/supabase/tietokanta";
 import { supabasePalvelinAvainAsetettu } from "@/lib/supabase/yllapito-asiakas";
+
+const LUKUKENTAT = new Set([
+  "it_teho_mw",
+  "teho_mw",
+  "pinta_ala_ha",
+  "sahkonkaytto_twh_a",
+  "generaattorit_lkm",
+  "generaattorit_kaytossa_max_lkm",
+  "generaattori_polttoaineteho_mw",
+  "generaattori_yksikkoteho_mwe",
+  "diesel_vuosikulutus_maara",
+  "varavoima_paastot_t_co2e",
+  "polttoainevarasto_maara",
+]);
 
 function nykyinenHankeArvo(hanke: HankeListalla, kentta: PaivitettavaHankeKentta): string {
   if (kentta === "toimija_nimi") return hanke.toimija?.nimi ?? "";
   const arvo = hanke[kentta as Exclude<PaivitettavaHankeKentta, "toimija_nimi">];
   if (arvo == null || arvo === "") return "";
   return String(arvo);
+}
+
+function yksikkoTeksti(yksikko: string | null | undefined): string {
+  if (yksikko === "m3") return "m³";
+  if (yksikko === "mw") return "MW";
+  if (yksikko === "litra") return "litraa";
+  return "";
+}
+
+function naytaNykyinen(kentta: string, arvo: string, yksikko?: string | null): string {
+  if (!arvo) return "ei merkitty";
+  if (kentta === "vaihe" && arvo in VAIHE_NIMET) {
+    return VAIHE_NIMET[arvo as HankeVaihe];
+  }
+  const teksti = LUKUKENTAT.has(kentta) ? muotoileLuku(arvo) : arvo;
+  const yksikkoNimi = yksikkoTeksti(yksikko);
+  return yksikkoNimi ? `${teksti} ${yksikkoNimi}` : teksti;
 }
 
 export default async function KenttapaivitysSivu({
@@ -64,18 +97,109 @@ export default async function KenttapaivitysSivu({
   const { user: yllapitaja } = await haeYllapitaja();
   const julkaiseSuoraan = Boolean(yllapitaja && supabasePalvelinAvainAsetettu());
   const kenttaNimi = HANKE_KENTTA_NIMET[kentta] ?? kentta;
+  const yksikkoOletus =
+    kentta === "diesel_vuosikulutus_maara"
+      ? (vaihtoehto?.diesel_vuosikulutus_yksikko ?? hanke.diesel_vuosikulutus_yksikko ?? "litra")
+      : kentta === "polttoainevarasto_maara"
+        ? (vaihtoehto?.polttoainevarasto_yksikko ?? "m3")
+        : "";
+  const naytettavaArvo = naytaNykyinen(
+    kentta,
+    nykyinen,
+    kentta === "diesel_vuosikulutus_maara" || kentta === "polttoainevarasto_maara"
+      ? yksikkoOletus
+      : null,
+  );
+  const voiTyhjentaa = Boolean(
+    !vaihtoehtoTunnus && nykyinen && tyhjennysKenttaLomakkeesta(kentta),
+  );
 
   return (
     <main id="sisalto" className="mx-auto w-full max-w-3xl flex-1 px-4 py-10">
       <p className="text-sm">
         <a href={`/hankkeet/${hanke.id}`} className="text-link underline">
-          {hanke.nimi}
+          Palaa hankkeeseen
         </a>
       </p>
       <h1 className="mt-4 text-3xl font-semibold tracking-tight">Päivitä kenttä</h1>
-      <p className="mt-3 max-w-prose leading-relaxed text-muted">
-        {vaihtoehto ? `Vaihtoehto ${vaihtoehto.tunnus} · ` : null}
-        {kenttaNimi}. Lähde merkitään samaan tapaan kuin muissakin rekisterin tiedoissa.
+
+      <dl className="mt-6 space-y-3 rounded border border-border bg-surface px-4 py-4">
+        <div>
+          <dt className="text-sm text-muted">Hanke</dt>
+          <dd className="font-medium">
+            {hanke.nimi}
+            <span className="font-normal text-muted"> · {hanke.kunta}</span>
+          </dd>
+        </div>
+        <div>
+          <dt className="text-sm text-muted">Kenttä</dt>
+          <dd className="font-medium">
+            {kenttaNimi}
+            {vaihtoehto ? (
+              <span className="font-normal text-muted"> · vaihtoehto {vaihtoehto.tunnus}</span>
+            ) : null}
+          </dd>
+        </div>
+        <div>
+          <dt className="text-sm text-muted">Nykyinen arvo</dt>
+          <dd className="font-medium">{naytettavaArvo}</dd>
+        </div>
+      </dl>
+
+      {query.valmis === "julkaistu" ? (
+        <p className="mt-6 rounded border border-border bg-surface px-4 py-3" role="status">
+          Kenttä julkaistiin.{" "}
+          <a href={`/hankkeet/${hanke.id}`} className="text-link underline">
+            Palaa hankkeeseen
+          </a>
+        </p>
+      ) : null}
+      {query.valmis === "odottaa" ? (
+        <p className="mt-6 rounded border border-border bg-surface px-4 py-3" role="status">
+          Ilmoitus odottaa tarkistusta.{" "}
+          <a href={`/hankkeet/${hanke.id}`} className="text-link underline">
+            Palaa hankkeeseen
+          </a>
+        </p>
+      ) : null}
+      {query.virhe ? (
+        <p className="mt-6 rounded border border-border bg-surface px-4 py-3" role="alert">
+          {query.virhe}
+        </p>
+      ) : null}
+
+      {query.valmis ? null : (
+        <KenttaPaivitysLomake
+          action={lahetaKenttapaivitys}
+          hankeId={hanke.id}
+          kentta={kentta}
+          vaihtoehto={vaihtoehto?.tunnus ?? null}
+          nykyinenArvo={nykyinen}
+          voiTyhjentaa={voiTyhjentaa}
+          onVaihe={kentta === "vaihe"}
+          vaiheValinnat={HANKE_VAIHEET.map((vaihe) => ({
+            arvo: vaihe,
+            nimi: VAIHE_NIMET[vaihe],
+          }))}
+          yksikko={
+            kentta === "diesel_vuosikulutus_maara"
+              ? "diesel"
+              : kentta === "polttoainevarasto_maara"
+                ? "polttoaine"
+                : null
+          }
+          yksikkoOletus={yksikkoOletus}
+          lainausPakollinen={kentta === "varavoima_paastot_t_co2e"}
+          julkaiseSuoraan={julkaiseSuoraan}
+          luottamusValinnat={LUOTTAMUSTASOT.map((taso) => ({
+            arvo: taso,
+            nimi: LUOTTAMUS_NIMET[taso],
+          }))}
+        />
+      )}
+
+      <p className="mt-6 max-w-prose text-sm leading-relaxed text-muted">
+        Lähde merkitään samaan tapaan kuin muissakin rekisterin tiedoissa.
         {kentta === "it_teho_mw" || kentta === "teho_mw" ? (
           <>
             {" "}
@@ -108,192 +232,56 @@ export default async function KenttapaivitysSivu({
             yhteenlaskettu polttoaineteho.
           </>
         ) : null}
-        {kentta === "varavoima_paastot_t_co2e" ? (
-          <>
-            {" "}
-            Lainaus on pakollinen. Siitä pitää ilmetä, kuka luvun on laskenut.
-          </>
-        ) : null}
         {julkaiseSuoraan
           ? " Ylläpitäjänä päivitys julkaistaan heti."
           : " Ilmoitus ei julkaise tietoja suoraan. Ylläpitäjä tarkistaa lähteen."}
       </p>
 
-      {query.valmis === "julkaistu" ? (
-        <p className="mt-6 rounded border border-border bg-surface px-4 py-3" role="status">
-          Kenttä julkaistiin.{" "}
-          <a href={`/hankkeet/${hanke.id}`} className="text-link underline">
-            Palaa hankkeeseen
-          </a>
-        </p>
-      ) : null}
-      {query.valmis === "odottaa" ? (
-        <p className="mt-6 rounded border border-border bg-surface px-4 py-3" role="status">
-          Ilmoitus odottaa tarkistusta.{" "}
-          <a href={`/hankkeet/${hanke.id}`} className="text-link underline">
-            Palaa hankkeeseen
-          </a>
-        </p>
-      ) : null}
-      {query.virhe ? (
-        <p className="mt-6 rounded border border-border bg-surface px-4 py-3" role="alert">
-          {query.virhe}
-        </p>
-      ) : null}
-
-      {query.valmis ? null : (
-        <form action={lahetaKenttapaivitys} className="mt-6 space-y-4">
-          <input type="hidden" name="hanke_id" value={hanke.id} />
-          <input type="hidden" name="kentta" value={kentta} />
-          {vaihtoehto ? (
-            <input type="hidden" name="vaihtoehto" value={vaihtoehto.tunnus} />
-          ) : null}
-          <input type="hidden" name="nykyinen_arvo" value={nykyinen} />
-
-          <p className="text-sm text-muted">Nykyinen arvo: {nykyinen || "ei merkitty"}</p>
-
-          <p className="flex flex-col gap-1">
-            <label htmlFor="arvo" className="text-sm font-medium">
-              Uusi arvo
-            </label>
-            {kentta === "vaihe" ? (
-              <select
-                id="arvo"
-                name="arvo"
+      {query.valmis || !voiTyhjentaa ? null : (
+        <noscript>
+          <form action={lahetaKenttaTyhjennys} className="mt-10 space-y-4 border-t border-border pt-8">
+            <input type="hidden" name="hanke_id" value={hanke.id} />
+            <input type="hidden" name="kentta" value={kentta} />
+            <h2 className="text-lg font-semibold">Tyhjennä arvo</h2>
+            <p className="flex flex-col gap-1">
+              <label htmlFor="noscript-kommentti" className="text-sm font-medium">
+                Kommentti
+                <PakollinenMerkki />
+              </label>
+              <textarea
+                id="noscript-kommentti"
+                name="perustelu"
                 required
-                defaultValue={nykyinen}
-                className="rounded border border-border bg-surface px-2 py-2"
-              >
-                <option value="">Valitse vaihe</option>
-                {HANKE_VAIHEET.map((vaihe) => (
-                  <option key={vaihe} value={vaihe}>
-                    {VAIHE_NIMET[vaihe]}
-                  </option>
-                ))}
-              </select>
-            ) : (
-              <input
-                id="arvo"
-                name="arvo"
-                required
-                defaultValue={nykyinen}
+                minLength={12}
+                rows={3}
                 className="rounded border border-border bg-surface px-2 py-2"
               />
-            )}
-          </p>
-
-          {kentta === "diesel_vuosikulutus_maara" ? (
-            <p className="flex flex-col gap-1">
-              <label htmlFor="yksikko" className="text-sm font-medium">
-                Yksikkö (pakollinen)
-              </label>
-              <select
-                id="yksikko"
-                name="yksikko"
-                required
-                defaultValue={
-                  vaihtoehto?.diesel_vuosikulutus_yksikko ??
-                  hanke.diesel_vuosikulutus_yksikko ??
-                  "litra"
-                }
-                className="rounded border border-border bg-surface px-2 py-2"
-              >
-                <option value="litra">litra</option>
-                <option value="m3">m³</option>
-              </select>
+              <span className="text-sm text-muted">
+                Kerro, miksi arvo tyhjennetään. Vähintään 12 merkkiä.
+              </span>
             </p>
-          ) : null}
-
-          {kentta === "polttoainevarasto_maara" ? (
-            <p className="flex flex-col gap-1">
-              <label htmlFor="yksikko" className="text-sm font-medium">
-                Yksikkö (pakollinen)
-              </label>
-              <select
-                id="yksikko"
-                name="yksikko"
-                required
-                defaultValue={vaihtoehto?.polttoainevarasto_yksikko ?? "m3"}
-                className="rounded border border-border bg-surface px-2 py-2"
-              >
-                <option value="m3">m³</option>
-                <option value="litra">litra</option>
-                <option value="mw">MW</option>
-              </select>
-            </p>
-          ) : null}
-
-          <p className="flex flex-col gap-1">
-            <label htmlFor="lahde_url" className="text-sm font-medium">
-              Lähteen osoite (pakollinen)
-            </label>
-            <input
-              id="lahde_url"
-              name="lahde_url"
-              type="url"
-              required
-              placeholder="https://"
-              className="rounded border border-border bg-surface px-2 py-2"
-            />
-          </p>
-          <p className="flex flex-col gap-1">
-            <label htmlFor="lahde_sivu" className="text-sm font-medium">
-              Sivunumero (jos asiakirja)
-            </label>
-            <input
-              id="lahde_sivu"
-              name="lahde_sivu"
-              inputMode="numeric"
-              className="rounded border border-border bg-surface px-2 py-2"
-            />
-          </p>
-          <p className="flex flex-col gap-1">
-            <label htmlFor="lainaus" className="text-sm font-medium">
-              Sanatarkka kohta lähteestä
-            </label>
-            <textarea
-              id="lainaus"
-              name="lainaus"
-              rows={3}
-              required={kentta === "varavoima_paastot_t_co2e"}
-              className="rounded border border-border bg-surface px-2 py-2"
-            />
-          </p>
-          {julkaiseSuoraan ? (
-            <p className="flex flex-col gap-1">
-              <label htmlFor="luottamus" className="text-sm font-medium">
-                Luottamus
-              </label>
-              <select
-                id="luottamus"
-                name="luottamus"
-                defaultValue="vahvistettu"
-                className="rounded border border-border bg-surface px-2 py-2"
-              >
-                {LUOTTAMUSTASOT.map((taso) => (
-                  <option key={taso} value={taso}>
-                    {LUOTTAMUS_NIMET[taso]}
-                  </option>
-                ))}
-              </select>
-            </p>
-          ) : null}
-          <p className="flex flex-col gap-1">
-            <label htmlFor="huomautus" className="text-sm font-medium">
-              Lisätieto ylläpitäjälle
-            </label>
-            <textarea
-              id="huomautus"
-              name="huomautus"
-              rows={3}
-              className="rounded border border-border bg-surface px-2 py-2"
-            />
-          </p>
-          <LomakeLahetysNappi
-            valmis={julkaiseSuoraan ? "Julkaise päivitys" : "Lähetä tarkistettavaksi"}
-            odottaa="Lähetetään…"
-          />
-        </form>
+            {julkaiseSuoraan ? (
+              <p className="flex items-start gap-2">
+                <input
+                  id="noscript-merkitse"
+                  name="merkitse_ei_lahdetta"
+                  type="checkbox"
+                  value="kylla"
+                  className="mt-1"
+                />
+                <label htmlFor="noscript-merkitse" className="text-sm">
+                  Merkitse tyhjän kentän tarkistetuksi: julkista lähdettä ei ole
+                </label>
+              </p>
+            ) : null}
+            <button
+              type="submit"
+              className="rounded border border-foreground bg-foreground px-4 py-2 text-sm font-medium text-background"
+            >
+              {julkaiseSuoraan ? "Tyhjennä ja julkaise" : "Lähetä tyhjennys tarkistettavaksi"}
+            </button>
+          </form>
+        </noscript>
       )}
 
       {query.valmis || vaihtoehtoTunnus || !tarkistusKenttaLomakkeesta(kentta) || nykyinen ? null : (
@@ -308,7 +296,7 @@ export default async function KenttapaivitysSivu({
           </p>
           <p className="flex flex-col gap-1">
             <label htmlFor="tarkistus_huomautus" className="text-sm font-medium">
-              Huomautus (ei julkaista)
+              Kommentti
             </label>
             <textarea
               id="tarkistus_huomautus"
@@ -316,63 +304,10 @@ export default async function KenttapaivitysSivu({
               rows={3}
               className="rounded border border-border bg-surface px-2 py-2"
             />
+            <span className="text-sm text-muted">Vapaaehtoinen. Ei julkaista.</span>
           </p>
           <LomakeLahetysNappi
             valmis={julkaiseSuoraan ? "Merkitse tarkistetuksi" : "Lähetä tarkistus jonoon"}
-            odottaa="Lähetetään…"
-          />
-        </form>
-      )}
-
-      {query.valmis || vaihtoehtoTunnus || !tyhjennysKenttaLomakkeesta(kentta) || !nykyinen ? null : (
-        <form action={lahetaKenttaTyhjennys} className="mt-10 space-y-4 border-t border-border pt-8">
-          <input type="hidden" name="hanke_id" value={hanke.id} />
-          <input type="hidden" name="kentta" value={kentta} />
-          <h2 className="text-lg font-semibold">Poista virheellinen arvo</h2>
-          <p className="text-sm leading-relaxed text-muted">
-            Jos julkaistu arvo on virheellinen eikä sitä voi korvata uudella lähteellä,
-            tyhjennä kenttä. Lähteet poistetaan. Voit merkitä samalla, ettei julkista
-            lähdettä ole.
-          </p>
-          <p className="flex flex-col gap-1">
-            <label htmlFor="tyhjennys_perustelu" className="text-sm font-medium">
-              Perustelu (pakollinen, vähintään 12 merkkiä)
-            </label>
-            <textarea
-              id="tyhjennys_perustelu"
-              name="perustelu"
-              required
-              minLength={12}
-              rows={3}
-              className="rounded border border-border bg-surface px-2 py-2"
-            />
-          </p>
-          <p className="flex flex-col gap-1">
-            <label htmlFor="tyhjennys_lahde_url" className="text-sm font-medium">
-              Lähde virheen todentamiseen (suositus)
-            </label>
-            <input
-              id="tyhjennys_lahde_url"
-              name="lahde_url"
-              type="url"
-              placeholder="https://"
-              className="rounded border border-border bg-surface px-2 py-2"
-            />
-          </p>
-          <p className="flex items-start gap-2">
-            <input
-              id="merkitse_ei_lahdetta"
-              name="merkitse_ei_lahdetta"
-              type="checkbox"
-              value="kylla"
-              className="mt-1"
-            />
-            <label htmlFor="merkitse_ei_lahdetta" className="text-sm">
-              Merkitse tyhjän kentän tarkistetuksi: julkista lähdettä ei ole
-            </label>
-          </p>
-          <LomakeLahetysNappi
-            valmis={julkaiseSuoraan ? "Tyhjennä ja julkaise" : "Lähetä tyhjennys jonoon"}
             odottaa="Lähetetään…"
           />
         </form>
