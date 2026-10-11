@@ -1,0 +1,1667 @@
+{
+ "osa": "kenttien-vahvistus",
+ "era": 1,
+ "kohteet": [
+  {
+   "hanke_id": "8021e1a8-347a-4119-a6cc-288f52365c15",
+   "hanke_nimi": "Fortum Orimattila, Pennala",
+   "asiakirjoja_listalla": 17,
+   "havainnot": [
+    {
+     "kentta": "kaavatunnus",
+     "arvo": "A217",
+     "asiakirja_url": "https://orimattilad10.oncloudos.com/cgi/DREQUEST.PHP?page=meetingitem&id=A0AB9112XDAD0X4942X8BC4X7E7F6EFF8EB3-19",
+     "asiakirjan_nimi": "Kh 14.9.2026 §381 Esisopimus T-korttelin datakeskusalueen kiinteistökaupasta",
+     "sivu": "ei sivunumeroa (HTML-sivu)",
+     "lainaus": "Rautamäentien asemakaavan (kaavatunnus A217) mukaisesta teollisuus- ja varastorakennusten korttelialueesta",
+     "poikkeaa_rekisterista": false,
+     "huomio": ""
+    },
+    {
+     "kentta": "kaavatunnus",
+     "arvo": "A217",
+     "asiakirja_url": "https://orimattila.fi/wp-content/uploads/A217_kaavaehdotuksen_selostus.pdf",
+     "asiakirjan_nimi": "A217 kaavaehdotuksen selostus",
+     "sivu": "1 (PDF; kansilehti, ei painettua numeroa)",
+     "lainaus": "RAUTAMÄENTIEN ASEMA- KAAVA JA ASEMAKAAVAN MUUTOS, A217 KAAVASELOSTUS",
+     "poikkeaa_rekisterista": false,
+     "huomio": ""
+    },
+    {
+     "kentta": "kortteli",
+     "arvo": "2516, 2517, 2518",
+     "asiakirja_url": "https://orimattila.fi/wp-content/uploads/A217_kaavaehdotuksen_selostus.pdf",
+     "asiakirjan_nimi": "A217 kaavaehdotuksen selostus",
+     "sivu": "3 (painettu) / 5 (PDF)",
+     "lainaus": "Asemakaavalla muodostuvat Orimattilan kaupungin Pennalan kylän korttelit 2516, 2517, 2518 sekä niihin liittyvät katu-, erityis- ja viheralueet.",
+     "poikkeaa_rekisterista": true,
+     "huomio": "Rekisterissä kortteli '2516, 2517'; asiakirjassa myös 2518."
+    },
+    {
+     "kentta": "kortteli",
+     "arvo": "2516, 2517, 2518",
+     "asiakirja_url": "https://orimattila.fi/wp-content/uploads/KAAVAKARTTA_Rautamaentien_AK_hyv_pienennetty.pdf",
+     "asiakirjan_nimi": "A217 Rautamäentien asemakaavakartta (hyväksytty)",
+     "sivu": "1 (PDF; kaavakartta, ei painettua numerointia)",
+     "lainaus": "Asemakaavalla muodostuvat korttelit 2516, 2517 ja 2518 sekä niihin liittyvät katu-, erityis-",
+     "poikkeaa_rekisterista": true,
+     "huomio": "Rekisterissä '2516, 2517'."
+    },
+    {
+     "kentta": "kortteli",
+     "arvo": "2517",
+     "asiakirja_url": "https://orimattilad10.oncloudos.com/cgi/DREQUEST.PHP?page=meetingitem&id=A0AB9112XDAD0X4942X8BC4X7E7F6EFF8EB3-19",
+     "asiakirjan_nimi": "Kh 14.9.2026 §381 Esisopimus T-korttelin datakeskusalueen kiinteistökaupasta",
+     "sivu": "ei sivunumeroa (HTML-sivu)",
+     "lainaus": "Kaupan Kohteeseen sisältyvät seuraavat määräalat ja tilat, jotka sisältyvät asemakaavan mukaiseen kortteliin 2517:",
+     "poikkeaa_rekisterista": false,
+     "huomio": "Esisopimuksen (datakeskusalue) kohde vain kortteli 2517."
+    },
+    {
+     "kentta": "kaava_ala_ha",
+     "arvo": "168",
+     "asiakirja_url": "https://orimattilad10.oncloudos.com/cgi/DREQUEST.PHP?page=meetingitem&id=2026613-10",
+     "asiakirjan_nimi": "Kh 13.4.2026 §148 A217 hyväksyminen",
+     "sivu": "ei sivunumeroa (HTML-sivu)",
+     "lainaus": "Asemakaava-alueen koko on 168 hehtaaria.",
+     "poikkeaa_rekisterista": true,
+     "huomio": "Rekisterissä kaava_ala_ha tyhjä."
+    },
+    {
+     "kentta": "kaava_ala_ha",
+     "arvo": "noin 168",
+     "asiakirja_url": "https://orimattila.fi/wp-content/uploads/A217_kaavaehdotuksen_selostus.pdf",
+     "asiakirjan_nimi": "A217 kaavaehdotuksen selostus",
+     "sivu": "4 (painettu) / 6 (PDF)",
+     "lainaus": "Suunnittelu- alueen laajuus on noin 168 hehtaaria.",
+     "poikkeaa_rekisterista": true,
+     "huomio": "Rekisterissä kaava_ala_ha tyhjä."
+    },
+    {
+     "kentta": "pinta_ala_ha",
+     "arvo": "127,6 (T-2, datakeskus); 11,8 (T-3)",
+     "asiakirja_url": "https://orimattilad10.oncloudos.com/cgi/DREQUEST.PHP?page=meetingitem&id=2026613-10",
+     "asiakirjan_nimi": "Kh 13.4.2026 §148 A217 hyväksyminen",
+     "sivu": "ei sivunumeroa (HTML-sivu)",
+     "lainaus": "Pohjoisempi korttelialue 11,8 ha on varattu teollisuus- ja varastorakennuksille (T-3). Eteläisempi korttelialue 127,6 ha on varattu datakeskukselle (T-2).",
+     "poikkeaa_rekisterista": true,
+     "huomio": "Rekisterissä pinta_ala_ha tyhjä; vaihtoehdot 'Hankkeen osuus 130 ha' ja 'Kaupungin maa-alue 55 ha'. Teksti esitetään 'Asemakaavaluonnos'-otsikon alla."
+    },
+    {
+     "kentta": "pinta_ala_ha",
+     "arvo": "1 276 600 m² (kortteli 2517, luonnos)",
+     "asiakirja_url": "https://orimattila.fi/wp-content/uploads/A217_kaavaselostus_LUONNOS.pdf",
+     "asiakirjan_nimi": "A217 kaavaluonnoksen selostus",
+     "sivu": "63 (painettu) / 65 (PDF)",
+     "lainaus": "T-2-kortteli 2517 on kooltaan 1 276 600 m² ja sen rakennusoikeus on 638 300 k-m².",
+     "poikkeaa_rekisterista": false,
+     "huomio": "Yksikkö m², ei muunnettu."
+    },
+    {
+     "kentta": "pinta_ala_ha",
+     "arvo": "n. 517 893 m2, eli n. 52 ha (esisopimuksen kohde)",
+     "asiakirja_url": "https://orimattilad10.oncloudos.com/cgi/DREQUEST.PHP?page=meetingitem&id=A0AB9112XDAD0X4942X8BC4X7E7F6EFF8EB3-19",
+     "asiakirjan_nimi": "Kh 14.9.2026 §381 Esisopimus T-korttelin datakeskusalueen kiinteistökaupasta",
+     "sivu": "ei sivunumeroa (HTML-sivu)",
+     "lainaus": "Kiinteistöjen ja määräalojen yhteenlaskettu pinta-ala on yhteensä n. 517 893 m2, eli n. 52 ha.",
+     "poikkeaa_rekisterista": true,
+     "huomio": "Rekisterin vaihtoehto 'Kaupungin maa-alue 55 ha'."
+    },
+    {
+     "kentta": "pinta_ala_ha",
+     "arvo": "noin 17,1204 (vuokra-alueet, Pennalan logistiikka-alue)",
+     "asiakirja_url": "https://orimattilad10.oncloudos.com/cgi/DREQUEST.PHP?page=meetingitem&id=2025457-5",
+     "asiakirjan_nimi": "Kh 27.1.2025 Teollisuustonttien vuokraus, Pennala, Fortum Power and Heat Oy",
+     "sivu": "ei sivunumeroa (HTML-sivu)",
+     "lainaus": "Orimattilan kaupunki vuokraa Fortum Power and Heat Oy:lle yhteensä noin 17,1204 hehtaarin suuruiset alueet",
+     "poikkeaa_rekisterista": false,
+     "huomio": "Koskee eri asemakaavan (Pennalan logistiikka-alue, korttelit 43, 48, 49) tontteja; samassa tekstissä myös 'noin 17,1203 hehtaaria'."
+    },
+    {
+     "kentta": "vaihe",
+     "arvo": "kaava hyväksytty (Kv 27.4.2026 § 38)",
+     "asiakirja_url": "https://orimattilad10.oncloudos.com/cgi/DREQUEST.PHP?page=meetingitem&id=2026609-6",
+     "asiakirjan_nimi": "Kv 27.4.2026 §38 A217 hyväksyminen (liitteet 2026609-6-25466…25469, -25558)",
+     "sivu": "ei sivunumeroa (HTML-sivu)",
+     "lainaus": "A217 Rautamäentien asemakaava ja asemakaavamuutos on edennyt hyväksymisvaiheeseen.",
+     "poikkeaa_rekisterista": true,
+     "huomio": "Rekisterissä vaihe 'lupamenettely'; asiakirjoissa ei lupamenettelyä."
+    },
+    {
+     "kentta": "vaihe",
+     "arvo": "kiinteistökaupan esisopimus (Kv 21.9.2026 § 74)",
+     "asiakirja_url": "https://orimattilad10.oncloudos.com/cgi/DREQUEST.PHP?page=meetingitem&id=19F938BDXD829X458CXBA79X30CF3800500B-10",
+     "asiakirjan_nimi": "Kv 21.9.2026 §74 Esisopimus T-korttelin datakeskusalueen kiinteistökaupasta",
+     "sivu": "ei sivunumeroa (HTML-sivu)",
+     "lainaus": "Kiinteistökaupan esisopimuksen kohde on osa Orimattilan kaupungin Rautamäentien asemakaavan (kaavatunnus A217) mukaisesta teollisuus- ja varastorakennusten korttelialueesta",
+     "poikkeaa_rekisterista": false,
+     "huomio": ""
+    },
+    {
+     "kentta": "maaraaika",
+     "arvo": "luonnos nähtävillä 15.8. – 26.9.2025",
+     "asiakirja_url": "https://orimattilad10.oncloudos.com/cgi/DREQUEST.PHP?page=meetingitem&id=2026613-10",
+     "asiakirjan_nimi": "Kh 13.4.2026 §148 A217 hyväksyminen",
+     "sivu": "ei sivunumeroa (HTML-sivu)",
+     "lainaus": "Asemakaavaluonnos oli nähtävillä 15.8. – 26.9.2025.",
+     "poikkeaa_rekisterista": false,
+     "huomio": "Kaksi eri arvoa luonnoksen nähtävilläololle, ks. seuraava."
+    },
+    {
+     "kentta": "maaraaika",
+     "arvo": "luonnos nähtävillä 25.8. –26.9.2025 / 25.08.-26.09.2025",
+     "asiakirja_url": "https://orimattila.fi/wp-content/uploads/A217_kaavaehdotuksen_selostus.pdf",
+     "asiakirjan_nimi": "A217 kaavaehdotuksen selostus",
+     "sivu": "5 (painettu) / 7 (PDF)",
+     "lainaus": "Kaavaluonnoksen hyväksyminen ja nähtävilläolo Elinvoimavaliokunta 19.8.2025, § 11 25.8. –26.9.2025",
+     "poikkeaa_rekisterista": false,
+     "huomio": "Sama arvo kaavakartoissa: 'Kaavaluonnoksen nähtävilläolo 25.08.-26.09.2025' (A217 kaavaehdotuskartta s.1 PDF). Ristiriidassa pykälätekstin 15.8. kanssa."
+    },
+    {
+     "kentta": "maaraaika",
+     "arvo": "ehdotus nähtävillä 21.01. – 19.02.2026",
+     "asiakirja_url": "https://orimattilad10.oncloudos.com/cgi/DREQUEST.PHP?page=meetingitem&id=2026613-10",
+     "asiakirjan_nimi": "Kh 13.4.2026 §148 A217 hyväksyminen",
+     "sivu": "ei sivunumeroa (HTML-sivu)",
+     "lainaus": "Kaavaehdotus oli yleisesti nähtävillä 21.01. – 19.02.2026 välisen ajan.",
+     "poikkeaa_rekisterista": false,
+     "huomio": ""
+    },
+    {
+     "kentta": "maaraaika",
+     "arvo": "OAS nähtävillä 31.1.2025–",
+     "asiakirja_url": "https://orimattila.fi/wp-content/uploads/A217_kaavaehdotuksen_selostus.pdf",
+     "asiakirjan_nimi": "A217 kaavaehdotuksen selostus",
+     "sivu": "5 (painettu) / 7 (PDF)",
+     "lainaus": "Osallistumis- ja arviointisuunnitelma nähtävillä 31.1.2025–",
+     "poikkeaa_rekisterista": false,
+     "huomio": ""
+    },
+    {
+     "kentta": "kaava_ala_ha",
+     "arvo": "noin 292 (Pennalan teollisuusalueen osayleiskaava)",
+     "asiakirja_url": "https://orimattilad10.oncloudos.com/cgi/DREQUEST.PHP?page=meetingitem&id=2026609-5",
+     "asiakirjan_nimi": "Kv 27.4.2026 §37 Pennalan teollisuusalueen osayleiskaava, hyväksyminen",
+     "sivu": "ei sivunumeroa (HTML-sivu)",
+     "lainaus": "Kaava-alueen koko on noin 292 hehtaaria.",
+     "poikkeaa_rekisterista": false,
+     "huomio": "Koskee osayleiskaavaa, ei asemakaavaa A217."
+    },
+    {
+     "kentta": "maaraaika",
+     "arvo": "osayleiskaavan ehdotus nähtävillä 22.10. – 23.11.2025",
+     "asiakirja_url": "https://orimattilad10.oncloudos.com/cgi/DREQUEST.PHP?page=meetingitem&id=2026609-5",
+     "asiakirjan_nimi": "Kv 27.4.2026 §37 Pennalan teollisuusalueen osayleiskaava, hyväksyminen",
+     "sivu": "ei sivunumeroa (HTML-sivu)",
+     "lainaus": "Kaavaehdotus oli nähtävillä nähtävillä 22.10. – 23.11.2025.",
+     "poikkeaa_rekisterista": false,
+     "huomio": "Osayleiskaava; tuplasana alkuperäisessä."
+    }
+   ],
+   "avatut_asiakirjat": [
+    {
+     "url": "https://orimattila.fi/wp-content/uploads/A217_kaavaehdotuksen_selostus.pdf",
+     "nimi": "A217 kaavaehdotuksen selostus",
+     "tyyppi": "viranomaisasiakirja"
+    },
+    {
+     "url": "https://orimattila.fi/wp-content/uploads/A217_kaavaehdotuskartta.pdf",
+     "nimi": "A217 kaavaehdotuskartta",
+     "tyyppi": "viranomaisasiakirja"
+    },
+    {
+     "url": "https://orimattila.fi/wp-content/uploads/A217_kaavakartta_LUONNOS.pdf",
+     "nimi": "A217 kaavakartta, luonnos",
+     "tyyppi": "viranomaisasiakirja"
+    },
+    {
+     "url": "https://orimattila.fi/wp-content/uploads/A217_kaavaselostus_LUONNOS.pdf",
+     "nimi": "A217 kaavaluonnoksen selostus",
+     "tyyppi": "viranomaisasiakirja"
+    },
+    {
+     "url": "https://orimattila.fi/wp-content/uploads/KAAVAKARTTA_Rautamaentien_AK_hyv_pienennetty.pdf",
+     "nimi": "A217 Rautamäentien asemakaavakartta (hyväksytty)",
+     "tyyppi": "viranomaisasiakirja"
+    },
+    {
+     "url": "https://orimattilad10.oncloudos.com/cgi/DREQUEST.PHP?page=meetingitem&id=2025552-7",
+     "nimi": "Evv 16.12.2025 §84 A217 ehdotusvaihe",
+     "tyyppi": "paatos"
+    },
+    {
+     "url": "https://orimattilad10.oncloudos.com/cgi/DREQUEST.PHP?page=meetingitem&id=2026581-11",
+     "nimi": "Evv 17.3.2026 §38 A217 hyväksyminen",
+     "tyyppi": "paatos"
+    },
+    {
+     "url": "https://orimattilad10.oncloudos.com/cgi/DREQUEST.PHP?page=meetingitem&id=2025515-11",
+     "nimi": "Evv 19.8.2025 §11 A217 Rautamäentien asemakaava ja asemakaavan muutos, luonnosvaihe",
+     "tyyppi": "paatos"
+    },
+    {
+     "url": "https://orimattilad10.oncloudos.com/cgi/DREQUEST.PHP?page=meetingitem&id=2026612-11",
+     "nimi": "Evv 24.3.2026 §60 A217 hyväksyminen",
+     "tyyppi": "paatos"
+    },
+    {
+     "url": "https://orimattilad10.oncloudos.com/cgi/DREQUEST.PHP?page=meetingitem&id=2026563-10",
+     "nimi": "Kh 12.1.2026 §10 A217 ehdotusvaihe",
+     "tyyppi": "paatos"
+    },
+    {
+     "url": "https://orimattilad10.oncloudos.com/cgi/DREQUEST.PHP?page=meetingitem&id=2026613-10",
+     "nimi": "Kh 13.4.2026 §148 A217 hyväksyminen",
+     "tyyppi": "paatos"
+    },
+    {
+     "url": "https://orimattilad10.oncloudos.com/cgi/DREQUEST.PHP?page=meetingitem&id=A0AB9112XDAD0X4942X8BC4X7E7F6EFF8EB3-19",
+     "nimi": "Kh 14.9.2026 §381 Esisopimus T-korttelin datakeskusalueen kiinteistökaupasta",
+     "tyyppi": "paatos"
+    },
+    {
+     "url": "https://orimattilad10.oncloudos.com/cgi/DREQUEST.PHP?page=meetingitem&id=2025457-5",
+     "nimi": "Kh 27.1.2025 Teollisuustonttien vuokraus, Pennala, Fortum Power and Heat Oy",
+     "tyyppi": "paatos"
+    },
+    {
+     "url": "https://orimattilad10.oncloudos.com/cgi/DREQUEST.PHP?page=meetingitem&id=19F938BDXD829X458CXBA79X30CF3800500B-10",
+     "nimi": "Kv 21.9.2026 §74 Esisopimus T-korttelin datakeskusalueen kiinteistökaupasta",
+     "tyyppi": "paatos"
+    },
+    {
+     "url": "https://orimattilad10.oncloudos.com/cgi/DREQUEST.PHP?page=meetingitem&id=2026609-5",
+     "nimi": "Kv 27.4.2026 §37 Pennalan teollisuusalueen osayleiskaava, hyväksyminen",
+     "tyyppi": "paatos"
+    },
+    {
+     "url": "https://orimattilad10.oncloudos.com/cgi/DREQUEST.PHP?page=meetingitem&id=2026609-6",
+     "nimi": "Kv 27.4.2026 §38 A217 hyväksyminen (liitteet 2026609-6-25466…25469, -25558)",
+     "tyyppi": "paatos"
+    },
+    {
+     "url": "https://orimattila.fi/wp-content/uploads/LIITE_3_Pennala_DC_Viitesuunnitelma_ja_alueleikkaukset.pdf",
+     "nimi": "Liite 3 Viitesuunnitelma ja alueleikkaukset (+ Liite 4, Liite 5)",
+     "tyyppi": "viranomaisasiakirja"
+    }
+   ],
+   "ei_sisaltoa": [
+    {
+     "url": "https://orimattila.fi/wp-content/uploads/LIITE_3_Pennala_DC_Viitesuunnitelma_ja_alueleikkaukset.pdf",
+     "nimi": "Liite 3 Viitesuunnitelma ja alueleikkaukset (+ Liite 4, Liite 5)"
+    }
+   ],
+   "toistaa": [
+    {
+     "url": "https://orimattilad10.oncloudos.com/cgi/DREQUEST.PHP?page=meetingitem&id=2025552-7",
+     "nimi": "Evv 16.12.2025 §84 A217 ehdotusvaihe",
+     "toistaa": "Kh 13.4.2026 §148 A217 hyväksyminen – https://orimattilad10.oncloudos.com/cgi/DREQUEST.PHP?page=meetingitem&id=2026613-10"
+    },
+    {
+     "url": "https://orimattilad10.oncloudos.com/cgi/DREQUEST.PHP?page=meetingitem&id=2026581-11",
+     "nimi": "Evv 17.3.2026 §38 A217 hyväksyminen",
+     "toistaa": "Kh 13.4.2026 §148 A217 hyväksyminen – https://orimattilad10.oncloudos.com/cgi/DREQUEST.PHP?page=meetingitem&id=2026613-10"
+    },
+    {
+     "url": "https://orimattilad10.oncloudos.com/cgi/DREQUEST.PHP?page=meetingitem&id=2025515-11",
+     "nimi": "Evv 19.8.2025 §11 A217 Rautamäentien asemakaava ja asemakaavan muutos, luonnosvaihe",
+     "toistaa": "Kh 13.4.2026 §148 A217 hyväksyminen – https://orimattilad10.oncloudos.com/cgi/DREQUEST.PHP?page=meetingitem&id=2026613-10"
+    },
+    {
+     "url": "https://orimattilad10.oncloudos.com/cgi/DREQUEST.PHP?page=meetingitem&id=2026612-11",
+     "nimi": "Evv 24.3.2026 §60 A217 hyväksyminen",
+     "toistaa": "Kh 13.4.2026 §148 A217 hyväksyminen – https://orimattilad10.oncloudos.com/cgi/DREQUEST.PHP?page=meetingitem&id=2026613-10"
+    },
+    {
+     "url": "https://orimattilad10.oncloudos.com/cgi/DREQUEST.PHP?page=meetingitem&id=2026563-10",
+     "nimi": "Kh 12.1.2026 §10 A217 ehdotusvaihe",
+     "toistaa": "Kh 13.4.2026 §148 A217 hyväksyminen – https://orimattilad10.oncloudos.com/cgi/DREQUEST.PHP?page=meetingitem&id=2026613-10"
+    },
+    {
+     "url": "https://orimattila.fi/wp-content/uploads/A217_kaavaehdotuskartta.pdf",
+     "nimi": "A217 kaavaehdotuskartta",
+     "toistaa": "A217 Rautamäentien asemakaavakartta (hyväksytty) – https://orimattila.fi/wp-content/uploads/KAAVAKARTTA_Rautamaentien_AK_hyv_pienennetty.pdf",
+     "huomio": "korttelit 2516, 2517, 2518 ja luonnoksen nähtävilläolo 25.08.-26.09.2025"
+    },
+    {
+     "url": "https://orimattila.fi/wp-content/uploads/A217_kaavakartta_LUONNOS.pdf",
+     "nimi": "A217 kaavakartta, luonnos",
+     "toistaa": "A217 Rautamäentien asemakaavakartta (hyväksytty) – https://orimattila.fi/wp-content/uploads/KAAVAKARTTA_Rautamaentien_AK_hyv_pienennetty.pdf",
+     "huomio": "korttelit 2516, 2517, 2518"
+    }
+   ]
+  },
+  {
+   "hanke_id": "a511e596-99c9-48de-8ebb-f8a2c15e473e",
+   "hanke_nimi": "FCDC Valkeakoski, Mahlianmaa",
+   "asiakirjoja_listalla": 14,
+   "havainnot": [
+    {
+     "kentta": "kaavatunnus",
+     "arvo": "553",
+     "asiakirja_url": "https://valkeakoski.tweb.fi/ktwebscr/fileshow?doctype=3&docid=626329",
+     "asiakirjan_nimi": "Kh 4.5.2026 §94 Mahlianmaan asemakaava, kaavanro 553: hyväksyminen",
+     "sivu": "1 (PDF; painettu numero ei tekstikerroksessa)",
+     "lainaus": "Kaavoitusasia: Mahlianmaan asemakaava, kaavanro 553: hyväksyminen",
+     "poikkeaa_rekisterista": false,
+     "huomio": ""
+    },
+    {
+     "kentta": "kaavatunnus",
+     "arvo": "553",
+     "asiakirja_url": "https://valkeakoski.tweb.fi/ktwebscr/fileshow?doctype=3&docid=625169&version=1",
+     "asiakirjan_nimi": "Mahlianmaa, hyväksymisvaiheen kaavaselostus liitteineen (liite Kh 4.5.2026 §94)",
+     "sivu": "3 (painettu, 3 (25)) / 4 (PDF)",
+     "lainaus": "Mahlianmaan asemakaava, kaavanumero 553.",
+     "poikkeaa_rekisterista": false,
+     "huomio": ""
+    },
+    {
+     "kentta": "kortteli",
+     "arvo": "3",
+     "asiakirja_url": "https://valkeakoski.tweb.fi/ktwebscr/fileshow?doctype=3&docid=625189&version=1",
+     "asiakirjan_nimi": "Mahlianmaa, hyväksymisvaiheen kaavakartta (liite Kh 4.5.2026 §94)",
+     "sivu": "1 (PDF; kaavakartta, ei painettua numerointia)",
+     "lainaus": "Valkeakosken kaupungin 24. kaupunginosan 908-462-8-75 korttelin 3 tontti 1 908-462-8-27 sekä tiealuetta.",
+     "poikkeaa_rekisterista": false,
+     "huomio": "Lainaus kartan tekstikerroksesta; järjestys voi olla kartan asettelun mukainen."
+    },
+    {
+     "kentta": "kaava_ala_ha",
+     "arvo": "noin 29,5",
+     "asiakirja_url": "https://valkeakoski.tweb.fi/ktwebscr/fileshow?doctype=3&docid=625169&version=1",
+     "asiakirjan_nimi": "Mahlianmaa, hyväksymisvaiheen kaavaselostus liitteineen (liite Kh 4.5.2026 §94)",
+     "sivu": "14 (painettu, 14 (25)) / 15 (PDF)",
+     "lainaus": "Asemakaava-alueen pinta-ala on noin 29,5 hehtaaria, joka jakautuu seuraavasti: - Yleisen tien aluetta 3,1 hehtaaria - Teollisuus- ja varastorakennusten korttelialuetta 26,4 hehtaaria",
+     "poikkeaa_rekisterista": true,
+     "huomio": "Rekisterissä kaava_ala_ha tyhjä ja pinta_ala_ha 29.47."
+    },
+    {
+     "kentta": "pinta_ala_ha",
+     "arvo": "26,4 (korttelialue, hyväksymisvaihe)",
+     "asiakirja_url": "https://valkeakoski.tweb.fi/ktwebscr/fileshow?doctype=3&docid=625169&version=1",
+     "asiakirjan_nimi": "Mahlianmaa, hyväksymisvaiheen kaavaselostus liitteineen (liite Kh 4.5.2026 §94)",
+     "sivu": "14 (painettu, 14 (25)) / 15 (PDF)",
+     "lainaus": "Teollisuus- ja varastorakennusten korttelialuetta 26,4 hehtaaria",
+     "poikkeaa_rekisterista": true,
+     "huomio": "Rekisterissä pinta_ala_ha 29.47."
+    },
+    {
+     "kentta": "pinta_ala_ha",
+     "arvo": "26,5 (korttelialue, kaavaluonnos)",
+     "asiakirja_url": "https://valkeakoski.tweb.fi/ktwebscr/fileshow?doctype=3&docid=626329",
+     "asiakirjan_nimi": "Kh 4.5.2026 §94 Mahlianmaan asemakaava, kaavanro 553: hyväksyminen",
+     "sivu": "2 (PDF; painettu numero ei tekstikerroksessa)",
+     "lainaus": "Kaavaluonnoksessa datakeskuksen mahdollistava teollisuusalueen kort- telialue on pinta-alaltaan 26,5 hehtaaria ja sille on osoitettu rakennusoi- keutta 200 000 k-m2.",
+     "poikkeaa_rekisterista": true,
+     "huomio": "Rekisterissä 29.47."
+    },
+    {
+     "kentta": "pinta_ala_ha",
+     "arvo": "noin 26 (varausalue)",
+     "asiakirja_url": "https://valkeakoski.tweb.fi/ktwebscr/fileshow?doctype=3&docid=671250",
+     "asiakirjan_nimi": "Kh 21.9.2026 §186 Alueen varaaminen 908-462-8-27 ja 908-462-8-75, Mahlianmaa, FCDC Corp Oy",
+     "sivu": "1 (PDF; painettu numero ei tekstikerroksessa)",
+     "lainaus": "FCDC Corp Oy on jättänyt hakemuksen Mahlianmaan asemakaavan alueella sijaitsevan noin 26 hehtaarin suuruisen alueen varaamisesta yhden vuoden määräajaksi.",
+     "poikkeaa_rekisterista": true,
+     "huomio": "Rekisterissä 29.47."
+    },
+    {
+     "kentta": "pinta_ala_ha",
+     "arvo": "noin 20 + n. 6 (sopimusalue + lisäalue)",
+     "asiakirja_url": "https://valkeakoski.tweb.fi/ktwebscr/fileshow?doctype=3&docid=499876",
+     "asiakirjan_nimi": "Kh 4.11.2024 §378 Lisäalueen maanluovutus ja asemakaavoituksen käynnistämissopimus, Mahlianmaa",
+     "sivu": "1 (PDF; painettu numero ei tekstikerroksessa)",
+     "lainaus": "Nykyinen sopimusalue on noin 20 hehtaaria ja lisäalueen tarve n. 6 hehtaaria.",
+     "poikkeaa_rekisterista": false,
+     "huomio": ""
+    },
+    {
+     "kentta": "vaihe",
+     "arvo": "kaava hyväksytty Kh 4.5.2026 § 94",
+     "asiakirja_url": "https://valkeakoski.tweb.fi/ktwebscr/fileshow?doctype=3&docid=626329",
+     "asiakirjan_nimi": "Kh 4.5.2026 §94 Mahlianmaan asemakaava, kaavanro 553: hyväksyminen",
+     "sivu": "1 (PDF; painettu numero ei tekstikerroksessa)",
+     "lainaus": "Kaavoitusasia: Mahlianmaan asemakaava, kaavanro 553: hyväksyminen",
+     "poikkeaa_rekisterista": true,
+     "huomio": "Rekisterissä 'lupamenettely'."
+    },
+    {
+     "kentta": "vaihe",
+     "arvo": "alueen varaus FCDC Corp Oy (Kh 21.9.2026 § 186)",
+     "asiakirja_url": "https://valkeakoski.tweb.fi/ktwebscr/fileshow?doctype=3&docid=671250",
+     "asiakirjan_nimi": "Kh 21.9.2026 §186 Alueen varaaminen 908-462-8-27 ja 908-462-8-75, Mahlianmaa, FCDC Corp Oy",
+     "sivu": "1 (PDF; painettu numero ei tekstikerroksessa)",
+     "lainaus": "FCDC Corp Oy on jättänyt hakemuksen Mahlianmaan asemakaavan alueella sijaitsevan noin 26 hehtaarin suuruisen alueen varaamisesta yhden vuoden määräajaksi.",
+     "poikkeaa_rekisterista": false,
+     "huomio": ""
+    },
+    {
+     "kentta": "maaraaika",
+     "arvo": "OAS 6.6.-5.8.2024; luonnos 14.11.-16.12.2024; ehdotus 27.11.2025-16.1.2026",
+     "asiakirja_url": "https://valkeakoski.tweb.fi/ktwebscr/fileshow?doctype=3&docid=625169&version=1",
+     "asiakirjan_nimi": "Mahlianmaa, hyväksymisvaiheen kaavaselostus liitteineen (liite Kh 4.5.2026 §94)",
+     "sivu": "5 (painettu, 5 (25)) / 6 (PDF)",
+     "lainaus": "OAS, nähtävillä 6.6.-5.8.2024 Luonnos, KH 4.11.2024 Luonnos, nähtävillä 14.11.-16.12.2024 Ehdotus, KH 17.11.2025 Ehdotus, nähtävillä 27.11.2025-16.1.2026",
+     "poikkeaa_rekisterista": false,
+     "huomio": ""
+    },
+    {
+     "kentta": "maaraaika",
+     "arvo": "ehdotus nähtävillä 27.11.2025-16.01.2026",
+     "asiakirja_url": "https://valkeakoski.tweb.fi/ktwebscr/fileshow?doctype=3&docid=582443",
+     "asiakirjan_nimi": "Tekla 17.12.2025 §152 lausunto Mahlianmaan asemakaavasta",
+     "sivu": "1 (PDF; painettu numero ei tekstikerroksessa)",
+     "lainaus": "Kaavamateriaali on nähtävillä 27.11.2025-16.01.2026 kaupungin Internet- sivuilla",
+     "poikkeaa_rekisterista": false,
+     "huomio": ""
+    },
+    {
+     "kentta": "pinta_ala_ha",
+     "arvo": "noin 20 (suunniteltu teollisuustontti, 2024)",
+     "asiakirja_url": "https://valkeakoski.tweb.fi/ktwebscr/fileshow?doctype=3&docid=473076",
+     "asiakirjan_nimi": "Kh 19.2.2024 §58 Sopimus kaavoituksen käynnistämisestä ja kiinteistön kaupan esisopimus Mahlianmaa",
+     "sivu": "1 (PDF; painettu numero ei tekstikerroksessa)",
+     "lainaus": "Alueesta olisi tarkoitus asemakaavoittaa noin 20 hehtaarin teollisuustontti.",
+     "poikkeaa_rekisterista": true,
+     "huomio": "Rekisterissä pinta_ala_ha 29.47."
+    }
+   ],
+   "avatut_asiakirjat": [
+    {
+     "url": "https://valkeakoski.tweb.fi/ktwebscr/fileshow?doctype=3&docid=565997",
+     "nimi": "Kh 17.11.2025 §258 ehdotusvaihe ja päivitetty OAS",
+     "tyyppi": "paatos"
+    },
+    {
+     "url": "https://valkeakoski.tweb.fi/ktwebscr/fileshow?doctype=3&docid=473076",
+     "nimi": "Kh 19.2.2024 §58 Sopimus kaavoituksen käynnistämisestä ja kiinteistön kaupan esisopimus Mahlianmaa",
+     "tyyppi": "paatos"
+    },
+    {
+     "url": "https://valkeakoski.tweb.fi/ktwebscr/fileshow?doctype=3&docid=671250",
+     "nimi": "Kh 21.9.2026 §186 Alueen varaaminen 908-462-8-27 ja 908-462-8-75, Mahlianmaa, FCDC Corp Oy",
+     "tyyppi": "paatos"
+    },
+    {
+     "url": "https://valkeakoski.tweb.fi/ktwebscr/fileshow?doctype=3&docid=486742",
+     "nimi": "Kh 27.5.2024 §243 vireilletulo ja OAS",
+     "tyyppi": "paatos"
+    },
+    {
+     "url": "https://valkeakoski.tweb.fi/ktwebscr/fileshow?doctype=3&docid=499876",
+     "nimi": "Kh 4.11.2024 §378 Lisäalueen maanluovutus ja asemakaavoituksen käynnistämissopimus, Mahlianmaa",
+     "tyyppi": "paatos"
+    },
+    {
+     "url": "https://valkeakoski.tweb.fi/ktwebscr/fileshow?doctype=3&docid=499880",
+     "nimi": "Kh 4.11.2024 §380 kaavaluonnos ja päivitetty OAS",
+     "tyyppi": "paatos"
+    },
+    {
+     "url": "https://valkeakoski.tweb.fi/ktwebscr/fileshow?doctype=3&docid=626329",
+     "nimi": "Kh 4.5.2026 §94 Mahlianmaan asemakaava, kaavanro 553: hyväksyminen",
+     "tyyppi": "paatos"
+    },
+    {
+     "url": "https://valkeakoski.tweb.fi/ktwebscr/fileshow?doctype=3&docid=625189&version=1",
+     "nimi": "Mahlianmaa, hyväksymisvaiheen kaavakartta (liite Kh 4.5.2026 §94)",
+     "tyyppi": "viranomaisasiakirja"
+    },
+    {
+     "url": "https://valkeakoski.tweb.fi/ktwebscr/fileshow?doctype=3&docid=625169&version=1",
+     "nimi": "Mahlianmaa, hyväksymisvaiheen kaavaselostus liitteineen (liite Kh 4.5.2026 §94)",
+     "tyyppi": "viranomaisasiakirja"
+    },
+    {
+     "url": "https://valkeakoski.tweb.fi/ktwebscr/fileshow?doctype=3&docid=602873",
+     "nimi": "Rylk 3.2.2026 §6 lausunto Mahlianmaan asemakaavasta",
+     "tyyppi": "paatos"
+    },
+    {
+     "url": "https://valkeakoski.tweb.fi/ktwebscr/fileshow?doctype=3&docid=582443",
+     "nimi": "Tekla 17.12.2025 §152 lausunto Mahlianmaan asemakaavasta",
+     "tyyppi": "paatos"
+    }
+   ],
+   "ei_sisaltoa": [],
+   "toistaa": [
+    {
+     "url": "https://valkeakoski.tweb.fi/ktwebscr/fileshow?doctype=3&docid=565997",
+     "nimi": "Kh 17.11.2025 §258 ehdotusvaihe ja päivitetty OAS",
+     "toistaa": "Kh 4.5.2026 §94 Mahlianmaan asemakaava, kaavanro 553: hyväksyminen – https://valkeakoski.tweb.fi/ktwebscr/fileshow?doctype=3&docid=626329"
+    },
+    {
+     "url": "https://valkeakoski.tweb.fi/ktwebscr/fileshow?doctype=3&docid=486742",
+     "nimi": "Kh 27.5.2024 §243 vireilletulo ja OAS",
+     "toistaa": "Kh 4.5.2026 §94 Mahlianmaan asemakaava, kaavanro 553: hyväksyminen – https://valkeakoski.tweb.fi/ktwebscr/fileshow?doctype=3&docid=626329"
+    },
+    {
+     "url": "https://valkeakoski.tweb.fi/ktwebscr/fileshow?doctype=3&docid=499880",
+     "nimi": "Kh 4.11.2024 §380 kaavaluonnos ja päivitetty OAS",
+     "toistaa": "Kh 4.5.2026 §94 Mahlianmaan asemakaava, kaavanro 553: hyväksyminen – https://valkeakoski.tweb.fi/ktwebscr/fileshow?doctype=3&docid=626329"
+    },
+    {
+     "url": "https://valkeakoski.tweb.fi/ktwebscr/fileshow?doctype=3&docid=602873",
+     "nimi": "Rylk 3.2.2026 §6 lausunto Mahlianmaan asemakaavasta",
+     "toistaa": "Tekla 17.12.2025 §152 lausunto Mahlianmaan asemakaavasta – https://valkeakoski.tweb.fi/ktwebscr/fileshow?doctype=3&docid=582443"
+    }
+   ]
+  },
+  {
+   "hanke_id": "6df78b4b-ae27-4a9a-b264-1ea50ad2a390",
+   "hanke_nimi": "Nebius Mäntsälä 2, Kapuli",
+   "asiakirjoja_listalla": 9,
+   "havainnot": [
+    {
+     "kentta": "kaavatunnus",
+     "arvo": "asemakaava 188B",
+     "asiakirja_url": "https://mantsalad10.oncloudos.com/kokous/2026494-5-30706.PDF",
+     "asiakirjan_nimi": "Poikkeamispäätös LP-505-2026-00242, Graniittitie 6 (liite 1, Kkl 26.8.2026 §85)",
+     "sivu": "1 (painettu, Sivu 1) / 1 (PDF)",
+     "lainaus": "Alueella on voimassa oleva asemakaava 188B vuodelta 2015.",
+     "poikkeaa_rekisterista": true,
+     "huomio": "Rekisterissä kaavatunnus 'Kapuli'."
+    },
+    {
+     "kentta": "kortteli",
+     "arvo": "2319 tontti 1",
+     "asiakirja_url": "https://mantsalad10.oncloudos.com/cgi/DREQUEST.PHP?page=meetingitem&id=2024302-4",
+     "asiakirjan_nimi": "Kh 19.8.2024 §138 Kapulin korttelin 2319 tontin 1 osan vuokraaminen (FinCap DC Corp Oy)",
+     "sivu": "ei sivunumeroa (HTML-sivu)",
+     "lainaus": "Kunnanhallitus päättää vuokrata FinCap DC Corp Oy:lle perustettavan yhtiön lukuun Kapulin yritysalueen korttelin 2319 tontin 1 osaa vastaavan, pinta-alaltaan yhteensä noin 58 800 m2:n",
+     "poikkeaa_rekisterista": false,
+     "huomio": "Rekisterissä '2319-1'."
+    },
+    {
+     "kentta": "kortteli",
+     "arvo": "K2319T1 (tilan nimi)",
+     "asiakirja_url": "https://mantsalad10.oncloudos.com/kokous/2025452-4-23258.PDF",
+     "asiakirjan_nimi": "Rakentamislupa LP-505-2025-00340, Graniittitie 6 (liite 1, Kkl 10.12.2025 §141)",
+     "sivu": "1 (painettu, Sivu 1) / 1 (PDF)",
+     "lainaus": "Tilan nimi K2319T1",
+     "poikkeaa_rekisterista": false,
+     "huomio": ""
+    },
+    {
+     "kentta": "kortteli",
+     "arvo": "2316 (tontti 2 ja tontin 1 osa)",
+     "asiakirja_url": "https://mantsalad10.oncloudos.com/cgi/DREQUEST.PHP?page=meetingitem&id=2024246-4",
+     "asiakirjan_nimi": "Kh 12.2.2024 §23 Korttelin 2316 osan vuokraaminen Kapulin yritysalueelta (FinCap DC Corp Oy)",
+     "sivu": "ei sivunumeroa (HTML-sivu)",
+     "lainaus": "FinCap DC Corp Oy on esittänyt pyynnön Kapulin yritysalueen korttelin 2316 tontin 2 ja tontin 1 osan vuokraamisesta perustettavalle yhtiölle.",
+     "poikkeaa_rekisterista": false,
+     "huomio": "Eri kortteli kuin rekisterissä; samassa hankeketjussa (Kh 3.11.2025 § 236 'korttelit 2316 ja 2319')."
+    },
+    {
+     "kentta": "pinta_ala_ha",
+     "arvo": "8.8001",
+     "asiakirja_url": "https://mantsalad10.oncloudos.com/kokous/2025452-4-23258.PDF",
+     "asiakirjan_nimi": "Rakentamislupa LP-505-2025-00340, Graniittitie 6 (liite 1, Kkl 10.12.2025 §141)",
+     "sivu": "1 (painettu, Sivu 1) / 1 (PDF)",
+     "lainaus": "Pinta-ala 8.8001 ha",
+     "poikkeaa_rekisterista": true,
+     "huomio": "Rekisterissä pinta_ala_ha 7.38. Rakentamisluvan kiinteistö 505-407-7-140."
+    },
+    {
+     "kentta": "pinta_ala_ha",
+     "arvo": "noin 7,4 (asemakaavan mukainen tontti)",
+     "asiakirja_url": "https://mantsalad10.oncloudos.com/cgi/DREQUEST.PHP?page=meetingitem&id=2024302-4",
+     "asiakirjan_nimi": "Kh 19.8.2024 §138 Kapulin korttelin 2319 tontin 1 osan vuokraaminen (FinCap DC Corp Oy)",
+     "sivu": "ei sivunumeroa (HTML-sivu)",
+     "lainaus": "Asemakaavan mukaisen tontin pinta-ala on noin 7,4 hehtaaria.",
+     "poikkeaa_rekisterista": true,
+     "huomio": "Rekisterissä 7.38."
+    },
+    {
+     "kentta": "pinta_ala_ha",
+     "arvo": "noin 58 800 m2 (vuokra-alue)",
+     "asiakirja_url": "https://mantsalad10.oncloudos.com/cgi/DREQUEST.PHP?page=meetingitem&id=2024302-4",
+     "asiakirjan_nimi": "Kh 19.8.2024 §138 Kapulin korttelin 2319 tontin 1 osan vuokraaminen (FinCap DC Corp Oy)",
+     "sivu": "ei sivunumeroa (HTML-sivu)",
+     "lainaus": "korttelin 2319 tontin 1 osaa vastaavan, pinta-alaltaan yhteensä noin 58 800 m2:n",
+     "poikkeaa_rekisterista": false,
+     "huomio": ""
+    },
+    {
+     "kentta": "vaihe",
+     "arvo": "rakentamislupa myönnetty LP-505-2025-00340 (Kkl 10.12.2025 § 141); poikkeamislupa LP-505-2026-00242 (Kkl 26.8.2026 § 85)",
+     "asiakirja_url": "https://mantsalad10.oncloudos.com/kokous/2026494-5-30706.PDF",
+     "asiakirjan_nimi": "Poikkeamispäätös LP-505-2026-00242, Graniittitie 6 (liite 1, Kkl 26.8.2026 §85)",
+     "sivu": "1 (painettu, Sivu 1) / 1 (PDF)",
+     "lainaus": "Haetaan luvan LP-505-2025-00340 muutoslupaan poikkeamislupaa.",
+     "poikkeaa_rekisterista": false,
+     "huomio": ""
+    },
+    {
+     "kentta": "maaraaika",
+     "arvo": "valitusaika 30 päivää tiedoksisaannista",
+     "asiakirja_url": "https://mantsalad10.oncloudos.com/kokous/2025452-4-23258.PDF",
+     "asiakirjan_nimi": "Rakentamislupa LP-505-2025-00340, Graniittitie 6 (liite 1, Kkl 10.12.2025 §141)",
+     "sivu": "5 (painettu, Sivu 5) / 5 (PDF)",
+     "lainaus": "Valitus on tehtävä 30 päivän kuluessa päätöksen tiedoksisaannista.",
+     "poikkeaa_rekisterista": false,
+     "huomio": "Sama poikkeamispäätöksessä s. 3 (PDF)."
+    },
+    {
+     "kentta": "pinta_ala_ha",
+     "arvo": "noin 1,750 (kiinteistö 505-407-7-139, osa korttelin 2316 tonttia 1)",
+     "asiakirja_url": "https://mantsalad10.oncloudos.com/cgi/DREQUEST.PHP?page=meetingitem&id=2025445-5",
+     "asiakirjan_nimi": "Kh 3.11.2025 §236 FCDC Corp Oy:n maanvuokrasopimuksen ja esisopimuksen muutos / korttelit 2316 ja 2319",
+     "sivu": "ei sivunumeroa (HTML-sivu)",
+     "lainaus": "Kaupan kohteena on pinta-alaltaan noin 1,750 hehtaarin laajuinen kiinteistö 505-407-7-139, joka vastaa osaa korttelin 2316 tontista 1.",
+     "poikkeaa_rekisterista": false,
+     "huomio": "Eri kiinteistö kuin rakentamislupa (505-407-7-140)."
+    }
+   ],
+   "avatut_asiakirjat": [
+    {
+     "url": "https://mantsalad10.oncloudos.com/cgi/DREQUEST.PHP?page=meetingitem&id=2024246-4",
+     "nimi": "Kh 12.2.2024 §23 Korttelin 2316 osan vuokraaminen Kapulin yritysalueelta (FinCap DC Corp Oy)",
+     "tyyppi": "paatos"
+    },
+    {
+     "url": "https://mantsalad10.oncloudos.com/cgi/DREQUEST.PHP?page=meetingitem&id=2024302-4",
+     "nimi": "Kh 19.8.2024 §138 Kapulin korttelin 2319 tontin 1 osan vuokraaminen (FinCap DC Corp Oy)",
+     "tyyppi": "paatos"
+    },
+    {
+     "url": "https://mantsalad10.oncloudos.com/cgi/DREQUEST.PHP?page=meetingitem&id=2025445-5",
+     "nimi": "Kh 3.11.2025 §236 FCDC Corp Oy:n maanvuokrasopimuksen ja esisopimuksen muutos / korttelit 2316 ja 2319",
+     "tyyppi": "paatos"
+    },
+    {
+     "url": "https://mantsalad10.oncloudos.com/cgi/DREQUEST.PHP?page=meetingitem&id=2025452-4",
+     "nimi": "Kuntakehityslautakunta 10.12.2025 §141 Rakentamislupa / Datakeskus / 505-407-7-140 / Graniittitie 6",
+     "tyyppi": "paatos"
+    },
+    {
+     "url": "https://mantsalad10.oncloudos.com/cgi/DREQUEST.PHP?page=meetingitem&id=2024357-5",
+     "nimi": "Kuntakehityslautakunta 11.12.2024 Rakennuslupa / Datakeskus / 505-407-3-286 / Moreenikatu 6",
+     "tyyppi": "paatos"
+    },
+    {
+     "url": "https://mantsalad10.oncloudos.com/cgi/DREQUEST.PHP?page=meetingitem&id=2025413-5",
+     "nimi": "Kuntakehityslautakunta 14.5.2025 Rakentamislupa / Datakeskus ja sähköasema / 505-407-7-137 / Gneissitie 3",
+     "tyyppi": "paatos"
+    },
+    {
+     "url": "https://mantsalad10.oncloudos.com/cgi/DREQUEST.PHP?page=meetingitem&id=2026494-5",
+     "nimi": "Kuntakehityslautakunta 26.8.2026 §85 Poikkeamislupa / Datakeskus / 505-407-7-140 / Graniittitie 6",
+     "tyyppi": "paatos"
+    },
+    {
+     "url": "https://mantsalad10.oncloudos.com/kokous/2026494-5-30706.PDF",
+     "nimi": "Poikkeamispäätös LP-505-2026-00242, Graniittitie 6 (liite 1, Kkl 26.8.2026 §85)",
+     "tyyppi": "paatos"
+    },
+    {
+     "url": "https://mantsalad10.oncloudos.com/kokous/2025452-4-23258.PDF",
+     "nimi": "Rakentamislupa LP-505-2025-00340, Graniittitie 6 (liite 1, Kkl 10.12.2025 §141)",
+     "tyyppi": "paatos"
+    }
+   ],
+   "ei_sisaltoa": [
+    {
+     "url": "https://mantsalad10.oncloudos.com/cgi/DREQUEST.PHP?page=meetingitem&id=2024357-5",
+     "nimi": "Kuntakehityslautakunta 11.12.2024 Rakennuslupa / Datakeskus / 505-407-3-286 / Moreenikatu 6",
+     "huomio": "eri kiinteistö 505-407-3-286"
+    },
+    {
+     "url": "https://mantsalad10.oncloudos.com/cgi/DREQUEST.PHP?page=meetingitem&id=2025413-5",
+     "nimi": "Kuntakehityslautakunta 14.5.2025 Rakentamislupa / Datakeskus ja sähköasema / 505-407-7-137 / Gneissitie 3",
+     "huomio": "eri kiinteistö 505-407-7-137 / Gneissitie 3; vain \"korttelialueelle\" ilman numeroa"
+    }
+   ],
+   "toistaa": [
+    {
+     "url": "https://mantsalad10.oncloudos.com/cgi/DREQUEST.PHP?page=meetingitem&id=2025452-4",
+     "nimi": "Kuntakehityslautakunta 10.12.2025 §141 Rakentamislupa / Datakeskus / 505-407-7-140 / Graniittitie 6",
+     "toistaa": "Rakentamislupa LP-505-2025-00340, Graniittitie 6 (liite 1, Kkl 10.12.2025 §141) – https://mantsalad10.oncloudos.com/kokous/2025452-4-23258.PDF",
+     "huomio": "T-6 / rakentamislupa"
+    },
+    {
+     "url": "https://mantsalad10.oncloudos.com/cgi/DREQUEST.PHP?page=meetingitem&id=2026494-5",
+     "nimi": "Kuntakehityslautakunta 26.8.2026 §85 Poikkeamislupa / Datakeskus / 505-407-7-140 / Graniittitie 6",
+     "toistaa": "Poikkeamispäätös LP-505-2026-00242, Graniittitie 6 (liite 1, Kkl 26.8.2026 §85) – https://mantsalad10.oncloudos.com/kokous/2026494-5-30706.PDF"
+    }
+   ]
+  },
+  {
+   "hanke_id": "950b05fd-7562-448c-8973-c83ac2a985ca",
+   "hanke_nimi": "Greensky Huittinen, Korvenkylä",
+   "asiakirjoja_listalla": 8,
+   "havainnot": [
+    {
+     "kentta": "kaavatunnus",
+     "arvo": "Hankaanmaan teollisuusalue, 22. Korvenkylä (nimi)",
+     "asiakirja_url": "https://huittinen-julkaisu.triplancloud.fi/ktwebscr/fileshow?doctype=7&docid=91790",
+     "asiakirjan_nimi": "Kh 31.8.2026 §116 Greensky Energy Oy:n datakeskushankkeen asemakaava / Hankaanmaan teollisuusalue, 22. Korvenkylä",
+     "sivu": "ei sivunumeroa (HTML-sivu)",
+     "lainaus": "Greensky Energy Oy:n datakeskushankkeen asemakaava / Hankaanmaan teollisuusalue, 22. Korvenkylä",
+     "poikkeaa_rekisterista": false,
+     "huomio": "Ei numerotunnusta."
+    },
+    {
+     "kentta": "kaava_ala_ha",
+     "arvo": "noin 62,9",
+     "asiakirja_url": "https://huittinen-julkaisu.triplancloud.fi/ktwebscr/fileshow?doctype=7&docid=91790",
+     "asiakirjan_nimi": "Kh 31.8.2026 §116 Greensky Energy Oy:n datakeskushankkeen asemakaava / Hankaanmaan teollisuusalue, 22. Korvenkylä",
+     "sivu": "ei sivunumeroa (HTML-sivu)",
+     "lainaus": "Suunnittelualue on täsmentynyt aloitusvaiheesta ja se kattaa noin 62,9 ha alueen, josta noin 50,4 ha osoitetaan teollisuus- ja varastorakennusten alueeksi (T-3).",
+     "poikkeaa_rekisterista": true,
+     "huomio": "Rekisterissä arvo 62.9 on kentässä pinta_ala_ha, kaava_ala_ha tyhjä."
+    },
+    {
+     "kentta": "kaava_ala_ha",
+     "arvo": "noin 60,3 (alustava, aloitusvaihe)",
+     "asiakirja_url": "https://huittinen-julkaisu.triplancloud.fi/ktwebscr/fileshow?doctype=7&docid=83010",
+     "asiakirjan_nimi": "Kh 30.3.2026 §45 Greensky Energy Oy:n datakeskushankkeen asemakaava",
+     "sivu": "ei sivunumeroa (HTML-sivu)",
+     "lainaus": "Suunnittelualueen alustava pinta-ala on noin 60,3 hehtaaria",
+     "poikkeaa_rekisterista": true,
+     "huomio": "Rekisterissä kaava_ala_ha tyhjä."
+    },
+    {
+     "kentta": "pinta_ala_ha",
+     "arvo": "noin 50,4 (T-3)",
+     "asiakirja_url": "https://huittinen-julkaisu.triplancloud.fi/ktwebscr/fileshow?doctype=7&docid=91790",
+     "asiakirjan_nimi": "Kh 31.8.2026 §116 Greensky Energy Oy:n datakeskushankkeen asemakaava / Hankaanmaan teollisuusalue, 22. Korvenkylä",
+     "sivu": "ei sivunumeroa (HTML-sivu)",
+     "lainaus": "josta noin 50,4 ha osoitetaan teollisuus- ja varastorakennusten alueeksi (T-3).",
+     "poikkeaa_rekisterista": true,
+     "huomio": "Rekisterissä pinta_ala_ha 62.9."
+    },
+    {
+     "kentta": "teho_mw",
+     "arvo": "noin 250 MW (datakeskuskokonaisuus, koko hanke)",
+     "asiakirja_url": "https://huittinen-julkaisu.triplancloud.fi/ktwebscr/fileshow?doctype=7&docid=83010",
+     "asiakirjan_nimi": "Kh 30.3.2026 §45 Greensky Energy Oy:n datakeskushankkeen asemakaava",
+     "sivu": "ei sivunumeroa (HTML-sivu)",
+     "lainaus": "Asemakaavan tarkoitus on mahdollistaa noin 250 MW:n datakeskuskokonaisuus siihen liittyvine sivutoimintoineen.",
+     "poikkeaa_rekisterista": false,
+     "huomio": "Suure 'MW' ilman tarkennusta (ei IT-teho); koskee koko kokonaisuutta."
+    },
+    {
+     "kentta": "vaihe",
+     "arvo": "kaavaluonnos nähtävillä (Kh 31.8.2026 § 116)",
+     "asiakirja_url": "https://huittinen-julkaisu.triplancloud.fi/ktwebscr/fileshow?doctype=7&docid=91790",
+     "asiakirjan_nimi": "Kh 31.8.2026 §116 Greensky Energy Oy:n datakeskushankkeen asemakaava / Hankaanmaan teollisuusalue, 22. Korvenkylä",
+     "sivu": "ei sivunumeroa (HTML-sivu)",
+     "lainaus": "Suunnittelualue on täsmentynyt aloitusvaiheesta ja se kattaa noin 62,9 ha alueen",
+     "poikkeaa_rekisterista": false,
+     "huomio": "Rekisterissä 'kaavoitus'."
+    },
+    {
+     "kentta": "maaraaika",
+     "arvo": "OAS nähtävillä 28.5.-26.6.2026",
+     "asiakirja_url": "https://huittinen-julkaisu.triplancloud.fi/ktwebscr/fileshow?doctype=7&docid=91790",
+     "asiakirjan_nimi": "Kh 31.8.2026 §116 Greensky Energy Oy:n datakeskushankkeen asemakaava / Hankaanmaan teollisuusalue, 22. Korvenkylä",
+     "sivu": "ei sivunumeroa (HTML-sivu)",
+     "lainaus": "Osallistumis- ja arviontisuunnitelma oli nähtävillä 28.5.-26.6.2026",
+     "poikkeaa_rekisterista": false,
+     "huomio": ""
+    },
+    {
+     "kentta": "maaraaika",
+     "arvo": "luonnos nähtävillä 10.9.–9.10.2026",
+     "asiakirja_url": "https://www.huittinen.fi/asuminen-ja-ymparisto/kaavoitus-maankaytto-ja-rakentaminen/nahtavillaolevatsuunnitelmat/nahtavillaolevatkaavat/",
+     "asiakirjan_nimi": "Nähtävillä olevat kaavat (OAS 31.8.2026, kaavakartta luonnos, kaavaselostus, palauteraportti ym.)",
+     "sivu": "ei sivunumeroa (HTML-sivu)",
+     "lainaus": "Asemakaavan luonnosaineisto on julkisesti nähtävillä 10.9.–9.10.2026",
+     "poikkeaa_rekisterista": true,
+     "huomio": "Rekisterin maaraajat: yksi 'kaavamuistutus' ilman päivämääriä (vertailu ei yksiselitteinen)."
+    }
+   ],
+   "avatut_asiakirjat": [
+    {
+     "url": "https://huittinen-julkaisu.triplancloud.fi/ktwebscr/fileshow?doctype=7&docid=86820",
+     "nimi": "Kh 18.5.2026 §77 Greensky Energy Oy:n datakeskushankkeen asemakaava",
+     "tyyppi": "paatos"
+    },
+    {
+     "url": "https://huittinen-julkaisu.triplancloud.fi/ktwebscr/fileshow?doctype=7&docid=83010",
+     "nimi": "Kh 30.3.2026 §45 Greensky Energy Oy:n datakeskushankkeen asemakaava",
+     "tyyppi": "paatos"
+    },
+    {
+     "url": "https://huittinen-julkaisu.triplancloud.fi/ktwebscr/fileshow?doctype=7&docid=91790",
+     "nimi": "Kh 31.8.2026 §116 Greensky Energy Oy:n datakeskushankkeen asemakaava / Hankaanmaan teollisuusalue, 22. Korvenkylä",
+     "tyyppi": "paatos"
+    },
+    {
+     "url": "https://huittinen-julkaisu.triplancloud.fi/ktwebscr/fileshow?doctype=7&docid=94636",
+     "nimi": "Kh 5.10.2026 §142 FCDC Corp Oy:n datakeskushankkeen asemakaava",
+     "tyyppi": "paatos"
+    },
+    {
+     "url": "https://www.huittinen.fi/wp-content/uploads/2026/09/Greensky-Energy-Oyn-datakeskushankkeen-asemakaava-luonnosvaiheen-yleisotilaisuus-esitys-22.9.2026.pdf",
+     "nimi": "Luonnosvaiheen yleisötilaisuuden esitys 22.9.2026",
+     "tyyppi": "viranomaisasiakirja"
+    },
+    {
+     "url": "https://www.huittinen.fi/asuminen-ja-ymparisto/kaavoitus-maankaytto-ja-rakentaminen/nahtavillaolevatsuunnitelmat/nahtavillaolevatkaavat/",
+     "nimi": "Nähtävillä olevat kaavat (OAS 31.8.2026, kaavakartta luonnos, kaavaselostus, palauteraportti ym.)",
+     "tyyppi": "viranomaisasiakirja"
+    },
+    {
+     "url": "https://huittinen-julkaisu.triplancloud.fi/ktwebscr/fileshow?doctype=7&docid=89335",
+     "nimi": "Tekla 17.6.2026 §58 Mielipide kaavan OAS:sta, Greensky Energy Oy",
+     "tyyppi": "paatos"
+    },
+    {
+     "url": "https://www.epressi.com/tiedotteet/kaupungit-ja-kunnat/datakeskushankkeen-asemakaavoitus-kaynnistetty-huittisissa.html",
+     "nimi": "Tiedote: Datakeskushankkeen asemakaavoitus käynnistetty Huittisissa",
+     "tyyppi": "viranomaisasiakirja"
+    }
+   ],
+   "ei_sisaltoa": [
+    {
+     "url": "https://huittinen-julkaisu.triplancloud.fi/ktwebscr/fileshow?doctype=7&docid=94636",
+     "nimi": "Kh 5.10.2026 §142 FCDC Corp Oy:n datakeskushankkeen asemakaava",
+     "huomio": "koskee FCDC Corp Oy:n Raijalan hanketta, ei tätä hanketta"
+    }
+   ],
+   "toistaa": [
+    {
+     "url": "https://huittinen-julkaisu.triplancloud.fi/ktwebscr/fileshow?doctype=7&docid=86820",
+     "nimi": "Kh 18.5.2026 §77 Greensky Energy Oy:n datakeskushankkeen asemakaava",
+     "toistaa": "Kh 30.3.2026 §45 Greensky Energy Oy:n datakeskushankkeen asemakaava – https://huittinen-julkaisu.triplancloud.fi/ktwebscr/fileshow?doctype=7&docid=83010",
+     "huomio": "60,3 ha ja 250 MW"
+    },
+    {
+     "url": "https://www.huittinen.fi/wp-content/uploads/2026/09/Greensky-Energy-Oyn-datakeskushankkeen-asemakaava-luonnosvaiheen-yleisotilaisuus-esitys-22.9.2026.pdf",
+     "nimi": "Luonnosvaiheen yleisötilaisuuden esitys 22.9.2026",
+     "toistaa": "Kh 31.8.2026 §116 Greensky Energy Oy:n datakeskushankkeen asemakaava / Hankaanmaan teollisuusalue, 22. Korvenkylä – https://huittinen-julkaisu.triplancloud.fi/ktwebscr/fileshow?doctype=7&docid=91790",
+     "huomio": "62,9 ha, 250 MW, OAS 28.5.-26.6.2026, luonnos 10.9.–9.10.2026"
+    },
+    {
+     "url": "https://huittinen-julkaisu.triplancloud.fi/ktwebscr/fileshow?doctype=7&docid=89335",
+     "nimi": "Tekla 17.6.2026 §58 Mielipide kaavan OAS:sta, Greensky Energy Oy",
+     "toistaa": "Kh 30.3.2026 §45 Greensky Energy Oy:n datakeskushankkeen asemakaava – https://huittinen-julkaisu.triplancloud.fi/ktwebscr/fileshow?doctype=7&docid=83010",
+     "huomio": "60,3 ha"
+    },
+    {
+     "url": "https://www.epressi.com/tiedotteet/kaupungit-ja-kunnat/datakeskushankkeen-asemakaavoitus-kaynnistetty-huittisissa.html",
+     "nimi": "Tiedote: Datakeskushankkeen asemakaavoitus käynnistetty Huittisissa",
+     "toistaa": "Kh 30.3.2026 §45 Greensky Energy Oy:n datakeskushankkeen asemakaava – https://huittinen-julkaisu.triplancloud.fi/ktwebscr/fileshow?doctype=7&docid=83010",
+     "huomio": "60,3 ha, 250 MW; OAS 28.5.-26.6.2026 toistaa Kh 31.8.2026 §116"
+    }
+   ]
+  },
+  {
+   "hanke_id": "ee7fe00f-41c3-4974-8a91-94b6b6f67916",
+   "hanke_nimi": "FCDC Corp, Visulahti",
+   "asiakirjoja_listalla": 7,
+   "havainnot": [
+    {
+     "kentta": "kaavatunnus",
+     "arvo": "1031",
+     "asiakirja_url": "https://mikkeli.fi/wp-content/uploads/2025/03/1031-Metsurinraitti-2-kaavaselostus-liitteineen-lv-17.2.2025.pdf",
+     "asiakirjan_nimi": "1031 Metsurinraitti 2 asemakaavan muutos, kaavaselostus liitteineen (lv 17.2.2025)",
+     "sivu": "1 (PDF; kansilehti, ei painettua numeroa)",
+     "lainaus": "MliDno-2024–1467 / Kaava nro 1031",
+     "poikkeaa_rekisterista": false,
+     "huomio": ""
+    },
+    {
+     "kentta": "kortteli",
+     "arvo": "70 (muodostuu); muutos koskee 70 ja 71",
+     "asiakirja_url": "https://mikkeli.fi/wp-content/uploads/2025/03/1031-Metsurinraitti-2-kaavaselostus-liitteineen-lv-17.2.2025.pdf",
+     "asiakirjan_nimi": "1031 Metsurinraitti 2 asemakaavan muutos, kaavaselostus liitteineen (lv 17.2.2025)",
+     "sivu": "3 (painettu, 3(21)) / 3 (PDF)",
+     "lainaus": "Asemakaavan muutos koskee 28. kaupunginosan (Visulahti) kortteleita 70 ja 71 sekä lähivirkistysalueita. Asemakaavan muutoksella muodostuu Mikkelin 28. kaupunginosan kortteli 70 ja lähivirkistysalue.",
+     "poikkeaa_rekisterista": true,
+     "huomio": "Rekisterissä '70–71'; muutoksen jälkeen kortteli 70."
+    },
+    {
+     "kentta": "kaava_ala_ha",
+     "arvo": "17,5",
+     "asiakirja_url": "https://mikkeli.cloudnc.fi/fi-FI/Toimielimet/Kaupunginhallitus/Kokous_16122024/Asemakaavan_muutos_28_kaupunginosa_Visul(72014)",
+     "asiakirjan_nimi": "Kh 16.12.2024 §339: Metsurinraitti 2 (hyväksymispäätös)",
+     "sivu": "ei sivunumeroa (HTML-sivu)",
+     "lainaus": "Kaava-alueen pinta-ala on 17,5 ha.",
+     "poikkeaa_rekisterista": true,
+     "huomio": "Rekisterissä kaava_ala_ha tyhjä."
+    },
+    {
+     "kentta": "pinta_ala_ha",
+     "arvo": "n. 17 (korttelialue)",
+     "asiakirja_url": "https://mikkeli.cloudnc.fi/fi-FI/Toimielimet/Kaupunginhallitus/Kokous_16122024/Asemakaavan_muutos_28_kaupunginosa_Visul(72014)",
+     "asiakirjan_nimi": "Kh 16.12.2024 §339: Metsurinraitti 2 (hyväksymispäätös)",
+     "sivu": "ei sivunumeroa (HTML-sivu)",
+     "lainaus": "Muutoksen seurauksena muodostuu yksi n. 17 ha korttelialue.",
+     "poikkeaa_rekisterista": true,
+     "huomio": "Rekisterissä pinta_ala_ha 21."
+    },
+    {
+     "kentta": "vaihe",
+     "arvo": "kaava hyväksytty Kh 16.12.2024 § 339, lainvoimainen 17.2.2025",
+     "asiakirja_url": "https://mikkeli.fi/wp-content/uploads/2025/03/1031-Metsurinraitti-2-kaavaselostus-liitteineen-lv-17.2.2025.pdf",
+     "asiakirjan_nimi": "1031 Metsurinraitti 2 asemakaavan muutos, kaavaselostus liitteineen (lv 17.2.2025)",
+     "sivu": "1 (PDF; kansilehti, ei painettua numeroa)",
+     "lainaus": "Kaupunginhallitus hyväksynyt 16.12.2024 §339 Lainvoimainen 17.2.2025",
+     "poikkeaa_rekisterista": true,
+     "huomio": "Rekisterissä 'lupamenettely'; asiakirjoissa ei lupamenettelyä."
+    },
+    {
+     "kentta": "maaraaika",
+     "arvo": "OAS 17-30.4.2024; ehdotus 9.10.-11.11.2024",
+     "asiakirja_url": "https://mikkeli.cloudnc.fi/fi-FI/Toimielimet/Kaupunginhallitus/Kokous_16122024/Asemakaavan_muutos_28_kaupunginosa_Visul(72014)",
+     "asiakirjan_nimi": "Kh 16.12.2024 §339: Metsurinraitti 2 (hyväksymispäätös)",
+     "sivu": "ei sivunumeroa (HTML-sivu)",
+     "lainaus": "Osallistumis- ja arviointisuunnitelma on ollut nähtävillä 17-30.4.2024 … Asemakaavan muutosehdotus on ollut nähtävillä 9.10.-11.11.2024.",
+     "poikkeaa_rekisterista": false,
+     "huomio": ""
+    },
+    {
+     "kentta": "maaraaika",
+     "arvo": "valitusaika 30 päivää",
+     "asiakirja_url": "https://mikkeli.cloudnc.fi/fi-FI/Toimielimet/Kaupunginhallitus/Kokous_16122024/Asemakaavan_muutos_28_kaupunginosa_Visul(72014)",
+     "asiakirjan_nimi": "Kh 16.12.2024 §339: Metsurinraitti 2 (hyväksymispäätös)",
+     "sivu": "ei sivunumeroa (HTML-sivu)",
+     "lainaus": "Kunnallisvalitus on tehtävä 30 päivän kuluessa päätöksen tiedoksisaa[nnista]",
+     "poikkeaa_rekisterista": false,
+     "huomio": "Lainaus katkeaa tekstin poiminnassa."
+    }
+   ],
+   "avatut_asiakirjat": [
+    {
+     "url": "https://mikkeli.fi/wp-content/uploads/2025/03/1031-Metsurinraitti-2-kaavaselostus-liitteineen-lv-17.2.2025.pdf",
+     "nimi": "1031 Metsurinraitti 2 asemakaavan muutos, kaavaselostus liitteineen (lv 17.2.2025)",
+     "tyyppi": "viranomaisasiakirja"
+    },
+    {
+     "url": "https://mikkeli.cloudnc.fi/fi-FI/Toimielimet/Kaupunginhallitus/Kokous_16122024/Asemakaavan_muutos_28_kaupunginosa_Visul(72014)",
+     "nimi": "Kh 16.12.2024 §339: Metsurinraitti 2 (hyväksymispäätös)",
+     "tyyppi": "paatos"
+    },
+    {
+     "url": "https://mikkeli.cloudnc.fi/fi-FI/Toimielimet/Kaupunginhallitus/Kokous_3092024/Asemakaavan_muutos_28_kaupunginosa_Visul(69434)",
+     "nimi": "Kh 30.9.2024 §243: Metsurinraitti 2 (alustava hyväksyminen)",
+     "tyyppi": "paatos"
+    },
+    {
+     "url": "https://mikkeli.cloudnc.fi/fi-FI/Toimielimet/Kaupunkikehityslautakunta/Kokous_1792024/Asemakaavan_muutos_28_kaupunginosa_Visul(69134)",
+     "nimi": "Kkltk 17.9.2024: Asemakaavan muutos 28. kaupunginosa (Visulahti) / Metsurinraitti 2",
+     "tyyppi": "paatos"
+    },
+    {
+     "url": "https://mikkeli.cloudnc.fi/download/Liite_Kh_16122024_Asemakaavan_muutos_Metsurinraitti_2/0eac669e-b5e1-4404-949d-9fb0933d32aa/103613",
+     "nimi": "Liite Kh 16.12.2024 Asemakaavan muutos Metsurinraitti 2",
+     "tyyppi": "paatos"
+    },
+    {
+     "url": "https://mikkeli.cloudnc.fi/download/Liite_Kh_3092024_Asemakaavan_muutos_Metsurinraitti_2/cd2a201d-8156-4e71-9660-0c988210a6da/102030",
+     "nimi": "Liite Kh 30.9.2024 Asemakaavan muutos Metsurinraitti 2",
+     "tyyppi": "paatos"
+    },
+    {
+     "url": "https://mikkeli.cloudnc.fi/download/Liite_Kkltk_1792024_Asemakaavan_muutos_Metsurinraitti_2/28941fc1-4839-4571-829b-ecab7880c7d4/101869",
+     "nimi": "Liite Kkltk 17.9.2024 Asemakaavan muutos Metsurinraitti 2",
+     "tyyppi": "paatos"
+    }
+   ],
+   "ei_sisaltoa": [],
+   "toistaa": [
+    {
+     "url": "https://mikkeli.cloudnc.fi/fi-FI/Toimielimet/Kaupunginhallitus/Kokous_3092024/Asemakaavan_muutos_28_kaupunginosa_Visul(69434)",
+     "nimi": "Kh 30.9.2024 §243: Metsurinraitti 2 (alustava hyväksyminen)",
+     "toistaa": "Kh 16.12.2024 §339: Metsurinraitti 2 (hyväksymispäätös) – https://mikkeli.cloudnc.fi/fi-FI/Toimielimet/Kaupunginhallitus/Kokous_16122024/Asemakaavan_muutos_28_kaupunginosa_Visul(72014)"
+    },
+    {
+     "url": "https://mikkeli.cloudnc.fi/fi-FI/Toimielimet/Kaupunkikehityslautakunta/Kokous_1792024/Asemakaavan_muutos_28_kaupunginosa_Visul(69134)",
+     "nimi": "Kkltk 17.9.2024: Asemakaavan muutos 28. kaupunginosa (Visulahti) / Metsurinraitti 2",
+     "toistaa": "Kh 16.12.2024 §339: Metsurinraitti 2 (hyväksymispäätös) – https://mikkeli.cloudnc.fi/fi-FI/Toimielimet/Kaupunginhallitus/Kokous_16122024/Asemakaavan_muutos_28_kaupunginosa_Visul(72014)"
+    },
+    {
+     "url": "https://mikkeli.cloudnc.fi/download/Liite_Kh_16122024_Asemakaavan_muutos_Metsurinraitti_2/0eac669e-b5e1-4404-949d-9fb0933d32aa/103613",
+     "nimi": "Liite Kh 16.12.2024 Asemakaavan muutos Metsurinraitti 2",
+     "toistaa": "1031 Metsurinraitti 2 asemakaavan muutos, kaavaselostus liitteineen (lv 17.2.2025) – https://mikkeli.fi/wp-content/uploads/2025/03/1031-Metsurinraitti-2-kaavaselostus-liitteineen-lv-17.2.2025.pdf"
+    },
+    {
+     "url": "https://mikkeli.cloudnc.fi/download/Liite_Kh_3092024_Asemakaavan_muutos_Metsurinraitti_2/cd2a201d-8156-4e71-9660-0c988210a6da/102030",
+     "nimi": "Liite Kh 30.9.2024 Asemakaavan muutos Metsurinraitti 2",
+     "toistaa": "1031 Metsurinraitti 2 asemakaavan muutos, kaavaselostus liitteineen (lv 17.2.2025) – https://mikkeli.fi/wp-content/uploads/2025/03/1031-Metsurinraitti-2-kaavaselostus-liitteineen-lv-17.2.2025.pdf"
+    },
+    {
+     "url": "https://mikkeli.cloudnc.fi/download/Liite_Kkltk_1792024_Asemakaavan_muutos_Metsurinraitti_2/28941fc1-4839-4571-829b-ecab7880c7d4/101869",
+     "nimi": "Liite Kkltk 17.9.2024 Asemakaavan muutos Metsurinraitti 2",
+     "toistaa": "1031 Metsurinraitti 2 asemakaavan muutos, kaavaselostus liitteineen (lv 17.2.2025) – https://mikkeli.fi/wp-content/uploads/2025/03/1031-Metsurinraitti-2-kaavaselostus-liitteineen-lv-17.2.2025.pdf"
+    }
+   ]
+  },
+  {
+   "hanke_id": "341e5d39-593c-4c3b-a64d-cd4a136dfc64",
+   "hanke_nimi": "Ecogrid Lahti, Kujala",
+   "asiakirjoja_listalla": 6,
+   "havainnot": [
+    {
+     "kentta": "kaavatunnus",
+     "arvo": "Asemakaava T (käyttötarkoitus), ei tunnusta",
+     "asiakirja_url": "https://lahti-prod.oncloudos.com/kokous/20261337-9-483863.PDF",
+     "asiakirjan_nimi": "Rakentamislupa 398-2026-325 (liite 1, Ryl 15.9.2026 §71)",
+     "sivu": "1 (painettu, 1 (6)) / 1 (PDF)",
+     "lainaus": "Asemakaava T TEOLLISUUS- JA VARASTORAKENNUSTEN KORTTELIALUE.",
+     "poikkeaa_rekisterista": false,
+     "huomio": "Asiakirja ei mainitse kaavan nimeä 'Kujalan teollisuusalue' eikä tunnusta."
+    },
+    {
+     "kentta": "vaihe",
+     "arvo": "rakentamislupa 398-2026-325 ja poikkeamislupa 398-2026-324 (vireille 28.07.2026)",
+     "asiakirja_url": "https://lahti-prod.oncloudos.com/kokous/20261337-9-483863.PDF",
+     "asiakirjan_nimi": "Rakentamislupa 398-2026-325 (liite 1, Ryl 15.9.2026 §71)",
+     "sivu": "1 (painettu, 1 (6)) / 1 (PDF)",
+     "lainaus": "Rakentamislupa 398-2026-325 Hakija Peab Oy Rakennuspaikka 398-17-990-6 Vartiokallionkatu 2 15160 LAHTI … Asian vireilletulo 28.07.2026",
+     "poikkeaa_rekisterista": false,
+     "huomio": ""
+    },
+    {
+     "kentta": "pinta_ala_ha",
+     "arvo": "ei ha-lukua; rakennusoikeus 29 804 k-m² (e = 0,40)",
+     "asiakirja_url": "https://lahti-prod.oncloudos.com/kokous/20261337-8-483860.PDF",
+     "asiakirjan_nimi": "Poikkeamislupa 398-2026-324 (liite)",
+     "sivu": "2 (painettu, 2 (6)) / 2 (PDF)",
+     "lainaus": "Kaavan mukainen rakennusoikeus on 29 804 k-m² (e = 0,40)",
+     "poikkeaa_rekisterista": false,
+     "huomio": "Tontin pinta-alaa ei mainita; ei laskettu."
+    },
+    {
+     "kentta": "vaihe",
+     "arvo": "poikkeamislupa 398-2026-324 myönnetty, Ryl 15.09.2026 § 70",
+     "asiakirja_url": "https://lahti-prod.oncloudos.com/kokous/20261337-8.PDF",
+     "asiakirjan_nimi": "Ryl 15.09.2026 § 70 pykälä-PDF (Poikkeamislupa 398-2026-324)",
+     "sivu": "1 (painettu, 1/4) / 1 (PDF)",
+     "lainaus": "Lautakunta myöntää liitteenä olevan poikkeamisluvan 398-2026-324.",
+     "poikkeaa_rekisterista": false,
+     "huomio": "Rekisterissä vaihe \"lupamenettely\"."
+    },
+    {
+     "kentta": "kortteli",
+     "arvo": "ei numeroa; korttelin rakennusoikeus 29 804 k-m2",
+     "asiakirja_url": "https://lahti-prod.oncloudos.com/kokous/20261337-8.PDF",
+     "asiakirjan_nimi": "Ryl 15.09.2026 § 70 pykälä-PDF (Poikkeamislupa 398-2026-324)",
+     "sivu": "2 (painettu, 2/4) / 2 (PDF)",
+     "lainaus": "Rakennusoikeuden osalta asemakaavassa korttelin suurimmaksi sallituksi rakennusoikeudeksi on osoitettu 29 804 k-m2 ja tonttitehokkuudeksi 0,4.",
+     "poikkeaa_rekisterista": false,
+     "huomio": "Korttelinumeroa ei mainita."
+    },
+    {
+     "kentta": "maaraaika",
+     "arvo": "valitusaika 30 päivää tiedoksisaannista (poikkeamislupa)",
+     "asiakirja_url": "https://lahti-prod.oncloudos.com/kokous/20261337-8-0.PDF",
+     "asiakirjan_nimi": "Ryl 15.09.2026 § 70 muutoksenhakuohje",
+     "sivu": "4 (painettu, 4 (5)) / 4 (PDF)",
+     "lainaus": "Valitus on tehtävä 30 päivän kuluessa päätöksen tiedoksisaannista.",
+     "poikkeaa_rekisterista": false,
+     "huomio": "Muutoksenhakuohje Ryl § 70."
+    },
+    {
+     "kentta": "vaihe",
+     "arvo": "rakentamislupa 398-2026-325 myönnetty, Ryl 15.09.2026 § 71",
+     "asiakirja_url": "https://lahti-prod.oncloudos.com/kokous/20261337-9.PDF",
+     "asiakirjan_nimi": "Ryl 15.09.2026 § 71 pykälä-PDF (Rakentamislupa 398-2026-325)",
+     "sivu": "1 (painettu, 1/2) / 1 (PDF)",
+     "lainaus": "Lautakunta myöntää liitteenä olevan rakentamisluvan 398-2026-325.",
+     "poikkeaa_rekisterista": false,
+     "huomio": ""
+    },
+    {
+     "kentta": "maaraaika",
+     "arvo": "valitusaika 30 päivää tiedoksisaannista (rakentamislupa)",
+     "asiakirja_url": "https://lahti-prod.oncloudos.com/kokous/20261337-9-0.PDF",
+     "asiakirjan_nimi": "Ryl 15.09.2026 § 71 muutoksenhakuohje",
+     "sivu": "4 (painettu, 4 (5)) / 4 (PDF)",
+     "lainaus": "Valitus on tehtävä 30 päivän kuluessa päätöksen tiedoksisaannista.",
+     "poikkeaa_rekisterista": false,
+     "huomio": "Muutoksenhakuohje Ryl § 71."
+    },
+    {
+     "kentta": "maaraaika",
+     "arvo": "oikaisuvaatimusaika 14 päivää (Kh 25.08.2025 § 270 kasvusopimus)",
+     "asiakirja_url": "https://lahti-prod.oncloudos.com/kokous/20251166-3778-0.PDF",
+     "asiakirjan_nimi": "Kh 25.08.2025 § 270 muutoksenhakuohje",
+     "sivu": "1 (PDF; ei painettua numerointia)",
+     "lainaus": "Oikaisuvaatimus on tehtävä 14 päivän kuluessa päätöksen tiedoksisaannista ennen viraston aukioloajan päättymistä.",
+     "poikkeaa_rekisterista": false,
+     "huomio": "Koskee kasvusopimuspäätöstä, ei lupaa."
+    }
+   ],
+   "avatut_asiakirjat": [
+    {
+     "url": "https://www.lahti.fi/uutiset/datakeskushankkeen-luvat-rakennus-ja-ymparistolupalautakunnan-kasittelyyn/",
+     "nimi": "Datakeskushankkeen luvat rakennus- ja ympäristölupalautakunnan käsittelyyn",
+     "tyyppi": "viranomaisasiakirja"
+    },
+    {
+     "url": "https://lahti-prod.oncloudos.com/cgi/DREQUEST.PHP?page=meetingitem&id=20251166-22",
+     "nimi": "Kh 25.8.2025 Kasvusopimus kaupungin ja datakeskusoperaattorin välillä",
+     "tyyppi": "paatos"
+    },
+    {
+     "url": "https://lahti-prod.oncloudos.com/kokous/20261337-8-483860.PDF",
+     "nimi": "Poikkeamislupa 398-2026-324 (liite)",
+     "tyyppi": "paatos"
+    },
+    {
+     "url": "https://lahti-prod.oncloudos.com/kokous/20261337-9-483863.PDF",
+     "nimi": "Rakentamislupa 398-2026-325 (liite 1, Ryl 15.9.2026 §71)",
+     "tyyppi": "paatos"
+    },
+    {
+     "url": "https://lahti-prod.oncloudos.com/cgi/DREQUEST.PHP?page=meetingitem&id=20261337-8",
+     "nimi": "Ryl 15.9.2026 §70 Poikkeamislupa 398-2026-324",
+     "tyyppi": "paatos"
+    },
+    {
+     "url": "https://lahti-prod.oncloudos.com/cgi/DREQUEST.PHP?page=meetingitem&id=20261337-9",
+     "nimi": "Ryl 15.9.2026 §71 Rakentamislupa 398-2026-325",
+     "tyyppi": "paatos"
+    }
+   ],
+   "ei_sisaltoa": [
+    {
+     "url": "https://www.lahti.fi/uutiset/datakeskushankkeen-luvat-rakennus-ja-ymparistolupalautakunnan-kasittelyyn/",
+     "nimi": "Datakeskushankkeen luvat rakennus- ja ympäristölupalautakunnan käsittelyyn",
+     "huomio": "uutinen; kerrosala, ei kenttätietoa"
+    }
+   ],
+   "toistaa": [],
+   "avatut_linkitetyt_pdf": [
+    {
+     "pykalasivu": "https://lahti-prod.oncloudos.com/cgi/DREQUEST.PHP?page=meetingitem&id=20261337-8",
+     "pdf": [
+      "https://lahti-prod.oncloudos.com/kokous/20261337-8.PDF",
+      "https://lahti-prod.oncloudos.com/kokous/20261337-8-483860.PDF",
+      "https://lahti-prod.oncloudos.com/kokous/20261337-8-0.PDF"
+     ]
+    },
+    {
+     "pykalasivu": "https://lahti-prod.oncloudos.com/cgi/DREQUEST.PHP?page=meetingitem&id=20261337-9",
+     "pdf": [
+      "https://lahti-prod.oncloudos.com/kokous/20261337-9.PDF",
+      "https://lahti-prod.oncloudos.com/kokous/20261337-9-483863.PDF",
+      "https://lahti-prod.oncloudos.com/kokous/20261337-9-0.PDF"
+     ]
+    },
+    {
+     "pykalasivu": "https://lahti-prod.oncloudos.com/cgi/DREQUEST.PHP?page=meetingitem&id=20251166-22",
+     "pdf": [
+      "https://lahti-prod.oncloudos.com/kokous/20251166-22.PDF",
+      "https://lahti-prod.oncloudos.com/kokous/20251166-22-391938.PDF",
+      "https://lahti-prod.oncloudos.com/kokous/20251166-3778-0.PDF"
+     ]
+    }
+   ],
+   "huomio_lahti": "Pykäläsivut sisälsivät vain linkit; avattu linkitetyt PDF:t. Liitteet 20261337-8-483860 ja 20261337-9-483863 ovat tavu-identtisiä listan asiakirjojen Poikkeamislupa 398-2026-324 ja Rakentamislupa 398-2026-325 kanssa. Kasvusopimus (20251166-22 ja liite) ei sisällä kenttätietoja oikaisuvaatimusaikaa lukuun ottamatta."
+  },
+  {
+   "hanke_id": "a9d15de9-8c35-46b4-aca8-8bc3c1fc0cf5",
+   "hanke_nimi": "Solano Pyhäjärvi, Uusi-Olkkola",
+   "asiakirjoja_listalla": 6,
+   "havainnot": [
+    {
+     "kentta": "kaavatunnus",
+     "arvo": "Uusi-Olkkolan asemakaava (nimi)",
+     "asiakirja_url": "https://poytakirjat.pyhajarvi.fi/djulkaisu/cgi/DREQUEST.PHP?page=meetingitem&id=2026395-6",
+     "asiakirjan_nimi": "Tekla 20.4.2026 §27 Uusi-Olkkolan asemakaava",
+     "sivu": "ei sivunumeroa (HTML-sivu)",
+     "lainaus": "Uusi-Olkkolan asemakaavan OAS oli nähtävillä 10.12.2025 – 9.1.2026 välisen ajan.",
+     "poikkeaa_rekisterista": false,
+     "huomio": ""
+    },
+    {
+     "kentta": "kaava_ala_ha",
+     "arvo": "87",
+     "asiakirja_url": "https://poytakirjat.pyhajarvi.fi/djulkaisu/cgi/DREQUEST.PHP?page=meetingitem&id=2026395-6",
+     "asiakirjan_nimi": "Tekla 20.4.2026 §27 Uusi-Olkkolan asemakaava",
+     "sivu": "ei sivunumeroa (HTML-sivu)",
+     "lainaus": "Asemakaavoitetun alueen koko on yhteensä 87 hehtaaria.",
+     "poikkeaa_rekisterista": true,
+     "huomio": "Rekisterissä kaava_ala_ha tyhjä, pinta_ala_ha 80."
+    },
+    {
+     "kentta": "kaava_ala_ha",
+     "arvo": "noin 83 (määräala)",
+     "asiakirja_url": "https://poytakirjat.pyhajarvi.fi/djulkaisu/cgi/DREQUEST.PHP?page=meetingitem&id=2025352-8",
+     "asiakirjan_nimi": "Kh 8.9.2025 §213 Kaavoituksen vireille tulosta päättäminen / Uusi-Olkkolan datakeskushanke",
+     "sivu": "ei sivunumeroa (HTML-sivu)",
+     "lainaus": "Hanketta varten laaditaan asemakaava noin 83 hehtaarin suuruiselle määräalalle tilasta Rn:o 626-403-5-100.",
+     "poikkeaa_rekisterista": true,
+     "huomio": "Rekisterissä tyhjä."
+    },
+    {
+     "kentta": "pinta_ala_ha",
+     "arvo": "93,382 (vuokra-alue)",
+     "asiakirja_url": "https://poytakirjat.pyhajarvi.fi/djulkaisu/cgi/DREQUEST.PHP?page=meetingitem&id=2025379-9",
+     "asiakirjan_nimi": "Kh 15.12.2025 §306 Maanvuokrasopimuksen hyväksyminen / Uusi-Olkkola",
+     "sivu": "ei sivunumeroa (HTML-sivu)",
+     "lainaus": "kaupunki vuokraa 93,382 hehtaarin määräalan tilasta Uusi-Olkkola 626-403-5-100 Solano Renewables Finland Oy:lle.",
+     "poikkeaa_rekisterista": true,
+     "huomio": "Rekisterissä pinta_ala_ha 80."
+    },
+    {
+     "kentta": "pinta_ala_ha",
+     "arvo": "noin 87 (kiinteistö)",
+     "asiakirja_url": "https://poytakirjat.pyhajarvi.fi/djulkaisu/kokous/2025355-8-15637.PDF",
+     "asiakirjan_nimi": "OAS Uusi-Olkkolan asemakaava 11.11.2025 (oheismateriaali Tekla 18.11.2025 §74)",
+     "sivu": "4 (painettu, 4/12) / 4 (PDF)",
+     "lainaus": "Kaavoitettava alue sijaitsee kokonaisuudessaan Pyhäjärven kaupungin omistamalla kiinteistöllä, jonka koko on noin 87 hehtaaria",
+     "poikkeaa_rekisterista": true,
+     "huomio": "Rekisterissä 80."
+    },
+    {
+     "kentta": "vaihe",
+     "arvo": "OAS-vaihe (Tekla 20.4.2026 § 27)",
+     "asiakirja_url": "https://poytakirjat.pyhajarvi.fi/djulkaisu/cgi/DREQUEST.PHP?page=meetingitem&id=2026395-6",
+     "asiakirjan_nimi": "Tekla 20.4.2026 §27 Uusi-Olkkolan asemakaava",
+     "sivu": "ei sivunumeroa (HTML-sivu)",
+     "lainaus": "Uusi-Olkkolan asemakaavan OAS oli nähtävillä 10.12.2025 – 9.1.2026 välisen ajan.",
+     "poikkeaa_rekisterista": false,
+     "huomio": ""
+    },
+    {
+     "kentta": "maaraaika",
+     "arvo": "OAS nähtävillä 10.12.2025 – 9.1.2026",
+     "asiakirja_url": "https://poytakirjat.pyhajarvi.fi/djulkaisu/cgi/DREQUEST.PHP?page=meetingitem&id=2026395-6",
+     "asiakirjan_nimi": "Tekla 20.4.2026 §27 Uusi-Olkkolan asemakaava",
+     "sivu": "ei sivunumeroa (HTML-sivu)",
+     "lainaus": "Uusi-Olkkolan asemakaavan OAS oli nähtävillä 10.12.2025 – 9.1.2026 välisen ajan.",
+     "poikkeaa_rekisterista": false,
+     "huomio": ""
+    },
+    {
+     "kentta": "maaraaika",
+     "arvo": "valitusaika 30 päivää (hyväksymispäätöksestä, tuleva)",
+     "asiakirja_url": "https://poytakirjat.pyhajarvi.fi/djulkaisu/kokous/2025355-8-15637.PDF",
+     "asiakirjan_nimi": "OAS Uusi-Olkkolan asemakaava 11.11.2025 (oheismateriaali Tekla 18.11.2025 §74)",
+     "sivu": "11 (painettu, 11/12) / 11 (PDF)",
+     "lainaus": "Valtuuston hyväksymispäätöksestä on 30 päivän valitusaika Pohjois-Suomen hallinto- oikeuteen.",
+     "poikkeaa_rekisterista": false,
+     "huomio": ""
+    }
+   ],
+   "avatut_asiakirjat": [
+    {
+     "url": "https://poytakirjat.pyhajarvi.fi/djulkaisu/cgi/DREQUEST.PHP?page=meetingitem&id=2025349-20",
+     "nimi": "Kh 11.8.2025 §198 Sopimus kaavoituksen käynnistämisestä ja yhteistyöstä (Solano Renewables Finland Oy)",
+     "tyyppi": "paatos"
+    },
+    {
+     "url": "https://poytakirjat.pyhajarvi.fi/djulkaisu/cgi/DREQUEST.PHP?page=meetingitem&id=2025379-9",
+     "nimi": "Kh 15.12.2025 §306 Maanvuokrasopimuksen hyväksyminen / Uusi-Olkkola",
+     "tyyppi": "paatos"
+    },
+    {
+     "url": "https://poytakirjat.pyhajarvi.fi/djulkaisu/cgi/DREQUEST.PHP?page=meetingitem&id=2025352-8",
+     "nimi": "Kh 8.9.2025 §213 Kaavoituksen vireille tulosta päättäminen / Uusi-Olkkolan datakeskushanke",
+     "tyyppi": "paatos"
+    },
+    {
+     "url": "https://poytakirjat.pyhajarvi.fi/djulkaisu/kokous/2025355-8-15637.PDF",
+     "nimi": "OAS Uusi-Olkkolan asemakaava 11.11.2025 (oheismateriaali Tekla 18.11.2025 §74)",
+     "tyyppi": "viranomaisasiakirja"
+    },
+    {
+     "url": "https://poytakirjat.pyhajarvi.fi/djulkaisu/cgi/DREQUEST.PHP?page=meetingitem&id=2025355-8",
+     "nimi": "Tekla 18.11.2025 §74 Uusi-Olkkolan asemakaava",
+     "tyyppi": "paatos"
+    },
+    {
+     "url": "https://poytakirjat.pyhajarvi.fi/djulkaisu/cgi/DREQUEST.PHP?page=meetingitem&id=2026395-6",
+     "nimi": "Tekla 20.4.2026 §27 Uusi-Olkkolan asemakaava",
+     "tyyppi": "paatos"
+    }
+   ],
+   "ei_sisaltoa": [],
+   "toistaa": [
+    {
+     "url": "https://poytakirjat.pyhajarvi.fi/djulkaisu/cgi/DREQUEST.PHP?page=meetingitem&id=2025349-20",
+     "nimi": "Kh 11.8.2025 §198 Sopimus kaavoituksen käynnistämisestä ja yhteistyöstä (Solano Renewables Finland Oy)",
+     "toistaa": "Kh 8.9.2025 §213 Kaavoituksen vireille tulosta päättäminen / Uusi-Olkkolan datakeskushanke – https://poytakirjat.pyhajarvi.fi/djulkaisu/cgi/DREQUEST.PHP?page=meetingitem&id=2025352-8",
+     "huomio": "noin 83 hehtaaria"
+    },
+    {
+     "url": "https://poytakirjat.pyhajarvi.fi/djulkaisu/cgi/DREQUEST.PHP?page=meetingitem&id=2025355-8",
+     "nimi": "Tekla 18.11.2025 §74 Uusi-Olkkolan asemakaava",
+     "toistaa": "Tekla 20.4.2026 §27 Uusi-Olkkolan asemakaava – https://poytakirjat.pyhajarvi.fi/djulkaisu/cgi/DREQUEST.PHP?page=meetingitem&id=2026395-6",
+     "huomio": "87 hehtaaria; OAS nähtäville 30 päivän ajaksi"
+    }
+   ]
+  },
+  {
+   "hanke_id": "c23d46c9-5b9e-40ca-a78e-9e2fb4deaf01",
+   "hanke_nimi": "Magnora Hämeenlinna, MORE",
+   "asiakirjoja_listalla": 5,
+   "havainnot": [
+    {
+     "kentta": "kaavatunnus",
+     "arvo": "2642",
+     "asiakirja_url": "https://hameenlinna.tweb.fi/ktwebscr/fileshow?doctype=7&docid=984348",
+     "asiakirjan_nimi": "Kv 19.5.2025 §58 Asemakaavan muutos 2642, Graniittikadun ympäristö, hyväksymisvaihe",
+     "sivu": "ei sivunumeroa (HTML-sivu)",
+     "lainaus": "Kaupunginvaltuusto hyväksyy asemakaavan nro 2642.",
+     "poikkeaa_rekisterista": true,
+     "huomio": "Rekisterissä kaavatunnus '2588'."
+    },
+    {
+     "kentta": "kortteli",
+     "arvo": "107 (pienenee)",
+     "asiakirja_url": "https://hameenlinna.tweb.fi/ktwebscr/fileshow?doctype=7&docid=837212",
+     "asiakirjan_nimi": "Kaupunkirakennelautakunta 10.12.2024 §240 Asemakaavan muutos 2642, ehdotusvaihe",
+     "sivu": "ei sivunumeroa (HTML-sivu)",
+     "lainaus": "Kaavamuutoksella korttelialue 107 pienenee",
+     "poikkeaa_rekisterista": false,
+     "huomio": "Asiakirja ei yksilöi datakeskuksen korttelia."
+    },
+    {
+     "kentta": "kaava_ala_ha",
+     "arvo": "noin 71,67",
+     "asiakirja_url": "https://hameenlinna.tweb.fi/ktwebscr/fileshow?doctype=7&docid=984348",
+     "asiakirjan_nimi": "Kv 19.5.2025 §58 Asemakaavan muutos 2642, Graniittikadun ympäristö, hyväksymisvaihe",
+     "sivu": "ei sivunumeroa (HTML-sivu)",
+     "lainaus": "Asemakaavan muutos laaditaan noin 71,67 ha kokoiselle Hämeenlinna kaupungin omistamalle maa-alueelle",
+     "poikkeaa_rekisterista": true,
+     "huomio": "Rekisterissä kaava_ala_ha tyhjä."
+    },
+    {
+     "kentta": "vaihe",
+     "arvo": "kaava hyväksytty Kv 19.5.2025 § 58",
+     "asiakirja_url": "https://hameenlinna.tweb.fi/ktwebscr/fileshow?doctype=7&docid=984348",
+     "asiakirjan_nimi": "Kv 19.5.2025 §58 Asemakaavan muutos 2642, Graniittikadun ympäristö, hyväksymisvaihe",
+     "sivu": "ei sivunumeroa (HTML-sivu)",
+     "lainaus": "Kaupunginvaltuusto hyväksyy asemakaavan nro 2642.",
+     "poikkeaa_rekisterista": true,
+     "huomio": "Rekisterissä 'lupamenettely'."
+    },
+    {
+     "kentta": "maaraaika",
+     "arvo": "luonnos 3.-18.10.2024; ehdotus 19.12.2024-22.1.2025",
+     "asiakirja_url": "https://hameenlinna.tweb.fi/ktwebscr/fileshow?doctype=7&docid=916910",
+     "asiakirjan_nimi": "Kaupunkirakennelautakunta 12.3.2025 §53 Asemakaavan muutos 2642, hyväksymisvaihe",
+     "sivu": "ei sivunumeroa (HTML-sivu)",
+     "lainaus": "Kaavaehdotus käsiteltiin kaupunkirakennelautakunnassa 10.12.2024, jonka jälkeen se pidettiin nähtävillä 19.12.2024-22.1.2025",
+     "poikkeaa_rekisterista": false,
+     "huomio": "Luonnos: 'se pidettiin nähtävillä 3.-18.10.2024' (Kaupunkirakennelautakunta 10.12.2024 § 240)."
+    }
+   ],
+   "avatut_asiakirjat": [
+    {
+     "url": "https://hameenlinna.tweb.fi/ktwebscr/fileshow?doctype=7&docid=837212",
+     "nimi": "Kaupunkirakennelautakunta 10.12.2024 §240 Asemakaavan muutos 2642, ehdotusvaihe",
+     "tyyppi": "paatos"
+    },
+    {
+     "url": "https://hameenlinna.tweb.fi/ktwebscr/fileshow?doctype=7&docid=916910",
+     "nimi": "Kaupunkirakennelautakunta 12.3.2025 §53 Asemakaavan muutos 2642, hyväksymisvaihe",
+     "tyyppi": "paatos"
+    },
+    {
+     "url": "https://hameenlinna.tweb.fi/ktwebscr/fileshow?doctype=7&docid=843996",
+     "nimi": "Kh 13.1.2025 §6 MORE-liittymäalueen palvelutonttien varaaminen ja luovuttaminen, Moreeni",
+     "tyyppi": "paatos"
+    },
+    {
+     "url": "https://hameenlinna.tweb.fi/ktwebscr/fileshow?doctype=7&docid=964259",
+     "nimi": "Kh 7.4.2025 §144 Asemakaavan muutos 2642, hyväksymisvaihe",
+     "tyyppi": "paatos"
+    },
+    {
+     "url": "https://hameenlinna.tweb.fi/ktwebscr/fileshow?doctype=7&docid=984348",
+     "nimi": "Kv 19.5.2025 §58 Asemakaavan muutos 2642, Graniittikadun ympäristö, hyväksymisvaihe",
+     "tyyppi": "paatos"
+    }
+   ],
+   "ei_sisaltoa": [
+    {
+     "url": "https://hameenlinna.tweb.fi/ktwebscr/fileshow?doctype=7&docid=843996",
+     "nimi": "Kh 13.1.2025 §6 MORE-liittymäalueen palvelutonttien varaaminen ja luovuttaminen, Moreeni",
+     "huomio": "koskee MORE-aluetta yleisesti (700/1100 ha), ei kenttätietoa"
+    }
+   ],
+   "toistaa": [
+    {
+     "url": "https://hameenlinna.tweb.fi/ktwebscr/fileshow?doctype=7&docid=964259",
+     "nimi": "Kh 7.4.2025 §144 Asemakaavan muutos 2642, hyväksymisvaihe",
+     "toistaa": "Kv 19.5.2025 §58 Asemakaavan muutos 2642, Graniittikadun ympäristö, hyväksymisvaihe – https://hameenlinna.tweb.fi/ktwebscr/fileshow?doctype=7&docid=984348"
+    }
+   ]
+  },
+  {
+   "hanke_id": "666cf1d2-cd14-498c-aa37-d953c2c56827",
+   "hanke_nimi": "Neoen Lappeenranta, Yllikkälä",
+   "asiakirjoja_listalla": 5,
+   "havainnot": [
+    {
+     "kentta": "kaavatunnus",
+     "arvo": "K2819",
+     "asiakirja_url": "https://www.lappeenranta.fi/MFiles/MFFiles/Open?fileId=169168&objectId=122646&objectTypeId=0",
+     "asiakirjan_nimi": "Yllikkälän datakeskuksen asemakaava, asemakaavaselostus luonnos 12.6.2026",
+     "sivu": "2 (painettu, 2/87) / 2 (PDF)",
+     "lainaus": "Kaavanumero K2819",
+     "poikkeaa_rekisterista": true,
+     "huomio": "Rekisterissä kaavatunnus 'Yllikkälän datakeskuksen asemakaava'."
+    },
+    {
+     "kentta": "kortteli",
+     "arvo": "1, 2 ja 3 (71 Yllikkälä)",
+     "asiakirja_url": "https://www.lappeenranta.fi/MFiles/MFFiles/Open?fileId=169168&objectId=122646&objectTypeId=0",
+     "asiakirjan_nimi": "Yllikkälän datakeskuksen asemakaava, asemakaavaselostus luonnos 12.6.2026",
+     "sivu": "2 (painettu, 2/87) / 2 (PDF)",
+     "lainaus": "Muodostuu 71 Yllikkälä, korttelit 1, 2 ja 3.",
+     "poikkeaa_rekisterista": true,
+     "huomio": "Rekisterissä kortteli tyhjä."
+    },
+    {
+     "kentta": "kaava_ala_ha",
+     "arvo": "83,6909",
+     "asiakirja_url": "https://www.lappeenranta.fi/MFiles/MFFiles/Open?fileId=167917&objectId=121902&objectTypeId=0",
+     "asiakirjan_nimi": "Liite 3 Asemakaavan seurantalomake 12.6.2026",
+     "sivu": "1 (painettu, Sivu 1 (1)) / 1 (PDF)",
+     "lainaus": "Kaava-alueen pinta-ala 83,6909",
+     "poikkeaa_rekisterista": true,
+     "huomio": "Rekisterissä kaava_ala_ha 84."
+    },
+    {
+     "kentta": "kaava_ala_ha",
+     "arvo": "noin 83,7",
+     "asiakirja_url": "https://www.lappeenranta.fi/MFiles/MFFiles/Open?fileId=169168&objectId=122646&objectTypeId=0",
+     "asiakirjan_nimi": "Yllikkälän datakeskuksen asemakaava, asemakaavaselostus luonnos 12.6.2026",
+     "sivu": "3 (painettu, 3/87) / 3 (PDF)",
+     "lainaus": "Suunnittelualueen kokonaispinta-ala on noin 83,7 hehtaaria.",
+     "poikkeaa_rekisterista": true,
+     "huomio": "Rekisterissä 84."
+    },
+    {
+     "kentta": "kaava_ala_ha",
+     "arvo": "noin 91,2 (OAS)",
+     "asiakirja_url": "https://www.lappeenranta.fi/MFiles/MFFiles/Open?fileId=167919&objectId=121904&objectTypeId=0",
+     "asiakirjan_nimi": "Yllikkälän datakeskuksen asemakaava, OAS 12.6.2026 (liite 1)",
+     "sivu": "1 (PDF; ei painettua numeroa ensimmäisellä sivulla, seuraavat 2 (7) …)",
+     "lainaus": "Yllikkälän datakeskuksen asemakaavan kahdesta osasta koostuvan suunnittelualueen pinta- ala on noin 91,2 hehtaaria.",
+     "poikkeaa_rekisterista": true,
+     "huomio": "Rekisterissä 84. OAS:ssa osa-alueet 11, 1 ja 83,7 ha."
+    },
+    {
+     "kentta": "pinta_ala_ha",
+     "arvo": "noin 38,4 (kortteli 2) ja noin 31,3 (kortteli 3)",
+     "asiakirja_url": "https://www.lappeenranta.fi/MFiles/MFFiles/Open?fileId=169168&objectId=122646&objectTypeId=0",
+     "asiakirjan_nimi": "Yllikkälän datakeskuksen asemakaava, asemakaavaselostus luonnos 12.6.2026",
+     "sivu": "49 (painettu, 49/87) / 49 (PDF)",
+     "lainaus": "Korttelin 2 pinta-ala on noin 38,4 hehtaaria ja korttelin 3 pinta-ala noin 31,3 h[ehtaaria]",
+     "poikkeaa_rekisterista": true,
+     "huomio": "Rekisterissä pinta_ala_ha 106."
+    },
+    {
+     "kentta": "vaihe",
+     "arvo": "OAS ja kaavaluonnos nähtävillä",
+     "asiakirja_url": "https://www.lappeenranta.fi/MFiles/MFFiles/Open?fileId=169168&objectId=122646&objectTypeId=0",
+     "asiakirjan_nimi": "Yllikkälän datakeskuksen asemakaava, asemakaavaselostus luonnos 12.6.2026",
+     "sivu": "2 (painettu, 2/87) / 2 (PDF)",
+     "lainaus": "Osallistumis- ja arviointisuunnitelma sekä kaavaluonnos ovat nähtävillä 15.6. – 3.8.2026.",
+     "poikkeaa_rekisterista": false,
+     "huomio": ""
+    },
+    {
+     "kentta": "maaraaika",
+     "arvo": "OAS ja luonnos nähtävillä 15.6. – 3.8.2026",
+     "asiakirja_url": "https://www.lappeenranta.fi/MFiles/MFFiles/Open?fileId=169168&objectId=122646&objectTypeId=0",
+     "asiakirjan_nimi": "Yllikkälän datakeskuksen asemakaava, asemakaavaselostus luonnos 12.6.2026",
+     "sivu": "2 (painettu, 2/87) / 2 (PDF)",
+     "lainaus": "Osallistumis- ja arviointisuunnitelma sekä kaavaluonnos ovat nähtävillä 15.6. – 3.8.2026.",
+     "poikkeaa_rekisterista": false,
+     "huomio": ""
+    }
+   ],
+   "avatut_asiakirjat": [
+    {
+     "url": "https://www.lappeenranta.fi/MFiles/MFFiles/Open?fileId=169024&objectId=122584&objectTypeId=0",
+     "nimi": "Hulevesiselvitys Lappeenrannan Yllikkälän datakeskushanketta varten 22.5.2026 / päivitetty 2.6.2026 [selvityksen_laatija]",
+     "tyyppi": "viranomaisasiakirja"
+    },
+    {
+     "url": "https://www.lappeenranta.fi/MFiles/MFFiles/Open?fileId=167918&objectId=121903&objectTypeId=0",
+     "nimi": "Liite 2A Osalliset ja lausuntopyynnöt 12.6.2026",
+     "tyyppi": "viranomaisasiakirja"
+    },
+    {
+     "url": "https://www.lappeenranta.fi/MFiles/MFFiles/Open?fileId=167917&objectId=121902&objectTypeId=0",
+     "nimi": "Liite 3 Asemakaavan seurantalomake 12.6.2026",
+     "tyyppi": "viranomaisasiakirja"
+    },
+    {
+     "url": "https://www.lappeenranta.fi/MFiles/MFFiles/Open?fileId=169168&objectId=122646&objectTypeId=0",
+     "nimi": "Yllikkälän datakeskuksen asemakaava, asemakaavaselostus luonnos 12.6.2026",
+     "tyyppi": "viranomaisasiakirja"
+    },
+    {
+     "url": "https://www.lappeenranta.fi/MFiles/MFFiles/Open?fileId=167919&objectId=121904&objectTypeId=0",
+     "nimi": "Yllikkälän datakeskuksen asemakaava, OAS 12.6.2026 (liite 1)",
+     "tyyppi": "viranomaisasiakirja"
+    }
+   ],
+   "ei_sisaltoa": [
+    {
+     "url": "https://www.lappeenranta.fi/MFiles/MFFiles/Open?fileId=169024&objectId=122584&objectTypeId=0",
+     "nimi": "Hulevesiselvitys Lappeenrannan Yllikkälän datakeskushanketta varten 22.5.2026 / päivitetty 2.6.2026 [selvityksen_laatija]"
+    },
+    {
+     "url": "https://www.lappeenranta.fi/MFiles/MFFiles/Open?fileId=167918&objectId=121903&objectTypeId=0",
+     "nimi": "Liite 2A Osalliset ja lausuntopyynnöt 12.6.2026"
+    }
+   ],
+   "toistaa": []
+  },
+  {
+   "hanke_id": "60073159-2736-4d0b-aad8-947fc04d2909",
+   "hanke_nimi": "Helios Lapinlahti-Alapitkä",
+   "asiakirjoja_listalla": 5,
+   "havainnot": [
+    {
+     "kentta": "kaava_ala_ha",
+     "arvo": "noin 87",
+     "asiakirja_url": "https://dynasty.lapinlahti.fi/Internet/cgi/DREQUEST.PHP?page=meetingitem&id=1F6AEDCEX5BFDX4ACAXADE3X06AAE1C8945C-8",
+     "asiakirjan_nimi": "Kh 17.8.2026 §148 Kaavoitusaloite Alapitkän datakeskuksen asemakaavan laatimiseksi (Helios 2 Dewberry Oy)",
+     "sivu": "ei sivunumeroa (HTML-sivu)",
+     "lainaus": "Kaavoitettavan alueen ala on noin 87 ha.",
+     "poikkeaa_rekisterista": true,
+     "huomio": "Rekisterissä kaava_ala_ha tyhjä, pinta_ala_ha 80."
+    },
+    {
+     "kentta": "vaihe",
+     "arvo": "kaavoitusaloite (Kh 17.8.2026 § 148); poikkeamislupa 402-2026-44 myönnetty 5.8.2026",
+     "asiakirja_url": "https://dynasty.lapinlahti.fi/Internet/kokous/1F6AEDCEX5BFDX4ACAXADE3X06AAE1C8945C-8-44517.PDF",
+     "asiakirjan_nimi": "Liite 3 Eriävä mielipide (Kh §148)",
+     "sivu": "1 (painettu) / 1 (PDF)",
+     "lainaus": "Samaan aikaan Lapinlahden kunnan rakennustarkastaja on jo 5.8.2026 myöntänyt poikkeamisluvan nro 402-2026-44 datakeskuksen ensimmäiselle vaiheelle.",
+     "poikkeaa_rekisterista": false,
+     "huomio": "Lähde on Kh:n pöytäkirjan liitteenä oleva eriävä mielipide."
+    },
+    {
+     "kentta": "teho_mw",
+     "arvo": "80–100 megawattia (1. vaihe)",
+     "asiakirja_url": "https://dynasty.lapinlahti.fi/Internet/kokous/1F6AEDCEX5BFDX4ACAXADE3X06AAE1C8945C-8-44517.PDF",
+     "asiakirjan_nimi": "Liite 3 Eriävä mielipide (Kh §148)",
+     "sivu": "1 (painettu) / 1 (PDF)",
+     "lainaus": "Datakeskuksen ensimmäinen vaihe on esitetyn aineiston mukaan 80–100 megawatin kokoluokkaa oleva hanke",
+     "poikkeaa_rekisterista": false,
+     "huomio": "Eriävä mielipide; suure 'megawatti' ilman tarkennusta; koskee 1. vaihetta."
+    },
+    {
+     "kentta": "teho_mw",
+     "arvo": "jopa 500 megawattia (koko kokonaisuus, mitoitusteho)",
+     "asiakirja_url": "https://dynasty.lapinlahti.fi/Internet/kokous/1F6AEDCEX5BFDX4ACAXADE3X06AAE1C8945C-8-44517.PDF",
+     "asiakirjan_nimi": "Liite 3 Eriävä mielipide (Kh §148)",
+     "sivu": "1 (painettu) / 1 (PDF)",
+     "lainaus": "Koko datakeskuskokonaisuuden mitoitusteho voi olla jopa 500 megawattia.",
+     "poikkeaa_rekisterista": false,
+     "huomio": "Eriävä mielipide; suure 'mitoitusteho'. Rekisterin teho_mw 500. Rekisterin kaavatunnus 'Alapitkän aurinkopuiston osayleiskaava' ei vahvistu avatuista asiakirjoista."
+    }
+   ],
+   "avatut_asiakirjat": [
+    {
+     "url": "https://dynasty.lapinlahti.fi/Internet/cgi/DREQUEST.PHP?page=meetingitem&id=2026608-4",
+     "nimi": "Kaavatoimikunta 16.2.2026 Alapitkä osayleiskaava 2030 päivittäminen",
+     "tyyppi": "paatos"
+    },
+    {
+     "url": "https://dynasty.lapinlahti.fi/Internet/cgi/DREQUEST.PHP?page=meetingitem&id=1F6AEDCEX5BFDX4ACAXADE3X06AAE1C8945C-8",
+     "nimi": "Kh 17.8.2026 §148 Kaavoitusaloite Alapitkän datakeskuksen asemakaavan laatimiseksi (Helios 2 Dewberry Oy)",
+     "tyyppi": "paatos"
+    },
+    {
+     "url": "https://dynasty.lapinlahti.fi/Internet/cgi/DREQUEST.PHP?page=meetingitem&id=2026617-4",
+     "nimi": "Kh 9.3.2026 Alapitkä osayleiskaava 2030 päivittäminen",
+     "tyyppi": "paatos"
+    },
+    {
+     "url": "https://dynasty.lapinlahti.fi/Internet/kokous/1F6AEDCEX5BFDX4ACAXADE3X06AAE1C8945C-8-44396.PDF",
+     "nimi": "Liite 1 Kartta_Alapitkän datakeskus (Kh §148)",
+     "tyyppi": "paatos"
+    },
+    {
+     "url": "https://dynasty.lapinlahti.fi/Internet/kokous/1F6AEDCEX5BFDX4ACAXADE3X06AAE1C8945C-8-44517.PDF",
+     "nimi": "Liite 3 Eriävä mielipide (Kh §148)",
+     "tyyppi": "paatos"
+    }
+   ],
+   "ei_sisaltoa": [
+    {
+     "url": "https://dynasty.lapinlahti.fi/Internet/cgi/DREQUEST.PHP?page=meetingitem&id=2026608-4",
+     "nimi": "Kaavatoimikunta 16.2.2026 Alapitkä osayleiskaava 2030 päivittäminen"
+    },
+    {
+     "url": "https://dynasty.lapinlahti.fi/Internet/cgi/DREQUEST.PHP?page=meetingitem&id=2026617-4",
+     "nimi": "Kh 9.3.2026 Alapitkä osayleiskaava 2030 päivittäminen"
+    },
+    {
+     "url": "https://dynasty.lapinlahti.fi/Internet/kokous/1F6AEDCEX5BFDX4ACAXADE3X06AAE1C8945C-8-44396.PDF",
+     "nimi": "Liite 1 Kartta_Alapitkän datakeskus (Kh §148)",
+     "huomio": "kartta, tekstikerros 191 merkkiä"
+    }
+   ],
+   "toistaa": []
+  }
+ ],
+ "ei_saatu_auki": [
+  {
+   "hanke_id": "a511e596-99c9-48de-8ebb-f8a2c15e473e",
+   "url": "https://www.valkeakoski.fi/uploads/sites/1/2025/11/55ac9a5d-553_mahlianmaa_ehdotus_selostuksen-liitteet-2-6_nahtaville.pdf",
+   "nimi": "553 Mahlianmaa, ehdotuksen selostuksen liitteet 2–6",
+   "syy": "HTTP 404"
+  },
+  {
+   "hanke_id": "a511e596-99c9-48de-8ebb-f8a2c15e473e",
+   "url": "https://www.valkeakoski.fi/uploads/sites/1/2025/11/54ea42fb-553_mahlianmaa_ehdotusvaiheen-kaavakartta.pdf",
+   "nimi": "553 Mahlianmaa, ehdotusvaiheen kaavakartta",
+   "syy": "HTTP 404"
+  },
+  {
+   "hanke_id": "a511e596-99c9-48de-8ebb-f8a2c15e473e",
+   "url": "https://www.valkeakoski.fi/uploads/sites/1/2025/11/5af75e68-553_mahlianmaa_ehdotus_selostuksen-liite-1_nahtaville.pdf",
+   "nimi": "553 Mahlianmaa, ehdotusvaiheen selostuksen liite 1 (OAS)",
+   "syy": "HTTP 404"
+  }
+ ],
+ "muutokset_v2": "toistaa-lista lisätty; sivut painettu/PDF tarkistettu; Lahden pykäläsivujen PDF:t avattu"
+}

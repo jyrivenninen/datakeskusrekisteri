@@ -123,6 +123,25 @@ export type EhdotusSisalto = {
   }>;
   /** Vierailijan lisäämät osoitteet. Eivät julkaise kentän arvoa. */
   lisalahteet?: Array<{ kentta: string; url: string; viesti?: string | null }>;
+  /** Lähdeselvitys 13: kentän vahvistus / poikkeama rinnakkain. */
+  lahdeselvitys13?: {
+    era: number;
+    osa: string;
+    kentta: string;
+    rekisterin_arvo?: string | null;
+    rekisterin_lahteet?: Array<{
+      lahde_url: string;
+      lainaus: string | null;
+      luottamus: string;
+    }>;
+    asiakirjan_arvo?: string | null;
+    asiakirjan_nimi?: string | null;
+    sivu?: string | null;
+    lainaus?: string | null;
+    huomio?: string | null;
+    poikkeaa_rekisterista?: boolean;
+    ratkaisuvaihtoehdot?: string[];
+  };
   lahde_metatiedot?: {
     dokumentti_id: string;
     url: string;

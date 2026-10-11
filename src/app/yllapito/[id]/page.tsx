@@ -128,6 +128,7 @@ export default async function EhdotusSivu({
   const kunta = sisalto.kunta;
   const dokumentti = sisalto.dokumentti;
   const lahteenvahvistus = sisalto.lahteenvahvistus;
+  const lahdeselvitys13 = sisalto.lahdeselvitys13;
   const esikasittelu = sisalto.esikasittelu;
   const tiivistys = sisalto.tiivistys;
   const ristiriita = sisalto.ristiriita;
@@ -874,6 +875,92 @@ export default async function EhdotusSivu({
                 </a>
               </dd>
             </div>
+          </dl>
+        </section>
+      ) : null}
+
+      {lahdeselvitys13 ? (
+        <section className="mt-6" aria-labelledby="ls13-otsikko">
+          <h2 id="ls13-otsikko" className="text-xl font-semibold">
+            Lähdeselvitys 13 — kentän vertailu
+          </h2>
+          <p className="mt-2 text-sm text-muted">
+            {lahdeselvitys13.osa === "vahvistus_sama"
+              ? "Asiakirja sanoo saman kuin rekisteri. Hyväksyntä lisää asiakirjan kentän lähteeksi; vanhaa lähdettä ei poisteta."
+              : "Älä muuta arvoa automaattisesti. Valitse ratkaisu lainauksen perusteella."}
+          </p>
+          <dl className="mt-4 divide-y divide-border border-y border-border">
+            <div className="py-3">
+              <dt className="font-medium">Kenttä</dt>
+              <dd className="mt-1">
+                {HANKE_KENTTA_NIMET[lahdeselvitys13.kentta] ?? lahdeselvitys13.kentta}
+              </dd>
+            </div>
+            <div className="py-3">
+              <dt className="font-medium">Rekisterin nykyinen arvo</dt>
+              <dd className="mt-1">{lahdeselvitys13.rekisterin_arvo ?? "tyhjä"}</dd>
+              {lahdeselvitys13.rekisterin_lahteet &&
+              lahdeselvitys13.rekisterin_lahteet.length > 0 ? (
+                <ul className="mt-2 space-y-2 text-sm">
+                  {lahdeselvitys13.rekisterin_lahteet.map((l) => (
+                    <li key={l.lahde_url} className="rounded border border-border px-3 py-2">
+                      <a
+                        href={l.lahde_url}
+                        className="text-link underline"
+                        rel="noopener noreferrer"
+                      >
+                        {l.lahde_url}
+                      </a>
+                      <p className="mt-1 text-muted">{l.luottamus}</p>
+                      {l.lainaus ? (
+                        <blockquote className="mt-1 border-l-2 pl-3">{l.lainaus}</blockquote>
+                      ) : null}
+                    </li>
+                  ))}
+                </ul>
+              ) : null}
+            </div>
+            <div className="py-3">
+              <dt className="font-medium">Asiakirjan arvo</dt>
+              <dd className="mt-1">{lahdeselvitys13.asiakirjan_arvo ?? "—"}</dd>
+            </div>
+            {lahdeselvitys13.asiakirjan_nimi ? (
+              <div className="py-3">
+                <dt className="font-medium">Asiakirja</dt>
+                <dd className="mt-1">{lahdeselvitys13.asiakirjan_nimi}</dd>
+              </div>
+            ) : null}
+            {lahdeselvitys13.sivu ? (
+              <div className="py-3">
+                <dt className="font-medium">Sivu</dt>
+                <dd className="mt-1">{lahdeselvitys13.sivu}</dd>
+              </div>
+            ) : null}
+            {lahdeselvitys13.lainaus ? (
+              <div className="py-3">
+                <dt className="font-medium">Lainaus</dt>
+                <dd className="mt-1 whitespace-pre-wrap">{lahdeselvitys13.lainaus}</dd>
+              </div>
+            ) : null}
+            {lahdeselvitys13.huomio ? (
+              <div className="py-3">
+                <dt className="font-medium">Huomio</dt>
+                <dd className="mt-1 whitespace-pre-wrap">{lahdeselvitys13.huomio}</dd>
+              </div>
+            ) : null}
+            {lahdeselvitys13.ratkaisuvaihtoehdot &&
+            lahdeselvitys13.ratkaisuvaihtoehdot.length > 0 ? (
+              <div className="py-3">
+                <dt className="font-medium">Ratkaisuvaihtoehdot</dt>
+                <dd className="mt-1">
+                  <ul className="list-disc space-y-1 pl-5">
+                    {lahdeselvitys13.ratkaisuvaihtoehdot.map((v) => (
+                      <li key={v}>{v}</li>
+                    ))}
+                  </ul>
+                </dd>
+              </div>
+            ) : null}
           </dl>
         </section>
       ) : null}
