@@ -167,6 +167,7 @@ export type Organisaatio = {
   tyyppi: OrganisaatioTyyppi;
   verkko_osoite: string | null;
   verkkotunnus: string | null;
+  slug: string;
   julkaistu: boolean;
   luotu_pvm: string;
   paivitetty_pvm: string;

@@ -3,6 +3,7 @@ import { notFound, permanentRedirect } from "next/navigation";
 import { AsiakirjaTaulukko } from "@/komponentit/asiakirja-kortti";
 import { AvattavaKortti, Korttiruudukko } from "@/komponentit/avattava-kortti";
 import { KarttaViive } from "@/komponentit/kartta-viive";
+import { konsulttiSivuPolku } from "@/lib/konsultti-slug";
 import { kuntaSivuPolku } from "@/lib/kunta-slug";
 import { normalisoiKuntaNimi, ratkaiseMaakunta } from "@/lib/maakunta";
 import { HankeGalleria } from "@/komponentit/hanke-galleria";
@@ -666,7 +667,12 @@ export default async function HankeSivu({
                 arvo={
                   rivi.organisaatio ? (
                     <a
-                      href={`/organisaatiot/${rivi.organisaatio.id}`}
+                      href={
+                        (rivi.rooli === "konsultti" || rivi.rooli === "yva_konsultti") &&
+                        rivi.organisaatio.slug
+                          ? konsulttiSivuPolku(rivi.organisaatio.slug)
+                          : `/organisaatiot/${rivi.organisaatio.id}`
+                      }
                       className="text-link underline"
                     >
                       {rivi.organisaatio.nimi}

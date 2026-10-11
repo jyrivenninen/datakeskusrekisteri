@@ -102,7 +102,13 @@ function serialisoiPaatos(rivi: PaatosNakyma) {
 }
 
 function serialisoiOrganisaatioRooli(rivi: HankeOrganisaatioNakyma) {
-  return poistaJulkaisu(rivi);
+  const pohja = poistaJulkaisu(rivi);
+  const konsultti =
+    (rivi.rooli === "konsultti" || rivi.rooli === "yva_konsultti") &&
+    rivi.organisaatio?.slug
+      ? { konsultti_sivu: `/konsultit/${rivi.organisaatio.slug}` }
+      : {};
+  return { ...pohja, ...konsultti };
 }
 
 function serialisoiAsiakirja(rivi: HankeAsiakirja) {
@@ -244,6 +250,7 @@ export const CSV_SARAKKEET = [
   "yva_diaarinumero",
   "kaavatunnus",
   "toimija_nimi",
+  "konsultit",
   "paivitetty_pvm",
   "json_url",
 ] as const;
@@ -265,6 +272,11 @@ export function hankkeetCsv(hankkeet: AvoinDataHanke[]): string {
   const rivit = [CSV_SARAKKEET.join(",")];
   for (const rivi of hankkeet) {
     const h = rivi.hanke;
+    const konsultit = rivi.organisaatiot
+      .filter((o) => o.rooli === "konsultti" || o.rooli === "yva_konsultti")
+      .map((o) => o.organisaatio?.nimi)
+      .filter((nimi): nimi is string => Boolean(nimi))
+      .join("; ");
     rivit.push(
       csvRivi([
         h.id,
@@ -280,6 +292,7 @@ export function hankkeetCsv(hankkeet: AvoinDataHanke[]): string {
         h.yva_diaarinumero,
         h.kaavatunnus,
         h.toimija?.nimi ?? null,
+        konsultit || null,
         h.paivitetty_pvm,
         rivi.linkit.json,
       ]),

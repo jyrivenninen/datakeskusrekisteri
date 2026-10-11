@@ -353,6 +353,22 @@ export async function hyvaksyMuutosehdotus(
     return;
   }
 
+  if (ehdotus.tyyppi === "hanke_organisaatio") {
+    const rooli = (ehdotus.sisalto as EhdotusSisalto).hanke_organisaatio;
+    if (!rooli?.organisaatio_id?.trim() || !rooli?.rooli?.trim()) {
+      throw new Error("Hanke–organisaatio-ehdotuksesta puuttuu organisaatio tai rooli.");
+    }
+    if (!Array.isArray(rooli.lahteet) || rooli.lahteet.length === 0) {
+      throw new Error("Hanke–organisaatio-ehdotuksesta puuttuvat lähderivit (lahteet).");
+    }
+    const { error: rpcVirhe } = await supabase.rpc("julkaise_hanke_organisaatio", {
+      p_ehdotus_id: ehdotusId,
+      p_kasittelija: kasittelija,
+    });
+    if (rpcVirhe) throw new Error(rpcVirhe.message);
+    return;
+  }
+
   if (
     ehdotus.tyyppi === "linkki_rikki" ||
     ehdotus.tyyppi === "ryhti_havainto" ||

@@ -25,6 +25,7 @@ import {
   PAATOS_KENTTA_NIMET,
   DOKUMENTTI_LAJI_NIMET,
   DOKUMENTTI_MUOTO_NIMET,
+  hankeOrganisaatioRooliNimi,
   hyvaksyPainikeTeksti,
   muotoileLuku,
   kasittelySelite,
@@ -127,6 +128,7 @@ export default async function EhdotusSivu({
   const tiivistys = sisalto.tiivistys;
   const ristiriita = sisalto.ristiriita;
   const lahdeMetatiedot = sisalto.lahde_metatiedot;
+  const hankeOrganisaatio = sisalto.hanke_organisaatio;
   const lahdeMetatiedotUrl = lahdeMetatiedot?.url ?? ehdotus.lahde_url ?? null;
   const hankeIdt = ehdotuksenHankeIdt(ehdotus.hanke_id, ristiriita);
   let hankkeet = await haeHankkeetYllapitoon(hankeIdt);
@@ -1378,6 +1380,57 @@ export default async function EhdotusSivu({
               Hyväksynnän jälkeen merkitään: julkista lähdettä ei ole.
             </p>
           ) : null}
+        </section>
+      ) : null}
+
+      {hankeOrganisaatio ? (
+        <section className="mt-6" aria-labelledby="hanke-org-otsikko">
+          <h2 id="hanke-org-otsikko" className="text-xl font-semibold">
+            Hanke–organisaatio-rooli
+          </h2>
+          <dl className="mt-4 divide-y divide-border border-y border-border">
+            <div className="py-3">
+              <dt className="font-medium">Organisaatio</dt>
+              <dd className="mt-1">
+                {hankeOrganisaatio.organisaatio_nimi ?? hankeOrganisaatio.organisaatio_id}
+              </dd>
+            </div>
+            <div className="py-3">
+              <dt className="font-medium">Rooli</dt>
+              <dd className="mt-1">
+                {hankeOrganisaatioRooliNimi(hankeOrganisaatio.rooli)}
+              </dd>
+            </div>
+            {hankeOrganisaatio.lahde_kohta ? (
+              <div className="py-3">
+                <dt className="font-medium">Kohta</dt>
+                <dd className="mt-1">{hankeOrganisaatio.lahde_kohta}</dd>
+              </div>
+            ) : null}
+          </dl>
+          {(hankeOrganisaatio.lahteet ?? []).length > 0 ? (
+            <ul className="mt-4 space-y-2 text-sm">
+              {hankeOrganisaatio.lahteet.map((lahde) => (
+                <li key={`${lahde.kentta}-${lahde.lahde_url}`} className="rounded border border-border px-3 py-2">
+                  <p className="font-medium">{lahde.kentta}</p>
+                  <p className="mt-1">
+                    <a href={lahde.lahde_url} className="text-link underline" rel="noopener noreferrer">
+                      {lahde.lahde_url}
+                    </a>
+                    {lahde.lahde_sivu ? ` (s. ${lahde.lahde_sivu})` : ""}
+                  </p>
+                  <p className="mt-1 text-muted">{LUOTTAMUS_NIMET[lahde.luottamus]}</p>
+                  {lahde.lainaus ? (
+                    <blockquote className="mt-1 border-l-2 pl-3">{lahde.lainaus}</blockquote>
+                  ) : null}
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="mt-3 text-sm text-muted" role="alert">
+              Ehdotuksesta puuttuvat lähderivit (lahteet).
+            </p>
+          )}
         </section>
       ) : null}
 

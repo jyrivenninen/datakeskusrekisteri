@@ -10,6 +10,15 @@ export type KehityslokiMerkinta = {
 export const KEHITYSLOKI: KehityslokiMerkinta[] = [
   {
     pvm: "2026-10-11",
+    otsikko: "Konsulttisivut",
+    kohdat: [
+      "YVA-asiakirjoissa nimetyille konsulteille hakemisto /konsultit ja sivu /konsultit/[slug].",
+      "Sivu listaa hankkeet ja asiakirjat, joista konsulttirooli ilmenee. Ei tehosummia, vertailua eikä arvioita.",
+      "Hankesivulla konsultti linkittyy konsulttisivulle. Sivukartta ja avoin data päivitetty.",
+    ],
+  },
+  {
+    pvm: "2026-10-11",
     otsikko: "Kuntasivut",
     kohdat: [
       "Jokaisella hankkeita sisältävällä kunnalla on sivu /kunnat/[slug] (esim. /kunnat/tuusula).",

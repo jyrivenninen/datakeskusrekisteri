@@ -433,7 +433,7 @@ export async function haeKunnanAsiakirjat(kuntaNimi: string): Promise<{
 }
 
 export type HankeOrganisaatioNakyma = HankeOrganisaatio & {
-  organisaatio: Pick<Organisaatio, "id" | "nimi"> | null;
+  organisaatio: Pick<Organisaatio, "id" | "nimi" | "slug"> | null;
   rooli_meta: { nimi: string } | null;
 };
 
@@ -708,7 +708,9 @@ export async function haeHanke(id: string): Promise<{
         .order("laji"),
       supabase
         .from("hanke_organisaatiot")
-        .select("*, organisaatio:organisaatiot(id, nimi), rooli_meta:hanke_organisaatio_roolit(nimi)")
+        .select(
+          "*, organisaatio:organisaatiot(id, nimi, slug), rooli_meta:hanke_organisaatio_roolit(nimi)",
+        )
         .eq("hanke_id", id)
         .eq("julkaistu", true)
         .order("rooli"),
@@ -1110,5 +1112,183 @@ export async function haeJulkisetLahdeajot(): Promise<{
     };
   } catch (syy) {
     return { ajot: [], katkaistu: false, virhe: virheViesti(syy) };
+  }
+}
+
+export type KonsulttiListalla = {
+  id: string;
+  nimi: string;
+  slug: string;
+  y_tunnus: string | null;
+  hankkeita: number;
+};
+
+export type KonsulttiHanke = {
+  id: string;
+  nimi: string;
+  kunta: string;
+  vaihe: HankeVaihe;
+  sijainti_lat: number | null;
+  sijainti_lon: number | null;
+  teho_mw: number | null;
+  it_teho_mw: number | null;
+  sijainti_alue: Hanke["sijainti_alue"];
+  lahde_url: string | null;
+  lahde_kohta: string | null;
+  lahde_dokumentti_id: string | null;
+  dokumentti_otsikko: string | null;
+};
+
+const KONSULTTI_ROOLIT = ["konsultti", "yva_konsultti"] as const;
+
+/** Organisaatiot, joilla on vähintään yksi julkaistu konsulttirooli. */
+export async function haeKonsultitJoissaHankkeita(): Promise<{
+  konsultit: KonsulttiListalla[];
+  virhe: string | null;
+}> {
+  if (!supabaseYmparistoAsetettu()) {
+    return { konsultit: [], virhe: "Konsultteja ei juuri nyt voitu hakea." };
+  }
+  try {
+    const supabase = await luoPalvelinAsiakas();
+    const { data, error } = await supabase
+      .from("hanke_organisaatiot")
+      .select(
+        "organisaatio_id, organisaatio:organisaatiot!inner(id, nimi, slug, y_tunnus, julkaistu), hanke:hankkeet!inner(id, julkaistu)",
+      )
+      .eq("julkaistu", true)
+      .in("rooli", [...KONSULTTI_ROOLIT])
+      .eq("organisaatio.julkaistu", true)
+      .eq("hanke.julkaistu", true);
+    if (error) return { konsultit: [], virhe: error.message };
+
+    const kartta = new Map<string, KonsulttiListalla & { hankeIdt: Set<string> }>();
+    for (const rivi of data ?? []) {
+      const org = rivi.organisaatio as unknown as {
+        id: string;
+        nimi: string;
+        slug: string;
+        y_tunnus: string | null;
+      };
+      const hanke = rivi.hanke as unknown as { id: string };
+      const aiempi = kartta.get(org.id);
+      if (aiempi) {
+        aiempi.hankeIdt.add(hanke.id);
+        aiempi.hankkeita = aiempi.hankeIdt.size;
+      } else {
+        kartta.set(org.id, {
+          id: org.id,
+          nimi: org.nimi,
+          slug: org.slug,
+          y_tunnus: org.y_tunnus,
+          hankkeita: 1,
+          hankeIdt: new Set([hanke.id]),
+        });
+      }
+    }
+    const konsultit = [...kartta.values()]
+      .map(({ hankeIdt: _h, ...rivi }) => rivi)
+      .sort((a, b) => a.nimi.localeCompare(b.nimi, "fi"));
+    return { konsultit, virhe: null };
+  } catch (syy) {
+    return { konsultit: [], virhe: virheViesti(syy) };
+  }
+}
+
+export async function haeKonsulttiSlugilla(slug: string): Promise<{
+  konsultti: KonsulttiListalla | null;
+  hankkeet: KonsulttiHanke[];
+  virhe: string | null;
+}> {
+  if (!supabaseYmparistoAsetettu()) {
+    return { konsultti: null, hankkeet: [], virhe: "Konsulttia ei juuri nyt voitu hakea." };
+  }
+  try {
+    const supabase = await luoPalvelinAsiakas();
+    const { data: org, error: orgVirhe } = await supabase
+      .from("organisaatiot")
+      .select("id, nimi, slug, y_tunnus")
+      .eq("slug", slug)
+      .eq("julkaistu", true)
+      .maybeSingle();
+    if (orgVirhe) return { konsultti: null, hankkeet: [], virhe: orgVirhe.message };
+    if (!org) return { konsultti: null, hankkeet: [], virhe: null };
+
+    const { data: roolit, error: rooliVirhe } = await supabase
+      .from("hanke_organisaatiot")
+      .select(
+        "lahde_url, lahde_kohta, lahde_dokumentti_id, hanke:hankkeet!inner(id, nimi, kunta, vaihe, sijainti_lat, sijainti_lon, teho_mw, it_teho_mw, sijainti_alue, julkaistu)",
+      )
+      .eq("organisaatio_id", org.id)
+      .eq("julkaistu", true)
+      .in("rooli", [...KONSULTTI_ROOLIT])
+      .eq("hanke.julkaistu", true);
+    if (rooliVirhe) return { konsultti: null, hankkeet: [], virhe: rooliVirhe.message };
+
+    const dokIdt = [
+      ...new Set(
+        (roolit ?? [])
+          .map((r) => r.lahde_dokumentti_id as string | null)
+          .filter((id): id is string => Boolean(id)),
+      ),
+    ];
+    const otsikot = new Map<string, string>();
+    if (dokIdt.length > 0) {
+      const { data: dokit } = await supabase
+        .from("dokumentit")
+        .select("id, otsikko")
+        .in("id", dokIdt);
+      for (const d of dokit ?? []) otsikot.set(d.id as string, d.otsikko as string);
+    }
+
+    const hankkeetKartta = new Map<string, KonsulttiHanke>();
+    for (const rivi of roolit ?? []) {
+      const h = rivi.hanke as unknown as {
+        id: string;
+        nimi: string;
+        kunta: string;
+        vaihe: HankeVaihe;
+        sijainti_lat: number | null;
+        sijainti_lon: number | null;
+        teho_mw: number | null;
+        it_teho_mw: number | null;
+        sijainti_alue: Hanke["sijainti_alue"];
+      };
+      if (hankkeetKartta.has(h.id)) continue;
+      hankkeetKartta.set(h.id, {
+        id: h.id,
+        nimi: h.nimi,
+        kunta: h.kunta,
+        vaihe: h.vaihe,
+        sijainti_lat: h.sijainti_lat,
+        sijainti_lon: h.sijainti_lon,
+        teho_mw: h.teho_mw,
+        it_teho_mw: h.it_teho_mw,
+        sijainti_alue: h.sijainti_alue,
+        lahde_url: (rivi.lahde_url as string | null) ?? null,
+        lahde_kohta: (rivi.lahde_kohta as string | null) ?? null,
+        lahde_dokumentti_id: (rivi.lahde_dokumentti_id as string | null) ?? null,
+        dokumentti_otsikko: rivi.lahde_dokumentti_id
+          ? (otsikot.get(rivi.lahde_dokumentti_id as string) ?? null)
+          : null,
+      });
+    }
+    const hankkeet = [...hankkeetKartta.values()].sort((a, b) =>
+      a.nimi.localeCompare(b.nimi, "fi"),
+    );
+
+    return {
+      konsultti: {
+        id: org.id as string,
+        nimi: org.nimi as string,
+        slug: org.slug as string,
+        y_tunnus: org.y_tunnus as string | null,
+        hankkeita: hankkeet.length,
+      },
+      hankkeet,
+      virhe: null,
+    };
+  } catch (syy) {
+    return { konsultti: null, hankkeet: [], virhe: virheViesti(syy) };
   }
 }

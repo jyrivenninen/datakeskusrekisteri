@@ -167,6 +167,24 @@ export type EhdotusSisalto = {
       merkitty: "koneen_ehdottama" | "ihmisen_vahvistama";
     }>;
   };
+  hanke_organisaatio?: {
+    organisaatio_id: string;
+    organisaatio_nimi?: string;
+    rooli: string;
+    lahde_dokumentti_id?: string | null;
+    lahde_url?: string | null;
+    lahde_kohta?: string | null;
+    lahteet: Array<{
+      kentta: string;
+      lahde_url: string;
+      lahde_sivu: number | null;
+      lahde_laji?: LahdeLaji;
+      vahvistettu_pvm: string;
+      luottamus: Luottamus;
+      lainaus: string | null;
+      merkitty: "koneen_ehdottama" | "ihmisen_vahvistama";
+    }>;
+  };
   kunta?: {
     kunta_id: string;
     kunta_nimi: string;

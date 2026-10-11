@@ -113,6 +113,7 @@ export const MUUTOSEHDOTUS_TYYPPI_NIMET: Record<string, string> = {
   kentta_tyhjennys: "Kentän tyhjennys",
   paatos: "Viranomaispäätös",
   maaraaja: "Määräaika",
+  hanke_organisaatio: "Hanke–organisaatio-rooli",
   lahde_tyyppi_havainto: "Lähdetyypin ehdotus",
 };
 
