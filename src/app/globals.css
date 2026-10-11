@@ -320,10 +320,13 @@ button.kartta-merkki:active:not(:disabled) {
   display: none;
 }
 
-/* Paikkatason arvio: isompi himmeä ympyrä, ei nuppineulaa. */
+/*
+ * Arvioitu sijainti: sama koko kuin tarkalla, katkoviivareunus.
+ * (Koko jää tarkoittamaan vain IT-teho-haloa; ei nuppineulaa.)
+ */
 .kartta-merkki--arvio .kartta-merkki-piste {
-  opacity: 0.55;
-  border-width: 1.5px;
+  border-style: dashed;
+  border-width: 2px;
   box-shadow: none;
 }
 
@@ -333,6 +336,11 @@ button.kartta-merkki:active:not(:disabled) {
 
 .kartta-merkki--arvio.kartta-merkki--nuppineula .kartta-merkki-piste {
   display: block;
+}
+
+/* Klusteri: lukumäärä erottuu mustalla merkillä (ks. .kartta-merkki-lkm). */
+.kartta-merkki--ryhma .kartta-merkki-piste {
+  box-shadow: 0 0 0 1.5px rgb(28 25 23 / 0.35), 0 1px 2px rgb(0 0 0 / 0.45);
 }
 
 .kartta-merkki:focus-visible {

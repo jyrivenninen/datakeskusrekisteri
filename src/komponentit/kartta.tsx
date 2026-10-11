@@ -627,7 +627,13 @@ function lisaaMerkkiVisuaalit(el: HTMLElement, vari: string, arvio: boolean) {
   const piste = document.createElement("span");
   piste.className = "kartta-merkki-piste";
   piste.setAttribute("aria-hidden", "true");
-  piste.style.backgroundColor = vari;
+  if (arvio) {
+    // Katkoviivareunus vaihevärillä; täyte vaalea — erottuu täytetystä tarkasta pisteestä.
+    piste.style.borderColor = vari;
+    piste.style.backgroundColor = "#fff";
+  } else {
+    piste.style.backgroundColor = vari;
+  }
 
   const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
   svg.setAttribute("class", "kartta-merkki-nuppineula");
@@ -791,24 +797,16 @@ function paivitaRyhmaMerkkiNakyvyys(
   return nakyvat.length > 0;
 }
 
-/** Arvioitu sijainti: aina ympyrä (ei nuppineulaa), isompi ja himmeämpi. */
-const ARVIO_PISTE_KOKO_PYSAKIT: [number, number][] = [
-  [4, 16],
-  [6, 20],
-  [8, 26],
-  [10, 32],
-  [14, 40],
-];
-
 function paivitaMerkkiTyyppi(elementti: HTMLElement, zoom: number) {
   const arvio = elementti.dataset.arvio === "1";
+  // Arvio: aina piste (ei nuppineulaa) + katkoviivareunus; koko sama kuin tarkalla.
   const nuppineula = !arvio && zoom >= NUPPINEULA_ZOOM_MIN;
   elementti.classList.toggle("kartta-merkki--nuppineula", nuppineula);
   elementti.classList.toggle("kartta-merkki--piste", !nuppineula);
   elementti.classList.toggle("kartta-merkki--arvio", arvio);
   const piste = elementti.querySelector<HTMLElement>(".kartta-merkki-piste");
   if (piste && !nuppineula) {
-    const koko = interpoloiLuku(arvio ? ARVIO_PISTE_KOKO_PYSAKIT : PISTE_KOKO_PYSAKIT, zoom);
+    const koko = interpoloiLuku(PISTE_KOKO_PYSAKIT, zoom);
     piste.style.setProperty("--piste-koko", `${koko}px`);
   }
 }
@@ -1568,6 +1566,37 @@ export function Kartta({
           <div className="mt-1 flex justify-between text-xs tabular-nums text-muted">
             <span>1 MW</span>
             <span>1000+ MW</span>
+          </div>
+          <div className="mt-3 flex items-start gap-2 px-1">
+            <span
+              className="mt-0.5 inline-block h-3 w-3 shrink-0 rounded-full border-2 border-dashed border-foreground bg-surface"
+              aria-hidden="true"
+            />
+            <span className="min-w-0 flex-1">
+              <span className="block text-sm font-semibold">Arvioitu sijainti</span>
+              <span className="mt-1 block text-xs leading-relaxed">
+                Katkoviivareunus = sijainti on arvio (esim. kunnan keskusta), ei
+                tarkkaa tonttia. Pisteen koko ei kerro arviosta.
+              </span>
+            </span>
+          </div>
+          <div className="mt-3 flex items-start gap-2 px-1">
+            <span
+              className="relative mt-0.5 inline-flex h-3 w-3 shrink-0 items-center justify-center"
+              aria-hidden="true"
+            >
+              <span className="inline-block h-3 w-3 rounded-full border-2 border-white bg-foreground shadow-sm" />
+              <span className="absolute -right-1.5 -top-1.5 flex h-3 min-w-3 items-center justify-center rounded-full border border-white bg-foreground px-0.5 text-[0.55rem] font-semibold leading-none text-surface">
+                2
+              </span>
+            </span>
+            <span className="min-w-0 flex-1">
+              <span className="block text-sm font-semibold">Useampi hanke</span>
+              <span className="mt-1 block text-xs leading-relaxed">
+                Numero merkin päällä = samassa pisteessä useampi hanke. Klikkaa
+                listaa varten.
+              </span>
+            </span>
           </div>
         </div>
         {johdonmukaisuusTarkistettavat.length > 0 ? (
