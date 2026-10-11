@@ -339,7 +339,7 @@ async function main() {
   const orgIdt = new Map<string, string>();
   let uusiaOrgeja = 0;
   for (const org of ORGANISAATIOT) {
-    const ennen = await sb
+    const { data: ennen } = await sb
       .from("organisaatiot")
       .select("id")
       .eq("julkaistu", true)
