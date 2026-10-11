@@ -4,10 +4,12 @@
  * Noutaa julkaistut dokumentit-taulun osoitteet, laskee SHA-256 uutettusta
  * tekstistä (PDF ja HTML) ja vertaa dokumentti_tiivisteet-tauluun.
  * Muutos → muutosehdotukset tyypillä dokumentti_muuttunut.
- * Ei kirjoita hankkeet- eikä dokumentit-tauluun.
+ * Sisältötiiviste (raaka-tavut) dokumentit-tauluun RPC:llä
+ * aseta_dokumentti_sisalto_tiiviste — ei suoralla .update():lla.
  *
  * Ympäristö: NEXT_PUBLIC_SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY
- * Valinnainen: DOKUMENTIT_VIIVE_MS (oletus 1000), DOKUMENTIT_KATTO, DOKUMENTIT_KUIVA=1
+ * Valinnainen: DOKUMENTIT_VIIVE_MS (oletus 1000), DOKUMENTIT_KATTO, DOKUMENTIT_KUIVA=1,
+ * DOKUMENTIT_VAIN_PUUTTUVA_SISALTO=1 (vain rivit ilman sisalto_tiivisteä — backfill)
  */
 import { createHash } from "node:crypto";
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
@@ -30,6 +32,7 @@ type DokumenttiRivi = {
   otsikko: string;
   muoto: string | null;
   hanke_id: string | null;
+  sisalto_tiiviste: string | null;
 };
 
 function viiveMs(): number {
@@ -46,7 +49,8 @@ function tiiviste(teksti: string): string {
 }
 
 function tasaaValilyonnit(teksti: string): string {
-  return teksti.replace(/\s+/g, " ").trim();
+  // Postgres ei hyväksy NUL-tavua tekstissä ("unsupported Unicode escape sequence").
+  return teksti.replace(/\u0000/g, "").replace(/\s+/g, " ").trim();
 }
 
 function htmlTekstiksi(html: string): string {
@@ -114,17 +118,34 @@ async function main() {
   }
   const kuiva = process.env.DOKUMENTIT_KUIVA === "1";
   const katto = Number(process.env.DOKUMENTIT_KATTO ?? "0");
+  const vainPuuttuvaSisalto = process.env.DOKUMENTIT_VAIN_PUUTTUVA_SISALTO === "1";
   const supabase: TietokantaAsiakas = createClient(url, avain, {
     auth: { persistSession: false, autoRefreshToken: false },
   });
 
-  const { data: dokumentit, error: dokVirhe } = await supabase
-    .from("dokumentit")
-    .select("id, url, otsikko, muoto, hanke_id")
-    .eq("julkaistu", true);
-  if (dokVirhe) throw new Error(dokVirhe.message);
-
-  const rivit = (dokumentit ?? []) as DokumenttiRivi[];
+  const rivit: DokumenttiRivi[] = [];
+  const sivuKoko = 1000;
+  for (let alku = 0; ; alku += sivuKoko) {
+    let dokKysely = supabase
+      .from("dokumentit")
+      .select("id, url, otsikko, muoto, hanke_id, sisalto_tiiviste")
+      .eq("julkaistu", true)
+      .order("id")
+      .range(alku, alku + sivuKoko - 1);
+    if (vainPuuttuvaSisalto) {
+      dokKysely = dokKysely.is("sisalto_tiiviste", null);
+    }
+    const { data: sivu, error: dokVirhe } = await dokKysely;
+    if (dokVirhe) throw new Error(dokVirhe.message);
+    const pala = (sivu ?? []) as DokumenttiRivi[];
+    rivit.push(...pala);
+    if (pala.length < sivuKoko) break;
+  }
+  if (vainPuuttuvaSisalto) {
+    console.log(`Backfill: ${rivit.length} dokumenttia ilman sisalto_tiivistettä.`);
+  } else {
+    console.log(`Tarkistetaan ${rivit.length} julkaistua dokumenttia.`);
+  }
   const { data: odottavat } = await supabase
     .from("muutosehdotukset")
     .select("lahde_url")
@@ -245,7 +266,14 @@ async function main() {
         if (tiivisteVirhe) throw new Error(tiivisteVirhe.message);
 
         const sisaltoTiiviste = createHash("sha256").update(nouto.tavuja).digest("hex");
-        await supabase.from("dokumentit").update({ sisalto_tiiviste: sisaltoTiiviste }).eq("id", dok.id);
+        const { error: sisaltoVirhe } = await supabase.rpc(
+          "aseta_dokumentti_sisalto_tiiviste",
+          {
+            p_dokumentti_id: dok.id,
+            p_sisalto_tiiviste: sisaltoTiiviste,
+          },
+        );
+        if (sisaltoVirhe) throw new Error(sisaltoVirhe.message);
       }
 
       if (muuttui && !jonossa.has(dok.url)) {

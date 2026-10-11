@@ -629,6 +629,13 @@ hanketta listauksessa, se on jo yhdistetty pois.
 (nousee automaattisesti, jos molemmilla on koordinaatit &lt; 500 m). Pelkkä sama nimi
 **ei** aina nosta havaintoa — siksi ajraportti on tärkeä.
 
+**Yhdistyssääntö (pakollinen):** yhdistys vaatii lähde-URL:n ja vahvistustyypin:
+1. sama `toimija_organisaatio_id` **ja** (sama `kaavatunnus` **tai** sama
+   `yva_diaarinumero` **tai** asiakirja nimeää molemmat), **tai**
+2. asiakirja osoittaa jatkumon (eri toimija mahdollinen).
+Pelkkä sijainti **ei** riitä, jos toimijat eroavat — pidä erillään ja kirjaa
+huomautus. Agentti ei yhdistä hankkeita.
+
 **Esimerkki (väärin — Solano):** Duplikaattihuomio → `taydennys` jossa `nimi` on jo
 sama kuin rekisterissä + huomautus «yhdistä toinen rivi».
 
@@ -817,6 +824,23 @@ Ajoraportissa erillinen osio:
 
 ---
 
+## Organisaatioroolit — vain organisaatio, ei henkilö
+
+`hanke_organisaatio`-rivin kohteena voi olla **vain organisaatio** (Oy, kunta,
+konsulttitoimisto jne.).
+
+| ❌ Älä | ✅ Tee |
+|--------|--------|
+| Luo organisaatio henkilönimestä (esim. «Emma Kaitaa», «Juha Pasma») | Hylkää rivi; älä INSERT organisaatiota |
+| Arvaa työnantaja henkilönimestä | Jätä rooli kirjaamatta tai etsi organisaationimi asiakirjasta |
+
+Jos henkilön nimi on tarpeen säilyttää, se menee roolirivin **huomautukseen**
+tai **lainaukseen**, ei `organisaatiot`-tauluun. Kaavoittaja merkitään
+asiakirjoissa usein nimellä — silloin etsi organisaatio (kaupunki / konsultti)
+tai jätä rivi tekemättä.
+
+---
+
 ## Tehtävä 3 — Asiakirjat ja päätökset
 
 Rekisterissä on erillinen asiakirjalista (`dokumentit`-taulu). **Et voi** kirjoittaa
@@ -827,6 +851,34 @@ sinne suoraan. Sen sijaan:
   `paatos`-ehdotus **aina ilman RPC:tä**.
 - Tuleva vaikuttamisen määräaika (YVA, kaava-OAS/luonnos, kaavamuistutus, valitusaika) →
   `maaraaja`-ehdotus **aina ilman RPC:tä**.
+
+### Kohdistus epävarma (pakollinen kenttä, ei vapaata huomautusta)
+
+Jos asiakirja löytyy kunnan hausta hankkeen X yhteydessä, mutta se **ei kuulu**
+hankkeeseen X (toinen toimija, toinen alue, selvästi eri hanke), **älä** kerro
+asiaa vain vapaassa `huomautus`-tekstissä. Vapaata tekstiä ei voi tarkistaa
+koneella — hyväksyntä kiinnittäisi rivin silti tuontihankkeeseen.
+
+Käytä strukturoituja kenttiä `sisalto`-juuressa (tai puuttuvan asiakirjan
+JSON-rivillä, josta tuontiskripti kopioi ne):
+
+```json
+{
+  "kohdistus_epavarma": true,
+  "kohdistus_huomio": "FCDC Corp Oy / Raumantie; ei Greensky Korvenkylä"
+}
+```
+
+| Kenttä | Tyyppi | Merkitys |
+|--------|--------|----------|
+| `kohdistus_epavarma` | boolean | `true` = älä kiinnitä tuontihankkeeseen |
+| `kohdistus_huomio` | string | Lyhyt vihje oikeasta hankkeesta / toimijasta |
+
+Kun `kohdistus_epavarma: true`, rivi menee jonoon **odottaa kohdistusta**.
+Ylläpito valitsee oikean hankkeen ennen julkaisua.
+
+**Älä** käytä `kohdistus_epavarma`, kun rivi kuuluu ehdotettuun hankkeeseen ja
+huomautus vain selventää («eri hanke kuin Herva»).
 
 **Ajankohtainen tilanne (2026-09-04):** Avoimet YVA-ikkunat rekisterissä / etusivulla
 (`paattyy_pvm` ≥ tänään): Mykänmaa 10.9.2026 (`yva_ohjelma`), Sarvenmaa 14.9.2026

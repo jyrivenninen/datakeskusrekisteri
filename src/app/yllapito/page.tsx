@@ -100,7 +100,10 @@ export default async function YllapitoSivu({
     (ehdotus) => !ehdotusPoistetulleHankkeelle(ehdotus.hanke_id, duplikaattiHankeIdt),
   );
   const odottavat = jarjestetyt.filter((e) => e.tila === "odottaa");
-  const kasitellyt = jarjestetyt.filter((e) => e.tila !== "odottaa");
+  const odottaaKohdistusta = jarjestetyt.filter((e) => e.tila === "odottaa_kohdistusta");
+  const kasitellyt = jarjestetyt.filter(
+    (e) => e.tila !== "odottaa" && e.tila !== "odottaa_kohdistusta",
+  );
   const odottavia = odottavat.length;
   const hyvaksyttyLkm = Number(params.hyvaksytty ?? "");
   const kuitattuLkm = Number(params.kuitattu ?? "");
@@ -394,6 +397,51 @@ export default async function YllapitoSivu({
                                 placeholder="Miksi tämä on duplikaatti?"
                               />
                             </p>
+                            <p>
+                              <label
+                                htmlFor={`yhdistys-lahde-${hanke.id}`}
+                                className="text-sm font-medium"
+                              >
+                                Lähde-URL
+                              </label>
+                              <input
+                                id={`yhdistys-lahde-${hanke.id}`}
+                                name="yhdistys_lahde_url"
+                                type="url"
+                                required
+                                className="mt-1 block w-full rounded border border-border bg-surface px-2 py-2 text-sm"
+                                placeholder="https://…"
+                              />
+                            </p>
+                            <p>
+                              <label
+                                htmlFor={`yhdistys-tyyppi-${hanke.id}`}
+                                className="text-sm font-medium"
+                              >
+                                Vahvistustyyppi
+                              </label>
+                              <select
+                                id={`yhdistys-tyyppi-${hanke.id}`}
+                                name="yhdistys_vahvistus_tyyppi"
+                                required
+                                className="mt-1 block w-full rounded border border-border bg-surface px-2 py-2 text-sm"
+                                defaultValue=""
+                              >
+                                <option value="">Valitse…</option>
+                                <option value="sama_kaavatunnus">
+                                  Sama toimija ja sama kaavatunnus
+                                </option>
+                                <option value="sama_yva">
+                                  Sama toimija ja sama YVA-diaari
+                                </option>
+                                <option value="asiakirja_molemmat">
+                                  Sama toimija ja asiakirja nimeää molemmat
+                                </option>
+                                <option value="jatkumo_asiakirja">
+                                  Asiakirja osoittaa jatkumon
+                                </option>
+                              </select>
+                            </p>
                             <button
                               type="submit"
                               className="rounded border border-border px-3 py-1.5 text-sm"
@@ -553,6 +601,21 @@ export default async function YllapitoSivu({
               Näytetään {vanhentuneetNaytto.length}/{vanhentuneet.length} vanhinta ensin.
             </p>
           ) : null}
+        </section>
+      ) : null}
+      {odottaaKohdistusta.length > 0 ? (
+        <section className="mt-8" aria-labelledby="kohdistus-otsikko">
+          <h2 id="kohdistus-otsikko" className="text-xl font-semibold">
+            Odottaa kohdistusta
+          </h2>
+          <p className="mt-2 max-w-prose text-sm text-muted">
+            Asiakirja löytyi toisen hankkeen hausta, mutta huomautus tai{" "}
+            <code>kohdistus_epavarma</code> kertoo, ettei se kuulu
+            tuontihankkeeseen. Valitse oikea hanke ennen julkaisua.
+          </p>
+          <ul className="mt-4 divide-y divide-border border-y border-border">
+            {odottaaKohdistusta.map((ehdotus) => ehdotusRivi(ehdotus))}
+          </ul>
         </section>
       ) : null}
       <section className="mt-8" aria-labelledby="ehdotukset-otsikko">

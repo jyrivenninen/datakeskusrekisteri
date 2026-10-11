@@ -78,6 +78,8 @@ export const HANKE_ORGANISAATIO_ROOLIT = [
   "yva_konsultti",
   "kaavan_laatija",
   "lupahakemuksen_laatija",
+  "selvityksen_laatija",
+  "vuokralainen",
   "yhteysviranomainen",
   "kaavoittaja",
   "muu",
@@ -129,6 +131,7 @@ export type EhdottajaTyyppi = (typeof EHDOTTAJA_TYYPIT)[number];
 
 export const MUUTOSEHDOTUS_TILAT = [
   "odottaa",
+  "odottaa_kohdistusta",
   "hyvaksytty",
   "hylatty",
 ] as const;

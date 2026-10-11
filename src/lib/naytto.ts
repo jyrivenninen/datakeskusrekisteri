@@ -281,14 +281,16 @@ export function ehdotuksenHankeIdt(
 
 export const MUUTOSEHDOTUS_TILA_NIMET: Record<MuutosehdotusTila, string> = {
   odottaa: "Odottaa",
+  odottaa_kohdistusta: "Odottaa kohdistusta",
   hyvaksytty: "Hyväksytty",
   hylatty: "Hylätty",
 };
 
 const MUUTOSEHDOTUS_TILA_JARJESTYS: Record<MuutosehdotusTila, number> = {
   odottaa: 0,
-  hyvaksytty: 1,
-  hylatty: 2,
+  odottaa_kohdistusta: 1,
+  hyvaksytty: 2,
+  hylatty: 3,
 };
 
 /** Odottaa ylimpänä, sitten hyväksytyt, alimpana hylätyt. Saman tilan sisällä uusin ensin. */
@@ -400,6 +402,8 @@ export const HANKE_ORGANISAATIO_ROOLI_NIMET: Record<string, string> = {
   yva_konsultti: "YVA-konsultti",
   kaavan_laatija: "Kaavan laatija",
   lupahakemuksen_laatija: "Lupahakemuksen laatija",
+  selvityksen_laatija: "Selvityksen laatija",
+  vuokralainen: "Vuokralainen",
   yhteysviranomainen: "Yhteysviranomainen",
   kaavoittaja: "Kaavoittaja",
   muu: "Muu",

@@ -35,6 +35,14 @@ export type RakentamisvaiheEhdotus = {
 
 export type EhdotusSisalto = {
   kentat: Record<string, EhdotettuKentta>;
+  /**
+   * Asiakirjaa ei saa kiinnittää tuontihankkeeseen ilman ihmisen
+   * kohdistusvalintaa. Vapaata huomautusta ei voi tarkistaa koneella —
+   * käytä tätä lippua.
+   */
+  kohdistus_epavarma?: boolean;
+  /** Lyhyt selite, mihin hankkeeseen asiakirja mahdollisesti kuuluu. */
+  kohdistus_huomio?: string | null;
   vaihtoehdot?: Record<string, Record<string, EhdotettuKentta>>;
   kuvat?: EhdotettuKuva[];
   linkki?: {

@@ -836,9 +836,11 @@ export async function hyvaksyEhdotusToiminto(formData: FormData): Promise<void> 
         kasittelija,
         String(formData.get("sailytettava_hanke_id") ?? ""),
         String(formData.get("ei_uudelleen_perustelu") ?? ""),
+        String(formData.get("yhdistys_lahde_url") ?? ""),
+        String(formData.get("yhdistys_vahvistus_tyyppi") ?? ""),
       );
     } else {
-      await hyvaksyMuutosehdotus(id, kasittelija, {
+      const tulos = await hyvaksyMuutosehdotus(id, kasittelija, {
         perustelu: String(formData.get("ei_uudelleen_perustelu") ?? ""),
         hanke_id: String(formData.get("kunta_hanke_id") ?? "").trim() || undefined,
         dokumentit_url: formData
@@ -846,6 +848,15 @@ export async function hyvaksyEhdotusToiminto(formData: FormData): Promise<void> 
           .map((arvo) => String(arvo).trim())
           .filter(Boolean),
       });
+      if (tulos === "odottaa_kohdistusta") {
+        revalidatePath("/yllapito");
+        revalidatePath(`/yllapito/${id}`);
+        redirect(
+          `/yllapito/${id}?virhe=${encodeURIComponent(
+            "Kohdistus epävarma: valitse oikea hanke ennen julkaisua. Rivi siirrettiin kohdistusjonoon.",
+          )}`,
+        );
+      }
     }
   } catch (syy) {
     const viesti = syy instanceof Error ? syy.message : "Hyväksyntä epäonnistui.";
@@ -896,6 +907,8 @@ export async function merkitseHankeDuplikaatiksiToiminto(formData: FormData): Pr
   const duplikaattiId = String(formData.get("duplikaatti_id") ?? "").trim();
   const kohdeId = String(formData.get("kohde_id") ?? "").trim();
   const perustelu = String(formData.get("perustelu") ?? "").trim();
+  const lahdeUrl = String(formData.get("yhdistys_lahde_url") ?? "").trim();
+  const vahvistusTyyppi = String(formData.get("yhdistys_vahvistus_tyyppi") ?? "").trim();
   const paluu = String(formData.get("paluu") ?? "/yllapito").trim() || "/yllapito";
   if (!duplikaattiId || !kohdeId) {
     redirect(`${paluu}?virhe=${encodeURIComponent("Duplikaatti ja kohde vaaditaan.")}`);
@@ -905,13 +918,32 @@ export async function merkitseHankeDuplikaatiksiToiminto(formData: FormData): Pr
       `${paluu}?virhe=${encodeURIComponent("Perustele duplikaatti vähintään 12 merkillä.")}`,
     );
   }
+  if (!lahdeUrl) {
+    redirect(`${paluu}?virhe=${encodeURIComponent("Duplikaatti vaatii lähde-URL:n.")}`);
+  }
+  if (
+    !["sama_kaavatunnus", "sama_yva", "asiakirja_molemmat", "jatkumo_asiakirja"].includes(
+      vahvistusTyyppi,
+    )
+  ) {
+    redirect(
+      `${paluu}?virhe=${encodeURIComponent("Valitse yhdistyksen vahvistustyyppi.")}`,
+    );
+  }
   if (!supabasePalvelinAvainAsetettu()) {
     redirect(
       `${paluu}?virhe=${encodeURIComponent("Toiminto vaatii palvelinavaimen.")}`,
     );
   }
   try {
-    await merkitseHankeDuplikaatiksi(duplikaattiId, kohdeId, kasittelija, perustelu);
+    await merkitseHankeDuplikaatiksi(
+      duplikaattiId,
+      kohdeId,
+      kasittelija,
+      perustelu,
+      lahdeUrl,
+      vahvistusTyyppi,
+    );
   } catch (syy) {
     const viesti = syy instanceof Error ? syy.message : "Duplikaatin merkintä epäonnistui.";
     redirect(`${paluu}?virhe=${encodeURIComponent(viesti)}`);
@@ -1302,7 +1334,11 @@ export async function hyvaksyKaikkiOdottavatToiminto(formData: FormData): Promis
       continue;
     }
     try {
-      await hyvaksyMuutosehdotus(rivi.id, kasittelija);
+      const tulos = await hyvaksyMuutosehdotus(rivi.id, kasittelija);
+      if (tulos === "odottaa_kohdistusta") {
+        ohitettu += 1;
+        continue;
+      }
       hyvaksytty += 1;
     } catch (syy) {
       const viesti = syy instanceof Error ? syy.message : "Hyväksyntä epäonnistui.";
@@ -1319,7 +1355,7 @@ export async function hyvaksyKaikkiOdottavatToiminto(formData: FormData): Promis
   const jonoon: string[] = [...epaonnistuneet];
   if (ohitettu > 0) {
     jonoon.unshift(
-      `${ohitettu} riviä jäi jonoon (ristiriitahavainto, kenttämuutos, päätös, tehon kenttävalinta, rakentamisvaihe, YVA-vaihtoehto, asiakirja tai poistettu hanke): käsittele yksitellen.`,
+      `${ohitettu} riviä jäi jonoon (ristiriitahavainto, epävarma kohdistus, kenttämuutos, päätös, tehon kenttävalinta, rakentamisvaihe, YVA-vaihtoehto, asiakirja tai poistettu hanke): käsittele yksitellen.`,
     );
   }
   if (jonoon.length > 0) {

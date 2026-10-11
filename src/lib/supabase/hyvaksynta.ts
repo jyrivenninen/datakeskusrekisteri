@@ -7,10 +7,17 @@ import {
   type EhdotusSisalto,
 } from "@/lib/ehdotus";
 import { geokoodaaOsoite, onSijaintiAluePolygon } from "@/lib/geokoodaus";
+import { onKohdistusEpavarma } from "@/lib/kohdistus-epavarma";
 import { ehdotuksenHankeIdt } from "@/lib/naytto";
+import {
+  hylkaaHenkilöOrganisaatioViesti,
+  onOrganisaatioNimi,
+} from "@/lib/organisaatio-nimi";
 import { LAHDE_LAJIT, type LahdeLaji } from "@/lib/supabase/tietokanta";
 import { luoYllapitoAsiakas } from "@/lib/supabase/yllapito-asiakas";
 import type { SupabaseClient } from "@supabase/supabase-js";
+
+export type HyvaksyntaTulos = "ok" | "odottaa_kohdistusta";
 
 function tanaan(): string {
   return new Date().toISOString().slice(0, 10);
@@ -178,8 +185,20 @@ export async function yhdistaHankkeetEhdotuksesta(
   kasittelija: string,
   sailytettavaId: string,
   perustelu: string,
+  lahdeUrl: string,
+  vahvistusTyyppi: string,
 ) {
   const teksti = ristiriitaEiUudelleenPerustelu(perustelu);
+  const url = lahdeUrl.trim();
+  const tyyppi = vahvistusTyyppi.trim();
+  if (!url) throw new Error("Yhdistys vaatii lähde-URL:n.");
+  if (
+    !["sama_kaavatunnus", "sama_yva", "asiakirja_molemmat", "jatkumo_asiakirja"].includes(
+      tyyppi,
+    )
+  ) {
+    throw new Error("Valitse yhdistyksen vahvistustyyppi.");
+  }
   const supabase = luoYllapitoAsiakas();
   const { data: ehdotus, error } = await supabase
     .from("muutosehdotukset")
@@ -204,6 +223,8 @@ export async function yhdistaHankkeetEhdotuksesta(
     p_ehdotus_id: ehdotusId,
     p_kasittelija: kasittelija,
     p_perustelu: teksti,
+    p_lahde_url: url,
+    p_vahvistus_tyyppi: tyyppi,
   });
   if (rpcVirhe) throw new Error(rpcVirhe.message);
 }
@@ -216,7 +237,7 @@ export async function hyvaksyMuutosehdotus(
     hanke_id?: string;
     dokumentit_url?: string[];
   },
-) {
+): Promise<HyvaksyntaTulos> {
   const supabase = luoYllapitoAsiakas();
   const { data: ehdotus, error } = await supabase
     .from("muutosehdotukset")
@@ -227,7 +248,7 @@ export async function hyvaksyMuutosehdotus(
   if (error || !ehdotus) {
     throw new Error("Ehdotusta ei löytynyt.");
   }
-  if (ehdotus.tila !== "odottaa") {
+  if (ehdotus.tila !== "odottaa" && ehdotus.tila !== "odottaa_kohdistusta") {
     throw new Error("Ehdotus on jo käsitelty.");
   }
 
@@ -263,7 +284,7 @@ export async function hyvaksyMuutosehdotus(
         p_kasittelija: kasittelija,
       });
       if (rpcVirhe) throw new Error(rpcVirhe.message);
-      return;
+      return "ok";
     }
   }
 
@@ -273,7 +294,7 @@ export async function hyvaksyMuutosehdotus(
       p_kasittelija: kasittelija,
     });
     if (rpcVirhe) throw new Error(rpcVirhe.message);
-    return;
+    return "ok";
   }
 
   if (ehdotus.tyyppi === "kentta_tyhjennys") {
@@ -284,7 +305,7 @@ export async function hyvaksyMuutosehdotus(
         p_kasittelija: kasittelija,
       });
       if (rpcVirhe) throw new Error(rpcVirhe.message);
-      return;
+      return "ok";
     }
     const korjattu = normalisoiKenttaTyhjennysSisalto(
       alkuperainen,
@@ -308,7 +329,7 @@ export async function hyvaksyMuutosehdotus(
       p_kasittelija: kasittelija,
     });
     if (rpcVirhe) throw new Error(rpcVirhe.message);
-    return;
+    return "ok";
   }
 
   if (ehdotus.tyyppi === "paatos") {
@@ -334,7 +355,7 @@ export async function hyvaksyMuutosehdotus(
       p_kasittelija: kasittelija,
     });
     if (rpcVirhe) throw new Error(rpcVirhe.message);
-    return;
+    return "ok";
   }
 
   if (ehdotus.tyyppi === "maaraaja") {
@@ -350,7 +371,7 @@ export async function hyvaksyMuutosehdotus(
       p_kasittelija: kasittelija,
     });
     if (rpcVirhe) throw new Error(rpcVirhe.message);
-    return;
+    return "ok";
   }
 
   if (ehdotus.tyyppi === "hanke_organisaatio") {
@@ -361,12 +382,16 @@ export async function hyvaksyMuutosehdotus(
     if (!Array.isArray(rooli.lahteet) || rooli.lahteet.length === 0) {
       throw new Error("Hanke–organisaatio-ehdotuksesta puuttuvat lähderivit (lahteet).");
     }
+    const orgNimi = rooli.organisaatio_nimi?.trim();
+    if (orgNimi && !onOrganisaatioNimi(orgNimi)) {
+      throw new Error(hylkaaHenkilöOrganisaatioViesti(orgNimi));
+    }
     const { error: rpcVirhe } = await supabase.rpc("julkaise_hanke_organisaatio", {
       p_ehdotus_id: ehdotusId,
       p_kasittelija: kasittelija,
     });
     if (rpcVirhe) throw new Error(rpcVirhe.message);
-    return;
+    return "ok";
   }
 
   if (
@@ -397,15 +422,48 @@ export async function hyvaksyMuutosehdotus(
       .eq("id", ehdotusId)
       .eq("tila", "odottaa");
     if (paivitysVirhe) throw new Error(paivitysVirhe.message);
-    return;
+    return "ok";
   }
 
   if (ehdotus.tyyppi === "kunta_havainto") {
-    const hankeId =
-      valinnat?.hanke_id?.trim() || ehdotus.hanke_id || null;
+    const valittuHanke = valinnat?.hanke_id?.trim() || null;
+    const tuotuHanke = (ehdotus.hanke_id as string | null) ?? null;
     const dokumentitUrl = valinnat?.dokumentit_url ?? [];
+    const epavarma = onKohdistusEpavarma({
+      huomautus: ehdotus.huomautus as string | null,
+      sisalto: ehdotus.sisalto,
+    });
+
+    // Epävarma kohdistus: älä kiinnitä tuontihankkeeseen. Vaatii eri hankkeen
+    // valinnan (tai kohdistusjonosta tulevan eksplisiittisen valinnan).
+    if (epavarma) {
+      const kohdistettu =
+        Boolean(valittuHanke) &&
+        (ehdotus.tila === "odottaa_kohdistusta" || valittuHanke !== tuotuHanke);
+      if (!kohdistettu) {
+        const sisalto = {
+          ...((ehdotus.sisalto as EhdotusSisalto) ?? { kentat: {} }),
+          kohdistus_epavarma: true,
+        };
+        const { error: jonoVirhe } = await supabase
+          .from("muutosehdotukset")
+          .update({
+            tila: "odottaa_kohdistusta",
+            sisalto,
+          })
+          .eq("id", ehdotusId)
+          .in("tila", ["odottaa", "odottaa_kohdistusta"]);
+        if (jonoVirhe) throw new Error(jonoVirhe.message);
+        return "odottaa_kohdistusta";
+      }
+    }
+
+    const hankeId = valittuHanke || tuotuHanke;
     if (dokumentitUrl.length > 0 && !hankeId) {
       throw new Error("Asiakirjojen julkaisu vaatii hankkeen valinnan.");
+    }
+    if (ehdotus.tila === "odottaa_kohdistusta" && !hankeId) {
+      throw new Error("Valitse hanke, johon asiakirja kohdistetaan.");
     }
     const { error: rpcVirhe } = await supabase.rpc("julkaise_kunta_havainto", {
       p_ehdotus_id: ehdotusId,
@@ -414,7 +472,7 @@ export async function hyvaksyMuutosehdotus(
       p_dokumentit_url: dokumentitUrl,
     });
     if (rpcVirhe) throw new Error(rpcVirhe.message);
-    return;
+    return "ok";
   }
 
   const sisalto = ehdotus.sisalto as EhdotusSisalto;
@@ -456,7 +514,7 @@ export async function hyvaksyMuutosehdotus(
       p_kasittelija: kasittelija,
     });
     if (kuvaVirhe) throw new Error(kuvaVirhe.message);
-    return;
+    return "ok";
   }
 
   if (sisalto.vaatii_lukeminen) {
@@ -468,7 +526,7 @@ export async function hyvaksyMuutosehdotus(
       p_kasittelija: kasittelija,
     });
     if (vaiheVirhe) throw new Error(vaiheVirhe.message);
-    return;
+    return "ok";
   }
   if (Array.isArray(sisalto.asiakirjat) && sisalto.asiakirjat.length > 0) {
     const { error: asiakirjaVirhe } = await supabase.rpc("julkaise_hanke_asiakirjat", {
@@ -476,7 +534,7 @@ export async function hyvaksyMuutosehdotus(
       p_kasittelija: kasittelija,
     });
     if (asiakirjaVirhe) throw new Error(asiakirjaVirhe.message);
-    return;
+    return "ok";
   }
 
   const vainHuomautus =
@@ -489,7 +547,7 @@ export async function hyvaksyMuutosehdotus(
       p_kasittelija: kasittelija,
     });
     if (huomVirhe) throw new Error(huomVirhe.message);
-    return;
+    return "ok";
   }
 
   const sijaintiKentat = Object.keys(kentat).filter(
@@ -505,7 +563,7 @@ export async function hyvaksyMuutosehdotus(
       p_kasittelija: kasittelija,
     });
     if (sijVirhe) throw new Error(sijVirhe.message);
-    return;
+    return "ok";
   }
 
   if (Object.keys(kentat).length === 0 && Object.keys(vaihtoehdot).length === 0) {
@@ -520,7 +578,7 @@ export async function hyvaksyMuutosehdotus(
         .eq("id", ehdotusId)
         .eq("tila", "odottaa");
       if (linkkiVirhe) throw new Error(linkkiVirhe.message);
-      return;
+      return "ok";
     }
     throw new Error("Ehdotuksessa ei ole kenttiä.");
   }
@@ -599,6 +657,7 @@ export async function hyvaksyMuutosehdotus(
   if (rpcVirhe) {
     throw new Error(rpcVirhe.message);
   }
+  return "ok";
 }
 
 export async function kuitaaHankeKentat(
@@ -683,13 +742,27 @@ export async function merkitseHankeDuplikaatiksi(
   kohdeId: string,
   kasittelija: string,
   perustelu: string,
+  lahdeUrl: string,
+  vahvistusTyyppi: string,
 ) {
+  const url = lahdeUrl.trim();
+  const tyyppi = vahvistusTyyppi.trim();
+  if (!url) throw new Error("Duplikaattimerkintä vaatii lähde-URL:n.");
+  if (
+    !["sama_kaavatunnus", "sama_yva", "asiakirja_molemmat", "jatkumo_asiakirja"].includes(
+      tyyppi,
+    )
+  ) {
+    throw new Error("Valitse yhdistyksen vahvistustyyppi.");
+  }
   const supabase = luoYllapitoAsiakas();
   const { error } = await supabase.rpc("merkitse_hanke_duplikaatiksi", {
     p_duplikaatti: duplikaattiId,
     p_kohde: kohdeId,
     p_kasittelija: kasittelija,
     p_perustelu: perustelu,
+    p_lahde_url: url,
+    p_vahvistus_tyyppi: tyyppi,
   });
   if (error) throw new Error(error.message);
 }

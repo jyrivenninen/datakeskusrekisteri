@@ -113,7 +113,11 @@ export default async function EhdotusSivu({
   const sisalto = ehdotus.sisalto as EhdotusSisalto;
   const rakentamisvaiheet = sisalto.rakentamisvaiheet ?? [];
   const hyvaksyntaEstetty = ehdotuksenHyvaksyntaEstetty(sisalto);
-  const odottaa = ehdotus.tila === "odottaa";
+  const odottaa =
+    ehdotus.tila === "odottaa" || ehdotus.tila === "odottaa_kohdistusta";
+  const odottaaKohdistusta = ehdotus.tila === "odottaa_kohdistusta";
+  const kohdistusEpavarma =
+    odottaaKohdistusta || Boolean(sisalto.kohdistus_epavarma);
   const hyvaksyTeksti = hyvaksyPainikeTeksti(ehdotus.tyyppi, {
     ytjEhdotaTunnus: Boolean(sisalto.ytj?.ehdota_tunnus),
   });
@@ -362,6 +366,21 @@ export default async function EhdotusSivu({
             })}
           </ul>
         </section>
+      ) : null}
+      {kohdistusEpavarma ? (
+        <p
+          className="mt-4 max-w-prose rounded border border-orange-700 bg-orange-50 px-3 py-2 text-sm dark:bg-orange-950/40"
+          role="status"
+        >
+          Kohdistus epävarma — asiakirjaa ei kiinnitetä tuontihankkeeseen. Valitse
+          oikea hanke alla ennen hyväksyntää.
+          {sisalto.kohdistus_huomio ? (
+            <>
+              {" "}
+              <span className="text-muted">({sisalto.kohdistus_huomio})</span>
+            </>
+          ) : null}
+        </p>
       ) : null}
       {ehdotus.huomautus ? (
         <p className="mt-4">
@@ -1807,6 +1826,48 @@ export default async function EhdotusSivu({
                   minLength={12}
                   className="w-full rounded border border-border bg-surface px-2 py-2"
                 />
+                {hankeIdt.length === 2 ? (
+                  <div className="space-y-3 rounded border border-border bg-background p-3">
+                    <p className="text-sm text-muted">
+                      Yhdistys vaatii lähde-URL:n ja vahvistustyypin. Pelkkä sijainti
+                      ei riitä, jos toimijat eroavat.
+                    </p>
+                    <label htmlFor="yhdistys-lahde-url" className="block text-sm font-medium">
+                      Yhdistyksen lähde-URL
+                    </label>
+                    <input
+                      id="yhdistys-lahde-url"
+                      name="yhdistys_lahde_url"
+                      type="url"
+                      className="w-full rounded border border-border bg-surface px-2 py-2 text-sm"
+                      placeholder="https://…"
+                    />
+                    <label
+                      htmlFor="yhdistys-vahvistus-tyyppi"
+                      className="block text-sm font-medium"
+                    >
+                      Vahvistustyyppi
+                    </label>
+                    <select
+                      id="yhdistys-vahvistus-tyyppi"
+                      name="yhdistys_vahvistus_tyyppi"
+                      className="w-full rounded border border-border bg-surface px-2 py-2 text-sm"
+                      defaultValue=""
+                    >
+                      <option value="">Valitse…</option>
+                      <option value="sama_kaavatunnus">
+                        Sama toimija ja sama kaavatunnus
+                      </option>
+                      <option value="sama_yva">Sama toimija ja sama YVA-diaari</option>
+                      <option value="asiakirja_molemmat">
+                        Sama toimija ja asiakirja nimeää molemmat
+                      </option>
+                      <option value="jatkumo_asiakirja">
+                        Asiakirja osoittaa jatkumon (eri toimija mahdollinen)
+                      </option>
+                    </select>
+                  </div>
+                ) : null}
               </div>
             ) : null}
             {kunta && ehdotus.tyyppi === "kunta_havainto" ? (
@@ -1817,14 +1878,24 @@ export default async function EhdotusSivu({
                       Hanke asiakirjoille
                     </label>
                     <p className="mt-1 max-w-prose text-sm text-muted">
-                      Valitse mihin hankkeeseen valitut asiakirjat julkaistaan.
+                      {kohdistusEpavarma
+                        ? "Kohdistus on epävarma: valitse oikea hanke. Tuontihanketta ei käytetä oletuksena."
+                        : "Valitse mihin hankkeeseen valitut asiakirjat julkaistaan."}
                     </p>
                     <select
                       id="kunta-hanke-id"
                       name="kunta_hanke_id"
-                      defaultValue={ehdotus.hanke_id ?? kunnanHankkeet[0]?.id ?? ""}
+                      required={kohdistusEpavarma}
+                      defaultValue={
+                        kohdistusEpavarma
+                          ? ""
+                          : (ehdotus.hanke_id ?? kunnanHankkeet[0]?.id ?? "")
+                      }
                       className="mt-2 w-full rounded border border-border bg-background px-2 py-2 text-sm"
                     >
+                      {kohdistusEpavarma ? (
+                        <option value="">Valitse hanke</option>
+                      ) : null}
                       {kunnanHankkeet.map((hanke) => (
                         <option key={hanke.id} value={hanke.id}>
                           {hanke.nimi}
