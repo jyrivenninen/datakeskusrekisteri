@@ -56,6 +56,7 @@ export default async function KonsulttiSivu({ params }: Props) {
         lat: hanke.sijainti_lat != null ? Number(hanke.sijainti_lat) : undefined,
         lon: hanke.sijainti_lon != null ? Number(hanke.sijainti_lon) : undefined,
         tehoMw: hankeTehoMw(hanke),
+        arvio: hanke.sijainti_alue_tyyppi === "arvio",
         alue,
       },
     ];

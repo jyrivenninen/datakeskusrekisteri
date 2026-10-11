@@ -1144,6 +1144,7 @@ export type KonsulttiHanke = {
   teho_mw: number | null;
   it_teho_mw: number | null;
   sijainti_alue: Hanke["sijainti_alue"];
+  sijainti_alue_tyyppi: Hanke["sijainti_alue_tyyppi"];
   lahde_url: string | null;
   lahde_kohta: string | null;
   lahde_dokumentti_id: string | null;
@@ -1278,7 +1279,7 @@ export async function haeKonsulttiSlugilla(slug: string): Promise<{
     const { data: roolit, error: rooliVirhe } = await supabase
       .from("hanke_organisaatiot")
       .select(
-        "rooli, lahde_url, lahde_kohta, lahde_dokumentti_id, hanke:hankkeet!inner(id, nimi, kunta, vaihe, sijainti_lat, sijainti_lon, teho_mw, it_teho_mw, sijainti_alue, julkaistu)",
+        "rooli, lahde_url, lahde_kohta, lahde_dokumentti_id, hanke:hankkeet!inner(id, nimi, kunta, vaihe, sijainti_lat, sijainti_lon, teho_mw, it_teho_mw, sijainti_alue, sijainti_alue_tyyppi, julkaistu)",
       )
       .eq("organisaatio_id", org.id)
       .eq("julkaistu", true)
@@ -1316,6 +1317,7 @@ export async function haeKonsulttiSlugilla(slug: string): Promise<{
         teho_mw: number | null;
         it_teho_mw: number | null;
         sijainti_alue: Hanke["sijainti_alue"];
+        sijainti_alue_tyyppi: Hanke["sijainti_alue_tyyppi"];
       };
       const rooli = normalisoiKonsulttiSivuRooli(rivi.rooli as string);
       const avain = `${h.id}:${rooli}`;
@@ -1331,6 +1333,7 @@ export async function haeKonsulttiSlugilla(slug: string): Promise<{
         teho_mw: h.teho_mw,
         it_teho_mw: h.it_teho_mw,
         sijainti_alue: h.sijainti_alue,
+        sijainti_alue_tyyppi: h.sijainti_alue_tyyppi,
         lahde_url: (rivi.lahde_url as string | null) ?? null,
         lahde_kohta: (rivi.lahde_kohta as string | null) ?? null,
         lahde_dokumentti_id: (rivi.lahde_dokumentti_id as string | null) ?? null,

@@ -1,5 +1,3 @@
-import type { EhdotusSisalto } from "@/lib/ehdotus";
-
 /**
  * Vapaatekstin varahaku: merkitsee, että asiakirjaa ei saa kiinnittää
  * siihen hankkeeseen, jolle se tuotiin. Ensisijainen tapa on
@@ -11,19 +9,21 @@ import type { EhdotusSisalto } from "@/lib/ehdotus";
 export const KOHDISTUS_EPAVARMA_HUOMAUTUS =
   /ei\s+t[äa]m[äa]n\s+hankkeen|ei\s+t[äa]m[äa](?=\s|[–—.-]|$)|v[äa]{2}r[äa]\s+hanke|v[äa]{2}r[äa]lle\s+hankkeelle|kohdistus[_\s-]?ep[äa]varma|älä\s+kohdista/i;
 
-type KohdistusSisalto = EhdotusSisalto & {
+type KohdistusDokumentti = {
+  url?: string;
+  otsikko?: string;
+  mita_ilmenee?: string | null;
   kohdistus_epavarma?: boolean;
   kohdistus_huomio?: string | null;
-  kunta?: EhdotusSisalto["kunta"] & {
+};
+
+type KohdistusSisalto = {
+  kohdistus_epavarma?: boolean;
+  kohdistus_huomio?: string | null;
+  kunta?: {
     kohdistus_epavarma?: boolean;
     grok_ilmenee?: string | null;
-    dokumentit?: Array<{
-      url?: string;
-      otsikko?: string;
-      mita_ilmenee?: string | null;
-      kohdistus_epavarma?: boolean;
-      kohdistus_huomio?: string | null;
-    }>;
+    dokumentit?: KohdistusDokumentti[];
   };
 };
 
