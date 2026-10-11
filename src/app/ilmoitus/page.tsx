@@ -211,6 +211,7 @@ export default async function IlmoitusSivu({
             valinnat={lisalahdeValinnat}
             alussa={julkinenTaydennys ? 1 : 0}
             vahintaan={julkinenTaydennys}
+            kentatPakollisia={julkinenUusi}
             otsikko={julkinenTaydennys ? "Täydennys" : "Muut linkit"}
             kysyViesti
             ohje={

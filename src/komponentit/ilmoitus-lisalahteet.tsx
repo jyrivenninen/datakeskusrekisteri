@@ -7,10 +7,25 @@ export type LisalahdeValinta = { arvo: string; nimi: string };
 
 type Rivi = { id: number; kentta: string; url: string; viesti: string };
 
+function riviPuutteellinen(rivi: Rivi): boolean {
+  return !rivi.kentta || !rivi.url.trim();
+}
+
+function naytaRivinPuute(rivi: Rivi) {
+  const kentta = document.getElementById(`lisalahde-${rivi.id}-kentta`);
+  const url = document.getElementById(`lisalahde-${rivi.id}-url`);
+  if (!rivi.kentta && kentta instanceof HTMLSelectElement) {
+    kentta.reportValidity();
+    return;
+  }
+  if (url instanceof HTMLInputElement) url.reportValidity();
+}
+
 export function IlmoitusLisalahteet({
   valinnat,
   alussa = 0,
   vahintaan = false,
+  kentatPakollisia = false,
   otsikko = "Muut linkit",
   ohje = "Jos jokin tieto on eri osoitteessa, lisää linkki ja valitse, mitä se koskee. Arvoa ei tarvitse kirjoittaa.",
   kysyViesti = false,
@@ -20,6 +35,8 @@ export function IlmoitusLisalahteet({
   alussa?: number;
   /** Viimeistä riviä ei voi poistaa. */
   vahintaan?: boolean;
+  /** Jokaisen lisätyn rivin tieto ja osoite ovat pakollisia. */
+  kentatPakollisia?: boolean;
   otsikko?: string;
   ohje?: string;
   /** Jokaiselle riville oma arvo tai viesti. */
@@ -38,6 +55,10 @@ export function IlmoitusLisalahteet({
 
   function lisaa() {
     const aukiRivi = rivit.find((rivi) => rivi.id === auki);
+    if (aukiRivi && kentatPakollisia && riviPuutteellinen(aukiRivi)) {
+      naytaRivinPuute(aukiRivi);
+      return;
+    }
     const tyhja =
       aukiRivi != null &&
       !aukiRivi.kentta &&
@@ -75,12 +96,22 @@ export function IlmoitusLisalahteet({
           tunniste={`lisalahde-${rivi.id}`}
           rivi={rivi}
           valinnat={valinnat}
-          pakollinen={vahintaan && jarjestys === 0}
+          pakollinen={kentatPakollisia || (vahintaan && jarjestys === 0)}
           erotin={jarjestys > 0}
           kysyViesti={kysyViesti}
           auki={auki === rivi.id}
           onAvaa={() => setAuki(rivi.id)}
-          onSulje={rivi.id === luonnos ? undefined : () => setAuki(null)}
+          onSulje={
+            rivi.id === luonnos
+              ? undefined
+              : () => {
+                  if (kentatPakollisia && riviPuutteellinen(rivi)) {
+                    naytaRivinPuute(rivi);
+                    return;
+                  }
+                  setAuki(null);
+                }
+          }
           onPaivita={(osa) => paivita(rivi.id, osa)}
           onPoista={vahintaan && rivit.length <= 1 ? undefined : () => poista(rivi.id)}
         />
