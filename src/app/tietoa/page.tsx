@@ -80,7 +80,8 @@ export default async function TietoaPalvelustaSivu() {
             ilman kävijään liittyvää tietoa. Lisäksi palvelinalusta Vercel Web Analytics
             kerää anonyymeja sivulataustilastoja (esim. sivu, viittaaja, maa ja
             laitetyyppi) ilman evästeitä ja ilman yksittäiseen kävijään yhdistettävää
-            tunnistetta.
+            tunnistetta. Vercel Speed Insights kerää anonyymeja suorituskykymittareita
+            (Core Web Vitals) ilman evästeitä.
           </p>
           <p>
             Rekisterin hanketiedoissa ei nimetä yksityishenkilöitä. Julkaistut tiedot koskevat
