@@ -73,11 +73,14 @@ export default async function TietoaPalvelustaSivu() {
         </h2>
         <div className="mt-3 space-y-3 leading-relaxed">
           <p>
-            Palvelu ei kerää käyttäjistä henkilötietoja eikä käytä analytiikkapalveluita,
-            mainoksia tai seurantaevästeitä. Lomakkeet eivät kysy nimeä eivätkä
-            yhteystietoja. Sivusto käyttää yhtä evästettä, jolla muistetaan esiversiota
-            koskevan ilmoituksen kuittaus. Sivulatauksista tallennetaan vain sivun osoite
-            ilman kävijään liittyvää tietoa.
+            Palvelu ei kerää käyttäjistä henkilötietoja eikä käytä mainoksia tai
+            seurantaevästeitä. Lomakkeet eivät kysy nimeä eivätkä yhteystietoja. Sivusto
+            käyttää yhtä evästettä, jolla muistetaan esiversiota koskevan ilmoituksen
+            kuittaus. Sivulatauksista tallennetaan omaan tietokantaan vain sivun osoite
+            ilman kävijään liittyvää tietoa. Lisäksi palvelinalusta Vercel Web Analytics
+            kerää anonyymeja sivulataustilastoja (esim. sivu, viittaaja, maa ja
+            laitetyyppi) ilman evästeitä ja ilman yksittäiseen kävijään yhdistettävää
+            tunnistetta.
           </p>
           <p>
             Rekisterin hanketiedoissa ei nimetä yksityishenkilöitä. Julkaistut tiedot koskevat

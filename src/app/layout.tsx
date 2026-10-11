@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { Analytics } from "@vercel/analytics/next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { cookies } from "next/headers";
 import { ESIVERSIO_EVASTE } from "@/lib/esiversio";
@@ -126,6 +127,7 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
             </nav>
           </div>
         </footer>
+        <Analytics />
       </body>
     </html>
   );

@@ -10,6 +10,14 @@ export type KehityslokiMerkinta = {
 export const KEHITYSLOKI: KehityslokiMerkinta[] = [
   {
     pvm: "2026-10-11",
+    otsikko: "Vercel Web Analytics",
+    kohdat: [
+      "Sivustolle lisättiin Vercel Web Analytics -seuranta (@vercel/analytics).",
+      "Yksityisyys-osiossa kerrotaan anonyymit sivulataustilastot ilman evästeitä.",
+    ],
+  },
+  {
+    pvm: "2026-10-11",
     otsikko: "Kentän päivitys",
     kohdat: [
       "Hankesivun Päivitä-lomake näyttää hankkeen, kentän ja nykyisen arvon.",
