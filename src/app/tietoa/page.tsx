@@ -77,11 +77,10 @@ export default async function TietoaPalvelustaSivu() {
             seurantaevästeitä. Lomakkeet eivät kysy nimeä eivätkä yhteystietoja. Sivusto
             käyttää yhtä evästettä, jolla muistetaan esiversiota koskevan ilmoituksen
             kuittaus. Sivulatauksista tallennetaan omaan tietokantaan vain sivun osoite
-            ilman kävijään liittyvää tietoa. Lisäksi palvelinalusta Vercel Web Analytics
-            kerää anonyymeja sivulataustilastoja (esim. sivu, viittaaja, maa ja
-            laitetyyppi) ilman evästeitä ja ilman yksittäiseen kävijään yhdistettävää
-            tunnistetta. Vercel Speed Insights kerää anonyymeja suorituskykymittareita
-            (Core Web Vitals) ilman evästeitä.
+            ilman kävijään liittyvää tietoa. Lisäksi palvelinalusta Vercel kerää
+            anonyymeja sivulataus- ja suorituskykytilastoja (esim. sivu, viittaaja, maa,
+            laitetyyppi ja Core Web Vitals). Tiedot kerätään ilman evästeitä, eikä niistä
+            voi tunnistaa yksittäistä kävijää.
           </p>
           <p>
             Rekisterin hanketiedoissa ei nimetä yksityishenkilöitä. Julkaistut tiedot koskevat
