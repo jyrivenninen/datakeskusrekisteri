@@ -321,21 +321,17 @@ button.kartta-merkki:active:not(:disabled) {
 }
 
 /*
- * Arvioitu sijainti: sama koko kuin tarkalla, katkoviivareunus.
- * (Koko jää tarkoittamaan vain IT-teho-haloa; ei nuppineulaa.)
+ * Arvioitu sijainti: sama muoto ja koko kuin tarkka, ilman reunusta,
+ * peittävyys ~55 %. Epävarma näkyy vaimeampana, ei korostettuna.
  */
 .kartta-merkki--arvio .kartta-merkki-piste {
-  border-style: dashed;
-  border-width: 2px;
+  border: none;
+  opacity: 0.55;
   box-shadow: none;
 }
 
-.kartta-merkki--arvio.kartta-merkki--nuppineula .kartta-merkki-nuppineula {
-  display: none;
-}
-
-.kartta-merkki--arvio.kartta-merkki--nuppineula .kartta-merkki-piste {
-  display: block;
+.kartta-merkki--arvio .kartta-merkki-nuppineula {
+  opacity: 0.55;
 }
 
 /* Klusteri: lukumäärä erottuu mustalla merkillä (ks. .kartta-merkki-lkm). */
