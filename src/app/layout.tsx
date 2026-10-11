@@ -65,6 +65,9 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
               </span>
             </p>
             <nav className="ml-auto flex flex-wrap justify-end gap-4 text-sm">
+              <a href="/kunnat" className="text-link underline">
+                Kunnat
+              </a>
               <a href="/opas/yva-mielipide" className="text-link underline">
                 YVA-opas
               </a>
@@ -115,6 +118,9 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
               </a>
               <a href="/ilmoitus" className="text-link underline">
                 Ilmoita hanke
+              </a>
+              <a href="/kunnat" className="text-link underline">
+                Kunnat
               </a>
               <a href="/opas/yva-mielipide" className="text-link underline">
                 YVA-opas

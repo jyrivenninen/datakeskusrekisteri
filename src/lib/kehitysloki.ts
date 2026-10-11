@@ -10,6 +10,15 @@ export type KehityslokiMerkinta = {
 export const KEHITYSLOKI: KehityslokiMerkinta[] = [
   {
     pvm: "2026-10-11",
+    otsikko: "Kuntasivut",
+    kohdat: [
+      "Jokaisella hankkeita sisältävällä kunnalla on sivu /kunnat/[slug] (esim. /kunnat/tuusula).",
+      "Sivulla ovat määräajat, kartta, hankkeet, asiakirjat ja viimeisimmät muutokset.",
+      "Kuntakohtaiset RSS- ja JSON-syötteet. Hakemisto /kunnat, linkit etusivulta ja hankesivulta.",
+    ],
+  },
+  {
+    pvm: "2026-10-11",
     otsikko: "Vercel Speed Insights",
     kohdat: [
       "Sivustolle lisättiin Vercel Speed Insights (@vercel/speed-insights).",

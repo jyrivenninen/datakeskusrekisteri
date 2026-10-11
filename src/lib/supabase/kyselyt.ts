@@ -266,6 +266,172 @@ export async function haeKuntaMaakuntaKartta(): Promise<Map<string, string>> {
   }
 }
 
+export type KuntaListalla = {
+  id: string;
+  nimi: string;
+  slug: string;
+  maakunta: string | null;
+  hankkeita: number;
+};
+
+export type KuntaAsiakirja = {
+  id: string;
+  url: string;
+  otsikko: string;
+  otsikko_automaattinen: boolean;
+  julkaisija: string | null;
+  julkaistu_pvm: string | null;
+  hanke_id: string;
+  hanke_nimi: string;
+};
+
+/** Kunta → slug (suomenkielinen nimi avaimena, normalisoituna). */
+export async function haeKuntaSlugKartta(): Promise<Map<string, string>> {
+  if (!supabaseYmparistoAsetettu()) return new Map();
+  try {
+    const supabase = await luoPalvelinAsiakas();
+    const { data, error } = await supabase.from("kunnat").select("nimi, slug");
+    if (error) return new Map();
+    const kartta = new Map<string, string>();
+    for (const rivi of data ?? []) {
+      if (!rivi.slug) continue;
+      kartta.set(normalisoiKuntaNimi(rivi.nimi), rivi.slug);
+    }
+    return kartta;
+  } catch {
+    return new Map();
+  }
+}
+
+/** Kunnat, joilla on vähintään yksi julkaistu hanke. */
+export async function haeKunnatJoissaHankkeita(): Promise<{
+  kunnat: KuntaListalla[];
+  virhe: string | null;
+}> {
+  if (!supabaseYmparistoAsetettu()) {
+    return { kunnat: [], virhe: "Kuntia ei juuri nyt voitu hakea." };
+  }
+  try {
+    const supabase = await luoPalvelinAsiakas();
+    const [{ data: kuntaRivitt, error: kuntaVirhe }, { data: hankeRivitt, error: hankeVirhe }] =
+      await Promise.all([
+        supabase.from("kunnat").select("id, nimi, slug, maakunta").eq("voimassa", true),
+        supabase.from("hankkeet").select("kunta").eq("julkaistu", true),
+      ]);
+    if (kuntaVirhe) return { kunnat: [], virhe: kuntaVirhe.message };
+    if (hankeVirhe) return { kunnat: [], virhe: hankeVirhe.message };
+
+    const lkm = new Map<string, number>();
+    for (const rivi of hankeRivitt ?? []) {
+      const nimi = rivi.kunta?.trim();
+      if (!nimi) continue;
+      const avain = normalisoiKuntaNimi(nimi);
+      lkm.set(avain, (lkm.get(avain) ?? 0) + 1);
+    }
+
+    const kunnat: KuntaListalla[] = [];
+    for (const rivi of kuntaRivitt ?? []) {
+      const hankkeita = lkm.get(normalisoiKuntaNimi(rivi.nimi)) ?? 0;
+      if (hankkeita === 0) continue;
+      kunnat.push({
+        id: rivi.id,
+        nimi: rivi.nimi,
+        slug: rivi.slug,
+        maakunta: rivi.maakunta,
+        hankkeita,
+      });
+    }
+    kunnat.sort((a, b) => a.nimi.localeCompare(b.nimi, "fi"));
+    return { kunnat, virhe: null };
+  } catch (syy) {
+    return { kunnat: [], virhe: virheViesti(syy) };
+  }
+}
+
+export async function haeKuntaSlugilla(slug: string): Promise<{
+  kunta: Pick<KuntaListalla, "id" | "nimi" | "slug" | "maakunta"> | null;
+  virhe: string | null;
+}> {
+  if (!supabaseYmparistoAsetettu()) {
+    return { kunta: null, virhe: "Kuntaa ei juuri nyt voitu hakea." };
+  }
+  try {
+    const supabase = await luoPalvelinAsiakas();
+    const { data, error } = await supabase
+      .from("kunnat")
+      .select("id, nimi, slug, maakunta")
+      .eq("slug", slug)
+      .maybeSingle();
+    if (error) return { kunta: null, virhe: error.message };
+    if (!data) return { kunta: null, virhe: null };
+    return {
+      kunta: {
+        id: data.id,
+        nimi: data.nimi,
+        slug: data.slug,
+        maakunta: data.maakunta,
+      },
+      virhe: null,
+    };
+  } catch (syy) {
+    return { kunta: null, virhe: virheViesti(syy) };
+  }
+}
+
+/** Kunnan hankkeisiin liittyvät lähdeasiakirjat (ei menetelmä-tyyppiä). */
+export async function haeKunnanAsiakirjat(kuntaNimi: string): Promise<{
+  asiakirjat: KuntaAsiakirja[];
+  virhe: string | null;
+}> {
+  if (!supabaseYmparistoAsetettu()) {
+    return { asiakirjat: [], virhe: "Asiakirjoja ei juuri nyt voitu hakea." };
+  }
+  try {
+    const supabase = await luoPalvelinAsiakas();
+    const { data: hankkeet, error: hankeVirhe } = await supabase
+      .from("hankkeet")
+      .select("id, nimi")
+      .eq("julkaistu", true)
+      .eq("kunta", kuntaNimi);
+    if (hankeVirhe) return { asiakirjat: [], virhe: hankeVirhe.message };
+    const idt = (hankkeet ?? []).map((h) => h.id);
+    if (idt.length === 0) return { asiakirjat: [], virhe: null };
+
+    const nimet = new Map((hankkeet ?? []).map((h) => [h.id, h.nimi]));
+    const { data, error } = await supabase
+      .from("dokumentit")
+      .select(
+        "id, url, otsikko, otsikko_automaattinen, julkaisija, julkaistu_pvm, hanke_id, lahde_tyyppi, kanoninen_dokumentti_id",
+      )
+      .eq("julkaistu", true)
+      .in("hanke_id", idt)
+      .neq("lahde_tyyppi", "menetelma")
+      .is("kanoninen_dokumentti_id", null)
+      .order("julkaistu_pvm", { ascending: false, nullsFirst: false })
+      .order("luotu_pvm", { ascending: false });
+    if (error) return { asiakirjat: [], virhe: error.message };
+
+    const asiakirjat: KuntaAsiakirja[] = [];
+    for (const rivi of data ?? []) {
+      if (!rivi.hanke_id) continue;
+      if (piilotaJulkinenAsiakirjaUrl(rivi.url)) continue;
+      asiakirjat.push({
+        id: rivi.id,
+        url: rivi.url,
+        otsikko: rivi.otsikko,
+        otsikko_automaattinen: rivi.otsikko_automaattinen,
+        julkaisija: rivi.julkaisija,
+        julkaistu_pvm: rivi.julkaistu_pvm,
+        hanke_id: rivi.hanke_id,
+        hanke_nimi: nimet.get(rivi.hanke_id) ?? "Hanke",
+      });
+    }
+    return { asiakirjat, virhe: null };
+  } catch (syy) {
+    return { asiakirjat: [], virhe: virheViesti(syy) };
+  }
+}
+
 export type HankeOrganisaatioNakyma = HankeOrganisaatio & {
   organisaatio: Pick<Organisaatio, "id" | "nimi"> | null;
   rooli_meta: { nimi: string } | null;
@@ -773,13 +939,19 @@ export async function haeJulkaistutMuutokset(opts?: {
   }
 }
 
-export async function haeKaikkiJulkaistutMuutokset(): Promise<{
+export async function haeKaikkiJulkaistutMuutokset(opts?: {
+  kunta?: string;
+}): Promise<{
   muutokset: JulkaistuMuutosNakyma[];
   virhe: string | null;
 }> {
   const rivit: JulkaistuMuutosNakyma[] = [];
   for (let alku = 0; ; alku += 1000) {
-    const { muutokset, virhe } = await haeJulkaistutMuutokset({ raja: 1000, alku });
+    const { muutokset, virhe } = await haeJulkaistutMuutokset({
+      raja: 1000,
+      alku,
+      kunta: opts?.kunta,
+    });
     if (virhe) return { muutokset: [], virhe };
     rivit.push(...muutokset);
     if (muutokset.length < 1000) return { muutokset: rivit, virhe: null };

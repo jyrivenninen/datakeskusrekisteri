@@ -3,7 +3,8 @@ import { notFound, permanentRedirect } from "next/navigation";
 import { AsiakirjaTaulukko } from "@/komponentit/asiakirja-kortti";
 import { AvattavaKortti, Korttiruudukko } from "@/komponentit/avattava-kortti";
 import { KarttaViive } from "@/komponentit/kartta-viive";
-import { ratkaiseMaakunta } from "@/lib/maakunta";
+import { kuntaSivuPolku } from "@/lib/kunta-slug";
+import { normalisoiKuntaNimi, ratkaiseMaakunta } from "@/lib/maakunta";
 import { HankeGalleria } from "@/komponentit/hanke-galleria";
 import { VaiheMerkki } from "@/komponentit/vaihe-merkki";
 import { lomakeKenttaKortista, VAIHTOEHTO_KENTAT } from "@/lib/ehdotus";
@@ -28,7 +29,12 @@ import {
   polttoainevarastoTeksti,
 } from "@/lib/naytto";
 import type { KorvaavaDokumentti } from "@/komponentit/lahdeluettelo";
-import { haeHanke, haeHankeOhjaus, haeKuntaMaakuntaKartta } from "@/lib/supabase/kyselyt";
+import {
+  haeHanke,
+  haeHankeOhjaus,
+  haeKuntaMaakuntaKartta,
+  haeKuntaSlugKartta,
+} from "@/lib/supabase/kyselyt";
 import { hankeOgKuvaus, kortinMetatiedot, SIVUSTON_KUVAUS, SIVUSTON_OTSIKKO } from "@/lib/sivuston-metatiedot";
 import { haeYllapitaja } from "@/lib/supabase/palvelin";
 import { supabasePalvelinAvainAsetettu } from "@/lib/supabase/yllapito-asiakas";
@@ -298,7 +304,12 @@ export default async function HankeSivu({
     notFound();
   }
 
-  const kuntaMaakunnat = await haeKuntaMaakuntaKartta();
+  const [kuntaMaakunnat, kuntaSlugit] = await Promise.all([
+    haeKuntaMaakuntaKartta(),
+    haeKuntaSlugKartta(),
+  ]);
+  const kuntaSlug = kuntaSlugit.get(normalisoiKuntaNimi(hanke.kunta));
+  const kuntaHref = kuntaSlug ? kuntaSivuPolku(kuntaSlug) : null;
   const ratkaistuMaakunta = ratkaiseMaakunta(hanke.maakunta, hanke.kunta, kuntaMaakunnat);
   const linkkiTekstit = rakennaDokumenttiLinkkiTekstit(asiakirjat);
   const korvaavat = new Map(
@@ -348,7 +359,13 @@ export default async function HankeSivu({
       </p>
       <h1 className="mt-4 text-3xl font-semibold tracking-tight">{hanke.nimi}</h1>
       <p className="mt-2 text-muted">
-        {hanke.kunta}
+        {kuntaHref ? (
+          <a href={kuntaHref} className="text-link underline">
+            {hanke.kunta}
+          </a>
+        ) : (
+          hanke.kunta
+        )}
         {ratkaistuMaakunta.maakunta ? `, ${ratkaistuMaakunta.maakunta}` : ""} ·{" "}
         <VaiheMerkki vaihe={hanke.vaihe} />
       </p>

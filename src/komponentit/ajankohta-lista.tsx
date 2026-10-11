@@ -13,12 +13,14 @@ export function AjankohtaKohta({
   href,
   nimi,
   kunta,
+  kuntaHref,
   piilotaKapealla = false,
 }: {
   ylarivi: string;
   href: string;
   nimi: string;
   kunta: string;
+  kuntaHref?: string | null;
   piilotaKapealla?: boolean;
 }) {
   return (
@@ -32,7 +34,17 @@ export function AjankohtaKohta({
         <a href={href} className="text-link underline">
           {nimi}
         </a>
-        <span className="text-muted"> ({kunta})</span>
+        <span className="text-muted">
+          {" ("}
+          {kuntaHref ? (
+            <a href={kuntaHref} className="text-link underline">
+              {kunta}
+            </a>
+          ) : (
+            kunta
+          )}
+          {")"}
+        </span>
       </p>
     </li>
   );

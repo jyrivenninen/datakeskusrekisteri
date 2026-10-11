@@ -37,9 +37,12 @@ function LatausPyora() {
 
 export function HankeLuetteloOsio({
   suodatus,
+  toiminto = "/",
   children,
 }: {
   suodatus: HankeSuodatus;
+  /** Polku johon järjestysparametri kirjoitetaan (oletus etusivu). */
+  toiminto?: string;
   children: ReactNode;
 }) {
   const router = useRouter();
@@ -49,16 +52,21 @@ export function HankeLuetteloOsio({
   const paivitaJarjestys = useCallback(
     (arvo: HankeJarjestys) => {
       aloitaSiirtyma(() => {
-        router.replace(
-          hankkeetSuodatusPolku({
+        let polku: string;
+        if (toiminto === "/") {
+          polku = hankkeetSuodatusPolku({
             ...suodatus,
             jarjestys: arvo === "nimi" ? undefined : arvo,
-          }),
-          { scroll: false },
-        );
+          });
+        } else {
+          const p = new URLSearchParams();
+          p.set("jarjestys", arvo);
+          polku = `${toiminto}?${p.toString()}`;
+        }
+        router.replace(polku, { scroll: false });
       });
     },
-    [router, suodatus],
+    [router, suodatus, toiminto],
   );
 
   return (

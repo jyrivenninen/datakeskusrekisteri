@@ -481,6 +481,7 @@ export type Kunta = {
   koodi: string;
   nimi: string;
   nimi_sv: string | null;
+  slug: string;
   maakunta: string | null;
   ely: string | null;
   voimassa: boolean;

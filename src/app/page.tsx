@@ -22,9 +22,12 @@ import {
   muutosYlarivi,
   yhteensaLause,
 } from "@/lib/muutos-naytto";
+import { kuntaSivuPolku } from "@/lib/kunta-slug";
+import { normalisoiKuntaNimi } from "@/lib/maakunta";
 import {
   haeJulkaistutHankkeet,
   haeJulkaistutMuutokset,
+  haeKuntaSlugKartta,
   haeTulevatMaaraajat,
   parsiSuodatus,
   rajaaHankelista,
@@ -54,13 +57,20 @@ export default async function Etusivu({
     { maaraajat, maara: maaraajaMaara, virhe: maaraajaVirhe },
     { muutokset, maara: muutosMaara, virhe: muutosVirhe },
     taydennys,
+    kuntaSlugit,
   ] = await Promise.all([
     haeYllapitaja(),
     haeJulkaistutHankkeet(),
     haeTulevatMaaraajat({ raja: ETUSIVU_RIVEJA }),
     haeJulkaistutMuutokset({ raja: ETUSIVU_RIVEJA }),
     haeKarttaTaydennys(),
+    haeKuntaSlugKartta(),
   ]);
+
+  function kuntaHref(kunta: string): string | null {
+    const slug = kuntaSlugit.get(normalisoiKuntaNimi(kunta));
+    return slug ? kuntaSivuPolku(slug) : null;
+  }
   const { hankkeet, johdot, virhe: hankeVirhe } = await rajaaHankelista(lista, suodatus);
   const { merkit, tuotantoVertailu, liityntapisteet, vaiheLkm } = kokoaKarttaSivuData(
     { hankkeet, johdot, virhe: hankeVirhe },
@@ -123,6 +133,7 @@ export default async function Etusivu({
                       href={`/hankkeet/${maaraaika.hanke.id}`}
                       nimi={maaraaika.hanke.nimi}
                       kunta={maaraaika.hanke.kunta}
+                      kuntaHref={kuntaHref(maaraaika.hanke.kunta)}
                     />
                   ))
                 )}
@@ -154,6 +165,7 @@ export default async function Etusivu({
                     href={`/hankkeet/${muutos.hanke.id}`}
                     nimi={muutos.hanke.nimi}
                     kunta={muutos.hanke.kunta}
+                    kuntaHref={kuntaHref(muutos.hanke.kunta)}
                   />
                 ))}
               </AjankohtaLista>
@@ -246,6 +258,7 @@ export default async function Etusivu({
             <ul className="mt-4 divide-y divide-border border-y border-border">
               {jarjestetytHankkeet.map((hanke) => {
                 const teho = hankeVaihtelvalit(hanke, hanke.vaihtoehdot).teho;
+                const kuntaPolku = kuntaHref(hanke.kunta);
                 return (
                   <li key={hanke.id} className="py-4">
                     <h4 className="text-lg font-semibold">
@@ -254,7 +267,13 @@ export default async function Etusivu({
                       </a>
                     </h4>
                     <p className="mt-1 text-sm text-muted">
-                      {hanke.kunta}
+                      {kuntaPolku ? (
+                        <a href={kuntaPolku} className="text-link underline">
+                          {hanke.kunta}
+                        </a>
+                      ) : (
+                        hanke.kunta
+                      )}
                       {hanke.maakunta ? `, ${hanke.maakunta}` : ""} ·{" "}
                       <VaiheMerkki vaihe={hanke.vaihe} />
                       {teho
