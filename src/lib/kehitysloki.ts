@@ -10,6 +10,24 @@ export type KehityslokiMerkinta = {
 export const KEHITYSLOKI: KehityslokiMerkinta[] = [
   {
     pvm: "2026-10-11",
+    otsikko: "Kaava-alue ja sijainnin perustelu",
+    kohdat: [
+      "Uusi kenttä kaava_ala_ha erottaa kaavoitetun alueen hankkeen pinta-alasta.",
+      "Sijainnin perustelu ja muiden sijaintien tarkastelu (YVA): oma osio hankesivulla, lainaus pakollinen.",
+      "Ilman YVA-menettelyä sijaintiperustelu jää tyhjäksi.",
+    ],
+  },
+  {
+    pvm: "2026-10-11",
+    otsikko: "Konsulttiroolien erottelu",
+    kohdat: [
+      "Roolit yva_konsultti, kaavan_laatija ja lupahakemuksen_laatija erotettu; vanha konsultti poistettu käytöstä.",
+      "YVA-selostusten 15 konsulttiroolia siirretty rooliin yva_konsultti.",
+      "/konsultit näyttää roolit erikseen. Kaavan laatija työskentelee usein kunnan lukuun, YVA-konsultti hankkeesta vastaavan lukuun.",
+    ],
+  },
+  {
+    pvm: "2026-10-11",
     otsikko: "Konsulttisivut",
     kohdat: [
       "YVA-asiakirjoissa nimetyille konsulteille hakemisto /konsultit ja sivu /konsultit/[slug].",

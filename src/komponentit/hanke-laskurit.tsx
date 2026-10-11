@@ -97,7 +97,8 @@ export function HankeLaskurit({ yhteenveto }: { yhteenveto: HankeYhteenveto }) {
             . IT-teho, jos merkitty, muuten teho. Generaattorin polttoainetehoa ei käytetä.
             Luku ei erottele hankkeen ensimmäistä vaihetta koko hankkeen tavoitteesta.
             Osa luvuista on ensimmäisen vaiheen lukuja, osa tavoitelukuja, eikä lähde
-            useimmiten kerro kumpi on kyseessä.
+            useimmiten kerro kumpi on kyseessä. Luku ei erottele myöskään hankkeita,
+            joiden lähteet antavat eri teholuvun.
           </p>
         </li>
         <li className="rounded border border-border bg-surface p-4">

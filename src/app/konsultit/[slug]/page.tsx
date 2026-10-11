@@ -20,11 +20,11 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   if (!konsultti) {
     return { title: `Konsultti – ${SIVUSTON_OTSIKKO}` };
   }
-  const lkm = hankkeet.length;
+  const lkm = new Set(hankkeet.map((h) => h.id)).size;
   const kuvaus =
     lkm === 0
       ? `${konsultti.nimi}: ei vielä julkaistuja konsulttirooleja.`
-      : `${konsultti.nimi}: merkitty konsultiksi ${lkm} ${lkm === 1 ? "hankkeessa" : "hankkeessa"}. Tiedot YVA-asiakirjoista.`;
+      : `${konsultti.nimi}: merkitty ${lkm} ${lkm === 1 ? "hankkeessa" : "hankkeessa"}. Tiedot asiakirjoista.`;
   return kortinMetatiedot({
     otsikko: `${konsultti.nimi} – ${SIVUSTON_OTSIKKO}`,
     kuvaus,
@@ -34,7 +34,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 export default async function KonsulttiSivu({ params }: Props) {
   const { slug } = await params;
-  const { konsultti, hankkeet, virhe } = await haeKonsulttiSlugilla(slug);
+  const { konsultti, hankkeet, ryhmat, virhe } = await haeKonsulttiSlugilla(slug);
   if (virhe) {
     return (
       <main id="sisalto" className="sivuleveys flex-1 py-10">
@@ -44,7 +44,8 @@ export default async function KonsulttiSivu({ params }: Props) {
   }
   if (!konsultti) notFound();
 
-  const merkit: Karttamerkki[] = hankkeet.flatMap((hanke) => {
+  const karttaHankkeet = new Map(hankkeet.map((h) => [h.id, h]));
+  const merkit: Karttamerkki[] = [...karttaHankkeet.values()].flatMap((hanke) => {
     const alue = hanke.sijainti_alue?.type === "Polygon" ? hanke.sijainti_alue : null;
     if (hanke.sijainti_lat == null && hanke.sijainti_lon == null && !alue) return [];
     return [
@@ -78,47 +79,53 @@ export default async function KonsulttiSivu({ params }: Props) {
         <p className="mt-2 text-muted">Y-tunnusta ei ole merkitty.</p>
       )}
       <p className="mt-4 max-w-prose text-sm leading-relaxed text-muted">
-        Konsultti on merkitty siltä osin kuin se ilmenee hankkeen YVA-asiakirjoista. Hankkeella,
-        jolla ei ole YVA-menettelyä, ei ole konsulttitietoa.
+        Roolit on merkitty siltä osin kuin ne ilmenevät hankkeen asiakirjoista. Kaavan laatija
+        työskentelee usein kunnan lukuun; YVA-konsultti hankkeesta vastaavan lukuun.
       </p>
 
-      <section className="mt-10" aria-labelledby="hankkeet-otsikko">
-        <h2 id="hankkeet-otsikko" className="text-xl font-semibold">
-          Hankkeet
-        </h2>
-        {hankkeet.length === 0 ? (
-          <p className="mt-3">Ei julkaistuja konsulttirooleja.</p>
-        ) : (
-          <ul className="mt-4 divide-y divide-border border-y border-border">
-            {hankkeet.map((hanke) => (
-              <li key={hanke.id} className="py-3">
-                <p>
-                  <a href={`/hankkeet/${hanke.id}`} className="text-link underline">
-                    {hanke.nimi}
-                  </a>
-                </p>
-                <p className="mt-1 text-sm text-muted">
-                  {hanke.kunta} · <VaiheMerkki vaihe={hanke.vaihe} />
-                </p>
-                {hanke.lahde_url ? (
-                  <p className="mt-1 text-sm">
-                    <a
-                      href={hanke.lahde_url}
-                      className="text-link underline"
-                      rel="noopener noreferrer"
-                    >
-                      {hanke.dokumentti_otsikko?.trim() || "Asiakirja, josta rooli ilmenee"}
+      {ryhmat.length === 0 ? (
+        <p className="mt-10">Ei julkaistuja konsulttirooleja.</p>
+      ) : (
+        ryhmat.map((ryhma) => (
+          <section
+            key={ryhma.rooli}
+            className="mt-10"
+            aria-labelledby={`hankkeet-${ryhma.rooli}`}
+          >
+            <h2 id={`hankkeet-${ryhma.rooli}`} className="text-xl font-semibold">
+              {ryhma.nimi}
+            </h2>
+            <ul className="mt-4 divide-y divide-border border-y border-border">
+              {ryhma.hankkeet.map((hanke) => (
+                <li key={`${ryhma.rooli}-${hanke.id}`} className="py-3">
+                  <p>
+                    <a href={`/hankkeet/${hanke.id}`} className="text-link underline">
+                      {hanke.nimi}
                     </a>
-                    {hanke.lahde_kohta ? (
-                      <span className="text-muted"> · {hanke.lahde_kohta}</span>
-                    ) : null}
                   </p>
-                ) : null}
-              </li>
-            ))}
-          </ul>
-        )}
-      </section>
+                  <p className="mt-1 text-sm text-muted">
+                    {hanke.kunta} · <VaiheMerkki vaihe={hanke.vaihe} />
+                  </p>
+                  {hanke.lahde_url ? (
+                    <p className="mt-1 text-sm">
+                      <a
+                        href={hanke.lahde_url}
+                        className="text-link underline"
+                        rel="noopener noreferrer"
+                      >
+                        {hanke.dokumentti_otsikko?.trim() || "Asiakirja, josta rooli ilmenee"}
+                      </a>
+                      {hanke.lahde_kohta ? (
+                        <span className="text-muted"> · {hanke.lahde_kohta}</span>
+                      ) : null}
+                    </p>
+                  ) : null}
+                </li>
+              ))}
+            </ul>
+          </section>
+        ))
+      )}
 
       {merkit.length > 0 ? (
         <section className="mt-10" aria-labelledby="kartta-otsikko">
@@ -131,7 +138,7 @@ export default async function KonsulttiSivu({ params }: Props) {
               kuntaSelite={{
                 kunta: konsultti.nimi,
                 maakunta: null,
-                hankkeita: hankkeet.length,
+                hankkeita: karttaHankkeet.size,
               }}
             />
           </div>

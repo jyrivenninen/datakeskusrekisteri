@@ -33,6 +33,13 @@ test("ei poimi pelkkää MW:ta", () => {
   assert.equal(o, null);
 });
 
+test("ei poimi hukkalämmön GWh:ta", () => {
+  const o = poimiSahkonkayttoTekstista(
+    "vuositasolla ne tuottavat lämpöä noin 25 GWh eli noin kolmanneksen kaukolämpöasiakkaiden tarvitsemasta lämmöstä",
+  );
+  assert.equal(o, null);
+});
+
 test("poimiYmparistoPdfUrlit", () => {
   const html =
     '<a href="https://www.ymparisto.fi/sites/default/files/documents/Foo%20YVA.pdf">pdf</a>';

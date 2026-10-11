@@ -316,6 +316,8 @@ läpi eikä arvoa löydy.
 
 **Työnkulku:** INSERT **ilman RPC:tä**. Ylläpito: «Hyväksy merkintä».
 
+`sisalto.tarkistus.tulos` on aina `ei_julkista_lahdetta`. Muu arvo, myös `ei_loydy`, hylätään hyväksynnässä. Syy kirjoitetaan huomautukseen: asiakirjaa ei ole luettu, vuosikulutusta ei löytynyt luetuista lähteistä, tai lähteen luku on laskettu tehosta.
+
 **Älä käytä kun:**
 - Kentässä **on jo arvo** (vaikka virheellinen) → hyväksyntä kaatuu.
   Käytä **`kentta_tyhjennys`**.
@@ -645,7 +647,9 @@ Täytä lisäksi kaikki löydetyt kentät **joihin on lähde**:
 | `yva_diaarinumero` | viranomaislähde |
 | `it_teho_mw` | datakeskuksen IT-kuorma MW. Vain jos lähde sanoo IT capacity tai IT load |
 | `teho_mw` | koko laitoksen sähköteho MW. Erittelemätön megawattiluku vain tähän |
-| `pinta_ala_ha`, `sahkonkaytto_twh_a` | vain dokumentoidusti |
+| `pinta_ala_ha` | maa- tai tonttiala; vain dokumentoidusti |
+| `kaava_ala_ha` | kaava-alueen ala; erillinen suure kuin `pinta_ala_ha` |
+| `sahkonkaytto_twh_a` | vain dokumentoidusti |
 | `generaattorit_lkm`, `generaattorit_kaytossa_max_lkm`, `generaattori_polttoaineteho_mw` | erikseen lähteestä |
 | `generaattori_yksikkoteho_mwe` | yhden generaattorin sähköteho MWe. Ei ole yhteenlaskettu polttoaineteho |
 | `diesel_vuosikulutus_maara`, `diesel_vuosikulutus_yksikko` | vuosikulutus ja yksikkö `litra` tai `m3` erikseen |
@@ -659,12 +663,25 @@ molemmat on merkitty. Jos lähde antaa vain yhden erittelemättömän megawattil
 se merkitään vain toiseen kenttään. Jos lähde sanoo "IT capacity" tai "IT load",
 luku on `it_teho_mw`. Muuten `teho_mw`. Generaattorin polttoaineteho ei ole kumpikaan.
 
+### Monitoiminen alue (datakeskus + akku/sähkövarasto + aurinko)
+
+Kun sama kaava-alue tai päätös koskee datakeskusta ja lisäksi akkuvarastoa,
+sähkövarastoa tai aurinkovoimaa:
+
+1. **Yksi hanke** alueelle / kaavalle — älä luo erillisiä DC-/akku-/aurinkohankkeita.
+2. Kirjaa `huomautus` (julkinen kenttä, lähde pakollinen), esim.
+   «Asiakirjoissa myös sähkövarasto ja aurinkovoima.» Älä merkitse `teho_mw` /
+   `it_teho_mw`, ennen kuin lähde erottaa datakeskuksen teho-osuuden.
+3. Käyttötarkoitustägit jätetään myöhemmäksi — älä keksi skeemaa.
+4. Huomautuksen sävy on neutraali havainto asiakirjasta, ei tulkintaa aikeista.
+
 Jos julkaistulla vaihtoehdolla, VE0 pois lukien, on luku jossakin kentässä
 (`teho_mw`, `it_teho_mw`, `pinta_ala_ha`, `sahkonkaytto_twh_a`,
 `generaattorit_lkm`, `generaattori_polttoaineteho_mw`,
 `generaattori_yksikkoteho_mwe`, `diesel_vuosikulutus_maara`,
 `varavoima_paastot_t_co2e`, `polttoainevarasto_maara`), sama hanketason kenttä jätetään tyhjäksi.
 Kenttä, jota yhdelläkään vaihtoehdolla ei ole, säilyy hankkeella.
+`kaava_ala_ha` on vain hanketasolla (ei vaihtoehdolla): kaava-alue ≠ tontti/maa-ala.
 Polttoainevarasto merkitään vain vaihtoehdolle: luku `polttoainevarasto_maara`
 ja yksikkö `polttoainevarasto_yksikko` (`m3`, `litra` tai `mw`). Yksikkö on
 pakollinen, kun luku on merkitty.
@@ -780,7 +797,8 @@ Kun sähkönkäyttö-aukot on käyty läpi, sama logiikka:
 |--------|--------------|-------|
 | `it_teho_mw` | Korkea jos `teho_mw` on epätarkka fallback | YVA, lupa, virallinen esite |
 | `sahkonkaytto_twh_a` | Korkea (yllä) | YVA, energiataulukot |
-| `pinta_ala_ha` | Keskitaso | Kaava, YVA |
+| `pinta_ala_ha` | Keskitaso | Tontti, maakauppa, YVA maa-alue |
+| `kaava_ala_ha` | Keskitaso | Kaava-alue (ei tontti) |
 | `generaattorit_lkm` | Matala ellei YVA mainitse | YVA, lupa |
 
 ### 5. Raportointi

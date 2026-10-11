@@ -231,7 +231,7 @@ async function jonoRooli(
     const sis = e.sisalto as { hanke_organisaatio?: { organisaatio_id?: string; rooli?: string } };
     return (
       sis.hanke_organisaatio?.organisaatio_id === orgId &&
-      sis.hanke_organisaatio?.rooli === "konsultti"
+      sis.hanke_organisaatio?.rooli === "yva_konsultti"
     );
   });
   if (jo) return "jo";
@@ -241,7 +241,7 @@ async function jonoRooli(
     .select("id")
     .eq("hanke_id", hankeId)
     .eq("organisaatio_id", orgId)
-    .eq("rooli", "konsultti")
+    .eq("rooli", "yva_konsultti")
     .eq("julkaistu", true)
     .maybeSingle();
   if (julkaistu?.id) return "jo";
@@ -263,13 +263,13 @@ async function jonoRooli(
     ehdottaja_tyyppi: "yllapitaja",
     ehdottaja_tunniste: EHDOTTAJA,
     lahde_url: r.selostusUrl,
-    huomautus: `Konsulttirooli YVA-selostuksesta: ${r.orgNimi}.`,
+    huomautus: `YVA-konsultti YVA-selostuksesta: ${r.orgNimi}.`,
     tila: "odottaa",
     sisalto: {
       hanke_organisaatio: {
         organisaatio_id: orgId,
         organisaatio_nimi: r.orgNimi,
-        rooli: "konsultti",
+        rooli: "yva_konsultti",
         lahde_dokumentti_id: dokId,
         lahde_url: r.selostusUrl,
         lahde_kohta: `s. ${r.lahdeSivu}`,

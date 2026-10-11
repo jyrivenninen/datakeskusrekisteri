@@ -277,6 +277,25 @@ export async function lahetaKenttapaivitys(formData: FormData): Promise<void> {
       "Varavoiman päästöluku vaatii lainauksen, josta ilmenee kuka luvun on laskenut.",
     );
   }
+  if (
+    (kentta === "sijaintiperustelu" || kentta === "muut_sijainnit") &&
+    lainaus.trim() === ""
+  ) {
+    paivitysPaluu(
+      hankeId,
+      kentta,
+      vaihtoehto,
+      "Sijaintiperustelu ja muiden sijaintien tarkastelu vaativat lainauksen lähteestä.",
+    );
+  }
+  if (
+    kentta === "muut_sijainnit" &&
+    !["tarkasteltu_ja_nimetty", "tarkasteltu_nimeamatta", "ei_kasitelty"].includes(
+      arvo.trim(),
+    )
+  ) {
+    paivitysPaluu(hankeId, kentta, vaihtoehto, "Muiden sijaintien arvo ei ole sallittu.");
+  }
   const { sisalto: pohja, virhe } = rakennaSisalto(
     lomakeKentat,
     lahdeUrl,
@@ -1475,4 +1494,130 @@ export async function merkitsePalauteKasitellyksi(formData: FormData): Promise<v
   }
   revalidatePath("/yllapito");
   redirect("/yllapito?palaute=1");
+}
+
+/** Ylläpidon lukujen läpikäynti: eri asia / ristiriita / korvattu. Heittää virheen asiakkaalle. */
+export async function kasitteleLuvunRistiriitaToiminto(formData: FormData): Promise<void> {
+  const { kasittelija } = await vaadiYllapitaja();
+  if (!supabasePalvelinAvainAsetettu()) {
+    throw new Error("Tallennus vaatii palvelinavaimen.");
+  }
+  const taulu = String(formData.get("taulu") ?? "").trim();
+  const riviId = String(formData.get("rivi_id") ?? "").trim();
+  const kentta = String(formData.get("kentta") ?? "").trim();
+  const paatos = String(formData.get("paatos") ?? "").trim();
+  const huomautus = String(formData.get("huomautus") ?? "").trim() || null;
+  const korvattavaLahdeId = String(formData.get("korvattava_lahde_id") ?? "").trim();
+
+  if (taulu !== "hankkeet" || !riviId || !kentta) {
+    throw new Error("Puutteellinen kohde.");
+  }
+  if (!["eri_asia", "ristiriitainen", "korvattu"].includes(paatos)) {
+    throw new Error("Tuntematon päätös.");
+  }
+
+  const yllapito = luoYllapitoAsiakas();
+
+  if (paatos === "ristiriitainen") {
+    const { error } = await yllapito
+      .from("kentta_lahteet")
+      .update({ luottamus: "ristiriitainen" })
+      .eq("taulu", taulu)
+      .eq("rivi_id", riviId)
+      .eq("kentta", kentta)
+      .neq("tila", "korvattu");
+    if (error) throw new Error(error.message);
+  }
+
+  if (paatos === "korvattu") {
+    if (!korvattavaLahdeId) throw new Error("Valitse korvattava lähde.");
+    const { data: lahteet, error: lVirhe } = await yllapito
+      .from("kentta_lahteet")
+      .select("id, lahde_url, tila")
+      .eq("taulu", taulu)
+      .eq("rivi_id", riviId)
+      .eq("kentta", kentta);
+    if (lVirhe) throw new Error(lVirhe.message);
+    const korvattava = (lahteet ?? []).find((l) => l.id === korvattavaLahdeId);
+    if (!korvattava) throw new Error("Korvattavaa lähdettä ei löytynyt.");
+    const sailytettava = (lahteet ?? []).find(
+      (l) => l.id !== korvattavaLahdeId && l.tila !== "korvattu",
+    );
+    if (!sailytettava) throw new Error("Säilytettävää lähdettä ei löytynyt.");
+
+    let { data: dok } = await yllapito
+      .from("dokumentit")
+      .select("id")
+      .eq("hanke_id", riviId)
+      .eq("url", sailytettava.lahde_url)
+      .maybeSingle();
+    if (!dok?.id) {
+      const { data: dokUrl } = await yllapito
+        .from("dokumentit")
+        .select("id")
+        .eq("url", sailytettava.lahde_url)
+        .maybeSingle();
+      dok = dokUrl;
+    }
+    if (!dok?.id) {
+      const { data: uusi, error: dVirhe } = await yllapito
+        .from("dokumentit")
+        .insert({
+          hanke_id: riviId,
+          url: sailytettava.lahde_url,
+          otsikko: sailytettava.lahde_url,
+          laji: "verkkosivu",
+          muoto: "html",
+          julkaistu: true,
+          lahde_tyyppi: "muu",
+          sitovuustaso: "epavirallinen",
+        })
+        .select("id")
+        .single();
+      if (dVirhe || !uusi) throw new Error(dVirhe?.message ?? "Dokumentin luonti epäonnistui.");
+      dok = uusi;
+      for (const dokKentta of ["otsikko", "laji", "muoto"] as const) {
+        const { error: lahdeVirhe } = await yllapito.rpc("tallenna_kentta_lahde", {
+          p_taulu: "dokumentit",
+          p_rivi_id: dok.id,
+          p_kentta: dokKentta,
+          p_lahde_url: sailytettava.lahde_url,
+          p_lahde_sivu: null,
+          p_vahvistettu_pvm: new Date().toISOString().slice(0, 10),
+          p_luottamus: "epavarma",
+          p_lainaus: "Säilytettävä lähde lukujen läpikäynnissä",
+          p_merkitty: "ihmisen_vahvistama",
+          p_lahde_laji: "html",
+        });
+        if (lahdeVirhe) throw new Error(lahdeVirhe.message);
+      }
+    }
+
+    const { error: kVirhe } = await yllapito
+      .from("kentta_lahteet")
+      .update({
+        tila: "korvattu",
+        korvaava_dokumentti_id: dok.id,
+      })
+      .eq("id", korvattavaLahdeId);
+    if (kVirhe) throw new Error(kVirhe.message);
+  }
+
+  const { error: jonoVirhe } = await yllapito.from("luvun_lapikaynti").upsert(
+    {
+      taulu,
+      rivi_id: riviId,
+      kentta,
+      paatos,
+      kasittelija,
+      huomautus,
+      kasitelty_pvm: new Date().toISOString(),
+    },
+    { onConflict: "taulu,rivi_id,kentta" },
+  );
+  if (jonoVirhe) throw new Error(jonoVirhe.message);
+
+  revalidatePath("/yllapito/luvut");
+  revalidatePath("/yllapito");
+  revalidatePath(`/hankkeet/${riviId}`);
 }

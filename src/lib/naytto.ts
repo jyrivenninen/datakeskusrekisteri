@@ -9,6 +9,7 @@ import type {
   MenettelyLaji,
   MenettelyTila,
   Merkinta,
+  MuutSijainnit,
   OrganisaatioTyyppi,
   SijaintiAlueTyyppi,
   DokumenttiLaji,
@@ -330,6 +331,7 @@ export const HANKE_KENTTA_NIMET: Record<string, string> = {
   teho_mw: "Teho (MW)",
   it_teho_mw: "IT-teho (MW)",
   pinta_ala_ha: "Pinta-ala (ha)",
+  kaava_ala_ha: "Kaava-alue (ha)",
   sahkonkaytto_twh_a: "Sähkönkäyttö (TWh/a)",
   generaattorit_lkm: "Varavoimageneraattorit (kpl)",
   generaattorit_kaytossa_max_lkm: "Generaattoreita yhtä aikaa enintään (kpl)",
@@ -345,6 +347,9 @@ export const HANKE_KENTTA_NIMET: Record<string, string> = {
   yva_diaarinumero: "YVA-diaarinumero",
   kaavatunnus: "Kaavatunnus",
   kortteli: "Kortteli",
+  huomautus: "Huomautus",
+  sijaintiperustelu: "Sijainnin perustelu",
+  muut_sijainnit: "Muiden sijaintien tarkastelu",
   sijainti_alue_tyyppi: "Alueen tyyppi",
   tunnus: "Tunnus",
   kuva_url: "Kuvan osoite",
@@ -356,6 +361,12 @@ export const SIJAINTI_ALUE_TYYPPI_NIMET: Record<SijaintiAlueTyyppi, string> = {
   kaava_alue: "Kaava-alue",
   tontti: "Tontti",
   arvio: "Arvio",
+};
+
+export const MUUT_SIJAINNIT_NIMET: Record<MuutSijainnit, string> = {
+  tarkasteltu_ja_nimetty: "Tarkasteltu ja nimetty",
+  tarkasteltu_nimeamatta: "Tarkasteltu nimeämättä",
+  ei_kasitelty: "Ei käsitelty",
 };
 
 export const HANKE_KUNTA_ROOLI_NIMET: Record<HankeKuntaRooli, string> = {
@@ -383,10 +394,12 @@ export const HANKE_ORGANISAATIO_ROOLI_NIMET: Record<string, string> = {
   operaattori: "Operaattori",
   kiinteistonomistaja: "Kiinteistön omistaja",
   maanomistaja: "Maanomistaja",
-  konsultti: "Konsultti",
+  konsultti: "Konsultti (vanha)",
   hallinnoija: "Hallinnoija",
   toimija: "Hankkeesta vastaava",
   yva_konsultti: "YVA-konsultti",
+  kaavan_laatija: "Kaavan laatija",
+  lupahakemuksen_laatija: "Lupahakemuksen laatija",
   yhteysviranomainen: "Yhteysviranomainen",
   kaavoittaja: "Kaavoittaja",
   muu: "Muu",

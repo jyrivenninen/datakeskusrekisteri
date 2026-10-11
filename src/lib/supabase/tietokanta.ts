@@ -76,6 +76,8 @@ export const HANKE_ORGANISAATIO_ROOLIT = [
   "hallinnoija",
   "toimija",
   "yva_konsultti",
+  "kaavan_laatija",
+  "lupahakemuksen_laatija",
   "yhteysviranomainen",
   "kaavoittaja",
   "muu",
@@ -146,6 +148,7 @@ export const HANKE_FAKTAKENTAT_EHDOLLISET = [
   "teho_mw",
   "it_teho_mw",
   "pinta_ala_ha",
+  "kaava_ala_ha",
   "sahkonkaytto_twh_a",
   "generaattorit_lkm",
   "generaattorit_kaytossa_max_lkm",
@@ -158,7 +161,18 @@ export const HANKE_FAKTAKENTAT_EHDOLLISET = [
   "yva_diaarinumero",
   "kaavatunnus",
   "kortteli",
+  "huomautus",
+  "sijaintiperustelu",
+  "muut_sijainnit",
 ] as const;
+
+export const MUUT_SIJAINNIT_ARVOT = [
+  "tarkasteltu_ja_nimetty",
+  "tarkasteltu_nimeamatta",
+  "ei_kasitelty",
+] as const;
+
+export type MuutSijainnit = (typeof MUUT_SIJAINNIT_ARVOT)[number];
 
 export type Organisaatio = {
   id: string;
@@ -199,6 +213,7 @@ export type Hanke = {
   teho_mw: number | null;
   it_teho_mw: number | null;
   pinta_ala_ha: number | null;
+  kaava_ala_ha: number | null;
   sahkonkaytto_twh_a: number | null;
   generaattorit_lkm: number | null;
   generaattorit_kaytossa_max_lkm: number | null;
@@ -209,6 +224,9 @@ export type Hanke = {
   varavoima_paastot_t_co2e: number | null;
   toimija_organisaatio_id: string | null;
   yva_diaarinumero: string | null;
+  huomautus: string | null;
+  sijaintiperustelu: string | null;
+  muut_sijainnit: MuutSijainnit | null;
   julkaistu: boolean;
   yhdistetty_kohde_id: string | null;
   poistettu_perustelu: string | null;

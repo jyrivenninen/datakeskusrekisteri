@@ -15,6 +15,8 @@ export function KenttaPaivitysLomake({
   voiTyhjentaa,
   onVaihe,
   vaiheValinnat,
+  arvoValinnat,
+  pitkaTeksti,
   yksikko,
   yksikkoOletus,
   lainausPakollinen,
@@ -29,12 +31,15 @@ export function KenttaPaivitysLomake({
   voiTyhjentaa: boolean;
   onVaihe: boolean;
   vaiheValinnat: Valinta[];
+  arvoValinnat?: Valinta[];
+  pitkaTeksti?: boolean;
   yksikko: "diesel" | "polttoaine" | null;
   yksikkoOletus: string;
   lainausPakollinen: boolean;
   julkaiseSuoraan: boolean;
   luottamusValinnat: Valinta[];
 }) {
+  const valintaLista = arvoValinnat ?? (onVaihe ? vaiheValinnat : null);
   const [tyhjennys, setTyhjennys] = useState(false);
 
   return (
@@ -78,7 +83,7 @@ export function KenttaPaivitysLomake({
               Uusi arvo
               <PakollinenMerkki />
             </label>
-            {onVaihe ? (
+            {valintaLista ? (
               <select
                 id="arvo"
                 name="arvo"
@@ -86,13 +91,21 @@ export function KenttaPaivitysLomake({
                 defaultValue=""
                 className="rounded border border-border bg-surface px-2 py-2"
               >
-                <option value="">Valitse vaihe</option>
-                {vaiheValinnat.map((vaihe) => (
+                <option value="">Valitse</option>
+                {valintaLista.map((vaihe) => (
                   <option key={vaihe.arvo} value={vaihe.arvo}>
                     {vaihe.nimi}
                   </option>
                 ))}
               </select>
+            ) : pitkaTeksti ? (
+              <textarea
+                id="arvo"
+                name="arvo"
+                required
+                rows={6}
+                className="rounded border border-border bg-surface px-2 py-2"
+              />
             ) : (
               <input
                 id="arvo"

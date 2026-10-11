@@ -21,10 +21,14 @@ function kontekstiEpavarma(konteksti: string): boolean {
   return EPAVARMA_SANAT.test(konteksti);
 }
 
+const LAMPO_KONTEKSTI =
+  /hukkalämp|lämpöä|lämmön|kaukolämp|datalämp|vuosituotanto|tuottavat lämpö|lämmitys/i;
+
 function mwIlmanEnergiaa(konteksti: string): boolean {
+  if (LAMPO_KONTEKSTI.test(konteksti)) return true;
   if (/\bTWh\b/i.test(konteksti) || /\bGWh\b/i.test(konteksti)) return false;
   if (/MWh\s*\/?\s*vuosi/i.test(konteksti)) return false;
-  if (/sähkön\s*kulutus|sähköntarve|vuosikulutus/i.test(konteksti)) return false;
+  if (/sähkön\s*kulutus|sähköntarve|vuosikulutus|sähköä/i.test(konteksti)) return false;
   return /\b\d[\d\s,.]*\s*MW\b/i.test(konteksti);
 }
 

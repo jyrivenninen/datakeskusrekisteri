@@ -205,6 +205,13 @@ export default async function YllapitoSivu({
         {" — "}
         URL-tasoinen lahde_tyyppi ja sitovuustaso (domain-ehdotukset ja käsin täydennys).
       </p>
+      <p className="mt-2 text-sm">
+        <Link href="/yllapito/luvut" className="font-medium text-link underline">
+          Lukujen läpikäynti
+        </Link>
+        {" — "}
+        kentät, joissa lähteet antavat eri luvun (ei automaattista korjausta).
+      </p>
       <section className="mt-8 rounded border border-border bg-surface px-4 py-4" aria-labelledby="katselu-otsikko">
         <h2 id="katselu-otsikko" className="text-lg font-semibold">
           Sivulataukset

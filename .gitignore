@@ -38,6 +38,9 @@ yarn-error.log*
 # vercel
 .vercel
 
+# Agenttien ajoraportit (ei hankedataa)
+agents/data/sahkonkaytto-skannaus-*.json
+
 # Paikalliset assetit (ei repoon)
 /lokaali/
 

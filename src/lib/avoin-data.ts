@@ -1,3 +1,4 @@
+import { onKonsulttiSivuRooli } from "@/lib/konsultti-roolit";
 import type { haeHanke } from "@/lib/supabase/kyselyt";
 import type {
   Hanke,
@@ -104,8 +105,7 @@ function serialisoiPaatos(rivi: PaatosNakyma) {
 function serialisoiOrganisaatioRooli(rivi: HankeOrganisaatioNakyma) {
   const pohja = poistaJulkaisu(rivi);
   const konsultti =
-    (rivi.rooli === "konsultti" || rivi.rooli === "yva_konsultti") &&
-    rivi.organisaatio?.slug
+    onKonsulttiSivuRooli(rivi.rooli) && rivi.organisaatio?.slug
       ? { konsultti_sivu: `/konsultit/${rivi.organisaatio.slug}` }
       : {};
   return { ...pohja, ...konsultti };
@@ -245,11 +245,15 @@ export const CSV_SARAKKEET = [
   "teho_mw",
   "it_teho_mw",
   "pinta_ala_ha",
+  "kaava_ala_ha",
   "sahkonkaytto_twh_a",
   "generaattorit_lkm",
   "yva_diaarinumero",
   "kaavatunnus",
   "toimija_nimi",
+  "huomautus",
+  "sijaintiperustelu",
+  "muut_sijainnit",
   "konsultit",
   "paivitetty_pvm",
   "json_url",
@@ -273,7 +277,7 @@ export function hankkeetCsv(hankkeet: AvoinDataHanke[]): string {
   for (const rivi of hankkeet) {
     const h = rivi.hanke;
     const konsultit = rivi.organisaatiot
-      .filter((o) => o.rooli === "konsultti" || o.rooli === "yva_konsultti")
+      .filter((o) => onKonsulttiSivuRooli(o.rooli))
       .map((o) => o.organisaatio?.nimi)
       .filter((nimi): nimi is string => Boolean(nimi))
       .join("; ");
@@ -287,11 +291,15 @@ export function hankkeetCsv(hankkeet: AvoinDataHanke[]): string {
         h.teho_mw,
         h.it_teho_mw,
         h.pinta_ala_ha,
+        h.kaava_ala_ha,
         h.sahkonkaytto_twh_a,
         h.generaattorit_lkm,
         h.yva_diaarinumero,
         h.kaavatunnus,
         h.toimija?.nimi ?? null,
+        h.huomautus,
+        h.sijaintiperustelu,
+        h.muut_sijainnit,
         konsultit || null,
         h.paivitetty_pvm,
         rivi.linkit.json,

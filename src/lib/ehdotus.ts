@@ -253,6 +253,7 @@ const NUMEERISET = new Set([
   "it_teho_mw",
   "teho_mw",
   "pinta_ala_ha",
+  "kaava_ala_ha",
   "sahkonkaytto_twh_a",
   "generaattorit_lkm",
   "generaattorit_kaytossa_max_lkm",
@@ -278,6 +279,7 @@ export const JULKINEN_LISALAHDE_KENTAT = [
   "teho_mw",
   "it_teho_mw",
   "pinta_ala_ha",
+  "kaava_ala_ha",
   "sahkonkaytto_twh_a",
   "generaattorit_lkm",
   "yva_diaarinumero",
@@ -342,6 +344,7 @@ export const LOMAKE_KENTAT = [
   "yva_diaarinumero",
   "it_teho_mw",
   "pinta_ala_ha",
+  "kaava_ala_ha",
   "sahkonkaytto_twh_a",
   "generaattorit_lkm",
   "generaattorit_kaytossa_max_lkm",
@@ -362,6 +365,7 @@ export const PAIVITETTAVAT_HANKE_KENTAT = [
   "teho_mw",
   "it_teho_mw",
   "pinta_ala_ha",
+  "kaava_ala_ha",
   "sahkonkaytto_twh_a",
   "generaattorit_lkm",
   "generaattorit_kaytossa_max_lkm",
@@ -374,6 +378,8 @@ export const PAIVITETTAVAT_HANKE_KENTAT = [
   "sijainti_lat",
   "sijainti_lon",
   "sijainti_alue_tyyppi",
+  "sijaintiperustelu",
+  "muut_sijainnit",
 ] as const;
 
 export type PaivitettavaHankeKentta = (typeof PAIVITETTAVAT_HANKE_KENTAT)[number];

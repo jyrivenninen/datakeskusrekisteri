@@ -10,16 +10,29 @@ import {
   tyhjennysKenttaLomakkeesta,
   type PaivitettavaHankeKentta,
 } from "@/lib/ehdotus";
-import { HANKE_KENTTA_NIMET, HANKETASON_VAIHTOEHTO_OHJE, LUOTTAMUS_NIMET, VAIHE_NIMET, muotoileLuku } from "@/lib/naytto";
+import {
+  HANKE_KENTTA_NIMET,
+  HANKETASON_VAIHTOEHTO_OHJE,
+  LUOTTAMUS_NIMET,
+  MUUT_SIJAINNIT_NIMET,
+  VAIHE_NIMET,
+  muotoileLuku,
+} from "@/lib/naytto";
 import { haeHanke, haeHankeOhjaus, type HankeListalla } from "@/lib/supabase/kyselyt";
 import { haeYllapitaja } from "@/lib/supabase/palvelin";
-import { HANKE_VAIHEET, LUOTTAMUSTASOT, type HankeVaihe } from "@/lib/supabase/tietokanta";
+import {
+  HANKE_VAIHEET,
+  LUOTTAMUSTASOT,
+  MUUT_SIJAINNIT_ARVOT,
+  type HankeVaihe,
+} from "@/lib/supabase/tietokanta";
 import { supabasePalvelinAvainAsetettu } from "@/lib/supabase/yllapito-asiakas";
 
 const LUKUKENTAT = new Set([
   "it_teho_mw",
   "teho_mw",
   "pinta_ala_ha",
+  "kaava_ala_ha",
   "sahkonkaytto_twh_a",
   "generaattorit_lkm",
   "generaattorit_kaytossa_max_lkm",
@@ -48,6 +61,9 @@ function naytaNykyinen(kentta: string, arvo: string, yksikko?: string | null): s
   if (!arvo) return "ei merkitty";
   if (kentta === "vaihe" && arvo in VAIHE_NIMET) {
     return VAIHE_NIMET[arvo as HankeVaihe];
+  }
+  if (kentta === "muut_sijainnit" && arvo in MUUT_SIJAINNIT_NIMET) {
+    return MUUT_SIJAINNIT_NIMET[arvo as keyof typeof MUUT_SIJAINNIT_NIMET];
   }
   const teksti = LUKUKENTAT.has(kentta) ? muotoileLuku(arvo) : arvo;
   const yksikkoNimi = yksikkoTeksti(yksikko);
@@ -181,6 +197,15 @@ export default async function KenttapaivitysSivu({
             arvo: vaihe,
             nimi: VAIHE_NIMET[vaihe],
           }))}
+          arvoValinnat={
+            kentta === "muut_sijainnit"
+              ? MUUT_SIJAINNIT_ARVOT.map((arvo) => ({
+                  arvo,
+                  nimi: MUUT_SIJAINNIT_NIMET[arvo],
+                }))
+              : undefined
+          }
+          pitkaTeksti={kentta === "sijaintiperustelu"}
           yksikko={
             kentta === "diesel_vuosikulutus_maara"
               ? "diesel"
@@ -189,7 +214,11 @@ export default async function KenttapaivitysSivu({
                 : null
           }
           yksikkoOletus={yksikkoOletus}
-          lainausPakollinen={kentta === "varavoima_paastot_t_co2e"}
+          lainausPakollinen={
+            kentta === "varavoima_paastot_t_co2e" ||
+            kentta === "sijaintiperustelu" ||
+            kentta === "muut_sijainnit"
+          }
           julkaiseSuoraan={julkaiseSuoraan}
           luottamusValinnat={LUOTTAMUSTASOT.map((taso) => ({
             arvo: taso,
@@ -216,6 +245,7 @@ export default async function KenttapaivitysSivu({
             "teho_mw",
             "it_teho_mw",
             "pinta_ala_ha",
+            "kaava_ala_ha",
             "sahkonkaytto_twh_a",
             "generaattorit_lkm",
             "generaattori_polttoaineteho_mw",

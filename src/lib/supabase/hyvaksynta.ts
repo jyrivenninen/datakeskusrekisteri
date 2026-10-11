@@ -479,6 +479,35 @@ export async function hyvaksyMuutosehdotus(
     return;
   }
 
+  const vainHuomautus =
+    Object.keys(kentat).length === 1 &&
+    Boolean(kentat.huomautus) &&
+    Object.keys(vaihtoehdot).length === 0;
+  if (vainHuomautus || sisalto.huomio === "hanke-huomautus") {
+    const { error: huomVirhe } = await supabase.rpc("julkaise_hanke_huomautus", {
+      p_ehdotus_id: ehdotusId,
+      p_kasittelija: kasittelija,
+    });
+    if (huomVirhe) throw new Error(huomVirhe.message);
+    return;
+  }
+
+  const sijaintiKentat = Object.keys(kentat).filter(
+    (k) => k === "sijaintiperustelu" || k === "muut_sijainnit",
+  );
+  if (
+    sijaintiKentat.length > 0 &&
+    sijaintiKentat.length === Object.keys(kentat).length &&
+    Object.keys(vaihtoehdot).length === 0
+  ) {
+    const { error: sijVirhe } = await supabase.rpc("julkaise_sijaintiperustelu", {
+      p_ehdotus_id: ehdotusId,
+      p_kasittelija: kasittelija,
+    });
+    if (sijVirhe) throw new Error(sijVirhe.message);
+    return;
+  }
+
   if (Object.keys(kentat).length === 0 && Object.keys(vaihtoehdot).length === 0) {
     if ((sisalto.lisalahteet?.length ?? 0) > 0) {
       const { error: linkkiVirhe } = await supabase

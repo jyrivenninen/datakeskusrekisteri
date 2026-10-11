@@ -3,6 +3,7 @@ import { notFound, permanentRedirect } from "next/navigation";
 import { AsiakirjaTaulukko } from "@/komponentit/asiakirja-kortti";
 import { AvattavaKortti, Korttiruudukko } from "@/komponentit/avattava-kortti";
 import { KarttaViive } from "@/komponentit/kartta-viive";
+import { onKonsulttiSivuRooli } from "@/lib/konsultti-roolit";
 import { konsulttiSivuPolku } from "@/lib/konsultti-slug";
 import { kuntaSivuPolku } from "@/lib/kunta-slug";
 import { normalisoiKuntaNimi, ratkaiseMaakunta } from "@/lib/maakunta";
@@ -18,6 +19,7 @@ import {
   MAARAAJA_NIMET,
   MENETTELY_LAJI_NIMET,
   MENETTELY_TILA_NIMET,
+  MUUT_SIJAINNIT_NIMET,
   SIJAINTI_ALUE_TYYPPI_NIMET,
   VAIHE_NIMET,
   VAIHE_VARIT,
@@ -175,6 +177,10 @@ function hankeRyhmat(
         {
           kentta: "pinta_ala_ha",
           arvo: hanke.pinta_ala_ha != null ? muotoileLuku(hanke.pinta_ala_ha) : null,
+        },
+        {
+          kentta: "kaava_ala_ha",
+          arvo: hanke.kaava_ala_ha != null ? muotoileLuku(hanke.kaava_ala_ha) : null,
         },
         {
           kentta: "sahkonkaytto_twh_a",
@@ -388,6 +394,11 @@ export default async function HankeSivu({
           {hanke.viimeisin_paatos.paattava_organisaatio?.nimi ?? "—"}
         </p>
       ) : null}
+      {hanke.huomautus ? (
+        <p className="mt-3 max-w-prose text-sm leading-relaxed">
+          {hanke.huomautus}
+        </p>
+      ) : null}
       <p className="mt-3 text-sm">
         <a href={`/hankkeet/${hanke.id}/paatos`} className="text-link underline">
           Ilmoita viranomaispäätös
@@ -428,6 +439,44 @@ export default async function HankeSivu({
           </p>
         ) : null}
       </section>
+
+      {hanke.sijaintiperustelu || hanke.muut_sijainnit ? (
+        <section className="mt-8" aria-labelledby="sijaintiperustelu-otsikko">
+          <h2 id="sijaintiperustelu-otsikko" className="text-xl font-semibold">
+            Sijainnin perustelu
+          </h2>
+          <p className="mt-2 text-sm text-muted">
+            Perustelu ja muiden sijaintien tarkastelu YVA-asiakirjasta. Ilman
+            YVA-menettelyä kentät jäävät tyhjiksi.
+          </p>
+          <Korttiruudukko>
+            {hanke.sijaintiperustelu ? (
+              <Faktakortti
+                hankeId={hanke.id}
+                rivi={{
+                  kentta: "sijaintiperustelu",
+                  arvo: hanke.sijaintiperustelu,
+                }}
+                lahteet={lahteet}
+                linkkiTekstit={linkkiTekstit}
+                korvaavat={korvaavat}
+              />
+            ) : null}
+            {hanke.muut_sijainnit ? (
+              <Faktakortti
+                hankeId={hanke.id}
+                rivi={{
+                  kentta: "muut_sijainnit",
+                  arvo: MUUT_SIJAINNIT_NIMET[hanke.muut_sijainnit],
+                }}
+                lahteet={lahteet}
+                linkkiTekstit={linkkiTekstit}
+                korvaavat={korvaavat}
+              />
+            ) : null}
+          </Korttiruudukko>
+        </section>
+      ) : null}
 
       <section className="mt-8" aria-labelledby="kuvat-otsikko">
         <h2 id="kuvat-otsikko" className="text-xl font-semibold">
@@ -668,8 +717,7 @@ export default async function HankeSivu({
                   rivi.organisaatio ? (
                     <a
                       href={
-                        (rivi.rooli === "konsultti" || rivi.rooli === "yva_konsultti") &&
-                        rivi.organisaatio.slug
+                        onKonsulttiSivuRooli(rivi.rooli) && rivi.organisaatio.slug
                           ? konsulttiSivuPolku(rivi.organisaatio.slug)
                           : `/organisaatiot/${rivi.organisaatio.id}`
                       }
