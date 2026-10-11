@@ -9,6 +9,16 @@ export type KehityslokiMerkinta = {
 
 export const KEHITYSLOKI: KehityslokiMerkinta[] = [
   {
+    pvm: "2026-10-11",
+    otsikko: "Ilmoituslomake",
+    kohdat: [
+      "Uuden hankkeen ilmoitukseen tarvitaan nimi, kunta ja osoite. Pakolliset kentät on merkitty tähdellä.",
+      "Täydennyksessä valitaan hanke, tieto ja osoite. Riville voi kirjoittaa arvon tai viestin.",
+      "Samaan ilmoitukseen voi lisätä useita tietoja. Aiemmat rivit näytetään tiivistettyinä.",
+      "Ilmoitus ei tule heti rekisteriin. Ylläpitäjä tarkistaa lähteen.",
+    ],
+  },
+  {
     pvm: "2026-10-10",
     otsikko: "Määräajat ja viimeksi päivitetty",
     kohdat: [

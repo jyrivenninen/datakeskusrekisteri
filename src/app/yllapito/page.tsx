@@ -161,6 +161,9 @@ export default async function YllapitoSivu({
           {ehdotus.tyyppi === "kunta_havainto" && kuntaDokumentit > 0
             ? ` · ${kuntaDokumentit} ehdotettua asiakirjaa`
             : ""}
+          {sisalto?.lisalahteet && sisalto.lisalahteet.length > 0
+            ? ` · ${sisalto.lisalahteet.length === 1 ? "1 muu linkki" : `${sisalto.lisalahteet.length} muuta linkkiä`}`
+            : ""}
         </p>
         {ehdotus.tyyppi === "lahde_tyyppi_havainto" && lahdeMetaUrl ? (
           <p className="mt-1 break-all text-sm">

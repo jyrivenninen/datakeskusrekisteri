@@ -464,6 +464,19 @@ export async function hyvaksyMuutosehdotus(
   }
 
   if (Object.keys(kentat).length === 0 && Object.keys(vaihtoehdot).length === 0) {
+    if ((sisalto.lisalahteet?.length ?? 0) > 0) {
+      const { error: linkkiVirhe } = await supabase
+        .from("muutosehdotukset")
+        .update({
+          tila: "hyvaksytty",
+          kasitelty_pvm: new Date().toISOString(),
+          kasittelija,
+        })
+        .eq("id", ehdotusId)
+        .eq("tila", "odottaa");
+      if (linkkiVirhe) throw new Error(linkkiVirhe.message);
+      return;
+    }
     throw new Error("Ehdotuksessa ei ole kenttiä.");
   }
 

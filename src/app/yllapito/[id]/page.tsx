@@ -1217,6 +1217,38 @@ export default async function EhdotusSivu({
         </section>
       ) : null}
 
+      {sisalto.lisalahteet && sisalto.lisalahteet.length > 0 ? (
+        <section className="mt-6" aria-labelledby="lisalahteet-otsikko">
+          <h2 id="lisalahteet-otsikko" className="text-xl font-semibold">
+            Muut linkit
+          </h2>
+          <p className="mt-2 text-sm text-muted">
+            Ilmoittaja kohdisti nämä osoitteet tietoon. Hyväksyntä merkitsee
+            ilmoituksen käsitellyksi. Lukua ei tallenneta: kirjaa arvo hankkeelle
+            erikseen, jos lähde sen kertoo.
+          </p>
+          <ul className="mt-4 divide-y divide-border border-y border-border">
+            {sisalto.lisalahteet.map((linkki, indeksi) => (
+              <li key={`${linkki.kentta}-${indeksi}`} className="py-3">
+                <p className="font-medium">
+                  {linkki.kentta === "muu"
+                    ? "Muu tieto"
+                    : (HANKE_KENTTA_NIMET[linkki.kentta] ?? linkki.kentta)}
+                </p>
+                {linkki.viesti ? (
+                  <p className="mt-1 whitespace-pre-wrap">{linkki.viesti}</p>
+                ) : null}
+                <p className="mt-1 break-all text-sm">
+                  <a href={linkki.url} className="text-link underline" rel="noopener noreferrer">
+                    {linkki.url}
+                  </a>
+                </p>
+              </li>
+            ))}
+          </ul>
+        </section>
+      ) : null}
+
       {Object.keys(sisalto.kentat ?? {}).length > 0 ? (
         <dl className="mt-6 divide-y divide-border border-y border-border">
         {Object.entries(sisalto.kentat ?? {}).map(([kentta, tieto]) => (

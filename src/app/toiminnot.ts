@@ -5,6 +5,7 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import {
   LOMAKE_KENTAT,
+  parsiIlmoitusLisalahteet,
   onPaivitettavaHankeKentta,
   onVaihtoehtoKentta,
   rakennaIlmoitusSisalto,
@@ -81,6 +82,16 @@ export async function lahetaIlmoitus(formData: FormData): Promise<void> {
   );
   if (virhe) ilmoitusPaluu(tyyppi, virhe);
 
+  const lisalahteet = parsiIlmoitusLisalahteet(
+    formData.getAll("lisalahde_kentta").map((arvo) => String(arvo)),
+    formData.getAll("lisalahde_url").map((arvo) => String(arvo)),
+    formData.getAll("lisalahde_viesti").map((arvo) => String(arvo)),
+  );
+  if (lisalahteet.virhe) ilmoitusPaluu(tyyppi, lisalahteet.virhe);
+  if (lisalahteet.lisalahteet.length > 0) {
+    sisalto.lisalahteet = lisalahteet.lisalahteet;
+  }
+
   if (tyyppi === "uusi_hanke") {
     const puute = tarkistaUusiHanke(sisalto);
     if (puute) ilmoitusPaluu(tyyppi, puute);
@@ -88,21 +99,29 @@ export async function lahetaIlmoitus(formData: FormData): Promise<void> {
     if (!hankeIdRaaka) {
       ilmoitusPaluu(tyyppi, "Valitse täydennettävä hanke.");
     }
-    if (Object.keys(sisalto.kentat).length === 0) {
-      ilmoitusPaluu(tyyppi, "Lisää vähintään yksi kenttä ja lähde.");
+    if (Object.keys(sisalto.kentat).length === 0 && !sisalto.lisalahteet?.length) {
+      ilmoitusPaluu(tyyppi, "Valitse tieto ja anna osoite.");
     }
   } else {
     ilmoitusPaluu(tyyppi, "Valitse ilmoituksen tyyppi.");
   }
 
   const ehdotuksenLahde =
-    lahdeUrl.trim() || Object.values(sisalto.kentat)[0]?.lahde_url || null;
+    lahdeUrl.trim() ||
+    Object.values(sisalto.kentat)[0]?.lahde_url ||
+    sisalto.lisalahteet?.[0]?.url ||
+    null;
   if (ehdotuksenLahde) {
     const kielto = lahdeUrlKieltoViesti(ehdotuksenLahde);
     if (kielto) ilmoitusPaluu(tyyppi, kielto);
   }
   const { user: yllapitaja, nimi: yllapitajaNimi } = await haeYllapitaja();
   const julkaiseSuoraan = Boolean(yllapitaja && supabasePalvelinAvainAsetettu());
+  if (!julkaiseSuoraan) {
+    for (const tieto of Object.values(sisalto.kentat)) {
+      tieto.luottamus = "epavarma";
+    }
+  }
 
   if (julkaiseSuoraan && yllapitaja) {
     const kasittelija = kasittelijaMerkinta(yllapitajaNimi, yllapitaja.email, yllapitaja.id);

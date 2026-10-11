@@ -113,6 +113,8 @@ export type EhdotusSisalto = {
     lahde_url?: string | null;
     lainaus?: string | null;
   }>;
+  /** Vierailijan lisäämät osoitteet. Eivät julkaise kentän arvoa. */
+  lisalahteet?: Array<{ kentta: string; url: string; viesti?: string | null }>;
   lahde_metatiedot?: {
     dokumentti_id: string;
     url: string;
@@ -244,6 +246,74 @@ const NUMEERISET = new Set([
   "sijainti_lat",
   "sijainti_lon",
 ]);
+
+/** Vierailijan uusi hanke: nimi ja kunta. Vaihe valitaan ylläpidossa. */
+export const JULKINEN_ILMOITUS_KENTAT = ["nimi", "kunta"] as const;
+
+/** Kentät, joihin vierailija voi kohdistaa linkin ja vapaan viestin. */
+export const JULKINEN_LISALAHDE_KENTAT = [
+  "nimi",
+  "kunta",
+  "maakunta",
+  "vaihe",
+  "toimija_nimi",
+  "teho_mw",
+  "it_teho_mw",
+  "pinta_ala_ha",
+  "sahkonkaytto_twh_a",
+  "generaattorit_lkm",
+  "yva_diaarinumero",
+  "sijainti",
+] as const;
+
+export const LISALAHDE_MUU = "muu";
+const LISALAHDE_KATTO = 12;
+const LISALAHDE_KENTAT = new Set<string>([...JULKINEN_LISALAHDE_KENTAT, LISALAHDE_MUU]);
+
+const LISALAHDE_VIESTI_KATTO = 2000;
+
+export type IlmoitusLisalahde = { kentta: string; url: string; viesti: string | null };
+
+/** Tyhjät rivit ohitetaan. Puoliksi täytetty rivi on virhe. */
+export function parsiIlmoitusLisalahteet(
+  kentat: string[],
+  osoitteet: string[],
+  viestit: string[] = [],
+): { lisalahteet: IlmoitusLisalahde[]; virhe: string | null } {
+  const maara = Math.max(kentat.length, osoitteet.length, viestit.length);
+  if (maara > LISALAHDE_KATTO) {
+    return { lisalahteet: [], virhe: "Tietoja voi lisätä enintään 12." };
+  }
+  const lisalahteet: IlmoitusLisalahde[] = [];
+  for (let i = 0; i < maara; i++) {
+    const kentta = (kentat[i] ?? "").trim();
+    const url = (osoitteet[i] ?? "").trim();
+    const viesti = (viestit[i] ?? "").trim();
+    if (!kentta && !url && !viesti) continue;
+    if (!kentta) {
+      return { lisalahteet: [], virhe: "Valitse, mitä linkki koskee." };
+    }
+    if (!LISALAHDE_KENTAT.has(kentta)) {
+      return { lisalahteet: [], virhe: "Linkin tieto ei ole sallittu." };
+    }
+    if (!url) {
+      return { lisalahteet: [], virhe: "Lisää linkin osoite tai poista tyhjä rivi." };
+    }
+    if (!onHttpsUrl(url)) {
+      return {
+        lisalahteet: [],
+        virhe: "Linkin osoitteen pitää alkaa http:// tai https://.",
+      };
+    }
+    const kielto = lahdeUrlKieltoViesti(url);
+    if (kielto) return { lisalahteet: [], virhe: kielto };
+    if (viesti.length > LISALAHDE_VIESTI_KATTO) {
+      return { lisalahteet: [], virhe: "Arvo tai viesti on liian pitkä." };
+    }
+    lisalahteet.push({ kentta, url, viesti: viesti || null });
+  }
+  return { lisalahteet, virhe: null };
+}
 
 export const LOMAKE_KENTAT = [
   "nimi",
@@ -520,9 +590,9 @@ export function rakennaIlmoitusSisalto(
 }
 
 export function tarkistaUusiHanke(sisalto: EhdotusSisalto): string | null {
-  for (const pakollinen of ["nimi", "kunta", "vaihe"] as const) {
+  for (const pakollinen of ["nimi", "kunta"] as const) {
     if (!sisalto.kentat[pakollinen]?.arvo) {
-      return "Uudessa hankkeessa tarvitaan nimi, kunta, vaihe ja lähde.";
+      return "Uudessa hankkeessa tarvitaan nimi, kunta ja lähde.";
     }
   }
   return null;
