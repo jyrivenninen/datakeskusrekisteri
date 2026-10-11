@@ -150,9 +150,11 @@ function hankeRyhmat(
         {
           kentta: "sijainti",
           arvo:
-            hanke.sijainti_lat != null && hanke.sijainti_lon != null
-              ? `${muotoileLuku(hanke.sijainti_lat)}, ${muotoileLuku(hanke.sijainti_lon)}`
-              : null,
+            hanke.sijainti_alue_tyyppi === "arvio"
+              ? null
+              : hanke.sijainti_lat != null && hanke.sijainti_lon != null
+                ? `${muotoileLuku(hanke.sijainti_lat)}, ${muotoileLuku(hanke.sijainti_lon)}`
+                : null,
         },
         {
           kentta: "sijainti_alue_tyyppi",
@@ -351,6 +353,7 @@ export default async function HankeSivu({
             lat: hanke.sijainti_lat != null ? Number(hanke.sijainti_lat) : undefined,
             lon: hanke.sijainti_lon != null ? Number(hanke.sijainti_lon) : undefined,
             tehoMw: hankeTehoMw(hanke),
+            arvio: hanke.sijainti_alue_tyyppi === "arvio",
             alue,
             johdot: karttajohdot,
           },
@@ -424,10 +427,17 @@ export default async function HankeSivu({
             vaiheVari: VAIHE_VARIT[hanke.vaihe],
           }}
         />
+        {hanke.sijainti_alue_tyyppi === "arvio" &&
+        hanke.sijainti_lat != null &&
+        hanke.sijainti_lon != null ? (
+          <p className="mt-2 text-sm text-muted">
+            Sijainti arvioitu paikan nimestä, ei hankkeen osoitteesta.
+          </p>
+        ) : null}
         {alue ? (
           <p className="mt-2 text-sm text-muted">
             Sininen alue on merkitty{" "}
-            {hanke.sijainti_alue_tyyppi
+            {hanke.sijainti_alue_tyyppi && hanke.sijainti_alue_tyyppi !== "arvio"
               ? SIJAINTI_ALUE_TYYPPI_NIMET[hanke.sijainti_alue_tyyppi].toLowerCase()
               : "hankealue"}
             .

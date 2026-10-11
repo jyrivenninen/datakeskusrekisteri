@@ -69,7 +69,11 @@ export function muotoileHankeKenttaArvo(
   }
   if (lahdeKentta === "sijainti") {
     const osat: string[] = [];
-    if (hanke.sijainti_lat != null && hanke.sijainti_lon != null) {
+    if (
+      hanke.sijainti_alue_tyyppi !== "arvio" &&
+      hanke.sijainti_lat != null &&
+      hanke.sijainti_lon != null
+    ) {
       osat.push(`${hanke.sijainti_lat}, ${hanke.sijainti_lon}`);
     }
     if (hanke.sijainti_alue_tyyppi) {

@@ -53,6 +53,8 @@ export type Karttamerkki = {
   sahkonkayttoTwhMax?: number | null;
   /** Maakunta hankkeen kentästä tai kunnan koodistosta. */
   maakunta?: string | null;
+  /** Paikkatason geokoodi: himmeämpi/isompi ympyrä, ei nuppineulaa. */
+  arvio?: boolean;
   alue?: SijaintiAlue | null;
   johdot?: { id: string; reitti: SijaintiViiva }[];
 };
@@ -370,6 +372,42 @@ function merkinKeskipiste(merkki: Karttamerkki): { lon: number; lat: number } | 
   return alue ? alueenKeskipiste(alue) : null;
 }
 
+/** Ryhmittelee päällekkäiset merkit (~0,1 m) samaan pisteeseen. */
+function pisteAvain(lat: number, lon: number): string {
+  return `${lat.toFixed(6)},${lon.toFixed(6)}`;
+}
+
+type MerkkiRyhma = {
+  avain: string;
+  lat: number;
+  lon: number;
+  hankkeet: Karttamerkki[];
+};
+
+function ryhmitteleMerkitPisteittain(merkit: Karttamerkki[]): MerkkiRyhma[] {
+  const ryhmat = new Map<string, MerkkiRyhma>();
+  for (const merkki of merkit) {
+    const keskipiste = merkinKeskipiste(merkki);
+    if (!keskipiste) continue;
+    const avain = pisteAvain(keskipiste.lat, keskipiste.lon);
+    const olemassa = ryhmat.get(avain);
+    if (olemassa) {
+      olemassa.hankkeet.push(merkki);
+    } else {
+      ryhmat.set(avain, {
+        avain,
+        lat: keskipiste.lat,
+        lon: keskipiste.lon,
+        hankkeet: [merkki],
+      });
+    }
+  }
+  for (const ryhma of ryhmat.values()) {
+    ryhma.hankkeet.sort((a, b) => a.nimi.localeCompare(b.nimi, "fi"));
+  }
+  return [...ryhmat.values()];
+}
+
 function interpoloiLuku(pysakit: [number, number][], arvo: number): number {
   if (pysakit.length === 0) return 0;
   if (arvo <= pysakit[0][0]) return pysakit[0][1];
@@ -583,17 +621,13 @@ function alueenKeskipiste(alue: SijaintiAlue): { lon: number; lat: number } | nu
   return { lon: summaLon / lkm, lat: summaLat / lkm };
 }
 
-function luoKarttamerkki(merkki: Karttamerkki) {
-  const el = document.createElement("a");
-  el.href = `/hankkeet/${merkki.id}`;
-  el.className = "kartta-merkki kartta-merkki--piste";
-  const vaihenimi = merkki.vaihe ? VAIHE_NIMET[merkki.vaihe] : null;
-  el.setAttribute("aria-label", vaihenimi ? `${merkki.nimi}, ${vaihenimi}` : merkki.nimi);
+function lisaaMerkkiVisuaalit(el: HTMLElement, vari: string, arvio: boolean) {
+  if (arvio) el.dataset.arvio = "1";
 
   const piste = document.createElement("span");
   piste.className = "kartta-merkki-piste";
   piste.setAttribute("aria-hidden", "true");
-  piste.style.backgroundColor = vaiheVari(merkki.vaihe);
+  piste.style.backgroundColor = vari;
 
   const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
   svg.setAttribute("class", "kartta-merkki-nuppineula");
@@ -607,7 +641,7 @@ function luoKarttamerkki(merkki: Karttamerkki) {
     "d",
     "M14 1.5c-6.4 0-11.5 5-11.5 11.2 0 8.6 11.5 25.3 11.5 25.3s11.5-16.7 11.5-25.3C25.5 6.5 20.4 1.5 14 1.5z",
   );
-  tausta.setAttribute("fill", vaiheVari(merkki.vaihe));
+  tausta.setAttribute("fill", vari);
   tausta.setAttribute("stroke", "#fff");
   tausta.setAttribute("stroke-width", "2");
 
@@ -621,16 +655,160 @@ function luoKarttamerkki(merkki: Karttamerkki) {
   svg.appendChild(keskus);
   el.appendChild(piste);
   el.appendChild(svg);
+}
+
+function luoYksiKarttamerkki(merkki: Karttamerkki) {
+  const el = document.createElement("a");
+  el.href = `/hankkeet/${merkki.id}`;
+  el.className = merkki.arvio
+    ? "kartta-merkki kartta-merkki--piste kartta-merkki--arvio"
+    : "kartta-merkki kartta-merkki--piste";
+  const vaihenimi = merkki.vaihe ? VAIHE_NIMET[merkki.vaihe] : null;
+  const arviolisays = merkki.arvio ? ", arvioitu sijainti" : "";
+  el.setAttribute(
+    "aria-label",
+    vaihenimi ? `${merkki.nimi}, ${vaihenimi}${arviolisays}` : `${merkki.nimi}${arviolisays}`,
+  );
+  lisaaMerkkiVisuaalit(el, vaiheVari(merkki.vaihe), Boolean(merkki.arvio));
   return el;
 }
 
+function suljeAvoimetMerkkiListat(paitsi?: HTMLElement) {
+  document.querySelectorAll<HTMLElement>(".kartta-merkki--ryhma[aria-expanded='true']").forEach((nappi) => {
+    if (paitsi && nappi === paitsi) return;
+    nappi.setAttribute("aria-expanded", "false");
+    const lista = nappi.parentElement?.querySelector<HTMLElement>(".kartta-merkki-lista");
+    if (lista) lista.hidden = true;
+  });
+}
+
+function luoRyhmaKarttamerkki(ryhma: MerkkiRyhma) {
+  const kehys = document.createElement("div");
+  kehys.className = "kartta-merkki-ryhma";
+
+  const nappi = document.createElement("button");
+  nappi.type = "button";
+  nappi.className = "kartta-merkki kartta-merkki--piste kartta-merkki--ryhma";
+  const kaikkiArvio = ryhma.hankkeet.every((h) => h.arvio);
+  if (kaikkiArvio) nappi.classList.add("kartta-merkki--arvio");
+  nappi.setAttribute("aria-expanded", "false");
+  nappi.setAttribute(
+    "aria-label",
+    `${ryhma.hankkeet.length} hanketta samassa pisteessä. Avaa lista.`,
+  );
+  nappi.dataset.lkm = String(ryhma.hankkeet.length);
+
+  // Väri: ensimmäisen hankkeen vaihe (aakkosjärjestyksessä).
+  const paavaihe = ryhma.hankkeet[0]?.vaihe;
+  lisaaMerkkiVisuaalit(nappi, vaiheVari(paavaihe), kaikkiArvio);
+
+  const lkm = document.createElement("span");
+  lkm.className = "kartta-merkki-lkm";
+  lkm.setAttribute("aria-hidden", "true");
+  lkm.textContent = String(ryhma.hankkeet.length);
+  nappi.appendChild(lkm);
+
+  const lista = document.createElement("div");
+  lista.className = "kartta-merkki-lista";
+  lista.hidden = true;
+  lista.setAttribute("role", "dialog");
+  lista.setAttribute("aria-label", "Hankkeet tässä pisteessä");
+
+  const otsikko = document.createElement("p");
+  otsikko.className = "kartta-merkki-lista-otsikko";
+  otsikko.textContent = `${ryhma.hankkeet.length} hanketta`;
+  lista.appendChild(otsikko);
+
+  const ul = document.createElement("ul");
+  ul.className = "kartta-merkki-lista-ul";
+  for (const hanke of ryhma.hankkeet) {
+    const li = document.createElement("li");
+    li.dataset.vaihe = hanke.vaihe ?? "";
+    const linkki = document.createElement("a");
+    linkki.href = `/hankkeet/${hanke.id}`;
+    const nimi = document.createElement("span");
+    nimi.className = "kartta-merkki-lista-nimi";
+    nimi.textContent = hanke.nimi;
+    linkki.appendChild(nimi);
+    if (hanke.vaihe) {
+      const vaihe = document.createElement("span");
+      vaihe.className = "kartta-merkki-lista-vaihe";
+      vaihe.textContent = VAIHE_NIMET[hanke.vaihe];
+      linkki.appendChild(vaihe);
+    }
+    li.appendChild(linkki);
+    ul.appendChild(li);
+  }
+  lista.appendChild(ul);
+
+  nappi.addEventListener("click", (tapahtuma) => {
+    tapahtuma.preventDefault();
+    tapahtuma.stopPropagation();
+    const auki = nappi.getAttribute("aria-expanded") === "true";
+    if (auki) {
+      nappi.setAttribute("aria-expanded", "false");
+      lista.hidden = true;
+    } else {
+      suljeAvoimetMerkkiListat(nappi);
+      nappi.setAttribute("aria-expanded", "true");
+      lista.hidden = false;
+    }
+  });
+
+  kehys.appendChild(nappi);
+  kehys.appendChild(lista);
+  return { kehys, nappi, lista };
+}
+
+function paivitaRyhmaMerkkiNakyvyys(
+  nappi: HTMLElement,
+  lista: HTMLElement,
+  hankkeet: Karttamerkki[],
+  aktiviset: Set<HankeVaihe>,
+): boolean {
+  const nakyvat = hankkeet.filter((h) => merkkiNakyvissa(h, aktiviset));
+  for (const li of lista.querySelectorAll<HTMLElement>("li")) {
+    const vaihe = (li.dataset.vaihe || undefined) as HankeVaihe | undefined;
+    li.hidden = !merkkiNakyvissa({ vaihe }, aktiviset);
+  }
+  const lkmEl = nappi.querySelector(".kartta-merkki-lkm");
+  if (lkmEl) lkmEl.textContent = String(nakyvat.length);
+  nappi.dataset.lkm = String(nakyvat.length);
+  const otsikko = lista.querySelector(".kartta-merkki-lista-otsikko");
+  if (otsikko) {
+    otsikko.textContent = nakyvat.length === 1 ? "1 hanke" : `${nakyvat.length} hanketta`;
+  }
+  nappi.setAttribute(
+    "aria-label",
+    nakyvat.length === 1
+      ? `${nakyvat[0].nimi}. Avaa lista.`
+      : `${nakyvat.length} hanketta samassa pisteessä. Avaa lista.`,
+  );
+  if (nakyvat.length === 0 && nappi.getAttribute("aria-expanded") === "true") {
+    nappi.setAttribute("aria-expanded", "false");
+    lista.hidden = true;
+  }
+  return nakyvat.length > 0;
+}
+
+/** Arvioitu sijainti: aina ympyrä (ei nuppineulaa), isompi ja himmeämpi. */
+const ARVIO_PISTE_KOKO_PYSAKIT: [number, number][] = [
+  [4, 16],
+  [6, 20],
+  [8, 26],
+  [10, 32],
+  [14, 40],
+];
+
 function paivitaMerkkiTyyppi(elementti: HTMLElement, zoom: number) {
-  const nuppineula = zoom >= NUPPINEULA_ZOOM_MIN;
+  const arvio = elementti.dataset.arvio === "1";
+  const nuppineula = !arvio && zoom >= NUPPINEULA_ZOOM_MIN;
   elementti.classList.toggle("kartta-merkki--nuppineula", nuppineula);
   elementti.classList.toggle("kartta-merkki--piste", !nuppineula);
+  elementti.classList.toggle("kartta-merkki--arvio", arvio);
   const piste = elementti.querySelector<HTMLElement>(".kartta-merkki-piste");
   if (piste && !nuppineula) {
-    const koko = interpoloiLuku(PISTE_KOKO_PYSAKIT, zoom);
+    const koko = interpoloiLuku(arvio ? ARVIO_PISTE_KOKO_PYSAKIT : PISTE_KOKO_PYSAKIT, zoom);
     piste.style.setProperty("--piste-koko", `${koko}px`);
   }
 }
@@ -906,7 +1084,18 @@ export function Kartta({
   const svgLiityntapisteRef = useRef<SVGSVGElement | null>(null);
   const liityntapisteetRef = useRef<FingridLiityntapiste[]>(liityntapisteet);
   const merkitNytRef = useRef<Karttamerkki[]>([]);
-  const merkkiluokatRef = useRef<Map<string, { marker: Marker; vaihe?: HankeVaihe }>>(new Map());
+  const merkkiluokatRef = useRef<
+    Map<
+      string,
+      {
+        marker: Marker;
+        vaiheet: (HankeVaihe | undefined)[];
+        hankkeet: Karttamerkki[];
+        ryhmaNappi?: HTMLElement;
+        ryhmaLista?: HTMLElement;
+      }
+    >
+  >(new Map());
   const aktivisetVaiheetRef = useRef<Set<HankeVaihe>>(kaikkiVaiheetAktiviset());
   const naytaTehoHalotRef = useRef(true);
   const naytaJohdonmukaisuusRef = useRef(false);
@@ -949,11 +1138,22 @@ export function Kartta({
     if (!kartta || !svgMaakunta || !svgTeho || !svgGeometria || !svgLiityntapiste) return;
 
     const zoom = kartta.getZoom();
-    for (const [, { marker, vaihe }] of merkkiluokatRef.current) {
-      const elementti = marker.getElement();
-      const nayta = merkkiNakyvissa({ vaihe }, aktiviset);
+    for (const [, luokka] of merkkiluokatRef.current) {
+      const elementti = luokka.marker.getElement();
+      let nayta: boolean;
+      if (luokka.ryhmaNappi && luokka.ryhmaLista) {
+        nayta = paivitaRyhmaMerkkiNakyvyys(
+          luokka.ryhmaNappi,
+          luokka.ryhmaLista,
+          luokka.hankkeet,
+          aktiviset,
+        );
+        if (nayta) paivitaMerkkiTyyppi(luokka.ryhmaNappi, zoom);
+      } else {
+        nayta = luokka.vaiheet.some((vaihe) => merkkiNakyvissa({ vaihe }, aktiviset));
+        if (nayta) paivitaMerkkiTyyppi(elementti, zoom);
+      }
       elementti.style.display = nayta ? "" : "none";
-      if (nayta) paivitaMerkkiTyyppi(elementti, zoom);
     }
 
     const suodatetut = suodataMerkit(merkitNyt, aktiviset);
@@ -1051,23 +1251,43 @@ export function Kartta({
     svgLiityntapisteRef.current = svgLiityntapiste;
 
     merkkiluokatRef.current = new Map();
-    for (const merkki of merkitNyt) {
-      const keskipiste =
-        merkki.lat != null && merkki.lon != null
-          ? { lat: merkki.lat, lon: merkki.lon }
-          : merkki.alue
-            ? alueenKeskipiste(merkki.alue)
-            : null;
-      if (!keskipiste) continue;
-      const elementti = luoKarttamerkki(merkki);
-      const marker = new Marker({ element: elementti, anchor: "center" })
-        .setLngLat([keskipiste.lon, keskipiste.lat])
-        .addTo(kartta);
-      paivitaMerkkiTyyppi(elementti, kartta.getZoom());
-      merkkiluokatRef.current.set(merkki.id, { marker, vaihe: merkki.vaihe });
+    for (const ryhma of ryhmitteleMerkitPisteittain(merkitNyt)) {
+      if (ryhma.hankkeet.length === 1) {
+        const merkki = ryhma.hankkeet[0];
+        const elementti = luoYksiKarttamerkki(merkki);
+        const marker = new Marker({ element: elementti, anchor: "center" })
+          .setLngLat([ryhma.lon, ryhma.lat])
+          .addTo(kartta);
+        paivitaMerkkiTyyppi(elementti, kartta.getZoom());
+        merkkiluokatRef.current.set(ryhma.avain, {
+          marker,
+          vaiheet: [merkki.vaihe],
+          hankkeet: ryhma.hankkeet,
+        });
+      } else {
+        const { kehys, nappi, lista } = luoRyhmaKarttamerkki(ryhma);
+        const marker = new Marker({ element: kehys, anchor: "center" })
+          .setLngLat([ryhma.lon, ryhma.lat])
+          .addTo(kartta);
+        paivitaMerkkiTyyppi(nappi, kartta.getZoom());
+        merkkiluokatRef.current.set(ryhma.avain, {
+          marker,
+          vaiheet: ryhma.hankkeet.map((h) => h.vaihe),
+          hankkeet: ryhma.hankkeet,
+          ryhmaNappi: nappi,
+          ryhmaLista: lista,
+        });
+      }
     }
 
     const merkkiluokat = [...merkkiluokatRef.current.values()].map(({ marker }) => marker);
+
+    const suljeListatKartalla = () => suljeAvoimetMerkkiListat();
+    const suljeListatEsc = (tapahtuma: KeyboardEvent) => {
+      if (tapahtuma.key === "Escape") suljeAvoimetMerkkiListat();
+    };
+    kartta.on("click", suljeListatKartalla);
+    document.addEventListener("keydown", suljeListatEsc);
 
     const rajat = new LngLatBounds();
     let onRajoja = false;
@@ -1144,6 +1364,9 @@ export function Kartta({
       kokoTarkkailija.disconnect();
       kartta.off("move", paivita);
       kartta.off("resize", paivita);
+      kartta.off("click", suljeListatKartalla);
+      document.removeEventListener("keydown", suljeListatEsc);
+      suljeAvoimetMerkkiListat();
       merkkiluokat.forEach((merkki) => merkki.remove());
       merkkiluokatRef.current.clear();
       svgMaakunta.remove();

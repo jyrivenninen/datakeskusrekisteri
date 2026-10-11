@@ -162,6 +162,134 @@ dialog.esiversio-ilmoitus::backdrop {
   outline: none;
 }
 
+/* Päällekkäiset hankkeet: yksi merkki + klikkauslista. */
+.kartta-merkki-ryhma {
+  position: relative;
+  width: 0;
+  height: 0;
+}
+
+button.kartta-merkki {
+  padding: 0;
+  margin: 0;
+  border: 0;
+  background: transparent;
+  font: inherit;
+  color: inherit;
+  appearance: none;
+}
+
+button.kartta-merkki:hover:not(:disabled),
+button.kartta-merkki:active:not(:disabled) {
+  filter: none;
+  transform: none;
+}
+
+.kartta-merkki-lkm {
+  position: absolute;
+  left: 7px;
+  top: -10px;
+  z-index: 2;
+  box-sizing: border-box;
+  min-width: 1.15rem;
+  height: 1.15rem;
+  padding: 0 0.28rem;
+  border: 1.5px solid #fff;
+  border-radius: 999px;
+  background: #1c1917;
+  color: #fff;
+  font-size: 0.625rem;
+  font-weight: 650;
+  line-height: 1.15rem;
+  letter-spacing: 0.01em;
+  text-align: center;
+  box-shadow: 0 1px 2px rgb(0 0 0 / 0.35);
+  pointer-events: none;
+}
+
+.kartta-merkki--nuppineula .kartta-merkki-lkm {
+  left: 8px;
+  top: -36px;
+}
+
+.kartta-merkki-lista {
+  position: absolute;
+  left: 0;
+  top: 12px;
+  z-index: 20;
+  min-width: 13rem;
+  max-width: min(18rem, 70vw);
+  padding: 0.55rem 0.65rem 0.5rem;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--surface);
+  color: var(--foreground);
+  box-shadow: 0 6px 20px rgb(0 0 0 / 0.18);
+  transform: translateX(-50%);
+}
+
+.kartta-merkki--nuppineula ~ .kartta-merkki-lista,
+.kartta-merkki-ryhma:has(.kartta-merkki--nuppineula) .kartta-merkki-lista {
+  top: 6px;
+}
+
+.kartta-merkki-lista-otsikko {
+  margin: 0 0 0.35rem;
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: var(--muted, #78716c);
+}
+
+.kartta-merkki-lista-ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.kartta-merkki-lista-ul li + li {
+  margin-top: 0.2rem;
+  padding-top: 0.2rem;
+  border-top: 1px solid var(--border);
+}
+
+.kartta-merkki-lista-ul a {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  padding: 0.2rem 0.15rem;
+  border-radius: 3px;
+  text-decoration: none;
+  color: inherit;
+}
+
+.kartta-merkki-lista-ul a:hover {
+  background: color-mix(in srgb, var(--link) 8%, transparent);
+}
+
+.kartta-merkki-lista-ul a:focus-visible {
+  outline: 2px solid var(--link);
+  outline-offset: 1px;
+}
+
+.kartta-merkki-lista-nimi {
+  font-size: 0.875rem;
+  font-weight: 550;
+  line-height: 1.25;
+  color: var(--link);
+}
+
+.kartta-merkki-lista-vaihe {
+  font-size: 0.75rem;
+  line-height: 1.2;
+  color: var(--muted, #78716c);
+}
+
+.maplibregl-marker {
+  overflow: visible;
+}
+
 .kartta-merkki-piste {
   position: absolute;
   left: 0;
@@ -190,6 +318,21 @@ dialog.esiversio-ilmoitus::backdrop {
 
 .kartta-merkki--nuppineula .kartta-merkki-piste {
   display: none;
+}
+
+/* Paikkatason arvio: isompi himmeä ympyrä, ei nuppineulaa. */
+.kartta-merkki--arvio .kartta-merkki-piste {
+  opacity: 0.55;
+  border-width: 1.5px;
+  box-shadow: none;
+}
+
+.kartta-merkki--arvio.kartta-merkki--nuppineula .kartta-merkki-nuppineula {
+  display: none;
+}
+
+.kartta-merkki--arvio.kartta-merkki--nuppineula .kartta-merkki-piste {
+  display: block;
 }
 
 .kartta-merkki:focus-visible {

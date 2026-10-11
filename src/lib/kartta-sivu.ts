@@ -84,6 +84,7 @@ export function kokoaKarttaSivuData(
         sahkonkayttoTwhMin: sahko?.min ?? null,
         sahkonkayttoTwhMax: sahko?.max ?? null,
         maakunta: ratkaiseMaakunta(hanke.maakunta, hanke.kunta, kuntaMaakunnat).maakunta,
+        arvio: hanke.sijainti_alue_tyyppi === "arvio",
         alue,
         johdot: hankeJohdot,
       },
