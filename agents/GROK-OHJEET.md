@@ -645,26 +645,16 @@ sama kuin rekisterissä + huomautus «yhdistä toinen rivi».
 
 ### Uuden hankkeen minimi
 
-Pakolliset: `nimi`, `kunta`, `vaihe`.
+**Pakolliset juuressa:** `nimi`, `kunta`, `vaihe`.
 
-Täytä lisäksi kaikki löydetyt kentät **joihin on lähde**:
+**Pakolliset myös `kentat`-taulukossa** (jokaisella `lahteet[]`):
+`nimi`, `kunta`, `vaihe`, `sijainti_alue_tyyppi`.
 
-| Kenttä | Huomio |
-|--------|--------|
-| `maakunta` | johdetaan kunnasta; älä merkitse kentälle omaa lähdettä |
-| `toimija_nimi` | Y-tunnus vain jos YTJ:stä varmistettu |
-| `yva_diaarinumero` | viranomaislähde |
-| `it_teho_mw` | datakeskuksen IT-kuorma MW. Vain jos lähde sanoo IT capacity tai IT load |
-| `teho_mw` | koko laitoksen sähköteho MW. Erittelemätön megawattiluku vain tähän |
-| `pinta_ala_ha` | maa- tai tonttiala; vain dokumentoidusti |
-| `kaava_ala_ha` | kaava-alueen ala; erillinen suure kuin `pinta_ala_ha` |
-| `sahkonkaytto_twh_a` | vain dokumentoidusti |
-| `generaattorit_lkm`, `generaattorit_kaytossa_max_lkm`, `generaattori_polttoaineteho_mw` | erikseen lähteestä |
-| `generaattori_yksikkoteho_mwe` | yhden generaattorin sähköteho MWe. Ei ole yhteenlaskettu polttoaineteho |
-| `diesel_vuosikulutus_maara`, `diesel_vuosikulutus_yksikko` | vuosikulutus ja yksikkö `litra` tai `m3` erikseen |
-| `varavoima_paastot_t_co2e` | t CO2e/a. Lainaus on pakollinen ja siitä pitää ilmetä, kuka luvun on laskenut |
-| `kaavatunnus`, `kortteli` | kaavasta |
-| `sijainti_lat`, `sijainti_lon`, `sijainti_alue_tyyppi` | vain jos koordinaatit lähteestä; `sijainti_alue_tyyppi`: `kaava_alue` / `tontti` / `arvio` |
+Juuren arvot eivät riitä ilman vastaavaa `kentat`-riviä ja lähdettä.
+
+Täytä lisäksi kaikki löydetyt kentät **joihin on lähde**. Ylläpidon
+tuonti-JSON:n sallitut `kentta`-nimet ja pakollisuus: ks. kohta
+[Uusi hanke — ylläpidon tuontimuoto](#uusi-hanke--ylläpidon-tuontimuoto-ensisijainen-uusille-löydöille).
 
 `it_teho_mw` on datakeskuksen IT-kuorma megawatteina. `teho_mw` on koko laitoksen
 sähköteho megawatteina. IT-teho on aina pienempi tai yhtä suuri kuin teho, kun
@@ -952,16 +942,82 @@ muodossa. Ylläpito tuo sen näkymässä `/yllapito/uusi-hanke` (validointi →
 esikatselu → vahvistus). Älä kutsu `julkaise_agentti_ehdotus` tällä
 rakenteella — se on ihmisen tuontia varten.
 
-**Pakollista:** jokaisella kentällä `lahteet[]` (url, `lahde_tyyppi`, lainaus) —
-**kaikki** lähteet kirjoitetaan, ei vain ensimmäistä; toimijalla samaan tapaan
-`lahde_url` + `lahde_tyyppi` + lainaus; `sijainti_alue_tyyppi` (`kaava_alue` |
-`tontti` | `arvio`); kaava-ala ja tontti eri kenttiin (`kaava_ala_ha`,
-`pinta_ala_ha`); organisaatioihin ei henkilönimeä; logo/hakutulosote ei kelpaa
-laatijan lähteeksi. Jos kaikki lähteet ovat `media` tai `hankkeen_oma`, hanke
-ei mene suoraan julkaistuksi.
+#### Juuri (objektin ylätaso)
+
+| Kenttä | Pakollinen | Huomio |
+|--------|------------|--------|
+| `nimi` | kyllä | Sama arvo myös `kentat`-rivillä `nimi` |
+| `kunta` | kyllä | Sama myös `kentat`-rivillä `kunta` |
+| `vaihe` | kyllä | Sama myös `kentat`-rivillä `vaihe`. Arvot: `esiselvitys`, `yva_vireilla`, `yva_paattynyt`, `kaavoitus`, `lupamenettely`, `rakenteilla`, `toiminnassa`, `peruttu` |
+| `kentat` | kyllä | Taulukko; ks. alla |
+| `toimija` | ei | Jos annetaan: `nimi`, `lahde_url`, `lahde_tyyppi`, `lainaus` pakollisia; `y_tunnus` vapaaehtoinen (vain YTJ) |
+| `roolit` | ei | `rooli`, `organisaatio`, `lahde_url`, `lainaus` |
+| `asiakirjat` | ei | `url`, `lahde_tyyppi`, `otsikko`; vapaaehtoiset `julkaisija`, `paivays` |
+| `huomautus` | ei | Julkinen teksti; monitoimihankkeella pakollinen |
+| `ilmoituksen_id` | ei | Sulkee jonossa olevan `uusi_hanke`-ilmoituksen |
+
+#### `kentat[]` — sallitut `kentta`-nimet
+
+Jokaisella rivillä: `kentta`, `arvo`, `lahteet[]` (vähintään yksi). Vapaaehtoinen
+`yksikko` (esim. `ha`, `litra`). **Älä käytä muita nimiä** (esim. `latitude`,
+`lon`, `sijainti`) — validointi hylkää ne.
+
+| `kentta` | Pakollinen | Huomio |
+|----------|------------|--------|
+| `nimi` | **kyllä** | Lähde pakollinen |
+| `kunta` | **kyllä** | Lähde pakollinen |
+| `vaihe` | **kyllä** | Lähde pakollinen |
+| `sijainti_alue_tyyppi` | **kyllä** | Arvo ∈ `kaava_alue` \| `tontti` \| `arvio` |
+| `sijainti_lat` | ei | WGS84-leveysaste desimaaleina (esim. `"62.010600"`). **Vaatii oman `lahteet[]`.** |
+| `sijainti_lon` | ei | WGS84-pituusaste desimaaleina. **Vaatii oman `lahteet[]`.** |
+| `sijaintiperustelu` | ei | Vapaa teksti (esim. «noin 5 km kuntakeskuksesta pohjoiseen») |
+| `muut_sijainnit` | ei | Vaihtoehtoiset/muut sijainnit |
+| `maakunta` | ei | Johdetaan yleensä kunnasta |
+| `toimija_nimi` | ei | Organisaationimi, ei henkilönimeä |
+| `yva_diaarinumero` | ei | Viranomaislähde |
+| `teho_mw` | ei | Koko laitoksen sähköteho MW |
+| `it_teho_mw` | ei | IT-kuorma MW; vain jos lähde sanoo IT capacity / IT load |
+| `pinta_ala_ha` | ei | Maa- tai tonttiala |
+| `kaava_ala_ha` | ei | Kaava-alueen ala (≠ `pinta_ala_ha`) |
+| `sahkonkaytto_twh_a` | ei | |
+| `generaattorit_lkm` | ei | |
+| `generaattorit_kaytossa_max_lkm` | ei | |
+| `generaattori_polttoaineteho_mw` | ei | |
+| `generaattori_yksikkoteho_mwe` | ei | Yhden generaattorin sähköteho MWe |
+| `diesel_vuosikulutus_maara` | ei | Yksikkö rivin `yksikko`-kenttään (`litra` / `m3`) |
+| `varavoima_paastot_t_co2e` | ei | Lainauksesta pitää ilmetä laskija |
+| `polttoainevarasto_maara` | ei | Yksikkö rivin `yksikko`-kenttään |
+| `kaavatunnus` | ei | |
+| `kortteli` | ei | |
+| `kiinteistotunnus` | ei | |
+| `huomautus` | ei | Voi olla myös juuressa |
+
+**Lähde jokaiselle riville:** `lahteet[].url`, `lahde_tyyppi`, `lainaus`
+pakollisia; vapaaehtoiset `julkaisija`, `asiakirjan_nimi`, `paivays`, `sivu`.
+Kirjoita **kaikki** lähteet, ei vain ensimmäistä.
 
 `lahde_tyyppi` ∈ `paatos` | `viranomaisasiakirja` | `rekisteri` |
 `hankkeen_oma` | `media` | `menetelma` | `muu`.
+
+Jos kaikki lähteet ovat `media` tai `hankkeen_oma`, hanke ei mene suoraan
+julkaistuksi. Organisaatioihin ei henkilönimeä; logo/hakutulosote ei kelpaa
+laatijan lähteeksi.
+
+#### Sijainti (koordinaatit)
+
+- Koordinaatit annetaan **vain** `kentat`-riveinä `sijainti_lat` ja
+  `sijainti_lon` (ei juuren kenttiä, ei `lat`/`lon`/`latitude`).
+- Molemmille saa ja **pitää** antaa lähde (`lahteet[]`), kuten muillekin
+  faktakentille. Geokoodauksen lähdetyyppi on usein `menetelma` tai `rekisteri`.
+- `sijainti_lat` / `sijainti_lon` **eivät ole pakollisia**. Pelkkä `kunta` +
+  `sijainti_alue_tyyppi` (+ tarvittaessa `sijaintiperustelu`) kelpaa.
+- Kun piste on arvio (kuntakeskus, paikannimi, «X km suuntaan» ilman
+  tarkkaa rajaa): `sijainti_alue_tyyppi` = `arvio`, ja jos annat pisteen,
+  merkitse lat/lon samaan arvioon (älä `tontti` / `kaava_alue`).
+- Suositus kartalle: jos tarkkaa pistettä ei ole, johda piste kuntakeskuksesta
+  (tai nimetystä paikasta) ja merkitse `arvio` + `sijaintiperustelu`
+  (esim. «Kuntakeskuksen geokoodi; lähde kuvaa sijainnin kunnassa ilman
+  tarkkaa tonttia»).
 
 ```json
 {
@@ -1017,6 +1073,24 @@ ei mene suoraan julkaistuksi.
         "lahde_tyyppi": "viranomaisasiakirja",
         "sivu": "2",
         "lainaus": "Suunnittelualue asemakaavan rajauksen mukaan."
+      }]
+    },
+    {
+      "kentta": "sijainti_lat",
+      "arvo": "62.010600",
+      "lahteet": [{
+        "url": "https://nominatim.openstreetmap.org/…",
+        "lahde_tyyppi": "menetelma",
+        "lainaus": "Nominatim: Esimerkkikunta municipality centroid."
+      }]
+    },
+    {
+      "kentta": "sijainti_lon",
+      "arvo": "23.018690",
+      "lahteet": [{
+        "url": "https://nominatim.openstreetmap.org/…",
+        "lahde_tyyppi": "menetelma",
+        "lainaus": "Nominatim: Esimerkkikunta municipality centroid."
       }]
     },
     {

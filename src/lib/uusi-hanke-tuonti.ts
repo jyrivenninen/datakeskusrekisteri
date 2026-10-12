@@ -92,7 +92,8 @@ export type TuontiValidointi = {
   vainHeikotLahteet: boolean;
 };
 
-const SALLITUT_KENTAT = new Set([
+/** Kentat-taulukon sallitut `kentta`-nimet (ylläpidon tuonti-JSON). */
+export const UUSI_HANKE_TUONTI_KENTAT = [
   "nimi",
   "kunta",
   "maakunta",
@@ -120,7 +121,13 @@ const SALLITUT_KENTAT = new Set([
   "muut_sijainnit",
   "kiinteistotunnus",
   "huomautus",
-]);
+] as const;
+
+const SALLITUT_KENTAT = new Set<string>(UUSI_HANKE_TUONTI_KENTAT);
+
+function sallitutKentatViesti(): string {
+  return UUSI_HANKE_TUONTI_KENTAT.join(", ");
+}
 
 const ORGANISAATIO_KENTAT = new Set(["toimija_nimi"]);
 
@@ -331,7 +338,7 @@ export function parsiJaValidoiUusiHankeTuonti(raaka: unknown): TuontiValidointi 
       if (!SALLITUT_KENTAT.has(kentta)) {
         virheet.push({
           polku: `${polku}.kentta`,
-          viesti: `Tuntematon kenttä «${kentta}».`,
+          viesti: `Tuntematon kenttä «${kentta}». Sallitut: ${sallitutKentatViesti()}.`,
         });
         return;
       }

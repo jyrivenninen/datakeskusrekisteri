@@ -101,6 +101,28 @@ test("kenttä ilman lähdettä on virhe", () => {
   assert.ok(t.virheet.some((v) => v.viesti.includes("ei ole lähdettä")));
 });
 
+test("tuntematon kenttä listaa sallitut nimet", () => {
+  const raaka = pohja();
+  raaka.kentat.push({
+    kentta: "latitude",
+    arvo: "62.1",
+    lahteet: [
+      {
+        url: "https://example.com/paatos.pdf",
+        lahde_tyyppi: "menetelma",
+        lainaus: "Kuntakeskus.",
+      },
+    ],
+  });
+  const t = parsiJaValidoiUusiHankeTuonti(raaka);
+  assert.equal(t.ok, false);
+  const viesti = t.virheet.find((v) => v.viesti.includes("Tuntematon kenttä"))?.viesti;
+  assert.ok(viesti);
+  assert.match(viesti!, /Sallitut:/);
+  assert.match(viesti!, /sijainti_lat/);
+  assert.match(viesti!, /sijainti_alue_tyyppi/);
+});
+
 test("teho ja it_teho samasta erottelemattomasta lähteestä hylätään", () => {
   const raaka = pohja();
   raaka.kentat.push(
