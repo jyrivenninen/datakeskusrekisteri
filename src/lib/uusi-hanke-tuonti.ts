@@ -651,6 +651,33 @@ export function parsiTuontiJsonTekstista(teksti: string): TuontiValidointi {
   return parsiJaValidoiUusiHankeTuonti(raaka);
 }
 
+/**
+ * Kun tuonti avataan ilmoituksen kautta (`?ilmoituksen_id=`), Grokin JSON:ssa
+ * on usein tyhjä `ilmoituksen_id`. Täytä se URL-/lomake-id:llä, jotta
+ * vahvistus sulkee oikean jonorivin.
+ */
+export function taydennaTyhjaIlmoituksenId(
+  jsonTeksti: string,
+  ilmoituksenId: string | undefined | null,
+): { teksti: string; taydennetty: boolean } {
+  const id = typeof ilmoituksenId === "string" ? ilmoituksenId.trim() : "";
+  if (!id) return { teksti: jsonTeksti, taydennetty: false };
+  try {
+    const raaka = JSON.parse(jsonTeksti) as unknown;
+    if (!raaka || typeof raaka !== "object" || Array.isArray(raaka)) {
+      return { teksti: jsonTeksti, taydennetty: false };
+    }
+    const o = raaka as Record<string, unknown>;
+    const nyky =
+      typeof o.ilmoituksen_id === "string" ? o.ilmoituksen_id.trim() : "";
+    if (nyky) return { teksti: jsonTeksti, taydennetty: false };
+    o.ilmoituksen_id = id;
+    return { teksti: JSON.stringify(o, null, 2), taydennetty: true };
+  } catch {
+    return { teksti: jsonTeksti, taydennetty: false };
+  }
+}
+
 function lahdeEhdotukseksi(lahde: UusiHankeTuontiLahde): {
   lahde_url: string;
   lahde_sivu: number | null;

@@ -4,6 +4,7 @@ import {
   onKelvotonLaatijaLahde,
   parsiJaValidoiUusiHankeTuonti,
   parsiSivuNumeroksi,
+  taydennaTyhjaIlmoituksenId,
   tuontiEhdotusSisalloksi,
 } from "./uusi-hanke-tuonti";
 
@@ -99,6 +100,27 @@ test("kenttä ilman lähdettä on virhe", () => {
   const t = parsiJaValidoiUusiHankeTuonti(raaka);
   assert.equal(t.ok, false);
   assert.ok(t.virheet.some((v) => v.viesti.includes("ei ole lähdettä")));
+});
+
+test("tyhjä ilmoituksen_id täydennetään URL-id:llä", () => {
+  const t = taydennaTyhjaIlmoituksenId(
+    JSON.stringify({ nimi: "X", ilmoituksen_id: "" }),
+    "1a1623e2-0000-4000-8000-000000000001",
+  );
+  assert.equal(t.taydennetty, true);
+  assert.equal(
+    JSON.parse(t.teksti).ilmoituksen_id,
+    "1a1623e2-0000-4000-8000-000000000001",
+  );
+});
+
+test("olemassa olevaa ilmoituksen_id:tä ei ylikirjoiteta", () => {
+  const t = taydennaTyhjaIlmoituksenId(
+    JSON.stringify({ nimi: "X", ilmoituksen_id: "jo-asetettu" }),
+    "uusi-id",
+  );
+  assert.equal(t.taydennetty, false);
+  assert.equal(JSON.parse(t.teksti).ilmoituksen_id, "jo-asetettu");
 });
 
 test("tuntematon kenttä listaa sallitut nimet", () => {

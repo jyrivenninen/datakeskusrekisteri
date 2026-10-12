@@ -1,10 +1,10 @@
 import Link from "next/link";
-import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import {
   esikatseleUusiHankeLomakeToiminto,
   esikatseleUusiHankeTuontiToiminto,
   peruutaUusiHankeEsikatseluToiminto,
+  UUSI_HANKE_ESIKATSELU_AVAIN,
   vahvistaUusiHankeTuontiToiminto,
 } from "@/app/toiminnot";
 import { LAHDE_TYYPIT, LAHDE_TYYPPI_NIMET } from "@/lib/lahde-metatiedot";
@@ -15,8 +15,7 @@ import { HANKE_VAIHEET, SIJAINTI_ALUE_TYYPIT } from "@/lib/supabase/tietokanta";
 import type { UusiHankeTuonti } from "@/lib/uusi-hanke-tuonti";
 import type { TuplaOsuma } from "@/lib/uusi-hanke-tuplat";
 import type { LahdeTyyppiRistiriita } from "@/lib/uusi-hanke-lahde-tyyppi-ristiriita";
-
-const EVASTE = "uusi_hanke_esikatselu";
+import { haeYllapitoLuonnos } from "@/lib/yllapito-luonnos";
 
 const LOMAKE_KENTTA_RIVIT = [
   "nimi",
@@ -60,6 +59,7 @@ async function vaadiYllapitaja() {
   if (!data) {
     redirect("/kirjaudu?virhe=" + encodeURIComponent("Ei ylläpito-oikeutta."));
   }
+  return { user, supabase };
 }
 
 function EsimerkkiJson() {
@@ -147,23 +147,19 @@ export default async function UusiHankeSivu({
     ilmoituksen_id?: string;
   }>;
 }) {
-  await vaadiYllapitaja();
+  const { user, supabase } = await vaadiYllapitaja();
   const params = await searchParams;
   const nakyma = params.nakyma === "lomake" ? "lomake" : "json";
   const ilmoituksenId = (params.ilmoituksen_id ?? "").trim();
   const navIlmoitus = ilmoituksenId
     ? `&ilmoituksen_id=${encodeURIComponent(ilmoituksenId)}`
     : "";
-  const evasteet = await cookies();
-  const raaka = evasteet.get(EVASTE)?.value;
-  let tila: EsikatseluTila | null = null;
-  if (raaka) {
-    try {
-      tila = JSON.parse(raaka) as EsikatseluTila;
-    } catch {
-      tila = null;
-    }
-  }
+  // Tila tietokannassa: eväste (~4 kt) ei riitä Grokin tuonti-JSON:lle.
+  const tila = await haeYllapitoLuonnos<EsikatseluTila>(
+    supabase,
+    user.id,
+    UUSI_HANKE_ESIKATSELU_AVAIN,
+  );
 
   const esimerkkJson = (() => {
     const pohja = JSON.parse(EsimerkkiJson()) as Record<string, unknown>;
@@ -357,6 +353,14 @@ export default async function UusiHankeSivu({
                     <dd className="whitespace-pre-wrap">{tila.tuonti.huomautus}</dd>
                   </div>
                 ) : null}
+                {tila.tuonti.ilmoituksen_id ? (
+                  <div>
+                    <dt className="text-muted">Ilmoituksen id</dt>
+                    <dd className="break-all font-mono text-xs">
+                      {tila.tuonti.ilmoituksen_id}
+                    </dd>
+                  </div>
+                ) : null}
               </dl>
               <h4 className="mt-4 font-medium">Kentät ja lähteet</h4>
               <ul className="mt-2 space-y-3 text-sm">
@@ -464,6 +468,13 @@ export default async function UusiHankeSivu({
 
           <form action={vahvistaUusiHankeTuontiToiminto} className="space-y-4">
             <input type="hidden" name="json" value={tila.json} />
+            {(tila.tuonti.ilmoituksen_id || ilmoituksenId) ? (
+              <input
+                type="hidden"
+                name="ilmoituksen_id"
+                value={tila.tuonti.ilmoituksen_id || ilmoituksenId}
+              />
+            ) : null}
             {(tila.lahdeTyyppiRistiriidat?.length ?? 0) > 0 ? (
               <fieldset className="space-y-4 rounded border border-border px-3 py-3">
                 <legend className="px-1 text-sm font-medium">
@@ -554,6 +565,13 @@ export default async function UusiHankeSivu({
             </div>
           </form>
           <form action={peruutaUusiHankeEsikatseluToiminto}>
+            {(tila.tuonti.ilmoituksen_id || ilmoituksenId) ? (
+              <input
+                type="hidden"
+                name="ilmoituksen_id"
+                value={tila.tuonti.ilmoituksen_id || ilmoituksenId}
+              />
+            ) : null}
             <button
               type="submit"
               className="rounded border border-border px-4 py-2 text-sm"
@@ -572,6 +590,17 @@ export default async function UusiHankeSivu({
             Rakenne on dokumentoitu GROK-OHJEET.md:ssä ja ylläpito-ohjeissa.
           </p>
           <form action={esikatseleUusiHankeTuontiToiminto} className="mt-4 space-y-3">
+            {ilmoituksenId ? (
+              <input type="hidden" name="ilmoituksen_id" value={ilmoituksenId} />
+            ) : null}
+            {ilmoituksenId ? (
+              <p className="rounded border border-border px-3 py-2 text-sm" role="status">
+                Tuonti liittyy ilmoitukseen{" "}
+                <code className="text-xs">{ilmoituksenId}</code>. Jos JSON:ssa
+                on tyhjä <code className="text-xs">ilmoituksen_id</code>, se
+                täytetään tällä tunnisteella.
+              </p>
+            ) : null}
             <label htmlFor="json" className="block text-sm font-medium">
               Hankkeen JSON
             </label>

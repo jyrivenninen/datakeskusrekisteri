@@ -38,10 +38,17 @@ import {
   LS13_RATKAISU_IDT,
   type Ls13RatkaisuId,
 } from "@/lib/lahdeselvitys13-ratkaisut";
-import { parsiTuontiJsonTekstista } from "@/lib/uusi-hanke-tuonti";
+import {
+  parsiTuontiJsonTekstista,
+  taydennaTyhjaIlmoituksenId,
+} from "@/lib/uusi-hanke-tuonti";
 import { taydennaKuntakeskusArvio } from "@/lib/uusi-hanke-kuntakeskus";
 import { haeUusiHankeTuplat } from "@/lib/uusi-hanke-tuplat";
 import { kirjoitaUusiHankeTuonti } from "@/lib/uusi-hanke-kirjoitus";
+import {
+  poistaYllapitoLuonnos,
+  tallennaYllapitoLuonnos,
+} from "@/lib/yllapito-luonnos";
 import {
   haeLahdeTyyppiRistiriidat,
   parsiLahdeTyyppiPaatokset,
@@ -1849,40 +1856,62 @@ export async function kasitteleLuvunRistiriitaToiminto(formData: FormData): Prom
   revalidatePath(`/hankkeet/${riviId}`);
 }
 
-const UUSI_HANKE_ESIKATSELU_EVASTE = "uusi_hanke_esikatselu";
+export const UUSI_HANKE_ESIKATSELU_AVAIN = "uusi_hanke_esikatselu";
 
-export async function peruutaUusiHankeEsikatseluToiminto(): Promise<void> {
-  await vaadiYllapitaja();
-  const evasteet = await cookies();
-  evasteet.delete(UUSI_HANKE_ESIKATSELU_EVASTE);
-  redirect("/yllapito/uusi-hanke?nakyma=json");
+function uusiHankeIlmoitusPolku(ilmoituksenId: string | undefined): string {
+  return ilmoituksenId
+    ? `&ilmoituksen_id=${encodeURIComponent(ilmoituksenId)}`
+    : "";
 }
 
-/** Vaihe 1–2: validoi JSON ja näytä esikatselu (evästeeseen). */
+export async function peruutaUusiHankeEsikatseluToiminto(
+  formData: FormData,
+): Promise<void> {
+  const { user, supabase } = await vaadiYllapitaja();
+  const ilmoituksenId = String(formData.get("ilmoituksen_id") ?? "").trim();
+  await poistaYllapitoLuonnos(supabase, user.id, UUSI_HANKE_ESIKATSELU_AVAIN);
+  redirect(`/yllapito/uusi-hanke?nakyma=json${uusiHankeIlmoitusPolku(ilmoituksenId)}`);
+}
+
+/** Vaihe 1–2: validoi JSON ja näytä esikatselu (tila tietokantaan, ei evästeeseen). */
 export async function esikatseleUusiHankeTuontiToiminto(
   formData: FormData,
 ): Promise<void> {
-  const { supabase } = await vaadiYllapitaja();
-  const jsonTeksti = String(formData.get("json") ?? "");
+  const { user, supabase } = await vaadiYllapitaja();
+  const ilmoituksenIdLomakkeesta = String(
+    formData.get("ilmoituksen_id") ?? "",
+  ).trim();
+  const taydennettyJson = taydennaTyhjaIlmoituksenId(
+    String(formData.get("json") ?? ""),
+    ilmoituksenIdLomakkeesta,
+  );
+  let jsonTeksti = taydennettyJson.teksti;
   const tulos = parsiTuontiJsonTekstista(jsonTeksti);
-  const evasteet = await cookies();
+  const ilmoituksenId =
+    tulos.tuonti?.ilmoituksen_id?.trim() || ilmoituksenIdLomakkeesta || undefined;
+  const nav = uusiHankeIlmoitusPolku(ilmoituksenId);
 
   if (!tulos.ok || !tulos.tuonti) {
-    evasteet.set(
-      UUSI_HANKE_ESIKATSELU_EVASTE,
-      JSON.stringify({
-        vaihe: "virheet",
-        json: jsonTeksti,
-        virheet: tulos.virheet,
-        varoitukset: tulos.varoitukset,
-      }),
-      { path: "/yllapito/uusi-hanke", httpOnly: true, sameSite: "lax", maxAge: 600 },
-    );
-    redirect("/yllapito/uusi-hanke?nakyma=json");
+    await tallennaYllapitoLuonnos(supabase, user.id, UUSI_HANKE_ESIKATSELU_AVAIN, {
+      vaihe: "virheet",
+      json: jsonTeksti,
+      virheet: tulos.virheet,
+      varoitukset: tulos.varoitukset,
+    });
+    redirect(`/yllapito/uusi-hanke?nakyma=json${nav}`);
   }
 
   let tuonti = tulos.tuonti;
+  if (ilmoituksenId && !tuonti.ilmoituksen_id) {
+    tuonti = { ...tuonti, ilmoituksen_id: ilmoituksenId };
+  }
   const varoitukset = [...tulos.varoitukset];
+  if (taydennettyJson.taydennetty) {
+    varoitukset.push({
+      polku: "ilmoituksen_id",
+      viesti: `Tyhjä ilmoituksen_id täydennetty ilmoituksen tunnisteella ${ilmoituksenId}.`,
+    });
+  }
   try {
     const taydennys = await taydennaKuntakeskusArvio(tuonti, supabase);
     tuonti = taydennys.tuonti;
@@ -1894,100 +1923,115 @@ export async function esikatseleUusiHankeTuontiToiminto(
       });
     }
   } catch (e) {
-    evasteet.set(
-      UUSI_HANKE_ESIKATSELU_EVASTE,
-      JSON.stringify({
-        vaihe: "virheet",
-        json: jsonTeksti,
-        virheet: [
-          ...tulos.virheet,
-          {
-            polku: "sijainti",
-            viesti: e instanceof Error ? e.message : "Kuntakeskusarvio epäonnistui.",
-          },
-        ],
-        varoitukset,
-      }),
-      { path: "/yllapito/uusi-hanke", httpOnly: true, sameSite: "lax", maxAge: 600 },
-    );
-    redirect("/yllapito/uusi-hanke?nakyma=json");
+    await tallennaYllapitoLuonnos(supabase, user.id, UUSI_HANKE_ESIKATSELU_AVAIN, {
+      vaihe: "virheet",
+      json: jsonTeksti,
+      virheet: [
+        ...tulos.virheet,
+        {
+          polku: "sijainti",
+          viesti: e instanceof Error ? e.message : "Kuntakeskusarvio epäonnistui.",
+        },
+      ],
+      varoitukset,
+    });
+    redirect(`/yllapito/uusi-hanke?nakyma=json${nav}`);
+  }
+
+  // Pidä JSON synkassa tuonnin ilmoituksen_id:n kanssa vahvistusta varten.
+  if (tuonti.ilmoituksen_id) {
+    jsonTeksti = taydennaTyhjaIlmoituksenId(
+      jsonTeksti,
+      tuonti.ilmoituksen_id,
+    ).teksti;
   }
 
   const tuplat = await haeUusiHankeTuplat(supabase, tuonti);
   const lahdeTyyppiRistiriidat = await haeLahdeTyyppiRistiriidat(supabase, tuonti);
-  evasteet.set(
-    UUSI_HANKE_ESIKATSELU_EVASTE,
-    JSON.stringify({
-      vaihe: "esikatselu",
-      json: jsonTeksti,
-      tuonti,
-      varoitukset,
-      vainHeikotLahteet: tulos.vainHeikotLahteet,
-      tuplat,
-      lahdeTyyppiRistiriidat,
-    }),
-    { path: "/yllapito/uusi-hanke", httpOnly: true, sameSite: "lax", maxAge: 600 },
-  );
-  redirect("/yllapito/uusi-hanke?nakyma=json&vaihe=esikatselu");
+  await tallennaYllapitoLuonnos(supabase, user.id, UUSI_HANKE_ESIKATSELU_AVAIN, {
+    vaihe: "esikatselu",
+    json: jsonTeksti,
+    tuonti,
+    varoitukset,
+    vainHeikotLahteet: tulos.vainHeikotLahteet,
+    tuplat,
+    lahdeTyyppiRistiriidat,
+  });
+  redirect(`/yllapito/uusi-hanke?nakyma=json&vaihe=esikatselu${nav}`);
 }
 
 /** Vaihe 3: vahvista ja kirjoita RPC:n kautta. */
 export async function vahvistaUusiHankeTuontiToiminto(
   formData: FormData,
 ): Promise<void> {
-  const { kasittelija, supabase } = await vaadiYllapitaja();
+  const { user, kasittelija, supabase } = await vaadiYllapitaja();
   if (!supabasePalvelinAvainAsetettu()) {
     redirect(
       `/yllapito/uusi-hanke?virhe=${encodeURIComponent("Palvelinavain puuttuu.")}`,
     );
   }
-  const jsonTeksti = String(formData.get("json") ?? "");
+  const ilmoituksenIdLomakkeesta = String(
+    formData.get("ilmoituksen_id") ?? "",
+  ).trim();
+  const jsonTeksti = taydennaTyhjaIlmoituksenId(
+    String(formData.get("json") ?? ""),
+    ilmoituksenIdLomakkeesta,
+  ).teksti;
   const tulos = parsiTuontiJsonTekstista(jsonTeksti);
-  const evasteet = await cookies();
+  const ilmoituksenId =
+    tulos.tuonti?.ilmoituksen_id?.trim() || ilmoituksenIdLomakkeesta || undefined;
+  const nav = uusiHankeIlmoitusPolku(ilmoituksenId);
 
   if (!tulos.ok || !tulos.tuonti) {
-    evasteet.delete(UUSI_HANKE_ESIKATSELU_EVASTE);
+    await poistaYllapitoLuonnos(supabase, user.id, UUSI_HANKE_ESIKATSELU_AVAIN);
     redirect(
       `/yllapito/uusi-hanke?virhe=${encodeURIComponent(
         tulos.virheet.map((v) => v.viesti).join(" ") || "Validointi epäonnistui.",
-      )}`,
+      )}${nav}`,
     );
   }
 
+  let tuonti = tulos.tuonti;
+  if (ilmoituksenId && !tuonti.ilmoituksen_id) {
+    tuonti = { ...tuonti, ilmoituksen_id: ilmoituksenId };
+  }
+
+  let kirjoitus;
   try {
-    const ristiriidat = await haeLahdeTyyppiRistiriidat(supabase, tulos.tuonti);
+    const ristiriidat = await haeLahdeTyyppiRistiriidat(supabase, tuonti);
     const lahdeTyyppiPaatokset = parsiLahdeTyyppiPaatokset(
       formData,
       ristiriidat,
     );
-    evasteet.delete(UUSI_HANKE_ESIKATSELU_EVASTE);
-    const kirjoitus = await kirjoitaUusiHankeTuonti({
-      tuonti: tulos.tuonti,
+    kirjoitus = await kirjoitaUusiHankeTuonti({
+      tuonti,
       kasittelija,
       vainHeikotLahteet: tulos.vainHeikotLahteet,
       lahdeTyyppiPaatokset,
     });
-    revalidatePath("/");
-    revalidatePath("/yllapito");
-    revalidatePath("/hankkeet", "layout");
-    if (kirjoitus.tila === "julkaistu") {
-      redirect(`/hankkeet/${kirjoitus.hanke_id}?luotu=1`);
-    }
-    if (kirjoitus.tila === "hankevinkki") {
-      redirect(
-        `/yllapito/${kirjoitus.ehdotus_id}?vihje=${encodeURIComponent(
-          "Hanke tallennettiin hankevinkiksi ja odottavaksi ehdotukseksi (vain media/hankkeen_oma -lähteet).",
-        )}`,
-      );
-    }
-    redirect(`/yllapito/${kirjoitus.ehdotus_id}`);
   } catch (syy) {
     const viesti = syy instanceof Error ? syy.message : "Kirjoitus epäonnistui.";
-    // Pidä esikatselu, jotta valinnat voi täydentää
+    // Pidä esikatseluluonnos, jotta valinnat voi täydentää
     redirect(
-      `/yllapito/uusi-hanke?nakyma=json&vaihe=esikatselu&virhe=${encodeURIComponent(viesti)}`,
+      `/yllapito/uusi-hanke?nakyma=json&vaihe=esikatselu&virhe=${encodeURIComponent(viesti)}${nav}`,
     );
   }
+
+  await poistaYllapitoLuonnos(supabase, user.id, UUSI_HANKE_ESIKATSELU_AVAIN);
+  revalidatePath("/");
+  revalidatePath("/yllapito");
+  revalidatePath("/hankkeet", "layout");
+  if (kirjoitus.tila === "julkaistu") {
+    redirect(`/hankkeet/${kirjoitus.hanke_id}?luotu=1`);
+  }
+  if (kirjoitus.tila === "hankevinkki") {
+    redirect(
+      `/yllapito/${kirjoitus.ehdotus_id}?vihje=${encodeURIComponent(
+        "Hanke tallennettiin hankevinkiksi ja odottavaksi ehdotukseksi (vain media/hankkeen_oma -lähteet).",
+      )}`,
+    );
+  }
+  redirect(`/yllapito/${kirjoitus.ehdotus_id}`);
 }
 
 /** Kenttäkohtainen lomake → sama JSON-putki. */
@@ -2068,5 +2112,7 @@ export async function esikatseleUusiHankeLomakeToiminto(
 
   const fd = new FormData();
   fd.set("json", JSON.stringify(objekti, null, 2));
+  const ilmoitus = String(formData.get("ilmoituksen_id") ?? "").trim();
+  if (ilmoitus) fd.set("ilmoituksen_id", ilmoitus);
   await esikatseleUusiHankeTuontiToiminto(fd);
 }
