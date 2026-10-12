@@ -157,7 +157,7 @@ export async function haeViranomaisVahvistusRivit(
         taulu: r.taulu,
         rivi_id: r.rivi_id,
         kentta: r.kentta,
-        lahteet: [],
+        lahteet: [] as ViranomaisVahvistusLahde[],
       };
       acc.lahteet.push({
         lahde_id: r.id,
