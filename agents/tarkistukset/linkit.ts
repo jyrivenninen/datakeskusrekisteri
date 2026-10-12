@@ -7,6 +7,7 @@
  * Valinnainen: LINKIT_VIIVE_MS (oletus 1000), LINKIT_KATTO, LINKIT_KUIVA=1
  */
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
+import { piilotaJulkinenAsiakirjaUrl } from "../../src/lib/lahde-geokoodaus-url";
 import { robotsSallii } from "./robots";
 import { lataaPaikallinenYmparisto } from "../ymparisto";
 
@@ -181,15 +182,27 @@ async function main() {
 
   const rivit: LahdeRivi[] = [];
   const nahdyt = new Set<string>();
+  let ohitettuMenetelma = 0;
   for (const rivi of (lahteet ?? []) as LahdeRivi[]) {
     const osoite = rivi.lahde_url?.trim();
     if (!osoite || nahdyt.has(osoite)) continue;
+    // Nominatim/MML/WFS-menetelmä-URL:t eivät ole dokumentteja — ei HEAD/GET.
+    if (piilotaJulkinenAsiakirjaUrl(osoite)) {
+      ohitettuMenetelma += 1;
+      nahdyt.add(osoite);
+      continue;
+    }
     nahdyt.add(osoite);
     rivit.push({ ...rivi, lahde_url: osoite });
   }
   for (const dok of dokumentit ?? []) {
     const osoite = String(dok.url ?? "").trim();
     if (!osoite || nahdyt.has(osoite)) continue;
+    if (piilotaJulkinenAsiakirjaUrl(osoite)) {
+      ohitettuMenetelma += 1;
+      nahdyt.add(osoite);
+      continue;
+    }
     nahdyt.add(osoite);
     rivit.push({
       lahde_url: osoite,
@@ -320,7 +333,7 @@ async function main() {
   }
 
   console.log(
-    `Valmis. Tarkistettu ${tarkistettu}, kirjattu ${kirjattu}${kuiva ? " (kuiva-ajo)" : ""}, robots.txt ohitti ${ohitettuRobots}, ei jonoon ${ohitettuEiJonoon}.`,
+    `Valmis. Tarkistettu ${tarkistettu}, kirjattu ${kirjattu}${kuiva ? " (kuiva-ajo)" : ""}, robots.txt ohitti ${ohitettuRobots}, menetelmä-URL ohitti ${ohitettuMenetelma}, ei jonoon ${ohitettuEiJonoon}.`,
   );
 }
 
