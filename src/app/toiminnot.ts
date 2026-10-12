@@ -2295,6 +2295,101 @@ export async function kasitteleViranomaisVahvistusEiTueToiminto(
   revalidatePath("/yllapito");
 }
 
+/** Uusi hanke -ilmoitus on oikeasti täydennys olemassa olevaan. */
+export async function taydennaUusiHankeOlemassaOlevalleToiminto(
+  formData: FormData,
+): Promise<void> {
+  const { kasittelija, supabase } = await vaadiYllapitaja();
+  if (!supabasePalvelinAvainAsetettu()) {
+    redirect(
+      `/yllapito?virhe=${encodeURIComponent("Tallennus vaatii palvelinavaimen.")}`,
+    );
+  }
+  const id = String(formData.get("id") ?? "").trim();
+  const hankeId = String(formData.get("hanke_id") ?? "").trim();
+  const perustelu = String(formData.get("perustelu") ?? "").trim();
+  if (!id || !hankeId) {
+    redirect(
+      `/yllapito/${id || ""}?virhe=${encodeURIComponent("Valitse olemassa oleva hanke.")}`,
+    );
+  }
+
+  const { data: ehdotus, error: eVirhe } = await supabase
+    .from("muutosehdotukset")
+    .select("id, tyyppi, tila")
+    .eq("id", id)
+    .maybeSingle();
+  if (eVirhe || !ehdotus) {
+    redirect(`/yllapito?virhe=${encodeURIComponent("Ehdotusta ei löytynyt.")}`);
+  }
+  if (ehdotus.tyyppi !== "uusi_hanke" || ehdotus.tila !== "odottaa") {
+    redirect(
+      `/yllapito/${id}?virhe=${encodeURIComponent("Vain odottava uusi hanke -ilmoitus.")}`,
+    );
+  }
+
+  const { data: hanke, error: hVirhe } = await supabase
+    .from("hankkeet")
+    .select("id, nimi, kunta, yhdistetty_kohde_id")
+    .eq("id", hankeId)
+    .maybeSingle();
+  if (hVirhe || !hanke || hanke.yhdistetty_kohde_id) {
+    redirect(
+      `/yllapito/${id}?virhe=${encodeURIComponent("Kohdehanketta ei löytynyt.")}`,
+    );
+  }
+
+  const teksti =
+    perustelu ||
+    `Täydennetty olemassa olevaa hanketta ${hanke.nimi} (${hankeId}). Ei uutta hanketta.`;
+
+  const yllapito = luoYllapitoAsiakas();
+  const { error } = await yllapito
+    .from("muutosehdotukset")
+    .update({
+      tila: "hyvaksytty",
+      hanke_id: hankeId,
+      kasitelty_pvm: new Date().toISOString(),
+      kasittelija,
+      perustelu: teksti,
+    })
+    .eq("id", id)
+    .eq("tila", "odottaa");
+  if (error) {
+    redirect(`/yllapito/${id}?virhe=${encodeURIComponent(error.message)}`);
+  }
+
+  revalidatePath("/yllapito");
+  revalidatePath(`/yllapito/${id}`);
+  revalidatePath(`/hankkeet/${hankeId}`);
+  redirect(`/yllapito/${id}?kasitelty=1`);
+}
+
+/** Aseta lainauksen_luonne (ihmisen luokitus). */
+export async function asetaLainauksenLuonneToiminto(
+  formData: FormData,
+): Promise<void> {
+  await vaadiYllapitaja();
+  if (!supabasePalvelinAvainAsetettu()) {
+    throw new Error("Tallennus vaatii palvelinavaimen.");
+  }
+  const lahdeId = String(formData.get("lahde_id") ?? "").trim();
+  const luonne = String(formData.get("lainauksen_luonne") ?? "").trim();
+  const hankeId = String(formData.get("hanke_id") ?? "").trim();
+  if (!lahdeId || !luonne) throw new Error("Lähde tai luonne puuttuu.");
+
+  const yllapito = luoYllapitoAsiakas();
+  const { error } = await yllapito.rpc("aseta_lahde_lainauksen_luonne", {
+    p_lahde_id: lahdeId,
+    p_luonne: luonne,
+  });
+  if (error) throw new Error(error.message);
+
+  revalidatePath("/yllapito/viranomais-vahvistus");
+  revalidatePath("/yllapito");
+  if (hankeId) revalidatePath(`/hankkeet/${hankeId}`);
+}
+
 /** LS13-erä: lainaus tukee → merkitse yksittäiseksi (pois eräjonosta). */
 export async function kasitteleLs13EraTukeeToiminto(
   formData: FormData,

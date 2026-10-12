@@ -230,6 +230,27 @@ export async function haeUusiHankeTuplat(
     }
   }
 
+  // Poista heikot osumat, jotka on merkitty eri hankkeeksi vahvan osuman kanssa.
+  const vahvatIdt = [...osumat.values()]
+    .filter((o) => o.vahva)
+    .map((o) => o.hanke_id);
+  if (vahvatIdt.length > 0 && osumat.size > 1) {
+    const { data: eiSama, error: eiSamaVirhe } = await supabase
+      .from("hanke_ei_sama")
+      .select("hanke_id_a, hanke_id_b")
+      .or(
+        `hanke_id_a.in.(${vahvatIdt.join(",")}),hanke_id_b.in.(${vahvatIdt.join(",")})`,
+      );
+    if (eiSamaVirhe) throw new Error(eiSamaVirhe.message);
+    const vahvaJoukko = new Set(vahvatIdt);
+    for (const pari of eiSama ?? []) {
+      const a = pari.hanke_id_a as string;
+      const b = pari.hanke_id_b as string;
+      if (vahvaJoukko.has(a) && !vahvaJoukko.has(b)) osumat.delete(b);
+      if (vahvaJoukko.has(b) && !vahvaJoukko.has(a)) osumat.delete(a);
+    }
+  }
+
   return [...osumat.values()].sort((a, b) => {
     if (a.vahva !== b.vahva) return a.vahva ? -1 : 1;
     return a.nimi.localeCompare(b.nimi, "fi");

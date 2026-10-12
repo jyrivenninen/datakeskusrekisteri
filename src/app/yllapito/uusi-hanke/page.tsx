@@ -530,6 +530,17 @@ export default async function UusiHankeSivu({
                           >
                             Avaa päivitys
                           </Link>
+                          {(tila.tuonti.ilmoituksen_id || ilmoituksenId) ? (
+                            <>
+                              {" · "}
+                              <Link
+                                href={`/yllapito/${tila.tuonti.ilmoituksen_id || ilmoituksenId}`}
+                                className="text-link underline"
+                              >
+                                Sulje ilmoitus täydennyksenä
+                              </Link>
+                            </>
+                          ) : null}
                         </p>
                       ) : (
                         <p className="mt-1 text-muted">

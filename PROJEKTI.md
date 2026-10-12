@@ -215,6 +215,13 @@ Nämä nousivat käytön ja integraatioiden myötä; tarkennetaan ennen toteutus
 - [x] 7A.4 Vanhentumisvahti
 - [x] 7A.6 Kuntien esityslistat — uusia lähteitä kartoitetaan ajossa (RSS + avoindata.fi)
 
+**Sähköliityntä (tietoryhmä, ei vielä skeemaa)**
+- [ ] Kentät / näyttö: jännite, virtapiirien lkm, pituus, reitti (olemassa olevan johdon vieressä), päätepiste
+- [ ] Esimerkki: Polarnode Kangasala, Ruutana — LVV-U/101946/2026: 2×400 kV, noin 5 km, Kangasalan sähköasemalta Tarasten kiertotalousalueelle (päätepiste kunnan alueella); YVA-menettelyä ei sovelleta. Kuulutus asiakirjoissa, ei kenttälähteenä.
+
+**Rakentamisvaiheet**
+- [ ] Vaiheitainen teho (esim. Compute Nordic Visulahti / Yle 50 MW): odottaa lähdettä, joka erittelee suureen (IT vs. kokonaisuus) ja kertoo vaiheen tilan.
+
 ---
 
 ## 7. Mitä Cursor tekee itse, mitä kysyy, mitä pyytää käyttäjältä

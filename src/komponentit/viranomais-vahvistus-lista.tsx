@@ -3,11 +3,19 @@
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import {
+  asetaLainauksenLuonneToiminto,
   kasitteleViranomaisVahvistusEiTueToiminto,
   kasitteleViranomaisVahvistusTukeeToiminto,
 } from "@/app/toiminnot";
+import {
+  LAINAUKSEN_LUONNE_NIMET,
+  LAINAUKSEN_LUONTEET,
+  luokitteleLainauksenLuonne,
+} from "@/lib/lainauksen-luonne";
 import { HANKE_KENTTA_NIMET } from "@/lib/naytto";
 import type { ViranomaisVahvistusRivi } from "@/lib/viranomais-vahvistus-lapikaynti";
+
+const LUONNE_KENTAT = new Set(["vaihe", "kuvaus"]);
 
 export function ViranomaisVahvistusLista({
   rivit,
@@ -27,12 +35,14 @@ export function ViranomaisVahvistusLista({
   const [poikkeamaAuki, setPoikkeamaAuki] = useState(false);
   const [huomautus, setHuomautus] = useState("");
   const [arviot, setArviot] = useState<Record<string, "tukee" | "ei_tue">>({});
+  const [luonneValinta, setLuonneValinta] = useState<Record<string, string>>({});
 
   useEffect(() => {
     setJono(rivit);
     setAktiivinen(0);
     setPoikkeamaAuki(false);
     setHuomautus("");
+    setLuonneValinta({});
   }, [rivit]);
 
   const rivi = jono[aktiivinen] ?? null;
@@ -98,6 +108,8 @@ export function ViranomaisVahvistusLista({
 
   if (!rivi) return null;
 
+  const kysyLuonne = LUONNE_KENTAT.has(rivi.kentta);
+
   const kenttaNimi =
     rivi.kentta.includes(",")
       ? "määräajat (alkaa, päättyy, tyyppi)"
@@ -131,7 +143,10 @@ export function ViranomaisVahvistusLista({
         </p>
 
         <ul className="mt-4 space-y-3">
-          {rivi.lahteet.map((lahde) => (
+          {rivi.lahteet.map((lahde) => {
+            const heur = luokitteleLainauksenLuonne(lahde.lainaus);
+            const tallennettu = lahde.lainauksen_luonne;
+            return (
             <li key={lahde.lahde_id} className="text-sm leading-relaxed">
               <p>
                 <span className="font-medium">Lainaus: </span>
@@ -150,8 +165,100 @@ export function ViranomaisVahvistusLista({
                   lähde
                 </a>
               </p>
+              {tallennettu ? (
+                <p className="mt-1 text-muted">
+                  Lainauksen luonne:{" "}
+                  {LAINAUKSEN_LUONNE_NIMET[
+                    tallennettu as keyof typeof LAINAUKSEN_LUONNE_NIMET
+                  ] ?? tallennettu}
+                </p>
+              ) : (
+                <p className="mt-1 text-muted">
+                  Lainauksen luonne: ei luokiteltu
+                  {heur
+                    ? ` · heuristinen arvio: ${LAINAUKSEN_LUONNE_NIMET[heur]}`
+                    : ""}
+                </p>
+              )}
+              {kysyLuonne && !vainLuku && !tallennettu ? (
+                <form
+                  className="mt-2 flex flex-wrap items-end gap-2"
+                  onSubmit={(e) => {
+                    e.preventDefault();
+                    void (async () => {
+                      const valinta = luonneValinta[lahde.lahde_id];
+                      if (!valinta) {
+                        setVirhe("Valitse lainauksen luonne.");
+                        return;
+                      }
+                      setTallentaa(true);
+                      setVirhe(null);
+                      const fd = new FormData();
+                      fd.set("lahde_id", lahde.lahde_id);
+                      fd.set("lainauksen_luonne", valinta);
+                      fd.set("hanke_id", rivi.hanke_id ?? "");
+                      try {
+                        await asetaLainauksenLuonneToiminto(fd);
+                        setJono((jon) =>
+                          jon.map((r) =>
+                            r.avain !== rivi.avain
+                              ? r
+                              : {
+                                  ...r,
+                                  lahteet: r.lahteet.map((l) =>
+                                    l.lahde_id === lahde.lahde_id
+                                      ? { ...l, lainauksen_luonne: valinta }
+                                      : l,
+                                  ),
+                                },
+                          ),
+                        );
+                        router.refresh();
+                      } catch (syy) {
+                        setVirhe(
+                          syy instanceof Error
+                            ? syy.message
+                            : "Luokituksen tallennus epäonnistui.",
+                        );
+                      } finally {
+                        setTallentaa(false);
+                      }
+                    })();
+                  }}
+                >
+                  <label className="text-sm">
+                    Aseta luokka
+                    <select
+                      className="ml-2 border border-border bg-background px-2 py-1 text-sm"
+                      value={luonneValinta[lahde.lahde_id] ?? ""}
+                      onChange={(e) =>
+                        setLuonneValinta((v) => ({
+                          ...v,
+                          [lahde.lahde_id]: e.target.value,
+                        }))
+                      }
+                      required
+                    >
+                      <option value="">—</option>
+                      {LAINAUKSEN_LUONTEET.map((k) => (
+                        <option key={k} value={k}>
+                          {LAINAUKSEN_LUONNE_NIMET[k]}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  <button
+                    type="submit"
+                    disabled={tallentaa}
+                    className="border border-border px-2 py-1 text-sm disabled:opacity-50"
+                  >
+                    Tallenna luokka
+                  </button>
+                </form>
+              ) : null}
             </li>
-          ))}
+            );
+          })}
         </ul>
 
         {virhe ? <p className="mt-3 text-sm text-red-700">{virhe}</p> : null}

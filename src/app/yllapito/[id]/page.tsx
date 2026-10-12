@@ -6,6 +6,7 @@ import {
   kasitteleLahdeselvitys13RatkaisuToiminto,
   korjaaLinkkiLahdeToiminto,
   tallennaLahdeMetatiedotToiminto,
+  taydennaUusiHankeOlemassaOlevalleToiminto,
 } from "@/app/toiminnot";
 import { PintaAlaYksikkoVahvistus } from "@/komponentit/pinta-ala-yksikko-vahvistus";
 import {
@@ -319,7 +320,8 @@ export default async function EhdotusSivu({
             Ilmoituslomakkeen ehdotuksessa on yleensä vain nimi ja kunta.
             Täydennä Grok-JSON:lla tai lomakkeella: validointi, tuplatarkistus
             ja vahvistus. Vahvistus sulkee tämän ehdotuksen hyväksytyksi ja
-            kirjaa uuden hankkeen.
+            kirjaa uuden hankkeen. Uusi hanke -ilmoitukset osoittautuvat usein
+            täydennyksiksi — käytä alla olevaa, jos hanke on jo rekisterissä.
           </p>
           <p className="mt-3">
             <a
@@ -329,6 +331,43 @@ export default async function EhdotusSivu({
               Avaa Uusi hanke -tuonti
             </a>
           </p>
+          <form
+            action={taydennaUusiHankeOlemassaOlevalleToiminto}
+            className="mt-6 space-y-3 border-t border-border pt-4"
+          >
+            <input type="hidden" name="id" value={ehdotus.id} />
+            <h3 className="font-medium">Täydennä olemassa olevaa</h3>
+            <p className="max-w-prose text-sm text-muted">
+              Sulkee ilmoituksen hyväksyttynä viittauksella valittuun hankkeeseen.
+              Ei luo uutta hanketta.
+            </p>
+            <label htmlFor="taydenna-hanke-id" className="block text-sm font-medium">
+              Kohdehanke (UUID)
+            </label>
+            <input
+              id="taydenna-hanke-id"
+              name="hanke_id"
+              required
+              placeholder="hanke-id"
+              className="w-full max-w-xl rounded border border-border bg-background px-2 py-2 font-mono text-sm"
+            />
+            <label htmlFor="taydenna-perustelu" className="block text-sm font-medium">
+              Perustelu
+            </label>
+            <textarea
+              id="taydenna-perustelu"
+              name="perustelu"
+              rows={2}
+              className="w-full rounded border border-border bg-background px-2 py-2 text-sm"
+              placeholder="Miksi ilmoitus on täydennys eikä uusi hanke"
+            />
+            <button
+              type="submit"
+              className="rounded border border-border px-4 py-2 text-sm font-medium"
+            >
+              Täydennä olemassa olevaa
+            </button>
+          </form>
         </section>
       ) : null}
       {query.julkaistu ? (

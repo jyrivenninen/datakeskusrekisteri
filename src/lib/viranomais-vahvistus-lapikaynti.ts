@@ -47,6 +47,8 @@ export type ViranomaisVahvistusLahde = {
   lainaus: string | null;
   merkitty: Merkinta;
   lahde_tyyppi: LahdeTyyppi;
+  /** Ihmisen asettama; null = ei luokiteltu. */
+  lainauksen_luonne: string | null;
 };
 
 export type ViranomaisVahvistusRivi = {
@@ -122,10 +124,11 @@ export async function haeViranomaisVahvistusRivit(
     let kysely = sb
       .from("kentta_lahteet")
       .select(
-        "id, taulu, rivi_id, kentta, lahde_url, lahde_sivu, lainaus, merkitty, tekninen_lahde, tila",
+        "id, taulu, rivi_id, kentta, lahde_url, lahde_sivu, lainaus, lainauksen_luonne, merkitty, tekninen_lahde, tila",
       )
       .eq("taulu", maara.taulu)
       .neq("tila", "korvattu")
+      .neq("tila", "ei_tue")
       .range(alku, alku + 999);
     if (maara.kentat) {
       kysely = kysely.in("kentta", [...maara.kentat]);
@@ -163,6 +166,7 @@ export async function haeViranomaisVahvistusRivit(
         lainaus: r.lainaus,
         merkitty: r.merkitty as Merkinta,
         lahde_tyyppi: tyyppi,
+        lainauksen_luonne: (r.lainauksen_luonne as string | null) ?? null,
       });
       kartta.set(avain, acc);
     }
