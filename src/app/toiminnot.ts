@@ -2006,19 +2006,6 @@ export async function vahvistaUusiHankeTuontiToiminto(
     tuonti = { ...tuonti, ilmoituksen_id: ilmoituksenId };
   }
 
-  // Estä vahvistus, jos esikatselussa geokoodaus/piste ei täsmää kuntaan.
-  const luonnos = await haeYllapitoLuonnos<{
-    sijaintiEsikatselu?: { estaa_vahvistuksen?: boolean; varoitus?: string | null };
-  }>(supabase, user.id, UUSI_HANKE_ESIKATSELU_AVAIN);
-  if (luonnos?.sijaintiEsikatselu?.estaa_vahvistuksen) {
-    redirect(
-      `/yllapito/uusi-hanke?nakyma=json&vaihe=esikatselu&virhe=${encodeURIComponent(
-        luonnos.sijaintiEsikatselu.varoitus ||
-          "Sijainti ei vastaa hankkeen kuntaa — vahvistus estetty.",
-      )}${nav}`,
-    );
-  }
-
   let kirjoitus;
   try {
     const ristiriidat = await haeLahdeTyyppiRistiriidat(supabase, tuonti);

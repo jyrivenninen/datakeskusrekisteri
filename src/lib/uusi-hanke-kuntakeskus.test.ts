@@ -184,9 +184,10 @@ test("ei kirjoita pistettä jos MML palauttaa väärän kunnan", async () => {
     t.tuonti.kentat.find((k) => k.kentta === "sijainti_lat"),
     undefined,
   );
-  assert.equal(t.sijainti.estaa_vahvistuksen, true);
+  assert.equal(t.sijainti.estaa_vahvistuksen, false);
+  assert.equal(t.sijainti.lat, null);
   assert.equal(t.sijainti.kunta_nimi, "Tuusula");
-  assert.match(t.sijainti.sanallinen ?? "", /60\.3955/);
   assert.match(t.sijainti.varoitus ?? "", /luotettavasti/);
   assert.match(t.sijainti.varoitus ?? "", /Tuusula/);
+  assert.match(t.sijainti.varoitus ?? "", /ilman pistettä/);
 });

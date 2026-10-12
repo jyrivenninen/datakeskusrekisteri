@@ -79,7 +79,6 @@ function sijaintiTuloksesta(
       hankkeenMaakunta.trim().toLocaleLowerCase("fi") ||
     // MML voi palauttaa maakuntakoodin (01) eikä nimeä
     /^\d+$/.test(geo.maakunta_nimi.trim());
-  const estaa = !vastaa || (!maakuntaOk && Boolean(hankkeenMaakunta && geo.maakunta_nimi));
   const sanallinen = [
     muotoileKoordinaatit(geo.lat, geo.lon),
     geo.maakunta_nimi,
@@ -95,10 +94,11 @@ function sijaintiTuloksesta(
     varoitus =
       `Kunnan keskipistettä ei saatu luotettavasti: MML palautti paikan ` +
       `«${geo.paikka_nimi ?? "?"}» kunnassa ${geo.kunta_nimi ?? "?"} (${geo.kunta_koodi ?? "?"}), ` +
-      `ei ${odotettu.nimi} (${odotettu.koodi}).`;
+      `ei ${odotettu.nimi} (${odotettu.koodi}). Hanke voidaan silti luoda ilman pistettä.`;
   } else if (!maakuntaOk && hankkeenMaakunta && geo.maakunta_nimi) {
     varoitus =
-      `Geokoodatun pisteen maakunta (${geo.maakunta_nimi}) ei vastaa hankkeen maakuntaa (${hankkeenMaakunta}).`;
+      `Geokoodatun pisteen maakunta (${geo.maakunta_nimi}) ei vastaa hankkeen maakuntaa (${hankkeenMaakunta}). ` +
+      `Hanke voidaan silti luoda ilman pistettä.`;
   }
 
   return {
@@ -110,7 +110,8 @@ function sijaintiTuloksesta(
     maakunta_nimi: geo.maakunta_nimi,
     paikka_tyyppi: geo.paikka_tyyppi,
     sanallinen,
-    estaa_vahvistuksen: estaa,
+    // Epäsopivuus → varoitus, ei vahvistuksen estoa (luonti ilman pistettä ok).
+    estaa_vahvistuksen: false,
     varoitus,
   };
 }
@@ -209,18 +210,20 @@ export async function taydennaKuntakeskusArvio(
   }
 
   const sijainti = sijaintiTuloksesta(geo, odotettu, kunta.maakunta);
-  if (sijainti.estaa_vahvistuksen || !geokoodausVastaaKuntaa(geo, odotettu)) {
+  if (!geokoodausVastaaKuntaa(geo, odotettu)) {
     // Näytä palautettu paikka esikatselussa, mutta älä kirjoita lat/lon
-    // tuontiin; vahvistus estetty.
+    // tuontiin. Vahvistus sallitaan (hanke ilman pistettä).
     return {
       tuonti,
       taydennetty: false,
       sijainti: {
         ...sijainti,
-        estaa_vahvistuksen: true,
+        lat: null,
+        lon: null,
+        estaa_vahvistuksen: false,
         varoitus:
           sijainti.varoitus ??
-          "Kunnan keskipistettä ei saatu luotettavasti.",
+          "Kunnan keskipistettä ei saatu luotettavasti. Hanke voidaan silti luoda ilman pistettä.",
       },
     };
   }

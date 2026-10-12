@@ -333,10 +333,10 @@ export default async function UusiHankeSivu({
                   </dd>
                 </div>
               </dl>
-              {tila.sijaintiEsikatselu.estaa_vahvistuksen ? (
-                <p className="mt-2 font-medium" role="alert">
-                  Vahvistus estetty: piste tai geokoodaus ei vastaa hankkeen
-                  kuntaa.
+              {tila.sijaintiEsikatselu.varoitus &&
+              tila.sijaintiEsikatselu.lat == null ? (
+                <p className="mt-2 text-muted">
+                  Voit vahvistaa hankkeen ilman sijaintipistettä.
                 </p>
               ) : null}
             </div>
@@ -633,7 +633,6 @@ export default async function UusiHankeSivu({
             <div className="flex flex-wrap gap-3">
               <button
                 type="submit"
-                disabled={Boolean(tila.sijaintiEsikatselu?.estaa_vahvistuksen)}
                 className="rounded border border-foreground bg-foreground px-4 py-2 text-sm font-medium text-background disabled:cursor-not-allowed disabled:opacity-50"
               >
                 {tila.vainHeikotLahteet

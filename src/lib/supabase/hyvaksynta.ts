@@ -23,6 +23,32 @@ function tanaan(): string {
   return new Date().toISOString().slice(0, 10);
 }
 
+/** Näkyy ylläpidon lähdeajot-listassa (ei pelkkä console.warn). */
+async function kirjaaGeokoodausEpaonnistuminen(
+  supabase: SupabaseClient,
+  opts: { hankeId: string | null; osoite: string; syy: string },
+): Promise<void> {
+  const kysely = new URL(
+    "https://avoin-paikkatieto.maanmittauslaitos.fi/geocoding/v2/pelias/search",
+  );
+  kysely.searchParams.set("text", opts.osoite);
+  kysely.searchParams.set("lang", "fi");
+  const virhe =
+    (opts.hankeId ? `hanke ${opts.hankeId}: ` : "hanke puuttuu: ") + opts.syy;
+  const { error } = await supabase.from("lahdeajot").insert({
+    sovitin: "geokoodaus-sijainti-alue",
+    tila: "epaonnistui",
+    paattyi_pvm: new Date().toISOString(),
+    osumia: 0,
+    virhe: virhe.slice(0, 2000),
+    kysely_url: kysely.toString(),
+  });
+  if (error) {
+    // Älä peitä alkuperäistä geokoodausvirhettä lokikirjoituksen epäonnistuessa.
+    console.error("[geokoodaus] lahdeajot-kirjaus epäonnistui:", error.message);
+  }
+}
+
 function lahdeLajiRiville(tieto: EhdotettuKentta): LahdeLaji {
   if (tieto.lahde_laji) {
     if (!(LAHDE_LAJIT as readonly string[]).includes(tieto.lahde_laji)) {
@@ -169,10 +195,11 @@ async function normalisoiSijaintiAlueKentat(
   }
 
   if (!odotettuKunta) {
-    console.warn(
-      "[geokoodaus] sijainti_alue ohitettu: odotettua kuntaa ei saatu selville",
-      { hankeId, osoite },
-    );
+    await kirjaaGeokoodausEpaonnistuminen(supabase, {
+      hankeId,
+      osoite,
+      syy: "Odotettua kuntaa ei saatu selville (hanke tai kunnat-taulu).",
+    });
   } else {
     try {
       const tulos = await geokoodaaOsoite(osoite, odotettuKunta);
@@ -183,15 +210,13 @@ async function normalisoiSijaintiAlueKentat(
         `${osoite} → MML: paikka «${tulos.paikka_nimi ?? tulos.label ?? "?"}», ` +
         `kunta ${tulos.kunta_nimi ?? "?"} (${tulos.kunta_koodi ?? "?"})`;
     } catch (e) {
-      console.warn(
-        "[geokoodaus] sijainti_alue geokoodaus epäonnistui",
-        {
-          hankeId,
-          osoite,
-          kunta: odotettuKunta.nimi,
-          virhe: e instanceof Error ? e.message : String(e),
-        },
-      );
+      await kirjaaGeokoodausEpaonnistuminen(supabase, {
+        hankeId,
+        osoite,
+        syy:
+          `Geokoodaus epäonnistui kuntaan ${odotettuKunta.nimi} (${odotettuKunta.koodi}): ` +
+          (e instanceof Error ? e.message : String(e)),
+      });
     }
   }
 
@@ -207,13 +232,18 @@ async function normalisoiSijaintiAlueKentat(
   }
 
   if (lat == null || lon == null || !Number.isFinite(lat) || !Number.isFinite(lon)) {
-    throw new Error(
+    const syy =
       `Osoitetta "${osoite}" ei voitu geokoodata luotettavasti` +
-        (odotettuKunta
-          ? ` kuntaan ${odotettuKunta.nimi} (${odotettuKunta.koodi})`
-          : " (odotettua kuntaa ei saatu selville)") +
-        ` eikä hankkeella ole olemassa olevia koordinaatteja.`,
-    );
+      (odotettuKunta
+        ? ` kuntaan ${odotettuKunta.nimi} (${odotettuKunta.koodi})`
+        : " (odotettua kuntaa ei saatu selville)") +
+      ` eikä hankkeella ole olemassa olevia koordinaatteja.`;
+    await kirjaaGeokoodausEpaonnistuminen(supabase, {
+      hankeId,
+      osoite,
+      syy: `Ilman pistettä: ${syy}`,
+    });
+    throw new Error(syy);
   }
 
   const lainaus =
