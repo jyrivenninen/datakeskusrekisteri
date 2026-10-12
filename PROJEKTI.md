@@ -221,6 +221,7 @@ Nämä nousivat käytön ja integraatioiden myötä; tarkennetaan ennen toteutus
 
 **Rakentamisvaiheet**
 - [ ] Vaiheitainen teho (esim. Compute Nordic Visulahti / Yle 50 MW): odottaa lähdettä, joka erittelee suureen (IT vs. kokonaisuus) ja kertoo vaiheen tilan.
+- [ ] Greensky Lapinlahti, Alapitkä: tehoarvio muuttuu asiakirjoissa kuukausittain (huhti 2026 ~100 MW → syys ~200 MW → kaavatoimikunta § 28 ~300 MW). Odota Grokin § 28 -selvitystä ennen teho_mw-kirjausta. Mahdollinen teho_min/teho_max-kynnys (Halsua, Raisio, Greensky) tai erillinen «suunnitelma muuttuu ajan myötä».
 
 ---
 

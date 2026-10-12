@@ -86,7 +86,7 @@ export function HankeLaskurit({ yhteenveto }: { yhteenveto: HankeYhteenveto }) {
           </p>
         </li>
         <li className="rounded border border-border bg-surface p-4">
-          <p className="text-sm text-muted">IT-teho tai teho</p>
+          <p className="text-sm text-muted">Ilmoitettu teho, lajeja erittelemättä</p>
           <p className="mt-1 text-2xl font-semibold tabular-nums">
             {yhteenveto.tehoMerkittyLkm === 0
               ? "Ei merkitty"
@@ -94,7 +94,8 @@ export function HankeLaskurit({ yhteenveto }: { yhteenveto: HankeYhteenveto }) {
           </p>
           <p className="mt-1 text-sm text-muted">
             <KattavuusHankkeilla merkitty={yhteenveto.tehoMerkittyLkm} kaikki={hankeita} />
-            . IT-teho, jos merkitty, muuten teho. Generaattorin polttoainetehoa ei käytetä.
+            . Yksi luku per hanke: IT-teho, jos merkitty, muuten teho, muuten
+            erittelemätön ilmoitettu teho. Generaattorin polttoainetehoa ei käytetä.
             Luku ei erottele hankkeen ensimmäistä vaihetta koko hankkeen tavoitteesta.
             Osa luvuista on ensimmäisen vaiheen lukuja, osa tavoitelukuja, eikä lähde
             useimmiten kerro kumpi on kyseessä. Luku ei erottele myöskään hankkeita,

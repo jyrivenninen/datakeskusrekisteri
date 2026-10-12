@@ -153,6 +153,7 @@ export const HANKE_FAKTAKENTAT_EHDOLLISET = [
   "sijainti",
   "teho_mw",
   "it_teho_mw",
+  "teho_erittelematon_mw",
   "pinta_ala_ha",
   "kaava_ala_ha",
   "sahkonkaytto_twh_a",
@@ -257,6 +258,8 @@ export type Hanke = {
   vaihe: HankeVaihe;
   teho_mw: number | null;
   it_teho_mw: number | null;
+  /** Nullable kunnes migraatio 20261016200000 ajettu. */
+  teho_erittelematon_mw?: number | null;
   pinta_ala_ha: number | null;
   kaava_ala_ha: number | null;
   sahkonkaytto_twh_a: number | null;

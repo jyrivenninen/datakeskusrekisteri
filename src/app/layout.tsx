@@ -102,8 +102,8 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
         {esiversioKuitattu ? null : <EsiversioIlmoitus />}
         {children}
         <footer className="mt-auto border-t border-border bg-surface">
-          <div className="sivuleveys grid gap-8 py-10 sm:grid-cols-[1fr_auto]">
-            <div>
+          <div className="sivuleveys flex flex-col gap-8 py-10 sm:flex-row sm:items-start sm:gap-16">
+            <div className="max-w-md shrink-0">
               <p className="text-sm font-medium text-foreground">
                 Datakeskushankkeiden kansallinen rekisteri
               </p>
@@ -112,7 +112,10 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
                 lähteineen. Esiversio: tietoja täydennetään ja varmennetaan.
               </p>
             </div>
-            <nav aria-label="Alatunniste" className="flex flex-col gap-2 text-sm sm:items-end">
+            <nav
+              aria-label="Alatunniste"
+              className="grid grid-cols-2 gap-x-8 gap-y-2 text-sm sm:grid-cols-3"
+            >
               <a href="/tietoa" className="text-link underline">
                 Tietoa palvelusta
               </a>

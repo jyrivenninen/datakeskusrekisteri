@@ -371,6 +371,7 @@ export const HANKE_KENTTA_NIMET: Record<string, string> = {
   vaihe: "Vaihe",
   teho_mw: "Teho (MW)",
   it_teho_mw: "IT-teho (MW)",
+  teho_erittelematon_mw: "Ilmoitettu teho, lajia erittelemättä (MW)",
   pinta_ala_ha: "Pinta-ala (ha)",
   kaava_ala_ha: "Kaava-alue (ha)",
   sahkonkaytto_twh_a: "Sähkönkäyttö (TWh/a)",
@@ -510,9 +511,18 @@ export function onKokoLuokka(arvo: string): arvo is KokoLuokka {
   return KOKO_LUOKAT.some((luokka) => luokka.arvo === arvo);
 }
 
-export function hankeTehoMw(hanke: Pick<Hanke, "it_teho_mw" | "teho_mw">): number | null {
+/**
+ * Yksi luku per hanke laskuriin ja karttaan: IT → kokonais → erittelemätön.
+ * Ei kaksoislaskua, vaikka useampi teho-kenttä olisi täytetty.
+ */
+export function hankeTehoMw(
+  hanke: Pick<Hanke, "it_teho_mw" | "teho_mw"> & {
+    teho_erittelematon_mw?: number | null;
+  },
+): number | null {
   if (hanke.it_teho_mw != null) return Number(hanke.it_teho_mw);
   if (hanke.teho_mw != null) return Number(hanke.teho_mw);
+  if (hanke.teho_erittelematon_mw != null) return Number(hanke.teho_erittelematon_mw);
   return null;
 }
 
