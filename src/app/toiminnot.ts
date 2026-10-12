@@ -39,6 +39,7 @@ import {
   type Ls13RatkaisuId,
 } from "@/lib/lahdeselvitys13-ratkaisut";
 import { parsiTuontiJsonTekstista } from "@/lib/uusi-hanke-tuonti";
+import { taydennaKuntakeskusArvio } from "@/lib/uusi-hanke-kuntakeskus";
 import { haeUusiHankeTuplat } from "@/lib/uusi-hanke-tuplat";
 import { kirjoitaUusiHankeTuonti } from "@/lib/uusi-hanke-kirjoitus";
 import {
@@ -1880,18 +1881,47 @@ export async function esikatseleUusiHankeTuontiToiminto(
     redirect("/yllapito/uusi-hanke?nakyma=json");
   }
 
-  const tuplat = await haeUusiHankeTuplat(supabase, tulos.tuonti);
-  const lahdeTyyppiRistiriidat = await haeLahdeTyyppiRistiriidat(
-    supabase,
-    tulos.tuonti,
-  );
+  let tuonti = tulos.tuonti;
+  const varoitukset = [...tulos.varoitukset];
+  try {
+    const taydennys = await taydennaKuntakeskusArvio(tuonti, supabase);
+    tuonti = taydennys.tuonti;
+    if (taydennys.taydennetty) {
+      varoitukset.push({
+        polku: "sijainti_lat",
+        viesti:
+          "Koordinaatit puuttuivat — esikatseluun ja julkaisuun johdetaan kunnan keskustan arvio (sijainti_alue_tyyppi = arvio, lahde_tyyppi = menetelma). Älä siirrä pistettä suunnan/etäisyyden mukaan; sijaintikuvaus kuuluu huomautukseen.",
+      });
+    }
+  } catch (e) {
+    evasteet.set(
+      UUSI_HANKE_ESIKATSELU_EVASTE,
+      JSON.stringify({
+        vaihe: "virheet",
+        json: jsonTeksti,
+        virheet: [
+          ...tulos.virheet,
+          {
+            polku: "sijainti",
+            viesti: e instanceof Error ? e.message : "Kuntakeskusarvio epäonnistui.",
+          },
+        ],
+        varoitukset,
+      }),
+      { path: "/yllapito/uusi-hanke", httpOnly: true, sameSite: "lax", maxAge: 600 },
+    );
+    redirect("/yllapito/uusi-hanke?nakyma=json");
+  }
+
+  const tuplat = await haeUusiHankeTuplat(supabase, tuonti);
+  const lahdeTyyppiRistiriidat = await haeLahdeTyyppiRistiriidat(supabase, tuonti);
   evasteet.set(
     UUSI_HANKE_ESIKATSELU_EVASTE,
     JSON.stringify({
       vaihe: "esikatselu",
       json: jsonTeksti,
-      tuonti: tulos.tuonti,
-      varoitukset: tulos.varoitukset,
+      tuonti,
+      varoitukset,
       vainHeikotLahteet: tulos.vainHeikotLahteet,
       tuplat,
       lahdeTyyppiRistiriidat,

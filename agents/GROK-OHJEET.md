@@ -968,10 +968,11 @@ Jokaisella rivillä: `kentta`, `arvo`, `lahteet[]` (vähintään yksi). Vapaaeht
 | `kunta` | **kyllä** | Lähde pakollinen |
 | `vaihe` | **kyllä** | Lähde pakollinen |
 | `sijainti_alue_tyyppi` | **kyllä** | Arvo ∈ `kaava_alue` \| `tontti` \| `arvio` |
-| `sijainti_lat` | ei | WGS84-leveysaste desimaaleina (esim. `"62.010600"`). **Vaatii oman `lahteet[]`.** |
-| `sijainti_lon` | ei | WGS84-pituusaste desimaaleina. **Vaatii oman `lahteet[]`.** |
-| `sijaintiperustelu` | ei | Vapaa teksti (esim. «noin 5 km kuntakeskuksesta pohjoiseen») |
-| `muut_sijainnit` | ei | Vaihtoehtoiset/muut sijainnit |
+| `sijainti_lat` | ei | WGS84-leveysaste desimaaleina (esim. `"62.010600"`). **Vaatii oman `lahteet[]`.** Jos puuttuu, ylläpito johtaa kuntakeskusarvion — ei tarvitse JSONiin. |
+| `sijainti_lon` | ei | WGS84-pituusaste desimaaleina. **Vaatii oman `lahteet[]`.** Jos puuttuu, ylläpito johtaa kuntakeskusarvion. |
+| `sijaintiperustelu` | ei | **Siting-perustelu:** miksi paikka valittiin (YVA). Ei sijaintikuvausta. |
+| `muut_sijainnit` | ei | Muiden sijaintien tarkastelu YVA:ssa (`tarkasteltu_ja_nimetty` \| …) |
+| `huomautus` | ei | Julkinen huomautus; **sijaintikuvaus** («noin 5 km pohjoiseen») kuuluu tähän, ei `sijaintiperustelu`-kenttään |
 | `maakunta` | ei | Johdetaan yleensä kunnasta |
 | `toimija_nimi` | ei | Organisaationimi, ei henkilönimeä |
 | `yva_diaarinumero` | ei | Viranomaislähde |
@@ -990,7 +991,6 @@ Jokaisella rivillä: `kentta`, `arvo`, `lahteet[]` (vähintään yksi). Vapaaeht
 | `kaavatunnus` | ei | |
 | `kortteli` | ei | |
 | `kiinteistotunnus` | ei | |
-| `huomautus` | ei | Voi olla myös juuressa |
 
 **Lähde jokaiselle riville:** `lahteet[].url`, `lahde_tyyppi`, `lainaus`
 pakollisia; vapaaehtoiset `julkaisija`, `asiakirjan_nimi`, `paivays`, `sivu`.
@@ -1003,21 +1003,22 @@ Jos kaikki lähteet ovat `media` tai `hankkeen_oma`, hanke ei mene suoraan
 julkaistuksi. Organisaatioihin ei henkilönimeä; logo/hakutulosote ei kelpaa
 laatijan lähteeksi.
 
-#### Sijainti (koordinaatit)
+#### Sijainti (koordinaatit) vs sijaintiperustelu vs huomautus
+
+| Kenttä / paikka | Käyttö |
+|-----------------|--------|
+| `sijainti_lat` / `sijainti_lon` | Karttapiste. Jos puuttuvat JSONista, **ylläpidon Uusi hanke -näkymä johtaa itse** kunnan keskustasta (`kunnat`-taulun nimi → MML), merkitsee `sijainti_alue_tyyppi = arvio` ja antaa lat/lon-lähteeksi `menetelma` + lainauksen johtamistavasta. **Älä** siirrä pistettä suunnan/etäisyyden mukaan. |
+| `sijaintiperustelu` | **Miksi** paikka valittiin (YVA siting). Ei «5 km pohjoiseen». |
+| `huomautus` (juuri tai kenttä) | Sijaintikuvaus kuten «noin 5 km kuntakeskuksesta pohjoiseen», kun lähde ei anna tarkkaa rajaa. |
 
 - Koordinaatit annetaan **vain** `kentat`-riveinä `sijainti_lat` ja
   `sijainti_lon` (ei juuren kenttiä, ei `lat`/`lon`/`latitude`).
-- Molemmille saa ja **pitää** antaa lähde (`lahteet[]`), kuten muillekin
-  faktakentille. Geokoodauksen lähdetyyppi on usein `menetelma` tai `rekisteri`.
-- `sijainti_lat` / `sijainti_lon` **eivät ole pakollisia**. Pelkkä `kunta` +
-  `sijainti_alue_tyyppi` (+ tarvittaessa `sijaintiperustelu`) kelpaa.
-- Kun piste on arvio (kuntakeskus, paikannimi, «X km suuntaan» ilman
-  tarkkaa rajaa): `sijainti_alue_tyyppi` = `arvio`, ja jos annat pisteen,
-  merkitse lat/lon samaan arvioon (älä `tontti` / `kaava_alue`).
-- Suositus kartalle: jos tarkkaa pistettä ei ole, johda piste kuntakeskuksesta
-  (tai nimetystä paikasta) ja merkitse `arvio` + `sijaintiperustelu`
-  (esim. «Kuntakeskuksen geokoodi; lähde kuvaa sijainnin kunnassa ilman
-  tarkkaa tonttia»).
+- Jos annat lat/lon itse: molemmille `lahteet[]`. Geokoodauksen tyyppi
+  on usein `menetelma`.
+- Lat/lon **eivät ole pakollisia JSONissa** — näkymä täydentää ne
+  vahvistuksessa. Tarkka tontti/kaavaraja: anna lat/lon (tai jätä
+  `sijainti_alue_tyyppi` = `tontti` / `kaava_alue` vain kun piste/raja
+  tulee lähteestä).
 
 ```json
 {

@@ -102,6 +102,15 @@ export function YllapitoOhjeet({ massahyvaksynta = false }: { massahyvaksynta?: 
               ilmoituslomakkeen ehdotuksen hyväksytyksi ja kirjaa viittauksen
               uuteen hankkeeseen.
             </li>
+            <li>
+              Jos JSON:ssa ei ole <code className="text-xs">sijainti_lat</code>{" "}
+              / <code className="text-xs">sijainti_lon</code>, näkymä johtaa
+              pisteen kunnan keskustasta (<code className="text-xs">kunnat</code>
+              + MML), merkitsee tyypin <code className="text-xs">arvio</code> ja
+              lähteen <code className="text-xs">menetelma</code>. Älä siirrä
+              pistettä suunnan mukaan. Sijaintikuvaus («5 km pohjoiseen»)
+              kuuluu huomautukseen, ei sijaintiperusteluun (siting).
+            </li>
           </OhjeKohta>
 
           <OhjeKohta otsikko="Täydennys, korjaus, uusi hanke ja valokuva" id="ohje-taydennys">

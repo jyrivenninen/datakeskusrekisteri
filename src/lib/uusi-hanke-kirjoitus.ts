@@ -12,6 +12,7 @@ import {
   tuontiEhdotusSisalloksi,
   type UusiHankeTuonti,
 } from "@/lib/uusi-hanke-tuonti";
+import { taydennaKuntakeskusArvio } from "@/lib/uusi-hanke-kuntakeskus";
 import type { LahdeTyyppi } from "@/lib/lahde-metatiedot";
 import type { LahdeTyyppiPaatos, LahdeTyyppiRistiriita } from "@/lib/uusi-hanke-lahde-tyyppi-ristiriita";
 import {
@@ -275,14 +276,15 @@ export async function kirjoitaUusiHankeTuonti(opts: {
   /** Esikatselussa tehdyt lahde_tyyppi-ristiriidan valinnat. */
   lahdeTyyppiPaatokset?: LahdeTyyppiPaatos[];
 }): Promise<TuontiKirjoitusTulos> {
-  const { tuonti, kasittelija, vainHeikotLahteet } = opts;
+  const { kasittelija, vainHeikotLahteet } = opts;
+  const sb = luoYllapitoAsiakas();
+  const { tuonti, taydennetty } = await taydennaKuntakeskusArvio(opts.tuonti, sb);
   const sisalto = tuontiEhdotusSisalloksi(tuonti);
 
   if (Object.keys(sisalto.kentat).length === 0) {
     throw new Error("Tuonnissa ei ole julkaistavia kenttiä.");
   }
 
-  const sb = luoYllapitoAsiakas();
   const ristiriidat = await haeLahdeTyyppiRistiriidat(sb, tuonti);
   const paatokset = opts.lahdeTyyppiPaatokset ?? [];
   if (ristiriidat.length > 0) {
@@ -296,6 +298,10 @@ export async function kirjoitaUusiHankeTuonti(opts: {
     }
   }
   const tyypitUrlille = kaytettavatLahdeTyypit(tuonti, ristiriidat, paatokset);
+
+  const huomautusLisa = taydennetty
+    ? "Luotu ylläpidon Uusi hanke -tuonnilla. Sijainti: kuntakeskusarvio (menetelma)."
+    : "Luotu ylläpidon Uusi hanke -tuonnilla.";
 
   if (vainHeikotLahteet) {
     const syy =
@@ -317,7 +323,7 @@ export async function kirjoitaUusiHankeTuonti(opts: {
     tuonti,
     sisalto,
     kasittelija,
-    "Luotu ylläpidon Uusi hanke -tuonnilla.",
+    huomautusLisa,
   );
 
   await hyvaksyMuutosehdotus(ehdotus_id, kasittelija);

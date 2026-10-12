@@ -48,18 +48,16 @@ export function onSijaintiAluePolygon(arvo: unknown): boolean {
   );
 }
 
-/** Geokoodaa osoiteteksti koordinaateiksi MML Pelias-hakua käyttäen. */
-export async function geokoodaaOsoite(teksti: string): Promise<GeokoodausTulos> {
-  const hakusana = teksti.trim();
-  if (hakusana.length < 3) {
-    throw new Error("Geokoodattava osoite on liian lyhyt.");
-  }
-
+async function geokoodaaPelias(
+  hakusana: string,
+  opts?: { layers?: string },
+): Promise<GeokoodausTulos> {
   const avain = mmlAvain();
   const url = new URL(`${JUURI}/geocoding/v2/pelias/search`);
   url.searchParams.set("text", hakusana);
   url.searchParams.set("lang", "fi");
   url.searchParams.set("size", "1");
+  if (opts?.layers) url.searchParams.set("layers", opts.layers);
 
   const vastaus = await fetch(url.toString(), {
     method: "GET",
@@ -98,6 +96,32 @@ export async function geokoodaaOsoite(teksti: string): Promise<GeokoodausTulos> 
   lahdeUrl.searchParams.set("text", hakusana);
   lahdeUrl.searchParams.set("lang", "fi");
   lahdeUrl.searchParams.set("size", "1");
+  if (opts?.layers) lahdeUrl.searchParams.set("layers", opts.layers);
 
   return { lat, lon, lahde_url: lahdeUrl.toString(), label };
+}
+
+/** Geokoodaa osoiteteksti koordinaateiksi MML Pelias-hakua käyttäen. */
+export async function geokoodaaOsoite(teksti: string): Promise<GeokoodausTulos> {
+  const hakusana = teksti.trim();
+  if (hakusana.length < 3) {
+    throw new Error("Geokoodattava osoite on liian lyhyt.");
+  }
+  return geokoodaaPelias(hakusana);
+}
+
+/**
+ * Kunnan keskustan arvioitu piste. Preferoi localadmin-kerrosta;
+ * jos ei osumaa, yrittää ilman kerrosrajausta.
+ */
+export async function geokoodaaKuntakeskus(kuntaNimi: string): Promise<GeokoodausTulos> {
+  const hakusana = kuntaNimi.trim();
+  if (hakusana.length < 2) {
+    throw new Error("Kunnan nimi on liian lyhyt geokoodaukseen.");
+  }
+  try {
+    return await geokoodaaPelias(hakusana, { layers: "localadmin" });
+  } catch {
+    return geokoodaaPelias(hakusana);
+  }
 }

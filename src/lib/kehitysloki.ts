@@ -10,11 +10,19 @@ export type KehityslokiMerkinta = {
 export const KEHITYSLOKI: KehityslokiMerkinta[] = [
   {
     pvm: "2026-10-11",
+    otsikko: "Dokumenttien sisältötiivisteet (odottaa)",
+    kohdat: [
+      "Sisältötiivisteiden (sisalto_tiiviste) backfill ajetaan, kun Grokin lähdeselvityksen erät 3 ja 4 on hyväksytty ja dokumenttimäärä on vakiintunut. Uudelleennoutoa (~1 100 asiakirjaa) ei tehdä kahdesti.",
+      "Backfillin jälkeen ajetaan duplikaattihaku (kanoninen_dokumentti_id / hae_kanoninen_dokumentti_sisalolla) ja raportoidaan samasisältöisten dokumenttien määrä. Tunnistus ei ole voinut toimia aiemmin, koska vertailtavaa tiivistettä ei ole ollut.",
+    ],
+  },
+  {
+    pvm: "2026-10-11",
     otsikko: "Kaava-alue ja sijainnin perustelu",
     kohdat: [
       "Uusi kenttä kaava_ala_ha erottaa kaavoitetun alueen hankkeen pinta-alasta.",
       "Sijainnin perustelu ja muiden sijaintien tarkastelu (YVA): oma osio hankesivulla, lainaus pakollinen.",
-      "Ilman YVA-menettelyä sijaintiperustelu jää tyhjäksi.",
+      "Sijaintiperustelu = miksi paikka valittiin (YVA). Sijaintikuvaus («5 km pohjoiseen») kuuluu huomautukseen. Ilman YVA-menettelyä sijaintiperustelu jää tyhjäksi.",
     ],
   },
   {

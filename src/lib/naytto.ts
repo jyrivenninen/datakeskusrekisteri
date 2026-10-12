@@ -350,7 +350,7 @@ export const HANKE_KENTTA_NIMET: Record<string, string> = {
   kaavatunnus: "Kaavatunnus",
   kortteli: "Kortteli",
   huomautus: "Huomautus",
-  sijaintiperustelu: "Sijainnin perustelu",
+  sijaintiperustelu: "Sijainnin perustelu (miksi paikka valittiin)",
   muut_sijainnit: "Muiden sijaintien tarkastelu",
   sijainti_alue_tyyppi: "Alueen tyyppi",
   tunnus: "Tunnus",
