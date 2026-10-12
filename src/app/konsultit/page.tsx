@@ -1,4 +1,9 @@
 import type { Metadata } from "next";
+import { HakemistoJarjestysValinta } from "@/komponentit/hakemisto-jarjestys";
+import {
+  jarjestaHakemistoRivit,
+  parsiHakemistoJarjestys,
+} from "@/lib/hakemisto-jarjestys";
 import { konsulttiSivuPolku } from "@/lib/konsultti-slug";
 import { hankeOrganisaatioRooliNimi } from "@/lib/naytto";
 import { haeKonsultitJoissaHankkeita } from "@/lib/supabase/kyselyt";
@@ -13,8 +18,18 @@ export const metadata: Metadata = kortinMetatiedot({
   polku: "/konsultit",
 });
 
-export default async function KonsultitHakemistoSivu() {
-  const { ryhmat, konsultit, virhe } = await haeKonsultitJoissaHankkeita();
+export default async function KonsultitHakemistoSivu({
+  searchParams,
+}: {
+  searchParams: Promise<{ jarjestys?: string }>;
+}) {
+  const { jarjestys: jarjestysRaaka } = await searchParams;
+  const jarjestys = parsiHakemistoJarjestys(jarjestysRaaka);
+  const { ryhmat: raakaRyhmat, konsultit, virhe } = await haeKonsultitJoissaHankkeita();
+  const ryhmat = raakaRyhmat.map((ryhma) => ({
+    ...ryhma,
+    konsultit: jarjestaHakemistoRivit(ryhma.konsultit, jarjestys),
+  }));
 
   return (
     <main id="sisalto" className="sivuleveys flex-1 py-10">
@@ -42,6 +57,9 @@ export default async function KonsultitHakemistoSivu() {
         </p>
       ) : (
         <div className="mt-10 space-y-10">
+          <div className="flex justify-end">
+            <HakemistoJarjestysValinta polku="/konsultit" jarjestys={jarjestys} />
+          </div>
           {ryhmat.map((ryhma) => (
             <section key={ryhma.rooli} aria-labelledby={`rooli-${ryhma.rooli}`}>
               <h2 id={`rooli-${ryhma.rooli}`} className="text-xl font-semibold">

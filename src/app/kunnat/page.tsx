@@ -1,4 +1,9 @@
 import type { Metadata } from "next";
+import { HakemistoJarjestysValinta } from "@/komponentit/hakemisto-jarjestys";
+import {
+  jarjestaHakemistoRivit,
+  parsiHakemistoJarjestys,
+} from "@/lib/hakemisto-jarjestys";
 import { kuntaSivuPolku } from "@/lib/kunta-slug";
 import { haeKunnatJoissaHankkeita } from "@/lib/supabase/kyselyt";
 import { kortinMetatiedot, SIVUSTON_OTSIKKO } from "@/lib/sivuston-metatiedot";
@@ -12,8 +17,15 @@ export const metadata: Metadata = kortinMetatiedot({
   polku: "/kunnat",
 });
 
-export default async function KunnatHakemistoSivu() {
-  const { kunnat, virhe } = await haeKunnatJoissaHankkeita();
+export default async function KunnatHakemistoSivu({
+  searchParams,
+}: {
+  searchParams: Promise<{ jarjestys?: string }>;
+}) {
+  const { jarjestys: jarjestysRaaka } = await searchParams;
+  const jarjestys = parsiHakemistoJarjestys(jarjestysRaaka);
+  const { kunnat: raaka, virhe } = await haeKunnatJoissaHankkeita();
+  const kunnat = jarjestaHakemistoRivit(raaka, jarjestys);
 
   return (
     <main id="sisalto" className="sivuleveys flex-1 py-10">
@@ -34,23 +46,28 @@ export default async function KunnatHakemistoSivu() {
       ) : kunnat.length === 0 ? (
         <p className="mt-6 leading-relaxed">Ei kuntia, joilla olisi julkaistuja hankkeita.</p>
       ) : (
-        <ul className="mt-8 divide-y divide-border border-y border-border">
-          {kunnat.map((kunta) => (
-            <li key={kunta.id} className="flex flex-wrap items-baseline justify-between gap-2 py-3">
-              <div>
-                <a href={kuntaSivuPolku(kunta.slug)} className="text-lg font-semibold text-link underline">
-                  {kunta.nimi}
-                </a>
-                {kunta.maakunta ? (
-                  <p className="mt-0.5 text-sm text-muted">{kunta.maakunta}</p>
-                ) : null}
-              </div>
-              <p className="text-sm tabular-nums text-muted">
-                {kunta.hankkeita} {kunta.hankkeita === 1 ? "hanke" : "hanketta"}
-              </p>
-            </li>
-          ))}
-        </ul>
+        <>
+          <div className="mt-8 flex justify-end">
+            <HakemistoJarjestysValinta polku="/kunnat" jarjestys={jarjestys} />
+          </div>
+          <ul className="mt-4 divide-y divide-border border-y border-border">
+            {kunnat.map((kunta) => (
+              <li key={kunta.id} className="flex flex-wrap items-baseline justify-between gap-2 py-3">
+                <div>
+                  <a href={kuntaSivuPolku(kunta.slug)} className="text-lg font-semibold text-link underline">
+                    {kunta.nimi}
+                  </a>
+                  {kunta.maakunta ? (
+                    <p className="mt-0.5 text-sm text-muted">{kunta.maakunta}</p>
+                  ) : null}
+                </div>
+                <p className="text-sm tabular-nums text-muted">
+                  {kunta.hankkeita} {kunta.hankkeita === 1 ? "hanke" : "hanketta"}
+                </p>
+              </li>
+            ))}
+          </ul>
+        </>
       )}
     </main>
   );
