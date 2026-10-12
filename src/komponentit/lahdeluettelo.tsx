@@ -1,4 +1,5 @@
 import { naytaLahdeLinkkiTeksti } from "@/lib/lahde-metatiedot";
+import { rajaaKoosteLuottamus } from "@/lib/lahde-tyyppi-domain";
 import { LAINAUKSEN_LUONNE_NIMET } from "@/lib/lainauksen-luonne";
 import type { KenttaLahde } from "@/lib/supabase/tietokanta";
 import { HANKE_KENTTA_NIMET, LUOTTAMUS_NIMET, MERKINTA_NIMET, muotoilePvm } from "@/lib/naytto";
@@ -65,8 +66,9 @@ export function Lahdeluettelo({
             <p className="mt-1 text-muted">tarkistettu {muotoilePvm(lahde.vahvistettu_pvm)}</p>
           ) : (
             <p className="mt-1 text-muted">
-              {LUOTTAMUS_NIMET[lahde.luottamus]} · {MERKINTA_NIMET[lahde.merkitty]} ·
-              tarkistettu {muotoilePvm(lahde.vahvistettu_pvm)}
+              {LUOTTAMUS_NIMET[rajaaKoosteLuottamus(lahde.lahde_url, lahde.luottamus)]} ·{" "}
+              {MERKINTA_NIMET[lahde.merkitty]} · tarkistettu{" "}
+              {muotoilePvm(lahde.vahvistettu_pvm)}
             </p>
           )}
           {korvattu && korvaava ? (

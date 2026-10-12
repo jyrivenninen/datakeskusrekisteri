@@ -154,13 +154,20 @@ function onMenetelma(host: string): boolean {
   return MENETELMA_HOSTIT.some((h) => host === h || host.endsWith(`.${h}`));
 }
 
-/** Kolmannen osapuolen koosteet — eivät hankkeen_oma, vaan muu. */
-const KOOSTEPALVELU_HOSTIT = [
+/**
+ * Kolmannen osapuolen hakemistot / koosteet.
+ * Näillä lähteillä luottamus enintään epavarma (ks. rajaaKoosteLuottamus).
+ */
+export const KOOSTEPALVELU_HOSTIT = [
+  "dcatlas.io",
+  "datacenters.com",
+  "datacenterhawk.com",
   "datacentermap.com",
   "peeringdb.com",
   "wikipedia.org",
   "openstreetmap.org",
-];
+  "colomap.com",
+] as const;
 
 function onKoostepalvelu(host: string): boolean {
   return KOOSTEPALVELU_HOSTIT.some((h) => host === h || host.endsWith(`.${h}`));
@@ -170,6 +177,16 @@ export function onKoostepalveluUrl(url: string): boolean {
   const host = puraDomain(url);
   if (!host) return false;
   return onKoostepalvelu(host);
+}
+
+/** Hakemistolähde ei nouse Vahvistettu-tasolle; merkitty säilyy erillisenä. */
+export function rajaaKoosteLuottamus<T extends string>(
+  url: string,
+  luottamus: T,
+): T | "epavarma" {
+  if (!onKoostepalveluUrl(url)) return luottamus;
+  if (luottamus === "vahvistettu") return "epavarma";
+  return luottamus;
 }
 
 function onViranomaisasiakirja(host: string, polku: string, koko: string): boolean {

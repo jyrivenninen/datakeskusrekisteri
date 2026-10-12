@@ -2229,13 +2229,39 @@ export async function kasitteleViranomaisVahvistusTukeeToiminto(
   if (lahdeIdt.length === 0) throw new Error("Lähde puuttuu.");
 
   const yllapito = luoYllapitoAsiakas();
-  const { data, error } = await yllapito.rpc("kuitaa_kentta_lahteet", {
-    p_lahde_idt: lahdeIdt,
-    p_kasittelija: kasittelija,
-    p_luottamus: "vahvistettu",
-  });
-  if (error) throw new Error(error.message);
-  if (typeof data === "number" && data === 0) {
+  const { data: lahdeRivit, error: hakuVirhe } = await yllapito
+    .from("kentta_lahteet")
+    .select("id, lahde_url")
+    .in("id", lahdeIdt);
+  if (hakuVirhe) throw new Error(hakuVirhe.message);
+  const { onKoostepalveluUrl } = await import("@/lib/lahde-tyyppi-domain");
+  const koosteIdt: string[] = [];
+  const muutIdt: string[] = [];
+  for (const id of lahdeIdt) {
+    const rivi = (lahdeRivit ?? []).find((r) => r.id === id);
+    if (rivi && onKoostepalveluUrl(rivi.lahde_url)) koosteIdt.push(id);
+    else muutIdt.push(id);
+  }
+  let paivitetty = 0;
+  if (muutIdt.length > 0) {
+    const { data, error } = await yllapito.rpc("kuitaa_kentta_lahteet", {
+      p_lahde_idt: muutIdt,
+      p_kasittelija: kasittelija,
+      p_luottamus: "vahvistettu",
+    });
+    if (error) throw new Error(error.message);
+    paivitetty += typeof data === "number" ? data : 0;
+  }
+  if (koosteIdt.length > 0) {
+    const { data, error } = await yllapito.rpc("kuitaa_kentta_lahteet", {
+      p_lahde_idt: koosteIdt,
+      p_kasittelija: kasittelija,
+      p_luottamus: "epavarma",
+    });
+    if (error) throw new Error(error.message);
+    paivitetty += typeof data === "number" ? data : 0;
+  }
+  if (paivitetty === 0) {
     throw new Error("Yhtään koneen ehdottamaa lähdettä ei päivitetty.");
   }
 

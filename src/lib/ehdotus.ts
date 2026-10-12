@@ -1,4 +1,5 @@
 import { lahdeUrlKieltoViesti } from "@/lib/lahde-url-kielto";
+import { rajaaKoosteLuottamus } from "@/lib/lahde-tyyppi-domain";
 import { HANKE_VAIHEET, type HankeVaihe, type LahdeLaji, type Luottamus } from "@/lib/supabase/tietokanta";
 
 export type EhdotettuLisalahde = {
@@ -701,8 +702,9 @@ export function kentanLuottamus(
   tieto: EhdotettuKentta,
   oletus: Luottamus,
 ): Luottamus {
-  if (tieto.luottamus && LUOTTAMUKSET.has(tieto.luottamus)) return tieto.luottamus;
-  return oletus;
+  const raaka =
+    tieto.luottamus && LUOTTAMUKSET.has(tieto.luottamus) ? tieto.luottamus : oletus;
+  return rajaaKoosteLuottamus(String(tieto.lahde_url ?? ""), raaka);
 }
 
 export const VAIHTOEHTO_KENTAT = [
