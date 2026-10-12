@@ -4,7 +4,6 @@ import {
   esikatseleUusiHankeLomakeToiminto,
   esikatseleUusiHankeTuontiToiminto,
   peruutaUusiHankeEsikatseluToiminto,
-  UUSI_HANKE_ESIKATSELU_AVAIN,
   vahvistaUusiHankeTuontiToiminto,
 } from "@/app/toiminnot";
 import { LAHDE_TYYPIT, LAHDE_TYYPPI_NIMET } from "@/lib/lahde-metatiedot";
@@ -15,7 +14,10 @@ import { HANKE_VAIHEET, SIJAINTI_ALUE_TYYPIT } from "@/lib/supabase/tietokanta";
 import type { UusiHankeTuonti } from "@/lib/uusi-hanke-tuonti";
 import type { TuplaOsuma } from "@/lib/uusi-hanke-tuplat";
 import type { LahdeTyyppiRistiriita } from "@/lib/uusi-hanke-lahde-tyyppi-ristiriita";
-import { haeYllapitoLuonnos } from "@/lib/yllapito-luonnos";
+import {
+  haeYllapitoLuonnos,
+  UUSI_HANKE_ESIKATSELU_AVAIN,
+} from "@/lib/yllapito-luonnos";
 
 const LOMAKE_KENTTA_RIVIT = [
   "nimi",

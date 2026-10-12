@@ -4,6 +4,9 @@
 
 import type { SupabaseClient } from "@supabase/supabase-js";
 
+/** Uusi hanke -esikatselun avain `yllapito_luonnokset`-taulussa. */
+export const UUSI_HANKE_ESIKATSELU_AVAIN = "uusi_hanke_esikatselu";
+
 const VANHENEMINEN_S = 600;
 
 export async function tallennaYllapitoLuonnos(

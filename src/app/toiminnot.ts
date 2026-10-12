@@ -48,6 +48,7 @@ import { kirjoitaUusiHankeTuonti } from "@/lib/uusi-hanke-kirjoitus";
 import {
   poistaYllapitoLuonnos,
   tallennaYllapitoLuonnos,
+  UUSI_HANKE_ESIKATSELU_AVAIN,
 } from "@/lib/yllapito-luonnos";
 import {
   haeLahdeTyyppiRistiriidat,
@@ -1855,8 +1856,6 @@ export async function kasitteleLuvunRistiriitaToiminto(formData: FormData): Prom
   revalidatePath("/yllapito");
   revalidatePath(`/hankkeet/${riviId}`);
 }
-
-export const UUSI_HANKE_ESIKATSELU_AVAIN = "uusi_hanke_esikatselu";
 
 function uusiHankeIlmoitusPolku(ilmoituksenId: string | undefined): string {
   return ilmoituksenId
