@@ -39,6 +39,12 @@ import {
   type Ls13RatkaisuId,
 } from "@/lib/lahdeselvitys13-ratkaisut";
 import {
+  ehdotuksellaKerrosalaPintaAlaksi,
+  ehdotuksellaPintaAlaYksikkoEpaselva,
+  epaselvatPintaAlaKentat,
+  muunnaM2Ha,
+} from "@/lib/pinta-ala-yksikko";
+import {
   parsiTuontiJsonTekstista,
   taydennaTyhjaIlmoituksenId,
 } from "@/lib/uusi-hanke-tuonti";
@@ -1425,6 +1431,70 @@ export async function hylkaaEhdotusToiminto(formData: FormData): Promise<void> {
   redirect("/yllapito?hylatty=1");
 }
 
+/** Vahvistaa pinta-/kaava-alan yksikön (> raja) ennen julkaisua. */
+export async function vahvistaPintaAlaYksikkoToiminto(
+  formData: FormData,
+): Promise<void> {
+  const { supabase } = await vaadiYllapitaja();
+  const id = String(formData.get("id") ?? "").trim();
+  const yksikko = String(formData.get("yksikko") ?? "").trim();
+  if (!id) throw new Error("Ehdotus puuttuu.");
+  if (yksikko !== "ha" && yksikko !== "m2") {
+    throw new Error("Valitse yksikkö ha tai m².");
+  }
+
+  const { data: ehdotus, error } = await supabase
+    .from("muutosehdotukset")
+    .select("id, sisalto, tila")
+    .eq("id", id)
+    .maybeSingle();
+  if (error) throw new Error(error.message);
+  if (!ehdotus || ehdotus.tila !== "odottaa") {
+    throw new Error("Ehdotusta ei löytynyt tai se on jo käsitelty.");
+  }
+
+  const sisalto = (ehdotus.sisalto ?? {}) as EhdotusSisalto;
+  const epaselvat = epaselvatPintaAlaKentat(sisalto.kentat);
+  if (epaselvat.length === 0) {
+    throw new Error("Ei epäselvää pinta-alakenttää.");
+  }
+
+  const uudetKentat = { ...sisalto.kentat };
+  for (const { kentta, arvo } of epaselvat) {
+    const vanha = uudetKentat[kentta];
+    if (!vanha) continue;
+    if (yksikko === "m2") {
+      uudetKentat[kentta] = {
+        ...vanha,
+        arvo: String(muunnaM2Ha(arvo)),
+        yksikko: "ha",
+        lainaus: vanha.lainaus
+          ? `${vanha.lainaus} [yksikkö vahvistettu: ${arvo} m² → ${muunnaM2Ha(arvo)} ha]`
+          : `Yksikkö vahvistettu: ${arvo} m² → ${muunnaM2Ha(arvo)} ha`,
+      };
+    } else {
+      uudetKentat[kentta] = {
+        ...vanha,
+        yksikko: "ha",
+        lainaus: vanha.lainaus
+          ? `${vanha.lainaus} [yksikkö vahvistettu: ha]`
+          : "Yksikkö vahvistettu: ha",
+      };
+    }
+  }
+
+  const { error: paivitysVirhe } = await supabase
+    .from("muutosehdotukset")
+    .update({ sisalto: { ...sisalto, kentat: uudetKentat } })
+    .eq("id", id)
+    .eq("tila", "odottaa");
+  if (paivitysVirhe) throw new Error(paivitysVirhe.message);
+
+  revalidatePath(`/yllapito/${id}`);
+  revalidatePath("/yllapito");
+  redirect(`/yllapito/${id}`);
+}
+
 /** Lähdeselvitys 13 -poikkeaman ratkaisu (radiovalinta läpikäynnissä). */
 export async function kasitteleLahdeselvitys13RatkaisuToiminto(
   formData: FormData,
@@ -1487,6 +1557,23 @@ export async function kasitteleLahdeselvitys13RatkaisuToiminto(
     const ls13 = sisalto.lahdeselvitys13;
     if (!ls13?.kentta) {
       throw new Error("Ehdotus ei ole lähdeselvitys 13 -poikkeama.");
+    }
+
+    if (
+      (ratkaisu === "korjaa_arvo" || ratkaisu === "vahvistaa_sanamuoto") &&
+      ehdotuksellaKerrosalaPintaAlaksi(sisalto)
+    ) {
+      throw new Error(
+        "Lainaus on kerrosalaa (k-m²), ei maa- tai kaava-alaa. Hylkää ehdotus.",
+      );
+    }
+    if (
+      (ratkaisu === "korjaa_arvo" || ratkaisu === "vahvistaa_sanamuoto") &&
+      ehdotuksellaPintaAlaYksikkoEpaselva(sisalto)
+    ) {
+      throw new Error(
+        "Pinta-alan yksikkö on epäselvä (ei_merkitty tai luku yli 5 000). Vahvista yksikkö ennen julkaisua.",
+      );
     }
 
     if (ratkaisu === "korjaa_arvo") {
@@ -2125,4 +2212,151 @@ export async function esikatseleUusiHankeLomakeToiminto(
   const ilmoitus = String(formData.get("ilmoituksen_id") ?? "").trim();
   if (ilmoitus) fd.set("ilmoituksen_id", ilmoitus);
   await esikatseleUusiHankeTuontiToiminto(fd);
+}
+
+/** Viranomaislähde tukee arvoa → merkitty = ihmisen_vahvistama. */
+export async function kasitteleViranomaisVahvistusTukeeToiminto(
+  formData: FormData,
+): Promise<void> {
+  const { kasittelija } = await vaadiYllapitaja();
+  if (!supabasePalvelinAvainAsetettu()) {
+    throw new Error("Tallennus vaatii palvelinavaimen.");
+  }
+  const lahdeIdt = String(formData.get("lahde_idt") ?? "")
+    .split(",")
+    .map((s) => s.trim())
+    .filter(Boolean);
+  if (lahdeIdt.length === 0) throw new Error("Lähde puuttuu.");
+
+  const yllapito = luoYllapitoAsiakas();
+  const { data, error } = await yllapito.rpc("kuitaa_kentta_lahteet", {
+    p_lahde_idt: lahdeIdt,
+    p_kasittelija: kasittelija,
+    p_luottamus: "vahvistettu",
+  });
+  if (error) throw new Error(error.message);
+  if (typeof data === "number" && data === 0) {
+    throw new Error("Yhtään koneen ehdottamaa lähdettä ei päivitetty.");
+  }
+
+  revalidatePath("/yllapito/viranomais-vahvistus");
+  revalidatePath("/yllapito");
+  const hankeId = String(formData.get("rivi_id") ?? "").trim();
+  if (hankeId) revalidatePath(`/hankkeet/${hankeId}`);
+}
+
+/** Lähde ei tue arvoa → poikkeama muutosehdotukset-jonoon. */
+export async function kasitteleViranomaisVahvistusEiTueToiminto(
+  formData: FormData,
+): Promise<void> {
+  const { kasittelija } = await vaadiYllapitaja();
+  if (!supabasePalvelinAvainAsetettu()) {
+    throw new Error("Tallennus vaatii palvelinavaimen.");
+  }
+  const taulu = String(formData.get("taulu") ?? "").trim();
+  const riviId = String(formData.get("rivi_id") ?? "").trim();
+  const kentta = String(formData.get("kentta") ?? "").trim();
+  const hankeId = String(formData.get("hanke_id") ?? "").trim() || null;
+  const lahdeUrl = String(formData.get("lahde_url") ?? "").trim();
+  const arvo = String(formData.get("arvo") ?? "").trim();
+  const huomautus = String(formData.get("huomautus") ?? "").trim();
+  if (!taulu || !riviId || !kentta || !lahdeUrl) {
+    throw new Error("Puutteellinen kohde.");
+  }
+  if (huomautus.length < 12) {
+    throw new Error("Huomautus on liian lyhyt.");
+  }
+
+  const yllapito = luoYllapitoAsiakas();
+  const { error } = await yllapito.from("muutosehdotukset").insert({
+    tyyppi: "korjaus",
+    hanke_id: hankeId,
+    ehdottaja_tyyppi: "yllapitaja",
+    ehdottaja_tunniste: "viranomais_vahvistus_ei_tue",
+    lahde_url: lahdeUrl,
+    huomautus: `Viranomaislähde ei tue arvoa (${taulu}.${kentta}${arvo ? ` = ${arvo}` : ""}): ${huomautus}`,
+    tila: "odottaa",
+    sisalto: {
+      kentat: {},
+      viranomais_vahvistus: {
+        taulu,
+        rivi_id: riviId,
+        kentta,
+        arvo: arvo || null,
+        lahde_url: lahdeUrl,
+        huomautus,
+        kasittelija,
+      },
+    },
+  });
+  if (error) throw new Error(error.message);
+
+  revalidatePath("/yllapito/viranomais-vahvistus");
+  revalidatePath("/yllapito");
+}
+
+/** LS13-erä: lainaus tukee → merkitse yksittäiseksi (pois eräjonosta). */
+export async function kasitteleLs13EraTukeeToiminto(
+  formData: FormData,
+): Promise<void> {
+  await vaadiYllapitaja();
+  if (!supabasePalvelinAvainAsetettu()) {
+    throw new Error("Tallennus vaatii palvelinavaimen.");
+  }
+  const hankeId = String(formData.get("hanke_id") ?? "").trim();
+  const kentta = String(formData.get("kentta") ?? "").trim();
+  const lahdeUrl = String(formData.get("lahde_url") ?? "").trim();
+  if (!hankeId || !kentta || !lahdeUrl) {
+    throw new Error("Puutteellinen kohde.");
+  }
+
+  const yllapito = luoYllapitoAsiakas();
+  const { data, error } = await yllapito.rpc("aseta_lahde_kuittaustapa", {
+    p_taulu: "hankkeet",
+    p_rivi_id: hankeId,
+    p_kentta: kentta,
+    p_lahde_url: lahdeUrl,
+    p_kuittaustapa: "yksittain",
+    p_eratunniste: null,
+  });
+  if (error) throw new Error(error.message);
+  if (typeof data === "number" && data === 0) {
+    throw new Error("Lähderivää ei päivitetty (ei ihmisen vahvistamaa osumaa).");
+  }
+
+  revalidatePath("/yllapito/ls13-era-kuittaukset");
+  revalidatePath("/yllapito");
+  revalidatePath(`/hankkeet/${hankeId}`);
+}
+
+/** LS13-erä: ei tue → peruuta kuittaus (merkitty=koneen_ehdottama). */
+export async function kasitteleLs13EraEiTueToiminto(
+  formData: FormData,
+): Promise<void> {
+  const { kasittelija } = await vaadiYllapitaja();
+  if (!supabasePalvelinAvainAsetettu()) {
+    throw new Error("Tallennus vaatii palvelinavaimen.");
+  }
+  const lahdeId = String(formData.get("lahde_id") ?? "").trim();
+  const hankeId = String(formData.get("hanke_id") ?? "").trim();
+  const huomautus = String(formData.get("huomautus") ?? "").trim();
+  if (!lahdeId) throw new Error("Lähde puuttuu.");
+  if (huomautus.length < 12) {
+    throw new Error("Huomautus on liian lyhyt.");
+  }
+
+  const yllapito = luoYllapitoAsiakas();
+  const { data, error } = await yllapito.rpc("peruuta_kentta_lahde_kuittaus", {
+    p_lahde_idt: [lahdeId],
+    p_kasittelija: kasittelija,
+    p_huomautus: huomautus,
+  });
+  if (error) throw new Error(error.message);
+  if (typeof data === "number" && data === 0) {
+    throw new Error("Kuittauksen peruutus ei päivittänyt rivejä.");
+  }
+
+  revalidatePath("/yllapito/ls13-era-kuittaukset");
+  revalidatePath("/yllapito");
+  if (hankeId) revalidatePath(`/hankkeet/${hankeId}`);
 }

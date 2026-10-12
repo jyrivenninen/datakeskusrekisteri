@@ -185,6 +185,45 @@ export type Organisaatio = {
   verkko_osoite: string | null;
   verkkotunnus: string | null;
   slug: string;
+  lei: string | null;
+  lei_tila: string | null;
+  lei_paivitetty_pvm: string | null;
+  lei_haettu_pvm: string | null;
+  maa: string | null;
+  rekisterinumero: string | null;
+  rekisteriviranomainen: string | null;
+  gleif_suora_emo_poikkeus: string | null;
+  gleif_ylin_emo_poikkeus: string | null;
+  julkaistu: boolean;
+  luotu_pvm: string;
+  paivitetty_pvm: string;
+};
+
+export const KUITTAUSTAVAT = ["yksittain", "era"] as const;
+export type Kuittaustapa = (typeof KUITTAUSTAVAT)[number];
+
+/** Suljettu sanasto organisaatio_suhteet.suhde_tunnus. */
+export const ORGANISAATIO_SUHDE_TYYPIT = [
+  "omistus",
+  "emoyhtio",
+  "hankeyhtio",
+  "gleif_suora_emo",
+  "gleif_ylin_emo",
+] as const;
+
+export type OrganisaatioSuhdeTyyppi = (typeof ORGANISAATIO_SUHDE_TYYPIT)[number];
+
+export type OrganisaatioSuhde = {
+  id: string;
+  lahde_organisaatio_id: string;
+  kohde_organisaatio_id: string;
+  suhde_tunnus: OrganisaatioSuhdeTyyppi;
+  voimassa_alkaen: string | null;
+  voimassa_paattyen: string | null;
+  lahde_dokumentti_id: string | null;
+  lahde_url: string | null;
+  lahde_kohta: string | null;
+  lainaus: string | null;
   julkaistu: boolean;
   luotu_pvm: string;
   paivitetty_pvm: string;
@@ -225,6 +264,8 @@ export type Hanke = {
   diesel_vuosikulutus_maara: number | null;
   diesel_vuosikulutus_yksikko: string | null;
   varavoima_paastot_t_co2e: number | null;
+  polttoainevarasto_maara: number | null;
+  polttoainevarasto_yksikko: string | null;
   toimija_organisaatio_id: string | null;
   yva_diaarinumero: string | null;
   huomautus: string | null;
@@ -418,6 +459,8 @@ export type Dokumentti = {
   paivitetty_pvm: string;
   sisalto_tiiviste: string | null;
   kanoninen_dokumentti_id: string | null;
+  sisalto_nouto_syy: string | null;
+  sisalto_nouto_pvm: string | null;
 };
 
 export type KenttaLahde = {
@@ -449,7 +492,7 @@ export type KenttaLahde = {
   merkitty_pvm: string;
   luotu_pvm: string;
   tekninen_lahde: boolean;
-  tila: "voimassa" | "korvattu";
+  tila: "voimassa" | "korvattu" | "ei_tue";
   korvaava_dokumentti_id: string | null;
 };
 

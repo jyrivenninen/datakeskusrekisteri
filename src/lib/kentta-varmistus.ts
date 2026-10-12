@@ -1,5 +1,6 @@
 import { onFaktalahde } from "@/lib/lahde-metatiedot";
 import type { LahdeTyyppi } from "@/lib/lahde-metatiedot";
+import { lahdeVoimassaLaskentaan } from "@/lib/lahde-tila";
 
 /** Nämä lähdetyypit vahvistavat faktakentän (positiivinen sääntö). */
 export const VARMISTAVAT_LAHDE_TYYPIT = [
@@ -11,14 +12,18 @@ export const VARMISTAVAT_LAHDE_TYYPIT = [
 export type KenttaLahdeTyyppiInfo = {
   lahde_tyyppi: LahdeTyyppi;
   tekninen_lahde?: boolean;
+  /** korvattu / ei_tue jätetään varmistuslaskennan ulkopuolelle. */
+  tila?: string | null;
 };
 
 /**
  * Kenttä on varmistettu, jos sillä on vähintään yksi ei-tekninen lähde, jonka
  * lahde_tyyppi on päätös, viranomaisasiakirja tai rekisteri.
+ * tila korvattu / ei_tue ei lasketa.
  */
 export function onKenttaVarmistettu(lahteet: readonly KenttaLahdeTyyppiInfo[]): boolean {
   return lahteet
+    .filter((l) => lahdeVoimassaLaskentaan(l.tila))
     .filter(onFaktalahde)
     .some((lahde) =>
       (VARMISTAVAT_LAHDE_TYYPIT as readonly string[]).includes(lahde.lahde_tyyppi),
@@ -55,7 +60,9 @@ export function varmistamatonSyy(
     throw new Error("Kenttä on varmistettu");
   }
 
-  const faktat = lahteet.filter(onFaktalahde);
+  const faktat = lahteet
+    .filter((l) => lahdeVoimassaLaskentaan(l.tila))
+    .filter(onFaktalahde);
   if (faktat.length === 0) return "tyypittamaton";
 
   const tyypit = new Set(faktat.map((l) => l.lahde_tyyppi));

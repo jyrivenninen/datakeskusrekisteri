@@ -8,6 +8,10 @@ import {
 } from "@/lib/ehdotus";
 import { geokoodaaOsoite, onSijaintiAluePolygon } from "@/lib/geokoodaus";
 import { onKohdistusEpavarma } from "@/lib/kohdistus-epavarma";
+import {
+  onLs13EraVahvistusTunniste,
+  tarkistaEraEhdotusKentat,
+} from "@/lib/ls13-era-portti";
 import { ehdotuksenHankeIdt } from "@/lib/naytto";
 import {
   hylkaaHenkilöOrganisaatioViesti,
@@ -333,6 +337,17 @@ export async function hyvaksyMuutosehdotus(
   }
   if (ehdotus.tila !== "odottaa" && ehdotus.tila !== "odottaa_kohdistusta") {
     throw new Error("Ehdotus on jo käsitelty.");
+  }
+
+  // LS13-erävahvistus: tunniste/luku pitää esiintyä lainauksessa ennen erähyväksyntää.
+  if (onLs13EraVahvistusTunniste(ehdotus.ehdottaja_tunniste as string)) {
+    const sisaltoPortti = ehdotus.sisalto as EhdotusSisalto;
+    const portti = tarkistaEraEhdotusKentat(sisaltoPortti.kentat ?? {});
+    if (!portti.ok) {
+      throw new Error(
+        `Erähyväksyntä estetty (${portti.kentta}): ${portti.syy} Käsittele yksittäin.`,
+      );
+    }
   }
 
   if (ehdotus.tyyppi === "lahde_tyyppi_havainto") {
@@ -743,18 +758,41 @@ export async function hyvaksyMuutosehdotus(
     return { tunnus, kentat: rivinKentat, lahteet: rivinLahteet };
   });
 
-  const { error: rpcVirhe } = await supabase.rpc("julkaise_ehdotetut_tiedot", {
-    p_tyyppi: ehdotus.tyyppi,
-    p_hanke_id: ehdotus.hanke_id,
-    p_hanke: hanke,
-    p_lahteet: lahteet,
-    p_ehdotus_id: ehdotusId,
-    p_kasittelija: kasittelija,
-    p_vaihtoehdot: vaihtoehtoRivit,
-  });
+  const { data: julkaistuHankeId, error: rpcVirhe } = await supabase.rpc(
+    "julkaise_ehdotetut_tiedot",
+    {
+      p_tyyppi: ehdotus.tyyppi,
+      p_hanke_id: ehdotus.hanke_id,
+      p_hanke: hanke,
+      p_lahteet: lahteet,
+      p_ehdotus_id: ehdotusId,
+      p_kasittelija: kasittelija,
+      p_vaihtoehdot: vaihtoehtoRivit,
+    },
+  );
   if (rpcVirhe) {
     throw new Error(rpcVirhe.message);
   }
+
+  const hankeIdKuittaus =
+    (typeof julkaistuHankeId === "string" ? julkaistuHankeId : null) ??
+    ehdotus.hanke_id;
+  if (hankeIdKuittaus && lahteet.length > 0) {
+    const eraTunniste = String(ehdotus.ehdottaja_tunniste ?? "");
+    const onEra = /^lahdeselvitys13_era[123]_vahvistus$/.test(eraTunniste);
+    for (const l of lahteet) {
+      const { error: kuittausVirhe } = await supabase.rpc("aseta_lahde_kuittaustapa", {
+        p_taulu: "hankkeet",
+        p_rivi_id: hankeIdKuittaus,
+        p_kentta: l.kentta,
+        p_lahde_url: l.lahde_url,
+        p_kuittaustapa: onEra ? "era" : "yksittain",
+        p_eratunniste: onEra ? eraTunniste : null,
+      });
+      if (kuittausVirhe) throw new Error(kuittausVirhe.message);
+    }
+  }
+
   return "ok";
 }
 

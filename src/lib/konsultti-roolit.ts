@@ -4,6 +4,7 @@ export const KONSULTTI_SIVU_ROOLIT = [
   "yva_konsultti",
   "kaavan_laatija",
   "lupahakemuksen_laatija",
+  "selvityksen_laatija",
 ] as const;
 
 export type KonsulttiSivuRooli = (typeof KONSULTTI_SIVU_ROOLIT)[number];
@@ -20,6 +21,7 @@ export const KONSULTTI_SIVU_ROOLI_JARJESTYS: KonsulttiSivuRooli[] = [
   "yva_konsultti",
   "kaavan_laatija",
   "lupahakemuksen_laatija",
+  "selvityksen_laatija",
 ];
 
 export function onKonsulttiSivuRooli(rooli: string): boolean {

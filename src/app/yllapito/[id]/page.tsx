@@ -7,6 +7,11 @@ import {
   korjaaLinkkiLahdeToiminto,
   tallennaLahdeMetatiedotToiminto,
 } from "@/app/toiminnot";
+import { PintaAlaYksikkoVahvistus } from "@/komponentit/pinta-ala-yksikko-vahvistus";
+import {
+  ehdotuksellaKerrosalaPintaAlaksi,
+  ehdotuksellaPintaAlaYksikkoEpaselva,
+} from "@/lib/pinta-ala-yksikko";
 import { normalisoiLs13RatkaisutNayttoon } from "@/lib/lahdeselvitys13-ratkaisut";
 import {
   LAHDE_TYYPPI_NIMET,
@@ -115,6 +120,8 @@ export default async function EhdotusSivu({
   const sisalto = ehdotus.sisalto as EhdotusSisalto;
   const rakentamisvaiheet = sisalto.rakentamisvaiheet ?? [];
   const hyvaksyntaEstetty = ehdotuksenHyvaksyntaEstetty(sisalto);
+  const pintaAlaYksikkoEpaselva = ehdotuksellaPintaAlaYksikkoEpaselva(sisalto);
+  const kerrosalaPintaAlaksi = ehdotuksellaKerrosalaPintaAlaksi(sisalto);
   const odottaa =
     ehdotus.tila === "odottaa" || ehdotus.tila === "odottaa_kohdistusta";
   const odottaaKohdistusta = ehdotus.tila === "odottaa_kohdistusta";
@@ -979,12 +986,26 @@ export default async function EhdotusSivu({
               <div className="py-3">
                 <dt className="font-medium">Ratkaisuvaihtoehdot</dt>
                 <dd className="mt-1">
-                  <p className="mb-3 max-w-prose text-sm text-muted">
-                    Varmistusvalo nousee vain, jos lähde tukee kentän arvoa
-                    sellaisenaan. Jos asiakirja kuvaa eri asiaa, sitä ei liitetä
-                    kentän lähteeksi.
-                  </p>
-                  {odottaa && supabasePalvelinAvainAsetettu() ? (
+                  {kerrosalaPintaAlaksi ? (
+                    <p className="mb-3 max-w-prose text-sm text-muted">
+                      Lainaus viittaa kerrosalaan (k-m²), ei maa- tai kaava-alaan.
+                      Julkaisevia ratkaisuja ei näytetä — hylkää ehdotus.
+                    </p>
+                  ) : pintaAlaYksikkoEpaselva ? (
+                    <p className="mb-3 max-w-prose text-sm text-muted">
+                      Yksikkö epäselvä — julkaisevia ratkaisuja (arvo korjataan /
+                      vahvistaa sanamuoto) ei näytetä. Vahvista yksikkö alla tai
+                      hylkää ehdotus.
+                    </p>
+                  ) : (
+                    <p className="mb-3 max-w-prose text-sm text-muted">
+                      Varmistusvalo nousee vain, jos lähde tukee kentän arvoa
+                      sellaisenaan. Jos asiakirja kuvaa eri asiaa, sitä ei liitetä
+                      kentän lähteeksi.
+                    </p>
+                  )}
+                  {odottaa &&
+                  supabasePalvelinAvainAsetettu() ? (
                     <form
                       action={kasitteleLahdeselvitys13RatkaisuToiminto}
                       className="space-y-3"
@@ -997,7 +1018,23 @@ export default async function EhdotusSivu({
                         <legend className="sr-only">Valitse ratkaisu</legend>
                         {normalisoiLs13RatkaisutNayttoon(
                           lahdeselvitys13.ratkaisuvaihtoehdot,
-                        ).map((v) => (
+                        )
+                          .filter((v) => {
+                            if (kerrosalaPintaAlaksi) {
+                              return (
+                                v.id !== "korjaa_arvo" &&
+                                v.id !== "vahvistaa_sanamuoto"
+                              );
+                            }
+                            if (pintaAlaYksikkoEpaselva) {
+                              return (
+                                v.id !== "korjaa_arvo" &&
+                                v.id !== "vahvistaa_sanamuoto"
+                              );
+                            }
+                            return true;
+                          })
+                          .map((v) => (
                           <div key={v.id} className="flex items-start gap-2">
                             <input
                               id={`ls13-ratkaisu-${v.id}`}
@@ -1943,15 +1980,33 @@ export default async function EhdotusSivu({
               ) : null}
             </form>
           ) : null}
+          {odottaa && kerrosalaPintaAlaksi ? (
+            <p className="max-w-prose rounded-xl border border-border bg-surface p-4 text-sm">
+              Kerrosala (k-m²) ei kelpaa{" "}
+              <code className="text-xs">pinta_ala_ha</code>- tai{" "}
+              <code className="text-xs">kaava_ala_ha</code>-kentälle. Hylkää
+              ehdotus — rekisterissä ei ole erillistä kerrosalakenttää.
+            </p>
+          ) : null}
+          {odottaa && pintaAlaYksikkoEpaselva && !kerrosalaPintaAlaksi ? (
+            <PintaAlaYksikkoVahvistus
+              ehdotusId={ehdotus.id}
+              kentat={sisalto.kentat ?? {}}
+            />
+          ) : null}
           {hyvaksyntaEstetty && odottaa ? (
             <p className="max-w-prose text-sm">
-              {sisalto.vaatii_lukeminen
-                ? "Hyväksyntä ei luo vaihetta. Lähde on luettava ja lainaus kirjattava ennen kuin luvut jaetaan vaiheisiin."
-                : sisalto.huomio === "erittelemattoman tehon kenttavalinta"
-                  ? "Hyväksyntä ei valitse kenttää. Käy rivi yksitellen ja tyhjennä toinen kenttä vasta, kun lähteen sana on luettu. Massahyväksyntä ohittaa nämä rivit."
-                  : sisalto.huomio === "wikipedia-it-teho"
-                    ? "Hyväksyntä ei poista Wikipedia-lähdettä."
-                    : "Hyväksyntä ei luo vaihetta, koska ehdotuksessa ei ole vaiheen tietoja."}
+              {kerrosalaPintaAlaksi
+                ? "Hyväksy ja julkaise ei ole käytössä: lainaus on kerrosalaa (k-m²)."
+                : pintaAlaYksikkoEpaselva
+                  ? "Hyväksy ja julkaise ei ole käytössä ennen pinta-alan yksikön vahvistusta."
+                  : sisalto.vaatii_lukeminen
+                    ? "Hyväksyntä ei luo vaihetta. Lähde on luettava ja lainaus kirjattava ennen kuin luvut jaetaan vaiheisiin."
+                    : sisalto.huomio === "erittelemattoman tehon kenttavalinta"
+                      ? "Hyväksyntä ei valitse kenttää. Käy rivi yksitellen ja tyhjennä toinen kenttä vasta, kun lähteen sana on luettu. Massahyväksyntä ohittaa nämä rivit."
+                      : sisalto.huomio === "wikipedia-it-teho"
+                        ? "Hyväksyntä ei poista Wikipedia-lähdettä."
+                        : "Hyväksyntä ei luo vaihetta, koska ehdotuksessa ei ole vaiheen tietoja."}
             </p>
           ) : null}
           {ehdotus.tyyppi !== "lahde_tyyppi_havainto" && !hyvaksyntaEstetty ? (

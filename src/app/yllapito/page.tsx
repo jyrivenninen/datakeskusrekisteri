@@ -222,6 +222,26 @@ export default async function YllapitoSivu({
         {" — "}
         kentät, joissa lähteet antavat eri luvun (ei automaattista korjausta).
       </p>
+      <p className="mt-2 text-sm">
+        <Link
+          href="/yllapito/viranomais-vahvistus"
+          className="font-medium text-link underline"
+        >
+          Viranomaislähde, ei ihmisen tarkistusta
+        </Link>
+        {" — "}
+        lainauksen tarkistus: tukee arvoa / ei tue.
+      </p>
+      <p className="mt-2 text-sm">
+        <Link
+          href="/yllapito/ls13-era-kuittaukset"
+          className="font-medium text-link underline"
+        >
+          LS13-eräkuittaukset
+        </Link>
+        {" — "}
+        eräajolla vahvistetut lähteet: tukee / peruuta kuittaus.
+      </p>
       <section className="mt-8 rounded border border-border bg-surface px-4 py-4" aria-labelledby="katselu-otsikko">
         <h2 id="katselu-otsikko" className="text-lg font-semibold">
           Sivulataukset

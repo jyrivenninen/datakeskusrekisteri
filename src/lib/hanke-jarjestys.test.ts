@@ -29,6 +29,8 @@ function hanke(
     diesel_vuosikulutus_maara: null,
     diesel_vuosikulutus_yksikko: null,
     varavoima_paastot_t_co2e: null,
+    polttoainevarasto_maara: null,
+    polttoainevarasto_yksikko: null,
     toimija_organisaatio_id: null,
     yva_diaarinumero: null,
     huomautus: null,

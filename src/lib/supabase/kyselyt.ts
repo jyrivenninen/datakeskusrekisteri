@@ -497,6 +497,8 @@ function stubDokumenttiRivi(hankeId: string, url: string): Dokumentti {
     paivitetty_pvm: nyt,
     sisalto_tiiviste: null,
     kanoninen_dokumentti_id: null,
+    sisalto_nouto_syy: null,
+    sisalto_nouto_pvm: null,
   };
 }
 
@@ -981,7 +983,9 @@ export async function haeJulkaistutOrganisaatiot(
     const supabase = await luoPalvelinAsiakas();
     let kysely = supabase
       .from("organisaatiot")
-      .select("*")
+      .select(
+        "id, nimi, y_tunnus, tyyppi, verkko_osoite, verkkotunnus, slug, lei, lei_tila, lei_paivitetty_pvm, lei_haettu_pvm, maa, rekisterinumero, rekisteriviranomainen, julkaistu, luotu_pvm, paivitetty_pvm",
+      )
       .eq("julkaistu", true)
       .order("nimi", { ascending: true });
     if (tyyppi) {
@@ -989,7 +993,14 @@ export async function haeJulkaistutOrganisaatiot(
     }
     const { data, error } = await kysely;
     if (error) return { organisaatiot: [], virhe: error.message };
-    return { organisaatiot: (data ?? []) as Organisaatio[], virhe: null };
+    return {
+      organisaatiot: (data ?? []).map((r) => ({
+        ...r,
+        gleif_suora_emo_poikkeus: null,
+        gleif_ylin_emo_poikkeus: null,
+      })) as Organisaatio[],
+      virhe: null,
+    };
   } catch (syy) {
     return { organisaatiot: [], virhe: virheViesti(syy) };
   }
@@ -1014,12 +1025,19 @@ export async function haeOrganisaatio(id: string): Promise<{
     const supabase = await luoPalvelinAsiakas();
     const { data: organisaatio, error } = await supabase
       .from("organisaatiot")
-      .select("*")
+      .select(
+        "id, nimi, y_tunnus, tyyppi, verkko_osoite, verkkotunnus, slug, lei, lei_tila, lei_paivitetty_pvm, lei_haettu_pvm, maa, rekisterinumero, rekisteriviranomainen, julkaistu, luotu_pvm, paivitetty_pvm",
+      )
       .eq("id", id)
       .eq("julkaistu", true)
       .maybeSingle();
     if (error) return { ...tyhja, virhe: error.message };
     if (!organisaatio) return tyhja;
+    const organisaatioJulkinen = {
+      ...organisaatio,
+      gleif_suora_emo_poikkeus: null,
+      gleif_ylin_emo_poikkeus: null,
+    } as Organisaatio;
 
     const [{ data: vastaavana }, { data: roolirivit }] = await Promise.all([
       supabase
@@ -1075,7 +1093,7 @@ export async function haeOrganisaatio(id: string): Promise<{
     );
 
     return {
-      organisaatio: organisaatio as Organisaatio,
+      organisaatio: organisaatioJulkinen,
       hankkeet,
       virhe: null,
     };

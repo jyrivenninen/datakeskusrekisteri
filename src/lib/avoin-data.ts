@@ -1,4 +1,7 @@
 import { onKonsulttiSivuRooli } from "@/lib/konsultti-roolit";
+import { lahdeVoimassaLaskentaan } from "@/lib/lahde-tila";
+import { serialisoiJulkinenOrganisaatio } from "@/lib/organisaatio-julkinen";
+import { muotoilePaatosKuvaus } from "@/lib/paatos-kuvaus";
 import type { haeHanke } from "@/lib/supabase/kyselyt";
 import type {
   Hanke,
@@ -20,7 +23,7 @@ export const AVOIN_DATA_LISENSSI = {
   lyhenne: "CC BY 4.0",
   url: "https://creativecommons.org/licenses/by/4.0/",
   attribution:
-    "Datakeskushankkeiden kansallinen rekisteri (datakeskusrekisteri.vercel.app)",
+    "Datakeskushankkeiden kansallinen rekisteri (www.datakeskusrekisteri.fi)",
 } as const;
 
 export const AVOIN_DATA_VERSIO = "1";
@@ -32,6 +35,8 @@ export type AvoinDataLahde = {
   lahde_url: string;
   lahde_sivu: number | null;
   lahde_laji: KenttaLahde["lahde_laji"];
+  lahde_tyyppi?: string | null;
+  viranomais_lahde?: boolean;
   vahvistettu_pvm: string;
   luottamus: KenttaLahde["luottamus"];
   merkitty: KenttaLahde["merkitty"];
@@ -41,12 +46,20 @@ export type AvoinDataLahde = {
   korvaava_dokumentti_id: string | null;
 };
 
-function serialisoiLahde(lahde: KenttaLahde): AvoinDataLahde {
+const VIRANOMAIS_TYYPIT = new Set(["paatos", "viranomaisasiakirja", "rekisteri"]);
+
+function serialisoiLahde(
+  lahde: KenttaLahde,
+  urlTyypit?: ReadonlyMap<string, string>,
+): AvoinDataLahde {
+  const tyyppi = urlTyypit?.get(lahde.lahde_url) ?? null;
   return {
     kentta: lahde.kentta,
     lahde_url: lahde.lahde_url,
     lahde_sivu: lahde.lahde_sivu,
     lahde_laji: lahde.lahde_laji,
+    lahde_tyyppi: tyyppi,
+    viranomais_lahde: tyyppi != null && VIRANOMAIS_TYYPIT.has(tyyppi),
     vahvistettu_pvm: lahde.vahvistettu_pvm,
     luottamus: lahde.luottamus,
     merkitty: lahde.merkitty,
@@ -57,8 +70,26 @@ function serialisoiLahde(lahde: KenttaLahde): AvoinDataLahde {
   };
 }
 
-function lahteetRiville(lahteet: KenttaLahde[]): AvoinDataLahde[] {
-  return lahteet.map(serialisoiLahde);
+function lahteetRiville(
+  lahteet: KenttaLahde[],
+  urlTyypit?: ReadonlyMap<string, string>,
+): AvoinDataLahde[] {
+  return lahteet.map((l) => serialisoiLahde(l, urlTyypit));
+}
+
+/** Kenttäkohtainen: onko vähintään yksi viranomaislähde. */
+function kentatViranomaislahde(
+  lahteet: KenttaLahde[],
+  urlTyypit: ReadonlyMap<string, string>,
+): Record<string, boolean> {
+  const tulos: Record<string, boolean> = {};
+  for (const lahde of lahteet) {
+    if (!lahdeVoimassaLaskentaan(lahde.tila) || lahde.tekninen_lahde) continue;
+    const tyyppi = urlTyypit.get(lahde.lahde_url);
+    const on = tyyppi != null && VIRANOMAIS_TYYPIT.has(tyyppi);
+    tulos[lahde.kentta] = Boolean(tulos[lahde.kentta]) || on;
+  }
+  return tulos;
 }
 
 function poistaJulkaisu<T extends { julkaistu?: boolean }>(
@@ -97,18 +128,37 @@ function serialisoiTarkistus(rivi: KenttaTarkistus) {
   };
 }
 
-function serialisoiPaatos(rivi: PaatosNakyma) {
+function serialisoiPaatos(
+  rivi: PaatosNakyma,
+  paatosLahteet: KenttaLahde[] = [],
+) {
   const { julkaistu: _j, ...loput } = rivi;
-  return loput;
+  const lainaus =
+    paatosLahteet.find(
+      (l) =>
+        l.rivi_id === rivi.id &&
+        l.kentta === "kuvaus" &&
+        lahdeVoimassaLaskentaan(l.tila),
+    )?.lainaus ?? null;
+  return {
+    ...loput,
+    kuvaus: muotoilePaatosKuvaus(rivi.kuvaus, lainaus),
+  };
 }
 
 function serialisoiOrganisaatioRooli(rivi: HankeOrganisaatioNakyma) {
-  const pohja = poistaJulkaisu(rivi);
+  const { organisaatio, ...muu } = poistaJulkaisu(rivi);
   const konsultti =
-    onKonsulttiSivuRooli(rivi.rooli) && rivi.organisaatio?.slug
-      ? { konsultti_sivu: `/konsultit/${rivi.organisaatio.slug}` }
+    onKonsulttiSivuRooli(rivi.rooli) && organisaatio?.slug
+      ? { konsultti_sivu: `/konsultit/${organisaatio.slug}` }
       : {};
-  return { ...pohja, ...konsultti };
+  return {
+    ...muu,
+    organisaatio: organisaatio
+      ? serialisoiJulkinenOrganisaatio(organisaatio)
+      : null,
+    ...konsultti,
+  };
 }
 
 function serialisoiAsiakirja(rivi: HankeAsiakirja) {
@@ -120,6 +170,8 @@ export type AvoinDataHanke = {
     vanhin_vahvistettu_pvm: string | null;
     viimeisin_paatos: PaatosNakyma | null;
   };
+  /** Kenttä → onko sillä vähintään yksi viranomaislähde (paatos/viranomaisasiakirja/rekisteri). */
+  kentat_viranomaislahde: Record<string, boolean>;
   lahteet: {
     hankkeet: AvoinDataLahde[];
     maaraajat: AvoinDataLahde[];
@@ -155,23 +207,38 @@ export function rakennaAvoinDataHanke(
 ): AvoinDataHanke | null {
   if (!kysely.hanke) return null;
   const polku = `/hankkeet/${kysely.hanke.id}`;
+  const urlTyypit = new Map<string, string>(
+    kysely.asiakirjat.map((a) => [a.url, a.lahde_tyyppi]),
+  );
+  const kaikkiHankeLahteet = [
+    ...kysely.lahteet,
+    ...kysely.maaraajaLahteet,
+    ...kysely.kuntaLahteet,
+    ...kysely.menettelyLahteet,
+    ...kysely.organisaatiorooliLahteet,
+    ...kysely.johtoLahteet,
+    ...kysely.vaihtoehtoLahteet,
+    ...kysely.kuvaLahteet,
+    ...kysely.paatosLahteet,
+  ];
   return {
     hanke: {
       ...serialisoiHanke(kysely.hanke),
       vanhin_vahvistettu_pvm: kysely.hanke.vanhin_vahvistettu_pvm,
       viimeisin_paatos: kysely.hanke.viimeisin_paatos,
     },
+    kentat_viranomaislahde: kentatViranomaislahde(kaikkiHankeLahteet, urlTyypit),
     lahteet: {
-      hankkeet: lahteetRiville(kysely.lahteet),
-      maaraajat: lahteetRiville(kysely.maaraajaLahteet),
-      kunnat: lahteetRiville(kysely.kuntaLahteet),
-      menettelyt: lahteetRiville(kysely.menettelyLahteet),
-      organisaatiot: lahteetRiville(kysely.organisaatiorooliLahteet),
-      johdot: lahteetRiville(kysely.johtoLahteet),
-      vaihtoehdot: lahteetRiville(kysely.vaihtoehtoLahteet),
-      kuvat: lahteetRiville(kysely.kuvaLahteet),
-      asiakirjat: lahteetRiville(kysely.asiakirjaLahteet),
-      paatokset: lahteetRiville(kysely.paatosLahteet),
+      hankkeet: lahteetRiville(kysely.lahteet, urlTyypit),
+      maaraajat: lahteetRiville(kysely.maaraajaLahteet, urlTyypit),
+      kunnat: lahteetRiville(kysely.kuntaLahteet, urlTyypit),
+      menettelyt: lahteetRiville(kysely.menettelyLahteet, urlTyypit),
+      organisaatiot: lahteetRiville(kysely.organisaatiorooliLahteet, urlTyypit),
+      johdot: lahteetRiville(kysely.johtoLahteet, urlTyypit),
+      vaihtoehdot: lahteetRiville(kysely.vaihtoehtoLahteet, urlTyypit),
+      kuvat: lahteetRiville(kysely.kuvaLahteet, urlTyypit),
+      asiakirjat: lahteetRiville(kysely.asiakirjaLahteet, urlTyypit),
+      paatokset: lahteetRiville(kysely.paatosLahteet, urlTyypit),
     },
     kunnat: kysely.kunnat.map(poistaJulkaisu),
     menettelyt: kysely.menettelyt.map(poistaJulkaisu),
@@ -181,7 +248,9 @@ export function rakennaAvoinDataHanke(
     vaihtoehdot: kysely.vaihtoehdot.map(poistaJulkaisu),
     kuvat: kysely.kuvat.map(poistaJulkaisu),
     asiakirjat: kysely.asiakirjat.map(serialisoiAsiakirja),
-    paatokset: kysely.paatokset.map(serialisoiPaatos),
+    paatokset: kysely.paatokset.map((p) =>
+      serialisoiPaatos(p, kysely.paatosLahteet),
+    ),
     tarkistukset: kysely.tarkistukset.map(serialisoiTarkistus),
     linkit: {
       html: `${juuriUrl}${polku}`,
@@ -232,7 +301,7 @@ export function avoinDataJuuriUrl(pyoeyta: string): string {
     const url = new URL(pyoeyta);
     return url.origin;
   } catch {
-    return "https://datakeskusrekisteri.vercel.app";
+    return "https://www.datakeskusrekisteri.fi";
   }
 }
 

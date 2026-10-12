@@ -11,6 +11,9 @@ import { HankeGalleria } from "@/komponentit/hanke-galleria";
 import { VaiheMerkki } from "@/komponentit/vaihe-merkki";
 import { lomakeKenttaKortista, VAIHTOEHTO_KENTAT } from "@/lib/ehdotus";
 import { rakennaDokumenttiLinkkiTekstit } from "@/lib/lahde-metatiedot";
+import type { LahdeTyyppi } from "@/lib/lahde-metatiedot";
+import { lahteetLiikennevalolle } from "@/lib/kentan-tila-lahteet";
+import { muotoilePaatosKuvaus } from "@/lib/paatos-kuvaus";
 import {
   JOHTO_TYYPPI_NIMET,
   HANKE_KENTTA_NIMET,
@@ -44,6 +47,22 @@ import { supabasePalvelinAvainAsetettu } from "@/lib/supabase/yllapito-asiakas";
 import type { Hanke, KenttaLahde, KenttaTarkistus } from "@/lib/supabase/tietokanta";
 
 export const revalidate = 60;
+
+function paatosKuvausNaytto(
+  kuvaus: string,
+  paatosId: string,
+  paatosLahteet: KenttaLahde[],
+): string {
+  const lainaus =
+    paatosLahteet.find(
+      (l) =>
+        l.rivi_id === paatosId &&
+        l.kentta === "kuvaus" &&
+        l.tila !== "korvattu" &&
+        l.tila !== "ei_tue",
+    )?.lainaus ?? null;
+  return muotoilePaatosKuvaus(kuvaus, lainaus);
+}
 
 function kentanLahteet(lahteet: KenttaLahde[], kentta: string): KenttaLahde[] {
   return lahteet.filter((lahde) => lahde.kentta === kentta);
@@ -81,6 +100,7 @@ function Faktakortti({
   linkkiTekstit,
   korvaavat,
   tarkistus,
+  urlTyypit,
 }: {
   hankeId: string;
   rivi: KenttaRivi;
@@ -88,6 +108,7 @@ function Faktakortti({
   linkkiTekstit?: ReadonlyMap<string, string>;
   korvaavat?: ReadonlyMap<string, KorvaavaDokumentti>;
   tarkistus?: KenttaTarkistus | null;
+  urlTyypit: ReadonlyMap<string, LahdeTyyppi>;
 }) {
   const naytettavat = kentanLahteet(lahteet, rivi.lahdeKentta ?? rivi.kentta);
   const lomakeKentta = lomakeKenttaKortista(rivi.kentta);
@@ -96,7 +117,7 @@ function Faktakortti({
     <AvattavaKortti
       nimi={HANKE_KENTTA_NIMET[rivi.kentta] ?? rivi.kentta}
       arvo={kenttaArvoksi(rivi)}
-      tila={kentanTila(!tyhja, naytettavat)}
+      tila={kentanTila(!tyhja, lahteetLiikennevalolle(naytettavat, urlTyypit))}
       lahteet={naytettavat}
       linkkiTekstit={linkkiTekstit}
       korvaavat={korvaavat}
@@ -221,6 +242,13 @@ function hankeRyhmat(
           ),
         },
         {
+          kentta: "polttoainevarasto_maara",
+          arvo: polttoainevarastoTeksti(
+            hanke.polttoainevarasto_maara,
+            hanke.polttoainevarasto_yksikko,
+          ),
+        },
+        {
           kentta: "varavoima_paastot_t_co2e",
           arvo:
             hanke.varavoima_paastot_t_co2e != null
@@ -321,6 +349,9 @@ export default async function HankeSivu({
   const kuntaHref = kuntaSlug ? kuntaSivuPolku(kuntaSlug) : null;
   const ratkaistuMaakunta = ratkaiseMaakunta(hanke.maakunta, hanke.kunta, kuntaMaakunnat);
   const linkkiTekstit = rakennaDokumenttiLinkkiTekstit(asiakirjat);
+  const urlTyypit = new Map<string, LahdeTyyppi>(
+    asiakirjat.map((a) => [a.url, a.lahde_tyyppi as LahdeTyyppi]),
+  );
   const korvaavat = new Map(
     asiakirjat.map((asiakirja) => [
       asiakirja.id,
@@ -392,8 +423,13 @@ export default async function HankeSivu({
       )}
       {hanke.viimeisin_paatos ? (
         <p className="mt-3 max-w-prose text-sm leading-relaxed">
-          Viimeisin merkitty päätös: {hanke.viimeisin_paatos.kuvaus} ·{" "}
-          {muotoilePvm(hanke.viimeisin_paatos.pvm)} ·{" "}
+          Viimeisin merkitty päätös:{" "}
+          {paatosKuvausNaytto(
+            hanke.viimeisin_paatos.kuvaus,
+            hanke.viimeisin_paatos.id,
+            paatosLahteet,
+          )}{" "}
+          · {muotoilePvm(hanke.viimeisin_paatos.pvm)} ·{" "}
           {hanke.viimeisin_paatos.paattava_organisaatio?.nimi ?? "—"}
         </p>
       ) : null}
@@ -470,6 +506,7 @@ export default async function HankeSivu({
                 lahteet={lahteet}
                 linkkiTekstit={linkkiTekstit}
                 korvaavat={korvaavat}
+                urlTyypit={urlTyypit}
               />
             ) : null}
             {hanke.muut_sijainnit ? (
@@ -482,6 +519,7 @@ export default async function HankeSivu({
                 lahteet={lahteet}
                 linkkiTekstit={linkkiTekstit}
                 korvaavat={korvaavat}
+                urlTyypit={urlTyypit}
               />
             ) : null}
           </Korttiruudukko>
@@ -520,8 +558,10 @@ export default async function HankeSivu({
           Tiedot ja lähteet
         </h2>
         <p className="mt-2 text-sm text-muted">
-          Kenttä avaa lähteen ja päivityslomakkeen. Vihreä valo on vahvistettu, keltainen
-          epävarma, punainen puuttuu.
+          Kenttä avaa lähteen ja päivityslomakkeen. Vihreä valo tarkoittaa
+          viranomaislähdettä (päätös, viranomaisasiakirja tai rekisteri), jonka
+          ihminen on tarkistanut tukevan arvoa. Keltainen on julkaistu tai muulla
+          lähteellä tarkistettu, punainen puuttuu.
         </p>
         <div className="mt-6 space-y-8">
           {hankeRyhmat(hanke, ratkaistuMaakunta.maakunta).map((ryhma) => (
@@ -538,6 +578,7 @@ export default async function HankeSivu({
                     lahteet={lahteet}
                     linkkiTekstit={linkkiTekstit}
                     korvaavat={korvaavat}
+                    urlTyypit={urlTyypit}
                     tarkistus={tarkistukset.find(
                       (riviTarkistus) =>
                         riviTarkistus.kentta === (rivi.lahdeKentta ?? rivi.kentta),
@@ -563,7 +604,10 @@ export default async function HankeSivu({
                 arvo={rivi.kunta}
                 tila={kentanTila(
                   true,
-                  kuntaLahteet.filter((lahde) => lahde.rivi_id === rivi.id),
+                  lahteetLiikennevalolle(
+                    kuntaLahteet.filter((lahde) => lahde.rivi_id === rivi.id),
+                    urlTyypit,
+                  ),
                 )}
                 lahteet={kuntaLahteet.filter((lahde) => lahde.rivi_id === rivi.id)}
                 linkkiTekstit={linkkiTekstit}
@@ -586,7 +630,10 @@ export default async function HankeSivu({
                 arvo={`${MENETTELY_TILA_NIMET[rivi.tila]}${rivi.tunnus ? ` · ${rivi.tunnus}` : ""}`}
                 tila={kentanTila(
                   true,
-                  menettelyLahteet.filter((lahde) => lahde.rivi_id === rivi.id),
+                  lahteetLiikennevalolle(
+                    menettelyLahteet.filter((lahde) => lahde.rivi_id === rivi.id),
+                    urlTyypit,
+                  ),
                 )}
                 lahteet={menettelyLahteet.filter((lahde) => lahde.rivi_id === rivi.id)}
                 linkkiTekstit={linkkiTekstit}
@@ -605,11 +652,14 @@ export default async function HankeSivu({
             {paatokset.map((rivi) => (
               <AvattavaKortti
                 key={rivi.id}
-                nimi={rivi.kuvaus}
+                nimi={paatosKuvausNaytto(rivi.kuvaus, rivi.id, paatosLahteet)}
                 arvo={`${muotoilePvm(rivi.pvm)} · ${rivi.paattava_organisaatio?.nimi ?? "—"}`}
                 tila={kentanTila(
                   true,
-                  paatosLahteet.filter((lahde) => lahde.rivi_id === rivi.id),
+                  lahteetLiikennevalolle(
+                    paatosLahteet.filter((lahde) => lahde.rivi_id === rivi.id),
+                    urlTyypit,
+                  ),
                 )}
                 lahteet={paatosLahteet.filter((lahde) => lahde.rivi_id === rivi.id)}
                 linkkiTekstit={linkkiTekstit}
@@ -683,7 +733,10 @@ export default async function HankeSivu({
                 }
                 tila={kentanTila(
                   true,
-                  vaihtoehtoLahteet.filter((lahde) => lahde.rivi_id === vaihtoehto.id),
+                  lahteetLiikennevalolle(
+                    vaihtoehtoLahteet.filter((lahde) => lahde.rivi_id === vaihtoehto.id),
+                    urlTyypit,
+                  ),
                 )}
                 lahteet={vaihtoehtoLahteet.filter((lahde) => lahde.rivi_id === vaihtoehto.id)}
                 linkkiTekstit={linkkiTekstit}
@@ -741,7 +794,10 @@ export default async function HankeSivu({
                 }
                 tila={kentanTila(
                   rivi.organisaatio != null,
-                  organisaatiorooliLahteet.filter((lahde) => lahde.rivi_id === rivi.id),
+                  lahteetLiikennevalolle(
+                    organisaatiorooliLahteet.filter((lahde) => lahde.rivi_id === rivi.id),
+                    urlTyypit,
+                  ),
                 )}
                 lahteet={organisaatiorooliLahteet.filter((lahde) => lahde.rivi_id === rivi.id)}
                 linkkiTekstit={linkkiTekstit}
@@ -792,7 +848,10 @@ export default async function HankeSivu({
                   arvo={`${menettely ? `${MENETTELY_LAJI_NIMET[menettely.laji]} · ` : ""}${maaraaika.alkaa_pvm ? `${muotoilePvm(maaraaika.alkaa_pvm)} – ` : ""}${muotoilePvm(maaraaika.paattyy_pvm)}`}
                   tila={kentanTila(
                     true,
-                    maaraajaLahteet.filter((lahde) => lahde.rivi_id === maaraaika.id),
+                    lahteetLiikennevalolle(
+                      maaraajaLahteet.filter((lahde) => lahde.rivi_id === maaraaika.id),
+                      urlTyypit,
+                    ),
                   )}
                   lahteet={maaraajaLahteet.filter((lahde) => lahde.rivi_id === maaraaika.id)}
                   linkkiTekstit={linkkiTekstit}
@@ -823,7 +882,10 @@ export default async function HankeSivu({
                   .join(" · ")}
                 tila={kentanTila(
                   true,
-                  johtoLahteet.filter((lahde) => lahde.rivi_id === johto.id),
+                  lahteetLiikennevalolle(
+                    johtoLahteet.filter((lahde) => lahde.rivi_id === johto.id),
+                    urlTyypit,
+                  ),
                 )}
                 lahteet={johtoLahteet.filter((lahde) => lahde.rivi_id === johto.id)}
                 linkkiTekstit={linkkiTekstit}

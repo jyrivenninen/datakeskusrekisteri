@@ -18,6 +18,12 @@ import type {
   MuutosehdotusTila,
 } from "@/lib/supabase/tietokanta";
 import { HANKE_VAIHEET, ORGANISAATIO_TYYPIT } from "@/lib/supabase/tietokanta";
+import type { LahdeTyyppi } from "@/lib/lahde-metatiedot";
+import { VARMISTAVAT_LAHDE_TYYPIT } from "@/lib/kentta-varmistus";
+import {
+  ehdotuksellaKerrosalaPintaAlaksi,
+  ehdotuksellaPintaAlaYksikkoEpaselva,
+} from "@/lib/pinta-ala-yksikko";
 
 export const VAIHE_NIMET: Record<HankeVaihe, string> = {
   esiselvitys: "Esiselvitys",
@@ -65,27 +71,51 @@ export const KENTAN_TILAT = ["vahvistettu", "vahvistamaton", "puuttuu"] as const
 export type KentanTila = (typeof KENTAN_TILAT)[number];
 
 export const KENTAN_TILA_NIMET: Record<KentanTila, string> = {
-  vahvistettu: "Varmennettu",
-  vahvistamaton: "Julkaistu, ei varmennettu",
+  vahvistettu: "Viranomaislähde, jonka ihminen on tarkistanut",
+  vahvistamaton: "Julkaistu tai muulla lähteellä tarkistettu",
   puuttuu: "Puuttuu",
 };
 
-/** Kentän tila: varmennettu vaatii ihmisen kuittauksen (merkitty). */
+type KentanTilaLahde = {
+  luottamus: Luottamus;
+  merkitty: Merkinta;
+  tila?: string | null;
+  /** Tehokas lähdetyyppi (paatos / viranomaisasiakirja / rekisteri / …). */
+  lahde_tyyppi?: LahdeTyyppi | null;
+  tekninen_lahde?: boolean;
+};
+
+/**
+ * Kentän liikennevalo.
+ * Vihreä vain, jos vähintään yksi ei-tekninen lähde on ihmisen vahvistama
+ * ja tyypiltään päätös, viranomaisasiakirja tai rekisteri, eikä yksikään
+ * voimassa oleva lähde ole ristiriitainen. Ihmisen vahvistama media /
+ * hankkeen_oma / muu → keltainen.
+ */
 export function kentanTila(
   arvoOn: boolean,
-  lahteet: ReadonlyArray<{
-    luottamus: Luottamus;
-    merkitty: Merkinta;
-    tila?: string | null;
-  }>,
+  lahteet: ReadonlyArray<KentanTilaLahde>,
 ): KentanTila {
-  const voimassa = lahteet.filter((lahde) => lahde.tila !== "korvattu");
+  const voimassa = lahteet.filter(
+    (lahde) =>
+      lahde.tila !== "korvattu" &&
+      lahde.tila !== "ei_tue" &&
+      lahde.tekninen_lahde !== true,
+  );
   if (!arvoOn) return "puuttuu";
   if (voimassa.length === 0) return "vahvistamaton";
   if (voimassa.some((lahde) => lahde.luottamus === "ristiriitainen")) {
     return "vahvistamaton";
   }
-  if (voimassa.some((lahde) => lahde.merkitty === "ihmisen_vahvistama")) {
+  const varmistavat = VARMISTAVAT_LAHDE_TYYPIT as readonly string[];
+  if (
+    voimassa.some(
+      (lahde) =>
+        lahde.merkitty === "ihmisen_vahvistama" &&
+        lahde.lahde_tyyppi != null &&
+        varmistavat.includes(lahde.lahde_tyyppi),
+    )
+  ) {
     return "vahvistettu";
   }
   return "vahvistamaton";
@@ -218,6 +248,10 @@ type JononSisalto = {
   rakentamisvaiheet?: readonly unknown[] | null;
   vaihtoehdot?: Record<string, unknown> | null;
   asiakirjat?: readonly unknown[] | null;
+  kentat?: Record<
+    string,
+    { arvo?: string | null; yksikko?: string | null; lainaus?: string | null }
+  > | null;
 };
 
 /** Hyväksy-painike ei julkaise: lähde on lukematta tai kenttä valitaan sanan mukaan. */
@@ -234,6 +268,10 @@ export function ehdotuksenHyvaksyntaEstetty(
   ) {
     return true;
   }
+  // Kerrosala (k-m²) ei ole pinta-ala — ei julkaista pinta_ala_ha / kaava_ala_ha.
+  if (ehdotuksellaKerrosalaPintaAlaksi(sisalto)) return true;
+  // ei_merkitty tai yli rajan ilman ha-yksikköä: vaadi vahvistus.
+  if (ehdotuksellaPintaAlaYksikkoEpaselva(sisalto)) return true;
   return false;
 }
 
@@ -527,7 +565,7 @@ export function vanhinVahvistettuPvm(
 ): string | null {
   let vanhin: string | null = null;
   for (const lahde of lahteet) {
-    if (lahde.tila === "korvattu") continue;
+    if (lahde.tila === "korvattu" || lahde.tila === "ei_tue") continue;
     const pvm = lahde.vahvistettu_pvm.slice(0, 10);
     if (!pvm) continue;
     if (!vanhin || pvm < vanhin) vanhin = pvm;

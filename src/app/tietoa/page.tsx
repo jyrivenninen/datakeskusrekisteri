@@ -61,6 +61,12 @@ export default async function TietoaPalvelustaSivu() {
             merkitään lähteineen. Tyhjä kenttä on parempi kuin arvattu.
           </p>
           <p>
+            Hankesivun liikennevalo: vihreä tarkoittaa viranomaislähdettä
+            (päätös, viranomaisasiakirja tai rekisteri), jonka ihminen on
+            tarkistanut tukevan arvoa. Keltainen on julkaistua tai muulla
+            lähteellä tarkistettua, punainen puuttuvaa.
+          </p>
+          <p>
             Ilmoitus lomakkeella tai agentin ehdottama havainto ei siirry
             rekisteriin ennen kuin ylläpitäjä on tarkistanut lähteen.
           </p>

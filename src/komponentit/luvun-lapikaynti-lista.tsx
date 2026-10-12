@@ -89,6 +89,9 @@ export function LuvunLapikayntiLista({ rivit }: { rivit: LuvunRistiriitaRivi[] }
           {rivi.hanke_kunta} · {HANKE_KENTTA_NIMET[rivi.kentta] ?? rivi.kentta} ·
           nykyinen arvo{" "}
           {rivi.nykyinen_arvo != null ? muotoileLuku(rivi.nykyinen_arvo) : "—"}
+          {rivi.syy === "kaava_epailys"
+            ? " · lainaus viittaa kaava-alueeseen (kaava_ala_ha tyhjä)"
+            : null}
         </p>
 
         <div className="mt-4 grid gap-3 md:grid-cols-2">

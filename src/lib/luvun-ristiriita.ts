@@ -42,7 +42,18 @@ export type LuvunRistiriitaRivi = {
   kentta: LuvunRistiriitaKentta;
   nykyinen_arvo: number | null;
   lahteet: LahdeLuku[];
+  /** ristiriita = eri luvut; kaava_epailys = kaava-ala pinta_ala_ha-kentässä */
+  syy?: "ristiriita" | "kaava_epailys";
 };
+
+const KAAVA_LAINAUS_RE =
+  /(asemakaava|yleiskaava|kaava[- ]?alue|kaavoitett|suunnittelualue|kaavoitusalue|korttelialue)/i;
+
+export function lainausViittaaKaavaAlaan(lainaus: string): boolean {
+  if (!lainaus.trim()) return false;
+  if (/kaavaillaan/i.test(lainaus)) return false;
+  return KAAVA_LAINAUS_RE.test(lainaus);
+}
 
 function normalisoiDesimaali(raaka: string): number {
   const siivottu = raaka.replace(/[\s\u00a0]/g, "");
@@ -224,7 +235,7 @@ export function rakennaLuvunRistiriitaRivit(
 
   for (const lahde of lahteet) {
     if (lahde.taulu !== "hankkeet") continue;
-    if (lahde.tila === "korvattu") continue;
+    if (lahde.tila === "korvattu" || lahde.tila === "ei_tue") continue;
     if (!(LUVUN_RISTIRIITA_KENTAT as readonly string[]).includes(lahde.kentta)) {
       continue;
     }
@@ -253,6 +264,7 @@ export function rakennaLuvunRistiriitaRivit(
   }
 
   const rivit: LuvunRistiriitaRivi[] = [];
+  const lisatyt = new Set<string>();
   for (const [avain, ryhma] of ryhmat) {
     if (kasitellytAvaimet.has(avain)) continue;
     if (ryhma.lahteet.length < 2) continue;
@@ -269,6 +281,30 @@ export function rakennaLuvunRistiriitaRivit(
       kentta: ryhma.kentta,
       nykyinen_arvo: hankeKenttaArvo(hanke, ryhma.kentta),
       lahteet: ryhma.lahteet.sort((a, b) => a.luku - b.luku),
+      syy: "ristiriita",
+    });
+    lisatyt.add(avain);
+  }
+
+  // Kaava-ala pinta_ala_ha-kentässä (yksikin lähde riittää), kun kaava_ala_ha tyhjä.
+  for (const [avain, ryhma] of ryhmat) {
+    if (ryhma.kentta !== "pinta_ala_ha") continue;
+    if (kasitellytAvaimet.has(avain) || lisatyt.has(avain)) continue;
+    const hanke = hankeKartta.get(ryhma.rivi_id);
+    if (!hanke) continue;
+    if (hanke.pinta_ala_ha == null || hanke.kaava_ala_ha != null) continue;
+    const kaavaLahteet = ryhma.lahteet.filter((l) => lainausViittaaKaavaAlaan(l.lainaus));
+    if (kaavaLahteet.length === 0) continue;
+    rivit.push({
+      avain,
+      taulu: "hankkeet",
+      rivi_id: ryhma.rivi_id,
+      hanke_nimi: hanke.nimi,
+      hanke_kunta: hanke.kunta,
+      kentta: "pinta_ala_ha",
+      nykyinen_arvo: hankeKenttaArvo(hanke, "pinta_ala_ha"),
+      lahteet: kaavaLahteet.sort((a, b) => a.luku - b.luku),
+      syy: "kaava_epailys",
     });
   }
 
@@ -278,6 +314,11 @@ export function rakennaLuvunRistiriitaRivit(
       if (a.kentta === "pinta_ala_ha") return -1;
       if (b.kentta === "pinta_ala_ha") return 1;
       return a.kentta.localeCompare(b.kentta, "fi");
+    }
+    // kaava-epäilyt ristiriitojen jälkeen saman kentän sisällä
+    if (a.syy !== b.syy) {
+      if (a.syy === "ristiriita") return -1;
+      if (b.syy === "ristiriita") return 1;
     }
     return a.hanke_nimi.localeCompare(b.hanke_nimi, "fi");
   });

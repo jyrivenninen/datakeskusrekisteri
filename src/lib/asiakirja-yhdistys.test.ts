@@ -26,6 +26,8 @@ function rivi(url: string, kattaaLkm: number): AsiakirjaListRivi {
     paivitetty_pvm: "2026-01-01T00:00:00.000Z",
     sisalto_tiiviste: null,
     kanoninen_dokumentti_id: null,
+    sisalto_nouto_syy: null,
+    sisalto_nouto_pvm: null,
     kattaa: Array.from({ length: kattaaLkm }, (_, i) => ({
       taulu: "hankkeet" as const,
       kentta: `kentta_${url.length}_${i}`,

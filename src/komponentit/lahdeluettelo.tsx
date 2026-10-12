@@ -20,9 +20,9 @@ export function Lahdeluettelo({
   }
 
   const jarjestys = [...lahteet].sort((a, b) => {
-    const aKorvattu = a.tila === "korvattu" ? 1 : 0;
-    const bKorvattu = b.tila === "korvattu" ? 1 : 0;
-    return aKorvattu - bKorvattu;
+    const aPassiivinen = a.tila === "korvattu" || a.tila === "ei_tue" ? 1 : 0;
+    const bPassiivinen = b.tila === "korvattu" || b.tila === "ei_tue" ? 1 : 0;
+    return aPassiivinen - bPassiivinen;
   });
 
   return (
@@ -30,6 +30,8 @@ export function Lahdeluettelo({
       {jarjestys.map((lahde) => {
         const teksti = naytaLahdeLinkkiTeksti(lahde.lahde_url, linkkiTekstit);
         const korvattu = lahde.tila === "korvattu";
+        const eiTue = lahde.tila === "ei_tue";
+        const passiivinen = korvattu || eiTue;
         const korvaava = lahde.korvaava_dokumentti_id
           ? korvaavat?.get(lahde.korvaava_dokumentti_id)
           : undefined;
@@ -37,12 +39,13 @@ export function Lahdeluettelo({
         <li
           key={lahde.id}
           className={
-            korvattu
+            passiivinen
               ? "rounded border border-dashed border-muted bg-background px-3 py-2"
               : "rounded border border-border bg-background px-3 py-2"
           }
         >
           {korvattu ? <p className="font-medium">Korvattu</p> : null}
+          {eiTue ? <p className="font-medium">Ei tue arvoa</p> : null}
           {naytaKentta ? (
             <p className="text-muted">{HANKE_KENTTA_NIMET[lahde.kentta] ?? lahde.kentta}</p>
           ) : null}
@@ -57,7 +60,7 @@ export function Lahdeluettelo({
             </a>
             {lahde.lahde_sivu != null ? ` (s. ${lahde.lahde_sivu})` : ""}
           </p>
-          {korvattu ? (
+          {passiivinen ? (
             <p className="mt-1 text-muted">tarkistettu {muotoilePvm(lahde.vahvistettu_pvm)}</p>
           ) : (
             <p className="mt-1 text-muted">

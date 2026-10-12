@@ -1,11 +1,13 @@
 /**
  * Hyväksyy LS13 erä 1:n sama-arvoiset lähdevahvistukset (TUN_SAMA).
- * Poikkeamat ja määräajat jätetään ihmisen yksittäiskäsittelyyn.
+ * Koneellinen lainaustarkistus on pakollinen: epäonnistuneet jäävät jonoon.
  *
  * Aja: npx tsx scripts/hyvaksy-lahdeselvitys13-era1-vahvistus.ts [--kuiva]
  */
 import { createClient } from "@supabase/supabase-js";
 import { lataaPaikallinenYmparisto } from "../agents/ymparisto";
+import type { EhdotusSisalto } from "../src/lib/ehdotus";
+import { tarkistaEraEhdotusKentat } from "../src/lib/ls13-era-portti";
 import { hyvaksyMuutosehdotus } from "../src/lib/supabase/hyvaksynta";
 
 const KASITTELIJA = "ylläpito";
@@ -21,17 +23,46 @@ async function main() {
 
   const { data, error } = await sb
     .from("muutosehdotukset")
-    .select("id, huomautus, hanke_id")
+    .select("id, huomautus, hanke_id, sisalto")
     .eq("ehdottaja_tunniste", TUN_SAMA)
     .eq("tila", "odottaa")
     .eq("tyyppi", "taydennys")
     .order("luotu_pvm");
   if (error) throw new Error(error.message);
 
-  console.log(`Vahvistuksia jonossa: ${(data ?? []).length}`);
+  const jonossa = data ?? [];
+  const eraan: typeof jonossa = [];
+  const yksittain: { id: string; huomautus: string | null; syy: string }[] = [];
+  for (const rivi of jonossa) {
+    const sisalto = rivi.sisalto as EhdotusSisalto;
+    const portti = tarkistaEraEhdotusKentat(sisalto?.kentat ?? {});
+    if (!portti.ok) {
+      yksittain.push({
+        id: rivi.id as string,
+        huomautus: rivi.huomautus as string | null,
+        syy: `${portti.kentta}: ${portti.syy}`,
+      });
+      continue;
+    }
+    eraan.push(rivi);
+  }
+
+  console.log(
+    JSON.stringify(
+      {
+        jonossa: jonossa.length,
+        eraan: eraan.length,
+        yksittain: yksittain.length,
+        yksittain_rivit: yksittain,
+      },
+      null,
+      2,
+    ),
+  );
+
   let ok = 0;
   let virhe = 0;
-  for (const rivi of data ?? []) {
+  for (const rivi of eraan) {
     if (kuiva) {
       console.log("[kuiva]", rivi.huomautus);
       continue;
@@ -45,10 +76,10 @@ async function main() {
       console.error("virhe", rivi.id, rivi.huomautus, e);
     }
   }
-  console.log({ ok, virhe, kuiva });
+  console.log({ ok, virhe, kuiva, ohitettu_yksittain: yksittain.length });
 }
 
 main().catch((e) => {
-  console.error(e);
+  console.error(e instanceof Error ? e.message : e);
   process.exit(1);
 });

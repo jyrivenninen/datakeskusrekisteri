@@ -17,6 +17,11 @@ export type EhdotettuKentta = {
   luottamus?: Luottamus;
   lahde_laji?: LahdeLaji;
   /**
+   * Asiakirjan yksikkö (esim. ha, m2). Pinta-aloissa pakollinen Grokin
+   * toimeksiannossa; `ei_merkitty` jos asiakirja ei kerro.
+   */
+  yksikko?: string | null;
+  /**
    * Lisälähteet samalle arvolle. Kirjoitetaan kaikki `kentta_lahteet`-riveiksi
    * hyväksynnässä — ei hiljaista pudotusta.
    */
