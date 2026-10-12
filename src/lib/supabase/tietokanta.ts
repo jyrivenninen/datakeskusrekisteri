@@ -494,6 +494,8 @@ export type KenttaLahde = {
   tekninen_lahde: boolean;
   tila: "voimassa" | "korvattu" | "ei_tue";
   korvaava_dokumentti_id: string | null;
+  /** Lainauksen rooli asiakirjassa; ei vaikuta valoon/varmistukseen toistaiseksi. */
+  lainauksen_luonne?: "paatososa" | "esitys" | "valmisteluteksti" | "muu" | null;
 };
 
 export const KENTTA_TARKISTUS_TULOKSET = ["ei_julkista_lahdetta"] as const;

@@ -1,4 +1,5 @@
 import { naytaLahdeLinkkiTeksti } from "@/lib/lahde-metatiedot";
+import { LAINAUKSEN_LUONNE_NIMET } from "@/lib/lainauksen-luonne";
 import type { KenttaLahde } from "@/lib/supabase/tietokanta";
 import { HANKE_KENTTA_NIMET, LUOTTAMUS_NIMET, MERKINTA_NIMET, muotoilePvm } from "@/lib/naytto";
 
@@ -74,6 +75,13 @@ export function Lahdeluettelo({
               <a href={korvaava.url} className="text-link underline" rel="noopener noreferrer">
                 {korvaava.otsikko}
               </a>
+            </p>
+          ) : null}
+          {lahde.lainauksen_luonne ? (
+            <p className="mt-1 text-muted">
+              Lainauksen luonne:{" "}
+              {LAINAUKSEN_LUONNE_NIMET[lahde.lainauksen_luonne] ??
+                lahde.lainauksen_luonne}
             </p>
           ) : null}
           {lahde.lainaus ? (
