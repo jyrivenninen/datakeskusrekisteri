@@ -202,6 +202,13 @@ export default async function YllapitoSivu({
       </div>
       <YllapitoOhjeet massahyvaksynta={massahyvaksynta} />
       <p className="mt-6 text-sm">
+        <Link href="/yllapito/uusi-hanke" className="font-medium text-link underline">
+          Uusi hanke
+        </Link>
+        {" — "}
+        JSON-tuonti tai lomake; validointi, tuplatarkistus ja vahvistus ennen kirjoitusta.
+      </p>
+      <p className="mt-2 text-sm">
         <Link href="/yllapito/lahde-tyypit" className="font-medium text-link underline">
           Lähdetyyppien läpikäynti
         </Link>

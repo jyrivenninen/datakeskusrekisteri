@@ -3,9 +3,11 @@ import {
   hyvaksyEhdotusToiminto,
   hylkaaEhdotusToiminto,
   julkaiseHankeToiminto,
+  kasitteleLahdeselvitys13RatkaisuToiminto,
   korjaaLinkkiLahdeToiminto,
   tallennaLahdeMetatiedotToiminto,
 } from "@/app/toiminnot";
+import { normalisoiLs13RatkaisutNayttoon } from "@/lib/lahdeselvitys13-ratkaisut";
 import {
   LAHDE_TYYPPI_NIMET,
   LAHDE_TYYPIT,
@@ -953,11 +955,80 @@ export default async function EhdotusSivu({
               <div className="py-3">
                 <dt className="font-medium">Ratkaisuvaihtoehdot</dt>
                 <dd className="mt-1">
-                  <ul className="list-disc space-y-1 pl-5">
-                    {lahdeselvitys13.ratkaisuvaihtoehdot.map((v) => (
-                      <li key={v}>{v}</li>
-                    ))}
-                  </ul>
+                  <p className="mb-3 max-w-prose text-sm text-muted">
+                    Varmistusvalo nousee vain, jos lähde tukee kentän arvoa
+                    sellaisenaan. Jos asiakirja kuvaa eri asiaa, sitä ei liitetä
+                    kentän lähteeksi.
+                  </p>
+                  {odottaa && supabasePalvelinAvainAsetettu() ? (
+                    <form
+                      action={kasitteleLahdeselvitys13RatkaisuToiminto}
+                      className="space-y-3"
+                    >
+                      <input type="hidden" name="id" value={ehdotus.id} />
+                      {kuuluuHavaintojonoon(ehdotus.tyyppi) ? (
+                        <input type="hidden" name="seuraava_jonoon" value="1" />
+                      ) : null}
+                      <fieldset className="space-y-3">
+                        <legend className="sr-only">Valitse ratkaisu</legend>
+                        {normalisoiLs13RatkaisutNayttoon(
+                          lahdeselvitys13.ratkaisuvaihtoehdot,
+                        ).map((v) => (
+                          <div key={v.id} className="flex items-start gap-2">
+                            <input
+                              id={`ls13-ratkaisu-${v.id}`}
+                              type="radio"
+                              name="ls13_ratkaisu"
+                              value={v.id}
+                              required
+                              className="mt-1"
+                            />
+                            <label
+                              htmlFor={`ls13-ratkaisu-${v.id}`}
+                              className="text-sm"
+                            >
+                              <span className="font-medium">{v.teksti}</span>
+                              <span className="mt-0.5 block text-muted">
+                                {v.ohje}
+                              </span>
+                            </label>
+                          </div>
+                        ))}
+                      </fieldset>
+                      <label
+                        htmlFor="ls13-ratkaisu-perustelu"
+                        className="block text-sm font-medium"
+                      >
+                        Perustelu (pakollinen, kun lähteet ovat eri asia tai
+                        ristiriita)
+                      </label>
+                      <textarea
+                        id="ls13-ratkaisu-perustelu"
+                        name="perustelu"
+                        rows={3}
+                        className="w-full rounded border border-border bg-surface px-2 py-2 text-sm"
+                      />
+                      <button
+                        type="submit"
+                        className="rounded border border-foreground bg-foreground px-4 py-2 text-sm font-medium text-background"
+                      >
+                        Käsittele valittu ratkaisu
+                      </button>
+                    </form>
+                  ) : (
+                    <ul className="list-disc space-y-2 pl-5">
+                      {normalisoiLs13RatkaisutNayttoon(
+                        lahdeselvitys13.ratkaisuvaihtoehdot,
+                      ).map((v) => (
+                        <li key={v.id}>
+                          <span className="font-medium">{v.teksti}</span>
+                          <span className="mt-0.5 block text-sm text-muted">
+                            {v.ohje}
+                          </span>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
                 </dd>
               </div>
             ) : null}

@@ -606,13 +606,28 @@ export async function hyvaksyMuutosehdotus(
 
   const lahteet = Object.entries(kentat)
     .filter(([kentta]) => !SIJAINTI_KENTAT.has(kentta))
-    .map(([kentta, tieto]) =>
-      lahdeRivi(
-        kentta === "toimija_nimi" ? "toimija_organisaatio_id" : kentta,
-        tieto,
-        "vahvistettu",
-      ),
-    );
+    .flatMap(([kentta, tieto]) => {
+      const kohde =
+        kentta === "toimija_nimi" ? "toimija_organisaatio_id" : kentta;
+      const rivit = [lahdeRivi(kohde, tieto, "vahvistettu")];
+      for (const lisa of tieto.lisalahteet ?? []) {
+        rivit.push(
+          lahdeRivi(
+            kohde,
+            {
+              arvo: tieto.arvo,
+              lahde_url: lisa.lahde_url,
+              lahde_sivu: lisa.lahde_sivu,
+              lainaus: lisa.lainaus,
+              luottamus: lisa.luottamus ?? tieto.luottamus,
+              lahde_laji: lisa.lahde_laji ?? tieto.lahde_laji,
+            },
+            "vahvistettu",
+          ),
+        );
+      }
+      return rivit;
+    });
   const sijaintiLahde =
     kentat.sijainti_lat ??
     kentat.sijainti_lon ??

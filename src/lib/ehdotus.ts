@@ -1,6 +1,14 @@
 import { lahdeUrlKieltoViesti } from "@/lib/lahde-url-kielto";
 import { HANKE_VAIHEET, type HankeVaihe, type LahdeLaji, type Luottamus } from "@/lib/supabase/tietokanta";
 
+export type EhdotettuLisalahde = {
+  lahde_url: string;
+  lahde_sivu: number | null;
+  lainaus: string | null;
+  luottamus?: Luottamus;
+  lahde_laji?: LahdeLaji;
+};
+
 export type EhdotettuKentta = {
   arvo: string;
   lahde_url: string;
@@ -8,6 +16,11 @@ export type EhdotettuKentta = {
   lainaus: string | null;
   luottamus?: Luottamus;
   lahde_laji?: LahdeLaji;
+  /**
+   * Lisälähteet samalle arvolle. Kirjoitetaan kaikki `kentta_lahteet`-riveiksi
+   * hyväksynnässä — ei hiljaista pudotusta.
+   */
+  lisalahteet?: EhdotettuLisalahde[];
 };
 
 export type EhdotettuKuva = {

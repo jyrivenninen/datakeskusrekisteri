@@ -578,9 +578,11 @@ Tai luku säilyy mutta epävarmana → jätä kenttä tai `korjaus` vain jos arv
 
 ### Duplikaattien välttä
 
-Ennen `uusi_hanke`: vertaa rekisterin `nimi`, `kunta`, `yva_diaarinumero`,
-`toimija_organisaatio_id` / toimijanimi. Jos epäilet duplikaattia, **älä luo
-uutta** — täydennä olemassa olevaa (`taydennys`).
+Ennen `uusi_hanke` tai ylläpidon tuonti-JSON:ia: vertaa rekisterin `nimi`,
+`kunta`, `yva_diaarinumero`, `kaavatunnus`, `toimija_organisaatio_id` /
+toimijanimi ja sijaintia. Jos epäilet duplikaattia, **älä luo uutta** —
+täydennä olemassa olevaa (`taydennys`). Ylläpidon tuontinäkymä näyttää
+tuplaosumat varoituksena; vahva osuma ohjaa täydentämään.
 
 **Huom:** API-luku näkee vain `julkaistu = true` -hankkeet. Sama hanke voi silti
 olla piilotettuna (`julkaistu = false`). Vertaa myös lähes samaa nimeä (esim.
@@ -943,7 +945,118 @@ Jokaisessa `sisalto.kentat`-kentässä:
 
 ## JSON-esimerkit
 
-### Uusi hanke
+### Uusi hanke — ylläpidon tuontimuoto (ensisijainen uusille löydöille)
+
+Kun löydät hankkeen, jota ei ole rekisterissä, tuota JSON alla olevassa
+muodossa. Ylläpito tuo sen näkymässä `/yllapito/uusi-hanke` (validointi →
+esikatselu → vahvistus). Älä kutsu `julkaise_agentti_ehdotus` tällä
+rakenteella — se on ihmisen tuontia varten.
+
+**Pakollista:** jokaisella kentällä `lahteet[]` (url, `lahde_tyyppi`, lainaus) —
+**kaikki** lähteet kirjoitetaan, ei vain ensimmäistä; toimijalla samaan tapaan
+`lahde_url` + `lahde_tyyppi` + lainaus; `sijainti_alue_tyyppi` (`kaava_alue` |
+`tontti` | `arvio`); kaava-ala ja tontti eri kenttiin (`kaava_ala_ha`,
+`pinta_ala_ha`); organisaatioihin ei henkilönimeä; logo/hakutulosote ei kelpaa
+laatijan lähteeksi. Jos kaikki lähteet ovat `media` tai `hankkeen_oma`, hanke
+ei mene suoraan julkaistuksi.
+
+`lahde_tyyppi` ∈ `paatos` | `viranomaisasiakirja` | `rekisteri` |
+`hankkeen_oma` | `media` | `menetelma` | `muu`.
+
+```json
+{
+  "nimi": "Esimerkkikampus",
+  "kunta": "Esimerkkikunta",
+  "vaihe": "kaavoitus",
+  "toimija": {
+    "nimi": "Esimerkki Oy",
+    "y_tunnus": "1234567-8",
+    "lahde_url": "https://kunta.fi/kuulutus.pdf",
+    "lahde_tyyppi": "viranomaisasiakirja",
+    "lainaus": "Esimerkki Oy kehittää datakeskusta."
+  },
+  "kentat": [
+    {
+      "kentta": "nimi",
+      "arvo": "Esimerkkikampus",
+      "lahteet": [{
+        "url": "https://kunta.fi/kuulutus.pdf",
+        "lahde_tyyppi": "viranomaisasiakirja",
+        "julkaisija": "Esimerkkikunta",
+        "asiakirjan_nimi": "Kuulutus",
+        "paivays": "2026-01-15",
+        "sivu": "1 (PDF)",
+        "lainaus": "Asemakaavan nimi Esimerkkikampus."
+      }]
+    },
+    {
+      "kentta": "kunta",
+      "arvo": "Esimerkkikunta",
+      "lahteet": [{
+        "url": "https://kunta.fi/kuulutus.pdf",
+        "lahde_tyyppi": "viranomaisasiakirja",
+        "sivu": "1",
+        "lainaus": "Sijaintikunta Esimerkkikunta."
+      }]
+    },
+    {
+      "kentta": "vaihe",
+      "arvo": "kaavoitus",
+      "lahteet": [{
+        "url": "https://kunta.fi/kuulutus.pdf",
+        "lahde_tyyppi": "viranomaisasiakirja",
+        "sivu": "1",
+        "lainaus": "Asemakaavan muutos vireillä."
+      }]
+    },
+    {
+      "kentta": "sijainti_alue_tyyppi",
+      "arvo": "kaava_alue",
+      "lahteet": [{
+        "url": "https://kunta.fi/kuulutus.pdf",
+        "lahde_tyyppi": "viranomaisasiakirja",
+        "sivu": "2",
+        "lainaus": "Suunnittelualue asemakaavan rajauksen mukaan."
+      }]
+    },
+    {
+      "kentta": "pinta_ala_ha",
+      "arvo": "40",
+      "yksikko": "ha",
+      "lahteet": [{
+        "url": "https://kunta.fi/kuulutus.pdf",
+        "lahde_tyyppi": "viranomaisasiakirja",
+        "sivu": "3 (PDF)",
+        "lainaus": "Hankealueen pinta-ala on noin 40 hehtaaria."
+      }]
+    }
+  ],
+  "roolit": [
+    {
+      "rooli": "kaavan_laatija",
+      "organisaatio": "Ramboll Finland Oy",
+      "lahde_url": "https://kunta.fi/kuulutus.pdf",
+      "lainaus": "Kaavan laatija Ramboll Finland Oy."
+    }
+  ],
+  "asiakirjat": [
+    {
+      "url": "https://kunta.fi/kuulutus.pdf",
+      "lahde_tyyppi": "viranomaisasiakirja",
+      "julkaisija": "Esimerkkikunta",
+      "otsikko": "Kuulutus asemakaavan muutoksesta",
+      "paivays": "2026-01-15"
+    }
+  ],
+  "huomautus": "",
+  "ilmoituksen_id": ""
+}
+```
+
+### Uusi hanke — agentin muutosehdotus (RPC)
+
+Agentin suora INSERT + `julkaise_agentti_ehdotus` käyttää edelleen
+`sisalto.kentat`-muotoa:
 
 ```json
 {

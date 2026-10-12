@@ -13,6 +13,7 @@ import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import { lataaPaikallinenYmparisto } from "../agents/ymparisto";
+import { ls13RatkaisuTekstit } from "../src/lib/lahdeselvitys13-ratkaisut";
 
 const TIEDOSTO = resolve(
   process.cwd(),
@@ -479,12 +480,7 @@ async function main() {
             lainaus: h.lainaus,
             huomio: h.huomio ?? null,
             poikkeaa_rekisterista: h.poikkeaa_rekisterista,
-            ratkaisuvaihtoehdot: [
-              "asiakirja vahvistaa nykyisen arvon eri sanamuodolla",
-              "arvo korjataan asiakirjan mukaiseksi, vanha lähde korvatuksi",
-              "lähteet tarkoittavat eri asiaa, molemmat jäävät",
-              "lähteet ovat ristiriidassa, luottamus ristiriitaiseksi",
-            ],
+            ratkaisuvaihtoehdot: ls13RatkaisuTekstit(),
           },
         },
       };

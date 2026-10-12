@@ -70,6 +70,40 @@ export function YllapitoOhjeet({ massahyvaksynta = false }: { massahyvaksynta?: 
             </li>
           </OhjeKohta>
 
+          <OhjeKohta otsikko="Uusi hanke (JSON / lomake)" id="ohje-uusi-hanke">
+            <li>
+              Luo uusi hanke näkymässä{" "}
+              <a href="/yllapito/uusi-hanke" className="text-link underline">
+                /yllapito/uusi-hanke
+              </a>
+              . Ensisijainen tapa on JSON-tuonti (Grok-selvitysten muoto);
+              lomake on toissijainen.
+            </li>
+            <li>
+              Jokaisella täytetyllä kentällä on oltava lähde-URL, lähdetyyppi ja
+              lainaus. Useita lähteitä per kenttä kirjoitetaan kaikki.
+              Toimijalla on oma <code className="text-xs">lahde_tyyppi</code>{" "}
+              (dokumentin metatieto URL:lle). Kenttää ilman lähdettä ei
+              pudoteta hiljaa — validointi listaa kaikki virheet kerralla.
+            </li>
+            <li>
+              Esikatselu näyttää tuplaosumat (nimi, kunta, kaavatunnus, toimija,
+              sijainti alle 1 km, kiinteistötunnus). Varoitus ei estä luontia;
+              vahva osuma ohjaa täydentämään olemassa olevaa. Älä yhdistä
+              hankkeita tässä näkymässä.
+            </li>
+            <li>
+              Jos kaikki lähteet ovat media tai hankkeen_oma, vahvistus luo
+              hankevinkin ja jättää ehdotuksen odottaa-tilaan — ei suoraa
+              julkaisua.
+            </li>
+            <li>
+              <code className="text-xs">ilmoituksen_id</code> sulkee
+              ilmoituslomakkeen ehdotuksen hyväksytyksi ja kirjaa viittauksen
+              uuteen hankkeeseen.
+            </li>
+          </OhjeKohta>
+
           <OhjeKohta otsikko="Täydennys, korjaus, uusi hanke ja valokuva" id="ohje-taydennys">
             <li>
               Avaa ehdotus. Vertaa jokaista kenttää sen omaan lähdeosoitteeseen

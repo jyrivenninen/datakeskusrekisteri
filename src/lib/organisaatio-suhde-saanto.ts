@@ -13,3 +13,6 @@
  */
 export const ORGANISAATIO_SUHDE_ASIAKIRJASAANTO =
   "Omistus-, konserni- tai hallintasuhde kirjataan vain, jos se ilmenee nimetystä asiakirjasta." as const;
+
+/** Roolirivin kohde: ks. `organisaatio-nimi.ts` — vain organisaatio, ei henkilönimi. */
+export { onOrganisaatioNimi, hylkaaHenkilöOrganisaatioViesti } from "@/lib/organisaatio-nimi";
