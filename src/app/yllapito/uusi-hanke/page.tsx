@@ -144,11 +144,16 @@ export default async function UusiHankeSivu({
     nakyma?: string;
     vaihe?: string;
     virhe?: string;
+    ilmoituksen_id?: string;
   }>;
 }) {
   await vaadiYllapitaja();
   const params = await searchParams;
   const nakyma = params.nakyma === "lomake" ? "lomake" : "json";
+  const ilmoituksenId = (params.ilmoituksen_id ?? "").trim();
+  const navIlmoitus = ilmoituksenId
+    ? `&ilmoituksen_id=${encodeURIComponent(ilmoituksenId)}`
+    : "";
   const evasteet = await cookies();
   const raaka = evasteet.get(EVASTE)?.value;
   let tila: EsikatseluTila | null = null;
@@ -160,12 +165,29 @@ export default async function UusiHankeSivu({
     }
   }
 
+  const esimerkkJson = (() => {
+    const pohja = JSON.parse(EsimerkkiJson()) as Record<string, unknown>;
+    if (ilmoituksenId) pohja.ilmoituksen_id = ilmoituksenId;
+    return JSON.stringify(pohja, null, 2);
+  })();
+
   return (
     <main className="mx-auto max-w-4xl px-4 py-8">
       <p className="text-sm">
         <Link href="/yllapito" className="text-link underline">
           ← Ylläpito
         </Link>
+        {ilmoituksenId ? (
+          <>
+            {" · "}
+            <Link
+              href={`/yllapito/${ilmoituksenId}`}
+              className="text-link underline"
+            >
+              Takaisin ilmoitukseen
+            </Link>
+          </>
+        ) : null}
       </p>
       <h1 className="mt-4 text-3xl font-semibold">Uusi hanke</h1>
       <p className="mt-2 max-w-prose text-sm text-muted">
@@ -174,6 +196,15 @@ export default async function UusiHankeSivu({
         vahvistus ennen kirjoitusta. Ei automaattista julkaisua ilman
         vahvistusta.
       </p>
+
+      {ilmoituksenId ? (
+        <p className="mt-4 rounded border border-border bg-surface px-3 py-2 text-sm">
+          Ilmoituksen id{" "}
+          <code className="text-xs">{ilmoituksenId}</code> täytetään
+          tuontiin. Vahvistus sulkee ilmoituksen hyväksytyksi ja liittää uuden
+          hankkeen.
+        </p>
+      ) : null}
 
       {!supabasePalvelinAvainAsetettu() ? (
         <p className="mt-4 rounded border border-border bg-surface px-3 py-2 text-sm">
@@ -189,7 +220,7 @@ export default async function UusiHankeSivu({
 
       <nav className="mt-6 flex gap-4 text-sm" aria-label="Tuontitapa">
         <Link
-          href="/yllapito/uusi-hanke?nakyma=json"
+          href={`/yllapito/uusi-hanke?nakyma=json${navIlmoitus}`}
           className={
             nakyma === "json"
               ? "font-semibold underline"
@@ -199,7 +230,7 @@ export default async function UusiHankeSivu({
           JSON-tuonti
         </Link>
         <Link
-          href="/yllapito/uusi-hanke?nakyma=lomake"
+          href={`/yllapito/uusi-hanke?nakyma=lomake${navIlmoitus}`}
           className={
             nakyma === "lomake"
               ? "font-semibold underline"
@@ -550,7 +581,7 @@ export default async function UusiHankeSivu({
               rows={22}
               required
               defaultValue={
-                tila?.vaihe === "virheet" ? tila.json : EsimerkkiJson()
+                tila?.vaihe === "virheet" ? tila.json : esimerkkJson
               }
               className="w-full rounded border border-border bg-background px-3 py-2 font-mono text-xs"
               spellCheck={false}
@@ -626,6 +657,7 @@ export default async function UusiHankeSivu({
                   name="ilmoituksen_id"
                   className="mt-1 w-full rounded border border-border px-2 py-1.5 text-sm"
                   placeholder="muutosehdotukset.id"
+                  defaultValue={ilmoituksenId}
                 />
               </div>
             </div>

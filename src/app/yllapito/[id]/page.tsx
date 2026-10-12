@@ -300,6 +300,30 @@ export default async function EhdotusSivu({
         <span>{ehdotus.ehdottaja_tunniste}</span>
       </p>
       {kasittely ? <p className="mt-2 text-muted">{kasittely}</p> : null}
+      {odottaa && ehdotus.tyyppi === "uusi_hanke" ? (
+        <section
+          className="mt-6 rounded border border-border bg-surface px-4 py-4"
+          aria-labelledby="uusi-hanke-tuonti-otsikko"
+        >
+          <h2 id="uusi-hanke-tuonti-otsikko" className="text-lg font-semibold">
+            Lähteistetty tuonti
+          </h2>
+          <p className="mt-2 max-w-prose text-sm text-muted">
+            Ilmoituslomakkeen ehdotuksessa on yleensä vain nimi ja kunta.
+            Täydennä Grok-JSON:lla tai lomakkeella: validointi, tuplatarkistus
+            ja vahvistus. Vahvistus sulkee tämän ehdotuksen hyväksytyksi ja
+            kirjaa uuden hankkeen.
+          </p>
+          <p className="mt-3">
+            <a
+              href={`/yllapito/uusi-hanke?nakyma=json&ilmoituksen_id=${ehdotus.id}`}
+              className="inline-block rounded border border-foreground bg-foreground px-4 py-2 text-sm font-medium text-background"
+            >
+              Avaa Uusi hanke -tuonti
+            </a>
+          </p>
+        </section>
+      ) : null}
       {query.julkaistu ? (
         <p className="mt-4">Hanke julkaistiin julkiselle sivustolle.</p>
       ) : null}
