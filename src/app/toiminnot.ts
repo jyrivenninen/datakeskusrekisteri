@@ -46,6 +46,7 @@ import { taydennaKuntakeskusArvio } from "@/lib/uusi-hanke-kuntakeskus";
 import { haeUusiHankeTuplat } from "@/lib/uusi-hanke-tuplat";
 import { kirjoitaUusiHankeTuonti } from "@/lib/uusi-hanke-kirjoitus";
 import {
+  haeYllapitoLuonnos,
   poistaYllapitoLuonnos,
   tallennaYllapitoLuonnos,
   UUSI_HANKE_ESIKATSELU_AVAIN,
@@ -1911,14 +1912,23 @@ export async function esikatseleUusiHankeTuontiToiminto(
       viesti: `Tyhjä ilmoituksen_id täydennetty ilmoituksen tunnisteella ${ilmoituksenId}.`,
     });
   }
+  let sijaintiEsikatselu = null as Awaited<
+    ReturnType<typeof taydennaKuntakeskusArvio>
+  >["sijainti"] | null;
   try {
     const taydennys = await taydennaKuntakeskusArvio(tuonti, supabase);
     tuonti = taydennys.tuonti;
+    sijaintiEsikatselu = taydennys.sijainti;
     if (taydennys.taydennetty) {
       varoitukset.push({
         polku: "sijainti_lat",
         viesti:
-          "Koordinaatit puuttuivat — esikatseluun ja julkaisuun johdetaan kunnan keskustan arvio (sijainti_alue_tyyppi = arvio, lahde_tyyppi = menetelma). Älä siirrä pistettä suunnan/etäisyyden mukaan; sijaintikuvaus kuuluu huomautukseen.",
+          "Koordinaatit puuttuivat — johdettiin kunnan keskustan arvio (sijainti_alue_tyyppi = arvio, lahde_tyyppi = menetelma), kun MML-vastaus täsmäsi kuntaan. Älä siirrä pistettä suunnan/etäisyyden mukaan; sijaintikuvaus kuuluu huomautukseen.",
+      });
+    } else if (taydennys.sijainti.varoitus) {
+      varoitukset.push({
+        polku: "sijainti",
+        viesti: taydennys.sijainti.varoitus,
       });
     }
   } catch (e) {
@@ -1955,6 +1965,7 @@ export async function esikatseleUusiHankeTuontiToiminto(
     vainHeikotLahteet: tulos.vainHeikotLahteet,
     tuplat,
     lahdeTyyppiRistiriidat,
+    sijaintiEsikatselu,
   });
   redirect(`/yllapito/uusi-hanke?nakyma=json&vaihe=esikatselu${nav}`);
 }
@@ -1993,6 +2004,19 @@ export async function vahvistaUusiHankeTuontiToiminto(
   let tuonti = tulos.tuonti;
   if (ilmoituksenId && !tuonti.ilmoituksen_id) {
     tuonti = { ...tuonti, ilmoituksen_id: ilmoituksenId };
+  }
+
+  // Estä vahvistus, jos esikatselussa geokoodaus/piste ei täsmää kuntaan.
+  const luonnos = await haeYllapitoLuonnos<{
+    sijaintiEsikatselu?: { estaa_vahvistuksen?: boolean; varoitus?: string | null };
+  }>(supabase, user.id, UUSI_HANKE_ESIKATSELU_AVAIN);
+  if (luonnos?.sijaintiEsikatselu?.estaa_vahvistuksen) {
+    redirect(
+      `/yllapito/uusi-hanke?nakyma=json&vaihe=esikatselu&virhe=${encodeURIComponent(
+        luonnos.sijaintiEsikatselu.varoitus ||
+          "Sijainti ei vastaa hankkeen kuntaa — vahvistus estetty.",
+      )}${nav}`,
+    );
   }
 
   let kirjoitus;

@@ -57,7 +57,12 @@ function pohjaIlmanKoordinaatteja(): UusiHankeTuonti {
   };
 }
 
-function mockSupabase(kunta: { nimi: string; lahde_url: string | null } | null) {
+function mockSupabase(kunta: {
+  nimi: string;
+  koodi: string;
+  lahde_url: string | null;
+  maakunta: string | null;
+} | null) {
   return {
     from() {
       return {
@@ -105,35 +110,83 @@ test("ei täydennä kun lat ja lon ovat jo olemassa", async () => {
       ],
     },
   );
-  const t = await taydennaKuntakeskusArvio(tuonti, mockSupabase(null), async () => {
-    throw new Error("ei saa kutsua");
-  });
+  const t = await taydennaKuntakeskusArvio(
+    tuonti,
+    mockSupabase({
+      nimi: "Kinnula",
+      koodi: "256",
+      lahde_url: null,
+      maakunta: "Keski-Suomi",
+    }),
+    async () => {
+      throw new Error("ei saa kutsua");
+    },
+  );
   assert.equal(t.taydennetty, false);
   assert.equal(t.tuonti.kentat.find((k) => k.kentta === "sijainti_lat")?.arvo, "63.1");
 });
 
-test("täydentää kuntakeskusarvion ja merkitsee arvio + menetelma", async () => {
+test("täydentää kuntakeskusarvion kun kuntakoodi täsmää", async () => {
   const tuonti = pohjaIlmanKoordinaatteja();
   const t = await taydennaKuntakeskusArvio(
     tuonti,
     mockSupabase({
       nimi: "Kinnula",
+      koodi: "256",
       lahde_url: "https://www.ymparisto.fi/kinnula",
+      maakunta: "Keski-Suomi",
     }),
     async () => ({
-      lat: 63.367,
-      lon: 24.967,
-      lahde_url: "https://avoin-paikkatieto.maanmittauslaitos.fi/geocoding/v2/pelias/search?text=Kinnula",
+      lat: 63.3672712,
+      lon: 24.9699576,
+      lahde_url:
+        "https://avoin-paikkatieto.maanmittauslaitos.fi/geocoding/v2/pelias/search?text=Kinnula+kunta",
       label: "Kinnula",
+      paikka_nimi: "Kinnula",
+      kunta_nimi: "Kinnula",
+      kunta_koodi: "256",
+      maakunta_nimi: "Keski-Suomi",
+      paikka_tyyppi: "Kunta",
     }),
   );
   assert.equal(t.taydennetty, true);
+  assert.equal(t.sijainti.estaa_vahvistuksen, false);
   const lat = t.tuonti.kentat.find((k) => k.kentta === "sijainti_lat");
-  const lon = t.tuonti.kentat.find((k) => k.kentta === "sijainti_lon");
-  const tyyppi = t.tuonti.kentat.find((k) => k.kentta === "sijainti_alue_tyyppi");
-  assert.equal(lat?.arvo, "63.367");
-  assert.equal(lon?.arvo, "24.967");
-  assert.equal(lat?.lahteet[0]?.lahde_tyyppi, "menetelma");
-  assert.match(lat?.lahteet[0]?.lainaus ?? "", /Ei siirretty suunnan/);
-  assert.equal(tyyppi?.arvo, "arvio");
+  assert.match(lat?.lahteet[0]?.lainaus ?? "", /256/);
+  assert.match(lat?.lahteet[0]?.lainaus ?? "", /Kinnula/);
+  assert.doesNotMatch(lat?.lahteet[0]?.lainaus ?? "", /Tuusula/);
+});
+
+test("ei kirjoita pistettä jos MML palauttaa väärän kunnan", async () => {
+  const tuonti = pohjaIlmanKoordinaatteja();
+  const t = await taydennaKuntakeskusArvio(
+    tuonti,
+    mockSupabase({
+      nimi: "Kinnula",
+      koodi: "256",
+      lahde_url: null,
+      maakunta: "Keski-Suomi",
+    }),
+    async () => ({
+      lat: 60.3955238,
+      lon: 25.060781,
+      lahde_url: "https://example.com/mml",
+      label: "Kinnula",
+      paikka_nimi: "Kinnula",
+      kunta_nimi: "Tuusula",
+      kunta_koodi: "858",
+      maakunta_nimi: "Uusimaa",
+      paikka_tyyppi: "Talo",
+    }),
+  );
+  assert.equal(t.taydennetty, false);
+  assert.equal(
+    t.tuonti.kentat.find((k) => k.kentta === "sijainti_lat"),
+    undefined,
+  );
+  assert.equal(t.sijainti.estaa_vahvistuksen, true);
+  assert.equal(t.sijainti.kunta_nimi, "Tuusula");
+  assert.match(t.sijainti.sanallinen ?? "", /60\.3955/);
+  assert.match(t.sijainti.varoitus ?? "", /luotettavasti/);
+  assert.match(t.sijainti.varoitus ?? "", /Tuusula/);
 });

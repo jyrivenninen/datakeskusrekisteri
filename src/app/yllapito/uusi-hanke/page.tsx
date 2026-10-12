@@ -12,6 +12,7 @@ import { haeKirjautunutKayttaja } from "@/lib/supabase/palvelin";
 import { supabasePalvelinAvainAsetettu } from "@/lib/supabase/yllapito-asiakas";
 import { HANKE_VAIHEET, SIJAINTI_ALUE_TYYPIT } from "@/lib/supabase/tietokanta";
 import type { UusiHankeTuonti } from "@/lib/uusi-hanke-tuonti";
+import type { SijaintiEsikatselu } from "@/lib/uusi-hanke-kuntakeskus";
 import type { TuplaOsuma } from "@/lib/uusi-hanke-tuplat";
 import type { LahdeTyyppiRistiriita } from "@/lib/uusi-hanke-lahde-tyyppi-ristiriita";
 import {
@@ -48,6 +49,7 @@ type EsikatseluTila =
       vainHeikotLahteet: boolean;
       tuplat: TuplaOsuma[];
       lahdeTyyppiRistiriidat?: LahdeTyyppiRistiriita[];
+      sijaintiEsikatselu?: SijaintiEsikatselu | null;
     };
 
 async function vaadiYllapitaja() {
@@ -284,6 +286,62 @@ export default async function UusiHankeSivu({
             </div>
           ) : null}
 
+          {tila.sijaintiEsikatselu ? (
+            <div
+              className="rounded border border-border px-3 py-3 text-sm"
+              role="region"
+              aria-labelledby="sijainti-esikatselu-otsikko"
+            >
+              <h3 id="sijainti-esikatselu-otsikko" className="font-medium">
+                Sijainti (geokoodaus / annettu piste)
+              </h3>
+              {tila.sijaintiEsikatselu.varoitus ? (
+                <p className="mt-2 font-medium" role="alert">
+                  {tila.sijaintiEsikatselu.varoitus}
+                </p>
+              ) : null}
+              {tila.sijaintiEsikatselu.sanallinen ? (
+                <p className="mt-2">{tila.sijaintiEsikatselu.sanallinen}</p>
+              ) : (
+                <p className="mt-2 text-muted">Ei luotettavaa pistettä.</p>
+              )}
+              <dl className="mt-2 grid gap-1 sm:grid-cols-2">
+                <div>
+                  <dt className="text-muted">Paikan nimi</dt>
+                  <dd>{tila.sijaintiEsikatselu.paikka_nimi ?? "—"}</dd>
+                </div>
+                <div>
+                  <dt className="text-muted">Kunta (vastaus)</dt>
+                  <dd>
+                    {tila.sijaintiEsikatselu.kunta_nimi ?? "—"}
+                    {tila.sijaintiEsikatselu.kunta_koodi
+                      ? ` (${tila.sijaintiEsikatselu.kunta_koodi})`
+                      : ""}
+                  </dd>
+                </div>
+                <div>
+                  <dt className="text-muted">Maakunta (vastaus)</dt>
+                  <dd>{tila.sijaintiEsikatselu.maakunta_nimi ?? "—"}</dd>
+                </div>
+                <div>
+                  <dt className="text-muted">Koordinaatit</dt>
+                  <dd className="font-mono text-xs">
+                    {tila.sijaintiEsikatselu.lat != null &&
+                    tila.sijaintiEsikatselu.lon != null
+                      ? `${tila.sijaintiEsikatselu.lat}, ${tila.sijaintiEsikatselu.lon}`
+                      : "—"}
+                  </dd>
+                </div>
+              </dl>
+              {tila.sijaintiEsikatselu.estaa_vahvistuksen ? (
+                <p className="mt-2 font-medium" role="alert">
+                  Vahvistus estetty: piste tai geokoodaus ei vastaa hankkeen
+                  kuntaa.
+                </p>
+              ) : null}
+            </div>
+          ) : null}
+
           {(tila.lahdeTyyppiRistiriidat?.length ?? 0) > 0 ? (
             <div
               className="rounded border border-border px-3 py-3"
@@ -411,10 +469,27 @@ export default async function UusiHankeSivu({
               {(tila.tuonti.roolit?.length ?? 0) > 0 ? (
                 <>
                   <h4 className="mt-4 font-medium">Roolit</h4>
-                  <ul className="mt-1 list-disc pl-5 text-sm">
+                  <ul className="mt-2 space-y-3 text-sm">
                     {tila.tuonti.roolit!.map((r, i) => (
-                      <li key={i}>
-                        {r.rooli}: {r.organisaatio}
+                      <li key={i} className="border-t border-border pt-2">
+                        <span className="font-medium">{r.rooli}</span>:{" "}
+                        {r.organisaatio}
+                        <ul className="mt-1 list-disc pl-5 text-muted">
+                          <li>
+                            <a
+                              href={r.lahde_url}
+                              className="text-link underline break-all"
+                              rel="noreferrer"
+                            >
+                              {r.lahde_url}
+                            </a>
+                            {r.lainaus ? (
+                              <span className="mt-0.5 block text-foreground">
+                                «{r.lainaus}»
+                              </span>
+                            ) : null}
+                          </li>
+                        </ul>
                       </li>
                     ))}
                   </ul>
@@ -558,7 +633,8 @@ export default async function UusiHankeSivu({
             <div className="flex flex-wrap gap-3">
               <button
                 type="submit"
-                className="rounded border border-foreground bg-foreground px-4 py-2 text-sm font-medium text-background"
+                disabled={Boolean(tila.sijaintiEsikatselu?.estaa_vahvistuksen)}
+                className="rounded border border-foreground bg-foreground px-4 py-2 text-sm font-medium text-background disabled:cursor-not-allowed disabled:opacity-50"
               >
                 {tila.vainHeikotLahteet
                   ? "Vahvista → hankevinkki + odottaa"

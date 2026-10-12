@@ -133,40 +133,93 @@ async function normalisoiSijaintiAlueKentat(
   let lat: number | null = null;
   let lon: number | null = null;
   let geokoodausUrl: string | null = null;
-  let geokoodausLabel: string | null = null;
+  let geokoodausLainausTeksti: string | null = null;
 
-  try {
-    const tulos = await geokoodaaOsoite(osoite);
-    lat = tulos.lat;
-    lon = tulos.lon;
-    geokoodausUrl = tulos.lahde_url;
-    geokoodausLabel = tulos.label;
-  } catch {
-    // Käytetään olemassa olevia koordinaatteja alla.
-  }
+  let odotettuKunta: { nimi: string; koodi: string } | null = null;
+  let olemassaLat: number | null = null;
+  let olemassaLon: number | null = null;
 
-  if ((lat == null || lon == null) && hankeId) {
-    const { data, error } = await supabase
+  if (hankeId) {
+    const { data: hanke, error: hVirhe } = await supabase
       .from("hankkeet")
-      .select("sijainti_lat, sijainti_lon")
+      .select("kunta, sijainti_lat, sijainti_lon")
       .eq("id", hankeId)
       .maybeSingle();
-    if (error) throw new Error(error.message);
-    if (data?.sijainti_lat != null && data?.sijainti_lon != null) {
-      lat = Number(data.sijainti_lat);
-      lon = Number(data.sijainti_lon);
+    if (hVirhe) throw new Error(hVirhe.message);
+    if (hanke?.kunta?.trim()) {
+      const { data: kuntaRivi } = await supabase
+        .from("kunnat")
+        .select("nimi, koodi")
+        .ilike("nimi", hanke.kunta.trim())
+        .eq("voimassa", true)
+        .maybeSingle();
+      if (kuntaRivi?.nimi && kuntaRivi.koodi) {
+        odotettuKunta = { nimi: kuntaRivi.nimi, koodi: kuntaRivi.koodi };
+      }
+    }
+    if (
+      hanke?.sijainti_lat != null &&
+      hanke?.sijainti_lon != null &&
+      Number.isFinite(Number(hanke.sijainti_lat)) &&
+      Number.isFinite(Number(hanke.sijainti_lon))
+    ) {
+      olemassaLat = Number(hanke.sijainti_lat);
+      olemassaLon = Number(hanke.sijainti_lon);
+    }
+  }
+
+  if (!odotettuKunta) {
+    console.warn(
+      "[geokoodaus] sijainti_alue ohitettu: odotettua kuntaa ei saatu selville",
+      { hankeId, osoite },
+    );
+  } else {
+    try {
+      const tulos = await geokoodaaOsoite(osoite, odotettuKunta);
+      lat = tulos.lat;
+      lon = tulos.lon;
+      geokoodausUrl = tulos.lahde_url;
+      geokoodausLainausTeksti =
+        `${osoite} → MML: paikka «${tulos.paikka_nimi ?? tulos.label ?? "?"}», ` +
+        `kunta ${tulos.kunta_nimi ?? "?"} (${tulos.kunta_koodi ?? "?"})`;
+    } catch (e) {
+      console.warn(
+        "[geokoodaus] sijainti_alue geokoodaus epäonnistui",
+        {
+          hankeId,
+          osoite,
+          kunta: odotettuKunta.nimi,
+          virhe: e instanceof Error ? e.message : String(e),
+        },
+      );
+    }
+  }
+
+  // Älä kirjoita uutta pistettä ilman kuntavarmennettua geokoodausta.
+  // Olemassa olevat koordinaatit kelpaavat vain varaksi (ei uutta pistettä).
+  if (lat == null || lon == null) {
+    if (olemassaLat != null && olemassaLon != null) {
+      lat = olemassaLat;
+      lon = olemassaLon;
+      geokoodausUrl = null;
+      geokoodausLainausTeksti = null;
     }
   }
 
   if (lat == null || lon == null || !Number.isFinite(lat) || !Number.isFinite(lon)) {
     throw new Error(
-      `Osoitetta "${osoite}" ei voitu geokoodata eikä hankkeella ole olemassa olevia koordinaatteja.`,
+      `Osoitetta "${osoite}" ei voitu geokoodata luotettavasti` +
+        (odotettuKunta
+          ? ` kuntaan ${odotettuKunta.nimi} (${odotettuKunta.koodi})`
+          : " (odotettua kuntaa ei saatu selville)") +
+        ` eikä hankkeella ole olemassa olevia koordinaatteja.`,
     );
   }
 
   const lainaus =
     sijaintiAlue.lainaus?.trim() ||
-    (geokoodausLabel ? `${osoite} (${geokoodausLabel})` : osoite);
+    geokoodausLainausTeksti ||
+    osoite;
 
   const pohja: EhdotettuKentta = {
     ...sijaintiAlue,
