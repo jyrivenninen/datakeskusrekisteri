@@ -145,6 +145,7 @@ export const MUUTOSEHDOTUS_TYYPPI_NIMET: Record<string, string> = {
   paatos: "Viranomaispäätös",
   maaraaja: "Määräaika",
   hanke_organisaatio: "Hanke–organisaatio-rooli",
+  organisaatio_suhde: "Organisaatiosuhde (GLEIF)",
   lahde_tyyppi_havainto: "Lähdetyypin ehdotus",
 };
 
@@ -445,6 +446,14 @@ export const HANKE_ORGANISAATIO_ROOLI_NIMET: Record<string, string> = {
   yhteysviranomainen: "Yhteysviranomainen",
   kaavoittaja: "Kaavoittaja",
   muu: "Muu",
+};
+
+export const ORGANISAATIO_SUHDE_NIMET: Record<string, string> = {
+  omistus: "Omistus",
+  emoyhtio: "Emoyhtiö",
+  hankeyhtio: "Hankeyhtiö",
+  gleif_suora_emo: "GLEIF: suora konsolidoiva emo",
+  gleif_ylin_emo: "GLEIF: ylin konsolidoiva emo",
 };
 
 export function hankeOrganisaatioRooliNimi(

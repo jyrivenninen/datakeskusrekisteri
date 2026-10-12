@@ -1,7 +1,10 @@
 /**
  * 7A.1 Linkkitarkistus. Ei kielimallia.
  * Kirjoittaa vain muutosehdotukset-tauluun tyypillä linkki_rikki.
- * HTTP 401/403/429 ja 5xx eivät ole rikkinäinen linkki: GET-uudelleenyritys, sitten ohitus.
+ *
+ * Jonoon vain kun HTTP-vastaus osoittaa kuolleen osoitteen (404/410 tms.).
+ * Bot-esto (401/403/429/5xx), TLS-/verkko-/timeout-virheet eivät ole
+ * rikkinäinen linkki — selain voi avata saman URL:n ongelmitta.
  *
  * Ympäristö: NEXT_PUBLIC_SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY
  * Valinnainen: LINKIT_VIIVE_MS (oletus 1000), LINKIT_KATTO, LINKIT_KUIVA=1
@@ -14,7 +17,7 @@ import { lataaPaikallinenYmparisto } from "../ymparisto";
 type TietokantaAsiakas = SupabaseClient;
 
 const USER_AGENT =
-  "Datakeskusrekisteri/0.1 (+https://datakeskusrekisteri.vercel.app/; linkkitarkistus)";
+  "Datakeskusrekisteri/0.1 (+https://www.datakeskusrekisteri.fi/; linkkitarkistus)";
 const EHDOTTAJA = "agents/tarkistukset/linkit";
 
 type LahdeRivi = {
@@ -40,8 +43,12 @@ function odota(ms: number) {
   return new Promise((r) => setTimeout(r, ms));
 }
 
-/** Bot-suojaus / rate limit — ei merkitä linkki_rikki-havainnoksi. */
-export const LINKKI_ESTETTY_TILAT = new Set([401, 403, 408, 425, 429, 500, 502, 503, 504]);
+/** Bot-suojaus / rate limit / väliaikainen palvelinvirhe — ei linkki_rikki. */
+export const LINKKI_ESTETTY_TILAT = new Set([
+  401, 403, 408, 425, 429,
+  500, 502, 503, 504,
+  520, 521, 522, 523, 524, 525, 526,
+]);
 
 export type LinkkiTarkistusTila = "toimii" | "estetty" | "kuollut";
 
@@ -51,24 +58,29 @@ export function luokitteleLinkkiTarkistus(t: {
 }): LinkkiTarkistusTila {
   if (t.http_tila != null && LINKKI_ESTETTY_TILAT.has(t.http_tila)) return "estetty";
   if (t.http_tila === 404 || t.http_tila === 410) return "kuollut";
-  if (t.virhe) {
-    return /timeout|aborted|ETIMEDOUT|ECONNRESET/i.test(t.virhe) ? "estetty" : "kuollut";
-  }
-  if (t.http_tila != null && t.http_tila >= 400) return "kuollut";
+  // Ei HTTP-tilaa / verkko-/TLS-virhe (fetch failed, CERT_…) → ei kuollut.
+  // Selain voi avata saman URL:n vaikka Node-fetch kaatuu.
+  if (t.virhe || t.http_tila == null) return "estetty";
+  if (t.http_tila >= 400) return "kuollut";
   return "toimii";
 }
 
-function eiKirjataJonoon(tila: number | null): boolean {
-  return tila != null && LINKKI_ESTETTY_TILAT.has(tila);
-}
-
-function onRikki(t: Tarkistus): boolean {
-  if (t.virhe) {
-    return !/timeout|aborted|ETIMEDOUT|ECONNRESET/i.test(t.virhe);
+function pyyntoVirheViesti(syy: unknown): string {
+  if (!(syy instanceof Error)) return "Pyyntö epäonnistui.";
+  const osat = [syy.message];
+  const cause = (syy as Error & { cause?: unknown }).cause;
+  if (cause instanceof Error) {
+    const koodi =
+      "code" in cause && typeof (cause as { code?: unknown }).code === "string"
+        ? (cause as { code: string }).code
+        : null;
+    if (koodi) osat.push(koodi);
+    else if (cause.message && cause.message !== syy.message) osat.push(cause.message);
+  } else if (cause && typeof cause === "object" && "code" in cause) {
+    const koodi = (cause as { code?: unknown }).code;
+    if (typeof koodi === "string") osat.push(koodi);
   }
-  if (t.http_tila == null) return true;
-  if (eiKirjataJonoon(t.http_tila)) return false;
-  return t.http_tila >= 400;
+  return osat.join(": ");
 }
 
 function odotus429(vastaus: Response, yritys: number): number {
@@ -83,7 +95,10 @@ function odotus429(vastaus: Response, yritys: number): number {
 }
 
 async function pyynto(url: string, method: "HEAD" | "GET", osittainen = false): Promise<Response> {
-  const otsikot: Record<string, string> = { "User-Agent": USER_AGENT };
+  const otsikot: Record<string, string> = {
+    "User-Agent": USER_AGENT,
+    Accept: "application/pdf,text/html,*/*",
+  };
   if (method === "GET" && osittainen) otsikot.Range = "bytes=0-0";
   return fetch(url, {
     method,
@@ -93,42 +108,86 @@ async function pyynto(url: string, method: "HEAD" | "GET", osittainen = false): 
   });
 }
 
+async function pyyntoTaiVirhe(
+  url: string,
+  method: "HEAD" | "GET",
+  osittainen = false,
+): Promise<{ vastaus: Response } | { virhe: string }> {
+  try {
+    return { vastaus: await pyynto(url, method, osittainen) };
+  } catch (syy) {
+    return { virhe: pyyntoVirheViesti(syy) };
+  }
+}
+
 export async function tarkistaOsoite(url: string): Promise<Tarkistus> {
   const alku = Date.now();
-  try {
-    let vastaus = await pyynto(url, "HEAD");
-    if (vastaus.status === 405 || vastaus.status === 501) {
-      vastaus = await pyynto(url, "GET", true);
-    } else if (
-      vastaus.status === 401 ||
-      vastaus.status === 403 ||
-      vastaus.status === 404 ||
-      vastaus.status === 410 ||
-      vastaus.status === 429
-    ) {
-      vastaus = await pyynto(url, "GET");
+  let head = await pyyntoTaiVirhe(url, "HEAD");
+  // HEAD epäonnistui verkossa → kokeile GET ennen estetty-luokittelua.
+  if ("virhe" in head) {
+    head = await pyyntoTaiVirhe(url, "GET", true);
+    if ("virhe" in head) {
+      return {
+        url,
+        http_tila: null,
+        vaste_ms: Date.now() - alku,
+        virhe: head.virhe,
+      };
     }
-    let yritys = 0;
-    while (vastaus.status === 429 && yritys < 4) {
-      await odota(odotus429(vastaus, yritys));
-      vastaus = await pyynto(url, "GET");
-      yritys += 1;
-    }
-    return {
-      url,
-      http_tila: vastaus.status,
-      vaste_ms: Date.now() - alku,
-      virhe: null,
-    };
-  } catch (syy) {
-    const viesti = syy instanceof Error ? syy.message : "Pyyntö epäonnistui.";
-    return {
-      url,
-      http_tila: null,
-      vaste_ms: Date.now() - alku,
-      virhe: viesti,
-    };
   }
+
+  let vastaus = head.vastaus;
+  if (vastaus.status === 405 || vastaus.status === 501) {
+    const get = await pyyntoTaiVirhe(url, "GET", true);
+    if ("virhe" in get) {
+      return {
+        url,
+        http_tila: null,
+        vaste_ms: Date.now() - alku,
+        virhe: get.virhe,
+      };
+    }
+    vastaus = get.vastaus;
+  } else if (
+    vastaus.status === 401 ||
+    vastaus.status === 403 ||
+    vastaus.status === 404 ||
+    vastaus.status === 410 ||
+    vastaus.status === 429
+  ) {
+    const get = await pyyntoTaiVirhe(url, "GET");
+    if ("virhe" in get) {
+      // HEAD antoi 4xx mutta GET kaatui verkkoon — ei todistettu kuolleeksi.
+      return {
+        url,
+        http_tila: null,
+        vaste_ms: Date.now() - alku,
+        virhe: get.virhe,
+      };
+    }
+    vastaus = get.vastaus;
+  }
+  let yritys = 0;
+  while (vastaus.status === 429 && yritys < 4) {
+    await odota(odotus429(vastaus, yritys));
+    const get = await pyyntoTaiVirhe(url, "GET");
+    if ("virhe" in get) {
+      return {
+        url,
+        http_tila: null,
+        vaste_ms: Date.now() - alku,
+        virhe: get.virhe,
+      };
+    }
+    vastaus = get.vastaus;
+    yritys += 1;
+  }
+  return {
+    url,
+    http_tila: vastaus.status,
+    vaste_ms: Date.now() - alku,
+    virhe: null,
+  };
 }
 
 function hankeIdKentasta(data: unknown): string | null {
@@ -292,15 +351,15 @@ async function main() {
     const luokka = luokitteleLinkkiTarkistus(tulos);
     if (luokka === "estetty") {
       ohitettuEiJonoon += 1;
-      console.log(`estetty (HTTP ${tulos.http_tila ?? "virhe"}), ei jonoon: ${rivi.lahde_url}`);
+      console.log(
+        `estetty (${tulos.http_tila != null ? `HTTP ${tulos.http_tila}` : tulos.virhe ?? "ei vastausta"}), ei jonoon: ${rivi.lahde_url}`,
+      );
       continue;
     }
 
-    if (onRikki(tulos) && !jonossa.has(rivi.lahde_url)) {
+    if (luokka === "kuollut" && !jonossa.has(rivi.lahde_url)) {
       const hankeId = await haeHankeId(supabase, rivi.taulu, rivi.rivi_id);
-      const huomautus = tulos.virhe
-        ? `Linkki ei vastannut: ${tulos.virhe}`
-        : `HTTP ${tulos.http_tila}. Tarkista, onko lähde siirtynyt.`;
+      const huomautus = `HTTP ${tulos.http_tila}. Tarkista, onko lähde siirtynyt.`;
       if (!kuiva) {
         const { error: lisaysVirhe } = await supabase.from("muutosehdotukset").insert({
           tyyppi: "linkki_rikki",

@@ -9,6 +9,15 @@ export type KehityslokiMerkinta = {
 
 export const KEHITYSLOKI: KehityslokiMerkinta[] = [
   {
+    pvm: "2026-10-12",
+    otsikko: "Toimijasivut ja GLEIF-haku",
+    kohdat: [
+      "Hankkeesta vastaaville organisaatioille hakemisto /toimijat ja sivu /toimijat/[slug]. Ei konsernihierarkiaa.",
+      "Ylläpito: GLEIF-haku organisaatiosivulla (rekisterinumero tai nimi). LEI tallennetaan RPC:llä; emosuhteet hyväksyntäjonoon.",
+      "Hankesivulla hankkeesta vastaava linkittyy toimijasivulle. Sivukartta, navigaatio ja Tietoa-sivu päivitetty.",
+    ],
+  },
+  {
     pvm: "2026-10-11",
     otsikko: "Dokumenttien sisältötiivisteet (odottaa)",
     kohdat: [

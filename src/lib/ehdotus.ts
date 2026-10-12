@@ -230,6 +230,18 @@ export type EhdotusSisalto = {
       merkitty: "koneen_ehdottama" | "ihmisen_vahvistama";
     }>;
   };
+  organisaatio_suhde?: {
+    suhde_tunnus: "gleif_suora_emo" | "gleif_ylin_emo" | string;
+    lahde_organisaatio_id: string;
+    lahde_organisaatio_nimi?: string;
+    emo_lei: string;
+    emo_nimi: string;
+    emo_rekisterinumero?: string | null;
+    emo_rekisteriviranomainen?: string | null;
+    emo_maa?: string | null;
+    lahde_url: string;
+    lainaus: string;
+  };
   kunta?: {
     kunta_id: string;
     kunta_nimi: string;

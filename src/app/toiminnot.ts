@@ -2424,6 +2424,168 @@ export async function kasitteleLs13EraTukeeToiminto(
   revalidatePath(`/hankkeet/${hankeId}`);
 }
 
+function organisaatioGleifPaluu(
+  organisaatioId: string,
+  params: Record<string, string>,
+): never {
+  const q = new URLSearchParams(params);
+  redirect(`/organisaatiot/${organisaatioId}?${q.toString()}`);
+}
+
+/** Ylläpito: GLEIF-haku rekisterinumerolla tai nimellä → ehdokaslista. */
+export async function haeGleifOrganisaatiolleToiminto(
+  formData: FormData,
+): Promise<void> {
+  const { kasittelija: _k } = await vaadiYllapitaja();
+  const organisaatioId = String(formData.get("organisaatio_id") ?? "").trim();
+  const tapa = String(formData.get("tapa") ?? "").trim();
+  const nimiHaku = String(formData.get("nimi") ?? "").trim();
+  if (!organisaatioId) {
+    redirect(`/hakemisto?virhe=${encodeURIComponent("Organisaatio puuttuu.")}`);
+  }
+  if (tapa === "nimi") {
+    if (nimiHaku.length < 3) {
+      organisaatioGleifPaluu(organisaatioId, {
+        gleif_virhe: "Nimihakuun tarvitaan vähintään kolme merkkiä.",
+      });
+    }
+    organisaatioGleifPaluu(organisaatioId, {
+      gleif_tila: "haku",
+      tapa: "nimi",
+      q: nimiHaku,
+    });
+  }
+  organisaatioGleifPaluu(organisaatioId, {
+    gleif_tila: "haku",
+    tapa: "rekisteri",
+  });
+}
+
+/** Ylläpito: valitse GLEIF-ehdokas vahvistettavaksi. */
+export async function valitseGleifEhdokasToiminto(
+  formData: FormData,
+): Promise<void> {
+  await vaadiYllapitaja();
+  const organisaatioId = String(formData.get("organisaatio_id") ?? "").trim();
+  const lei = String(formData.get("lei") ?? "").trim().toUpperCase();
+  if (!organisaatioId || !lei) {
+    redirect(`/hakemisto?virhe=${encodeURIComponent("LEI tai organisaatio puuttuu.")}`);
+  }
+  organisaatioGleifPaluu(organisaatioId, {
+    gleif_tila: "vahvista",
+    lei,
+  });
+}
+
+/** Ylläpito: tallenna vahvistettu LEI ja jonota emo-suhteet. */
+export async function vahvistaGleifLeiToiminto(
+  formData: FormData,
+): Promise<void> {
+  const { kasittelija } = await vaadiYllapitaja();
+  if (!supabasePalvelinAvainAsetettu()) {
+    throw new Error("Tallennus vaatii palvelinavaimen.");
+  }
+  const { haeGleifLeiTietue, gleifTietueUrl } = await import("@/lib/gleif");
+  const organisaatioId = String(formData.get("organisaatio_id") ?? "").trim();
+  const lei = String(formData.get("lei") ?? "").trim().toUpperCase();
+  if (!organisaatioId || !lei) {
+    redirect(`/hakemisto?virhe=${encodeURIComponent("LEI tai organisaatio puuttuu.")}`);
+  }
+
+  const haettu = await haeGleifLeiTietue(lei);
+  if (!haettu) {
+    organisaatioGleifPaluu(organisaatioId, {
+      gleif_virhe: "LEI-tietuetta ei löytynyt GLEIF:stä.",
+    });
+  }
+  const tulos = haettu!;
+
+  const suoraPoikkeus =
+    tulos.suora_emo?.tyyppi === "poikkeus" ? tulos.suora_emo.syy : null;
+  const ylinPoikkeus =
+    tulos.ylin_emo?.tyyppi === "poikkeus" ? tulos.ylin_emo.syy : null;
+
+  const yllapito = luoYllapitoAsiakas();
+  const { error: rpcVirhe } = await yllapito.rpc("julkaise_organisaatio_lei", {
+    p_organisaatio_id: organisaatioId,
+    p_lei: tulos.lei,
+    p_lei_tila: tulos.lei_tila,
+    p_lei_paivitetty_pvm: tulos.lei_paivitetty_pvm,
+    p_lahde_url: tulos.lahde_url,
+    p_kasittelija: kasittelija,
+    p_gleif_suora_emo_poikkeus: suoraPoikkeus,
+    p_gleif_ylin_emo_poikkeus: ylinPoikkeus,
+  });
+  if (rpcVirhe) {
+    organisaatioGleifPaluu(organisaatioId, {
+      gleif_virhe: rpcVirhe.message,
+    });
+  }
+
+  const { data: orgRivi } = await yllapito
+    .from("organisaatiot")
+    .select("nimi")
+    .eq("id", organisaatioId)
+    .maybeSingle();
+  const orgNimi = (orgRivi?.nimi as string | undefined) ?? organisaatioId;
+  const leiLahdeUrl = gleifTietueUrl(tulos.lei);
+
+  async function jonotaEmo(
+    suhdeTunnus: "gleif_suora_emo" | "gleif_ylin_emo",
+    emo: NonNullable<(typeof tulos)["suora_emo"]>,
+  ): Promise<void> {
+    if (emo.tyyppi !== "suhde") return;
+    const lainaus = `GLEIF ${suhdeTunnus === "gleif_suora_emo" ? "direct" : "ultimate"} parent: ${emo.nimi} (${emo.lei})`;
+    const { data: vanha } = await yllapito
+      .from("muutosehdotukset")
+      .select("id")
+      .eq("tyyppi", "organisaatio_suhde")
+      .eq("tila", "odottaa")
+      .contains("sisalto", {
+        organisaatio_suhde: {
+          suhde_tunnus: suhdeTunnus,
+          lahde_organisaatio_id: organisaatioId,
+          emo_lei: emo.lei,
+        },
+      })
+      .maybeSingle();
+    if (vanha) return;
+
+    const { error: jonoVirhe } = await yllapito.from("muutosehdotukset").insert({
+      tyyppi: "organisaatio_suhde",
+      tila: "odottaa",
+      ehdottaja_tyyppi: "yllapitaja",
+      ehdottaja_tunniste: kasittelija,
+      lahde_url: leiLahdeUrl,
+      huomautus: `GLEIF-emosuhde: ${orgNimi} → ${emo.nimi}`,
+      sisalto: {
+        kentat: {},
+        organisaatio_suhde: {
+          suhde_tunnus: suhdeTunnus,
+          lahde_organisaatio_id: organisaatioId,
+          lahde_organisaatio_nimi: orgNimi,
+          emo_lei: emo.lei,
+          emo_nimi: emo.nimi,
+          emo_rekisterinumero: emo.rekisterinumero,
+          emo_rekisteriviranomainen: emo.rekisteriviranomainen,
+          emo_maa: emo.maa,
+          lahde_url: leiLahdeUrl,
+          lainaus,
+        },
+      },
+    });
+    if (jonoVirhe) throw new Error(jonoVirhe.message);
+  }
+
+  if (tulos.suora_emo) await jonotaEmo("gleif_suora_emo", tulos.suora_emo);
+  if (tulos.ylin_emo) await jonotaEmo("gleif_ylin_emo", tulos.ylin_emo);
+
+  revalidatePath(`/organisaatiot/${organisaatioId}`);
+  revalidatePath("/toimijat");
+  revalidatePath("/yllapito");
+  organisaatioGleifPaluu(organisaatioId, { gleif_valmis: "1" });
+}
+
 /** LS13-erä: ei tue → peruuta kuittaus (merkitty=koneen_ehdottama). */
 export async function kasitteleLs13EraEiTueToiminto(
   formData: FormData,

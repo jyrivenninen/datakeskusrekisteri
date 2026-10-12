@@ -492,6 +492,15 @@ export async function hyvaksyMuutosehdotus(
     return "ok";
   }
 
+  if (ehdotus.tyyppi === "organisaatio_suhde") {
+    const { error: rpcVirhe } = await supabase.rpc("julkaise_organisaatio_suhde", {
+      p_ehdotus_id: ehdotusId,
+      p_kasittelija: kasittelija,
+    });
+    if (rpcVirhe) throw new Error(rpcVirhe.message);
+    return "ok";
+  }
+
   if (
     ehdotus.tyyppi === "linkki_rikki" ||
     ehdotus.tyyppi === "ryhti_havainto" ||
@@ -932,7 +941,7 @@ export async function hylkaaMuutosehdotus(
   perustelu: string,
 ) {
   const supabase = luoYllapitoAsiakas();
-  const { error } = await supabase
+  const { data, error } = await supabase
     .from("muutosehdotukset")
     .update({
       tila: "hylatty",
@@ -941,6 +950,10 @@ export async function hylkaaMuutosehdotus(
       perustelu: perustelu.trim() || "Hylätty ylläpidossa.",
     })
     .eq("id", ehdotusId)
-    .eq("tila", "odottaa");
+    .in("tila", ["odottaa", "odottaa_kohdistusta"])
+    .select("id");
   if (error) throw new Error(error.message);
+  if (!data?.length) {
+    throw new Error("Ehdotusta ei voi hylätä (väärä tila tai jo käsitelty).");
+  }
 }

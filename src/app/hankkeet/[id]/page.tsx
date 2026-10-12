@@ -6,6 +6,7 @@ import { KarttaViive } from "@/komponentit/kartta-viive";
 import { onKonsulttiSivuRooli } from "@/lib/konsultti-roolit";
 import { konsulttiSivuPolku } from "@/lib/konsultti-slug";
 import { kuntaSivuPolku } from "@/lib/kunta-slug";
+import { toimijaSivuPolku } from "@/lib/toimija-slug";
 import { normalisoiKuntaNimi, ratkaiseMaakunta } from "@/lib/maakunta";
 import { HankeGalleria } from "@/komponentit/hanke-galleria";
 import { VaiheMerkki } from "@/komponentit/vaihe-merkki";
@@ -140,7 +141,7 @@ function Faktakortti({
 }
 
 function hankeRyhmat(
-  hanke: Hanke & { toimija: { id: string; nimi: string } | null },
+  hanke: Hanke & { toimija: { id: string; nimi: string; slug: string } | null },
   maakunta: string | null,
 ): {
   id: string;
@@ -159,7 +160,11 @@ function hankeRyhmat(
         {
           kentta: "toimija_organisaatio_id",
           arvo: hanke.toimija?.nimi ?? null,
-          href: hanke.toimija ? `/organisaatiot/${hanke.toimija.id}` : null,
+          href: hanke.toimija?.slug
+            ? toimijaSivuPolku(hanke.toimija.slug)
+            : hanke.toimija
+              ? `/organisaatiot/${hanke.toimija.id}`
+              : null,
         },
         { kentta: "yva_diaarinumero", arvo: hanke.yva_diaarinumero },
       ],

@@ -180,6 +180,11 @@ export default async function TietoaPalvelustaSivu() {
         <ul className="mt-3 list-disc space-y-2 pl-5 leading-relaxed">
           <li>Ryhti (SYKE): kaavakohteet, kun aineisto on toimitettu.</li>
           <li>PRH YTJ, avoin data, CC BY 4.0: organisaatioiden Y-tunnukset.</li>
+          <li>
+            GLEIF LEI-tietueet (CC0): oikeushenkilön tunniste (LEI). Emotiedot
+            vain GLEIF-tietueesta; poikkeuskoodia ei näytetä julkisesti (teksti:
+            «ei emoyhtiötietoa GLEIF:ssä»).
+          </li>
           <li>Maanmittauslaitos, CC BY 4.0: geokoodaus ja taustakartta.</li>
           <li>Tilastokeskus, maakuntarajat (1:4 500 000), CC BY 4.0.</li>
           <li>

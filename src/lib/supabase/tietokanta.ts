@@ -121,6 +121,9 @@ export const MUUTOSEHDOTUS_TYYPIT = [
   "kentta_tyhjennys",
   "paatos",
   "maaraaja",
+  "hanke_organisaatio",
+  "organisaatio_suhde",
+  "lahde_tyyppi_havainto",
 ] as const;
 
 export type MuutosehdotusTyyppi = (typeof MUUTOSEHDOTUS_TYYPIT)[number];

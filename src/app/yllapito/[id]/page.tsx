@@ -40,6 +40,7 @@ import {
   MAARAAJA_KENTTA_NIMET,
   MAARAAJA_NIMET,
   MUUTOSEHDOTUS_TYYPPI_NIMET,
+  ORGANISAATIO_SUHDE_NIMET,
   RISTIRIITA_SAANTO_NIMET,
   VAIHE_NIMET,
 } from "@/lib/naytto";
@@ -144,6 +145,7 @@ export default async function EhdotusSivu({
   const ristiriita = sisalto.ristiriita;
   const lahdeMetatiedot = sisalto.lahde_metatiedot;
   const hankeOrganisaatio = sisalto.hanke_organisaatio;
+  const organisaatioSuhde = sisalto.organisaatio_suhde;
   const lahdeMetatiedotUrl = lahdeMetatiedot?.url ?? ehdotus.lahde_url ?? null;
   const hankeIdt = ehdotuksenHankeIdt(ehdotus.hanke_id, ristiriita);
   let hankkeet = await haeHankkeetYllapitoon(hankeIdt);
@@ -1708,6 +1710,73 @@ export default async function EhdotusSivu({
               Ehdotuksesta puuttuvat lähderivit (lahteet).
             </p>
           )}
+        </section>
+      ) : null}
+
+      {organisaatioSuhde ? (
+        <section className="mt-6" aria-labelledby="org-suhde-otsikko">
+          <h2 id="org-suhde-otsikko" className="text-xl font-semibold">
+            Organisaatiosuhde (GLEIF)
+          </h2>
+          <dl className="mt-4 divide-y divide-border border-y border-border">
+            <div className="py-3">
+              <dt className="font-medium">Suhde</dt>
+              <dd className="mt-1">
+                {ORGANISAATIO_SUHDE_NIMET[organisaatioSuhde.suhde_tunnus] ??
+                  organisaatioSuhde.suhde_tunnus}
+              </dd>
+            </div>
+            <div className="py-3">
+              <dt className="font-medium">Lähdeorganisaatio</dt>
+              <dd className="mt-1">
+                {organisaatioSuhde.lahde_organisaatio_nimi ??
+                  organisaatioSuhde.lahde_organisaatio_id}
+              </dd>
+            </div>
+            <div className="py-3">
+              <dt className="font-medium">Emo</dt>
+              <dd className="mt-1">
+                {organisaatioSuhde.emo_nimi}
+                <span className="mt-0.5 block font-mono text-sm text-muted">
+                  {organisaatioSuhde.emo_lei}
+                </span>
+                {[
+                  organisaatioSuhde.emo_rekisterinumero,
+                  organisaatioSuhde.emo_maa,
+                ]
+                  .filter(Boolean)
+                  .length > 0 ? (
+                  <span className="mt-0.5 block text-sm text-muted">
+                    {[organisaatioSuhde.emo_rekisterinumero, organisaatioSuhde.emo_maa]
+                      .filter(Boolean)
+                      .join(" · ")}
+                  </span>
+                ) : null}
+              </dd>
+            </div>
+            {organisaatioSuhde.lahde_url ? (
+              <div className="py-3">
+                <dt className="font-medium">Lähde</dt>
+                <dd className="mt-1">
+                  <a
+                    href={organisaatioSuhde.lahde_url}
+                    className="text-link underline"
+                    rel="noopener noreferrer"
+                  >
+                    {organisaatioSuhde.lahde_url}
+                  </a>
+                </dd>
+              </div>
+            ) : null}
+            {organisaatioSuhde.lainaus ? (
+              <div className="py-3">
+                <dt className="font-medium">Lainaus</dt>
+                <dd className="mt-1">
+                  <blockquote className="border-l-2 pl-3">{organisaatioSuhde.lainaus}</blockquote>
+                </dd>
+              </div>
+            ) : null}
+          </dl>
         </section>
       ) : null}
 

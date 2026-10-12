@@ -68,6 +68,9 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
               <a href="/kunnat" className="text-link underline">
                 Kunnat
               </a>
+              <a href="/toimijat" className="text-link underline">
+                Toimijat
+              </a>
               <a href="/konsultit" className="text-link underline">
                 Konsultit
               </a>
@@ -124,6 +127,9 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
               </a>
               <a href="/kunnat" className="text-link underline">
                 Kunnat
+              </a>
+              <a href="/toimijat" className="text-link underline">
+                Toimijat
               </a>
               <a href="/konsultit" className="text-link underline">
                 Konsultit

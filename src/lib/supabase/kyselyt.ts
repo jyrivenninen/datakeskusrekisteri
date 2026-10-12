@@ -59,7 +59,7 @@ export async function haeHankeOhjaus(vanhaId: string): Promise<string | null> {
 }
 
 export type HankeListalla = Hanke & {
-  toimija: Pick<Organisaatio, "id" | "nimi"> | null;
+  toimija: Pick<Organisaatio, "id" | "nimi" | "slug"> | null;
   vaihtoehdot: HankeVaihtoehto[];
   vanhin_vahvistettu_pvm: string | null;
   viimeisin_paatos: PaatosNakyma | null;
@@ -90,7 +90,7 @@ export async function haeJulkaistutHankkeet(
     const supabase = await luoPalvelinAsiakas();
     let kysely = supabase
       .from("hankkeet")
-      .select("*, toimija:toimija_organisaatio_id(id, nimi)")
+      .select("*, toimija:toimija_organisaatio_id(id, nimi, slug)")
       .eq("julkaistu", true)
       .order("nimi", { ascending: true });
 
@@ -673,7 +673,7 @@ export async function haeHanke(id: string): Promise<{
     const supabase = await luoPalvelinAsiakas();
     const { data: hanke, error: hankeVirhe } = await supabase
       .from("hankkeet")
-      .select("*, toimija:toimija_organisaatio_id(id, nimi)")
+      .select("*, toimija:toimija_organisaatio_id(id, nimi, slug)")
       .eq("id", id)
       .eq("julkaistu", true)
       .maybeSingle();
@@ -1042,13 +1042,13 @@ export async function haeOrganisaatio(id: string): Promise<{
     const [{ data: vastaavana }, { data: roolirivit }] = await Promise.all([
       supabase
         .from("hankkeet")
-        .select("*, toimija:toimija_organisaatio_id(id, nimi)")
+        .select("*, toimija:toimija_organisaatio_id(id, nimi, slug)")
         .eq("julkaistu", true)
         .eq("toimija_organisaatio_id", id)
         .order("nimi", { ascending: true }),
       supabase
         .from("hanke_organisaatiot")
-        .select("rooli, hanke:hankkeet!hanke_id(*, toimija:toimija_organisaatio_id(id, nimi))")
+        .select("rooli, hanke:hankkeet!hanke_id(*, toimija:toimija_organisaatio_id(id, nimi, slug))")
         .eq("organisaatio_id", id)
         .eq("julkaistu", true),
     ]);
@@ -1388,5 +1388,142 @@ export async function haeKonsulttiSlugilla(slug: string): Promise<{
     };
   } catch (syy) {
     return { konsultti: null, hankkeet: [], ryhmat: [], virhe: virheViesti(syy) };
+  }
+}
+
+export type ToimijaListalla = {
+  id: string;
+  nimi: string;
+  slug: string;
+  y_tunnus: string | null;
+  lei: string | null;
+  hankkeita: number;
+};
+
+export type ToimijaHanke = {
+  id: string;
+  nimi: string;
+  kunta: string;
+  vaihe: HankeVaihe;
+  sijainti_lat: number | null;
+  sijainti_lon: number | null;
+  teho_mw: number | null;
+  it_teho_mw: number | null;
+  sijainti_alue: Hanke["sijainti_alue"];
+  sijainti_alue_tyyppi: Hanke["sijainti_alue_tyyppi"];
+};
+
+/** Organisaatiot, jotka on merkitty hankkeesta vastaaviksi. */
+export async function haeToimijatJoissaHankkeita(): Promise<{
+  toimijat: ToimijaListalla[];
+  virhe: string | null;
+}> {
+  if (!supabaseYmparistoAsetettu()) {
+    return { toimijat: [], virhe: "Toimijoita ei juuri nyt voitu hakea." };
+  }
+  try {
+    const supabase = await luoPalvelinAsiakas();
+    const { data, error } = await supabase
+      .from("hankkeet")
+      .select(
+        "id, toimija_organisaatio_id, organisaatio:toimija_organisaatio_id!inner(id, nimi, slug, y_tunnus, lei, julkaistu)",
+      )
+      .eq("julkaistu", true)
+      .not("toimija_organisaatio_id", "is", null)
+      .eq("organisaatio.julkaistu", true);
+    if (error) return { toimijat: [], virhe: error.message };
+
+    type Kasassa = ToimijaListalla & { hankeIdt: Set<string> };
+    const kartta = new Map<string, Kasassa>();
+    for (const rivi of data ?? []) {
+      const org = rivi.organisaatio as unknown as {
+        id: string;
+        nimi: string;
+        slug: string;
+        y_tunnus: string | null;
+        lei: string | null;
+      };
+      const aiempi = kartta.get(org.id);
+      if (aiempi) {
+        aiempi.hankeIdt.add(rivi.id as string);
+        aiempi.hankkeita = aiempi.hankeIdt.size;
+      } else {
+        kartta.set(org.id, {
+          id: org.id,
+          nimi: org.nimi,
+          slug: org.slug,
+          y_tunnus: org.y_tunnus,
+          lei: org.lei,
+          hankkeita: 1,
+          hankeIdt: new Set([rivi.id as string]),
+        });
+      }
+    }
+    const toimijat = [...kartta.values()]
+      .map(({ hankeIdt: _h, ...rivi }) => rivi)
+      .sort((a, b) => a.nimi.localeCompare(b.nimi, "fi"));
+    return { toimijat, virhe: null };
+  } catch (syy) {
+    return { toimijat: [], virhe: virheViesti(syy) };
+  }
+}
+
+export async function haeToimijaSlugilla(slug: string): Promise<{
+  toimija: (ToimijaListalla & {
+    verkko_osoite: string | null;
+    lei_tila: string | null;
+  }) | null;
+  hankkeet: ToimijaHanke[];
+  virhe: string | null;
+}> {
+  if (!supabaseYmparistoAsetettu()) {
+    return { toimija: null, hankkeet: [], virhe: "Toimijaa ei juuri nyt voitu hakea." };
+  }
+  try {
+    const supabase = await luoPalvelinAsiakas();
+    const { data: org, error: orgVirhe } = await supabase
+      .from("organisaatiot")
+      .select("id, nimi, slug, y_tunnus, lei, lei_tila, verkko_osoite")
+      .eq("slug", slug)
+      .eq("julkaistu", true)
+      .maybeSingle();
+    if (orgVirhe) {
+      return { toimija: null, hankkeet: [], virhe: orgVirhe.message };
+    }
+    if (!org) return { toimija: null, hankkeet: [], virhe: null };
+
+    const { data: hankkeetData, error: hankeVirhe } = await supabase
+      .from("hankkeet")
+      .select(
+        "id, nimi, kunta, vaihe, sijainti_lat, sijainti_lon, teho_mw, it_teho_mw, sijainti_alue, sijainti_alue_tyyppi",
+      )
+      .eq("julkaistu", true)
+      .eq("toimija_organisaatio_id", org.id)
+      .order("nimi", { ascending: true });
+    if (hankeVirhe) {
+      return { toimija: null, hankkeet: [], virhe: hankeVirhe.message };
+    }
+
+    const hankkeet = (hankkeetData ?? []) as ToimijaHanke[];
+    if (hankkeet.length === 0) {
+      return { toimija: null, hankkeet: [], virhe: null };
+    }
+
+    return {
+      toimija: {
+        id: org.id as string,
+        nimi: org.nimi as string,
+        slug: org.slug as string,
+        y_tunnus: org.y_tunnus as string | null,
+        lei: org.lei as string | null,
+        lei_tila: org.lei_tila as string | null,
+        verkko_osoite: org.verkko_osoite as string | null,
+        hankkeita: hankkeet.length,
+      },
+      hankkeet,
+      virhe: null,
+    };
+  } catch (syy) {
+    return { toimija: null, hankkeet: [], virhe: virheViesti(syy) };
   }
 }
