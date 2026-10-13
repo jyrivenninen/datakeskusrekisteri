@@ -1,12 +1,29 @@
 import { createServerClient } from "@supabase/ssr";
+import { createClient } from "@supabase/supabase-js";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { haeAjalla } from "@/lib/hae-ajalla";
 import { supabaseJulkinenAvain, supabaseUrl } from "@/lib/supabase/ymparisto";
 
 /**
- * Palvelinasiakas App Routerille.
+ * Evästeetön julkinen lukija. Käytä revalidate-välimuistisilla sivuilla
+ * (ei cookies()/auth — muuten Cache-Control: private, no-store).
+ */
+export function luoJulkinenAsiakas() {
+  return createClient(supabaseUrl(), supabaseJulkinenAvain(), {
+    global: { fetch: haeAjalla },
+    auth: {
+      persistSession: false,
+      autoRefreshToken: false,
+      detectSessionInUrl: false,
+    },
+  });
+}
+
+/**
+ * Palvelinasiakas App Routerille (evästeet + mahdollinen istunto).
  * Anon-avaimella on tuotannossa vain lukuoikeus julkaistuun tietoon (RLS, vaihe 2).
+ * Älä käytä julkisissa revalidate-sivuissa — käytä luoJulkinenAsiakas().
  */
 export async function luoPalvelinAsiakas() {
   const evasteet = await cookies();

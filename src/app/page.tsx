@@ -16,6 +16,7 @@ import {
 import { haeKarttaTaydennys, kokoaKarttaSivuData } from "@/lib/kartta-sivu";
 import { ENERGIA_MAAKUNTA_TUOTANTO } from "@/lib/energiateollisuus-tuotanto";
 import { MaaraajaHuomioSelite } from "@/komponentit/maaraaja-huomio-merkinta";
+import { YllapitoHakemistoLinkki } from "@/komponentit/yllapito-nav-linkit";
 import { maaraajaHuomio } from "@/lib/maaraaja-huomio";
 import { MAARAAJA_NIMET, muotoilePvm, muotoileVaihtelvali } from "@/lib/naytto";
 import {
@@ -34,7 +35,6 @@ import {
   parsiSuodatus,
   rajaaHankelista,
 } from "@/lib/supabase/kyselyt";
-import { haeYllapitaja } from "@/lib/supabase/palvelin";
 
 export const revalidate = 60;
 
@@ -54,14 +54,12 @@ export default async function Etusivu({
   const suodatus = parsiSuodatus(params);
   const jarjestys = parsiHankeJarjestys(suodatus.jarjestys);
   const [
-    { user: yllapitaja },
     lista,
     { maaraajat, maara: maaraajaMaara, virhe: maaraajaVirhe },
     { muutokset, maara: muutosMaara, virhe: muutosVirhe },
     taydennys,
     kuntaSlugit,
   ] = await Promise.all([
-    haeYllapitaja(),
     haeJulkaistutHankkeet(),
     haeTulevatMaaraajat({ raja: ETUSIVU_RIVEJA }),
     haeJulkaistutMuutokset({ raja: ETUSIVU_RIVEJA }),
@@ -102,14 +100,7 @@ export default async function Etusivu({
         <a href="/opas/yva-mielipide" className="text-link underline">
           Näin teet YVA-mielipiteen
         </a>
-        {yllapitaja ? (
-          <>
-            {" · "}
-            <a href="/hakemisto" className="text-link underline">
-              Organisaatio- ja yhteystietohakemisto
-            </a>
-          </>
-        ) : null}
+        <YllapitoHakemistoLinkki />
       </p>
 
       <section className="mt-10" aria-label="Ajankohtaista">

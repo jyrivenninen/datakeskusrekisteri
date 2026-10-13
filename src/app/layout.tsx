@@ -2,11 +2,9 @@ import type { Metadata } from "next";
 import { Analytics } from "@vercel/analytics/next";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import { Geist, Geist_Mono } from "next/font/google";
-import { cookies } from "next/headers";
-import { ESIVERSIO_EVASTE } from "@/lib/esiversio";
-import { EsiversioIlmoitus } from "@/komponentit/esiversio-ilmoitus";
+import { EsiversioPortti } from "@/komponentit/esiversio-portti";
+import { YllapitoHakemistoNav, YllapitoNav } from "@/komponentit/yllapito-nav-linkit";
 import { kortinMetatiedot, SIVUSTON_KUVAUS, SIVUSTON_OSOITE, SIVUSTON_OTSIKKO } from "@/lib/sivuston-metatiedot";
-import { haeYllapitaja } from "@/lib/supabase/palvelin";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -37,11 +35,7 @@ export const metadata: Metadata = {
   },
 };
 
-export default async function RootLayout({ children }: LayoutProps<"/">) {
-  const evasteet = await cookies();
-  const esiversioKuitattu = evasteet.get(ESIVERSIO_EVASTE)?.value === "kylla";
-  const { user: yllapitaja } = await haeYllapitaja();
-
+export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html
       lang="fi"
@@ -80,26 +74,18 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
               <a href="/tietoa" className="text-link underline">
                 Tietoa
               </a>
-              {yllapitaja ? (
-                <a href="/hakemisto" className="text-link underline">
-                  Hakemisto
-                </a>
-              ) : null}
+              <YllapitoHakemistoNav />
               <a href="/ilmoitus" className="text-link underline">
                 Ilmoita hanke
               </a>
               <a href="/yhteys" className="text-link underline">
                 Yhteys
               </a>
-              {yllapitaja ? (
-                <a href="/yllapito" className="text-link underline">
-                  Ylläpito
-                </a>
-              ) : null}
+              <YllapitoNav />
             </nav>
           </div>
         </header>
-        {esiversioKuitattu ? null : <EsiversioIlmoitus />}
+        <EsiversioPortti />
         {children}
         <footer className="mt-auto border-t border-border bg-surface">
           <div className="sivuleveys flex flex-col gap-8 py-10 sm:flex-row sm:items-start sm:gap-16">

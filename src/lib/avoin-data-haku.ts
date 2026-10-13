@@ -5,7 +5,7 @@
 
 import { rakennaAvoinDataHanke, type AvoinDataHanke } from "@/lib/avoin-data";
 import { vanhinVahvistettuPvm, viimeisinPaatos } from "@/lib/naytto";
-import { luoPalvelinAsiakas } from "@/lib/supabase/palvelin";
+import { luoJulkinenAsiakas } from "@/lib/supabase/palvelin";
 import {
   kokoaHankeAsiakirjat,
   hankkeenFaktalahdeUrllit,
@@ -79,7 +79,7 @@ export async function haeAvoinDataHankkeet(juuriUrl: string): Promise<{
   }
 
   try {
-    const supabase = await luoPalvelinAsiakas();
+    const supabase = luoJulkinenAsiakas();
     const [
       hankkeet,
       lahteet,

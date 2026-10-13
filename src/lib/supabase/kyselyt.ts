@@ -8,9 +8,8 @@ import {
 } from "@/lib/asiakirja-yhdistys";
 import { piilotaJulkinenAsiakirjaUrl } from "@/lib/lahde-geokoodaus-url";
 import { naytaDokumenttiOtsikko } from "@/lib/lahde-metatiedot";
-import { luoPalvelinAsiakas } from "@/lib/supabase/palvelin";
+import { luoJulkinenAsiakas } from "@/lib/supabase/palvelin";
 import { supabaseYmparistoAsetettu } from "@/lib/supabase/ymparisto";
-import { unstable_noStore as noStore } from "next/cache";
 import type {
   Hanke,
   HankeJohto,
@@ -49,7 +48,7 @@ import { normalisoiKuntaNimi } from "@/lib/maakunta";
 /** Vanha tunniste yhdistämisen jälkeen. Julkinen ohjaustaulu. */
 export async function haeHankeOhjaus(vanhaId: string): Promise<string | null> {
   if (!supabaseYmparistoAsetettu()) return null;
-  const supabase = await luoPalvelinAsiakas();
+  const supabase = luoJulkinenAsiakas();
   const { data } = await supabase
     .from("hanke_ohjaukset")
     .select("uusi_id")
@@ -87,7 +86,7 @@ export async function haeJulkaistutHankkeet(
   }
 
   try {
-    const supabase = await luoPalvelinAsiakas();
+    const supabase = luoJulkinenAsiakas();
     let kysely = supabase
       .from("hankkeet")
       .select("*, toimija:toimija_organisaatio_id(id, nimi, slug)")
@@ -227,7 +226,7 @@ export async function rajaaHankelista(
 
   if (suodatus.kuvalliset && hankkeet.length > 0) {
     try {
-      const supabase = await luoPalvelinAsiakas();
+      const supabase = luoJulkinenAsiakas();
       const { data: kuvaRivit, error: kuvaVirhe } = await supabase
         .from("hanke_kuvat")
         .select("hanke_id")
@@ -257,7 +256,7 @@ export async function haeKuntaMaakuntaKartta(): Promise<Map<string, string>> {
   if (!supabaseYmparistoAsetettu()) return new Map();
 
   try {
-    const supabase = await luoPalvelinAsiakas();
+    const supabase = luoJulkinenAsiakas();
     const { data, error } = await supabase
       .from("kunnat")
       .select("nimi, maakunta")
@@ -299,7 +298,7 @@ export type KuntaAsiakirja = {
 export async function haeKuntaSlugKartta(): Promise<Map<string, string>> {
   if (!supabaseYmparistoAsetettu()) return new Map();
   try {
-    const supabase = await luoPalvelinAsiakas();
+    const supabase = luoJulkinenAsiakas();
     const { data, error } = await supabase.from("kunnat").select("nimi, slug");
     if (error) return new Map();
     const kartta = new Map<string, string>();
@@ -322,7 +321,7 @@ export async function haeKunnatJoissaHankkeita(): Promise<{
     return { kunnat: [], virhe: "Kuntia ei juuri nyt voitu hakea." };
   }
   try {
-    const supabase = await luoPalvelinAsiakas();
+    const supabase = luoJulkinenAsiakas();
     const [{ data: kuntaRivitt, error: kuntaVirhe }, { data: hankeRivitt, error: hankeVirhe }] =
       await Promise.all([
         supabase.from("kunnat").select("id, nimi, slug, maakunta").eq("voimassa", true),
@@ -366,7 +365,7 @@ export async function haeKuntaSlugilla(slug: string): Promise<{
     return { kunta: null, virhe: "Kuntaa ei juuri nyt voitu hakea." };
   }
   try {
-    const supabase = await luoPalvelinAsiakas();
+    const supabase = luoJulkinenAsiakas();
     const { data, error } = await supabase
       .from("kunnat")
       .select("id, nimi, slug, maakunta")
@@ -397,7 +396,7 @@ export async function haeKunnanAsiakirjat(kuntaNimi: string): Promise<{
     return { asiakirjat: [], virhe: "Asiakirjoja ei juuri nyt voitu hakea." };
   }
   try {
-    const supabase = await luoPalvelinAsiakas();
+    const supabase = luoJulkinenAsiakas();
     const { data: hankkeet, error: hankeVirhe } = await supabase
       .from("hankkeet")
       .select("id, nimi")
@@ -503,7 +502,7 @@ function stubDokumenttiRivi(hankeId: string, url: string): Dokumentti {
 }
 
 async function haeDokumentitUrleille(
-  supabase: Awaited<ReturnType<typeof luoPalvelinAsiakas>>,
+  supabase: Awaited<ReturnType<typeof luoJulkinenAsiakas>>,
   urls: string[],
 ): Promise<Dokumentti[]> {
   if (urls.length === 0) return [];
@@ -675,7 +674,7 @@ export async function haeHanke(id: string): Promise<{
   }
 
   try {
-    const supabase = await luoPalvelinAsiakas();
+    const supabase = luoJulkinenAsiakas();
     const { data: hanke, error: hankeVirhe } = await supabase
       .from("hankkeet")
       .select("*, toimija:toimija_organisaatio_id(id, nimi, slug)")
@@ -898,13 +897,12 @@ export async function haeTulevatMaaraajat(opts?: {
   maara: number;
   virhe: string | null;
 }> {
-  noStore();
   if (!supabaseYmparistoAsetettu()) {
     return { maaraajat: [], maara: 0, virhe: "Määräaikoja ei juuri nyt voitu hakea." };
   }
 
   try {
-    const supabase = await luoPalvelinAsiakas();
+    const supabase = luoJulkinenAsiakas();
     const tanaan = tanaanSuomessa();
     const alku = opts?.alku ?? 0;
     const raja = opts?.raja ?? 20;
@@ -943,13 +941,12 @@ export async function haeJulkaistutMuutokset(opts?: {
   maara: number;
   virhe: string | null;
 }> {
-  noStore();
   if (!supabaseYmparistoAsetettu()) {
     return { muutokset: [], maara: 0, virhe: "Muutoksia ei juuri nyt voitu hakea." };
   }
 
   try {
-    const supabase = await luoPalvelinAsiakas();
+    const supabase = luoJulkinenAsiakas();
     const alku = opts?.alku ?? 0;
     const raja = opts?.raja ?? 20;
     let kysely = supabase
@@ -998,7 +995,7 @@ export async function haeJulkaistutOrganisaatiot(
   }
 
   try {
-    const supabase = await luoPalvelinAsiakas();
+    const supabase = luoJulkinenAsiakas();
     let kysely = supabase
       .from("organisaatiot")
       .select(
@@ -1040,7 +1037,7 @@ export async function haeOrganisaatio(id: string): Promise<{
   }
 
   try {
-    const supabase = await luoPalvelinAsiakas();
+    const supabase = luoJulkinenAsiakas();
     const { data: organisaatio, error } = await supabase
       .from("organisaatiot")
       .select(
@@ -1143,7 +1140,7 @@ export async function haeJulkisetLahdeajot(): Promise<{
     return { ajot: [], katkaistu: false, virhe: "Lähdeajoja ei juuri nyt voitu hakea." };
   }
   try {
-    const supabase = await luoPalvelinAsiakas();
+    const supabase = luoJulkinenAsiakas();
     const { data, error } = await supabase
       .from("lahdeajot")
       .select("id, sovitin, tila, alkoi_pvm, paattyi_pvm, http_tila, osumia, virhe, kysely_url")
@@ -1207,7 +1204,7 @@ export async function haeKonsultitJoissaHankkeita(): Promise<{
     return { ryhmat: [], konsultit: [], virhe: "Konsultteja ei juuri nyt voitu hakea." };
   }
   try {
-    const supabase = await luoPalvelinAsiakas();
+    const supabase = luoJulkinenAsiakas();
     const { data, error } = await supabase
       .from("hanke_organisaatiot")
       .select(
@@ -1300,7 +1297,7 @@ export async function haeKonsulttiSlugilla(slug: string): Promise<{
     };
   }
   try {
-    const supabase = await luoPalvelinAsiakas();
+    const supabase = luoJulkinenAsiakas();
     const { data: org, error: orgVirhe } = await supabase
       .from("organisaatiot")
       .select("id, nimi, slug, y_tunnus")
@@ -1440,7 +1437,7 @@ export async function haeToimijatJoissaHankkeita(): Promise<{
     return { toimijat: [], virhe: "Toimijoita ei juuri nyt voitu hakea." };
   }
   try {
-    const supabase = await luoPalvelinAsiakas();
+    const supabase = luoJulkinenAsiakas();
     const { data, error } = await supabase
       .from("hankkeet")
       .select(
@@ -1498,7 +1495,7 @@ export async function haeToimijaSlugilla(slug: string): Promise<{
     return { toimija: null, hankkeet: [], virhe: "Toimijaa ei juuri nyt voitu hakea." };
   }
   try {
-    const supabase = await luoPalvelinAsiakas();
+    const supabase = luoJulkinenAsiakas();
     const { data: org, error: orgVirhe } = await supabase
       .from("organisaatiot")
       .select("id, nimi, slug, y_tunnus, lei, lei_tila, verkko_osoite")

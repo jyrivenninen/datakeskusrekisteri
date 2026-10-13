@@ -2,7 +2,7 @@
  * Fingrid-liityntäpisteet kartalle (Postgres / OSM Overpass). Ei Fingrid API -koordinaatteja.
  */
 
-import { luoPalvelinAsiakas } from "@/lib/supabase/palvelin";
+import { luoJulkinenAsiakas } from "@/lib/supabase/palvelin";
 import { supabaseYmparistoAsetettu } from "@/lib/supabase/ymparisto";
 
 export type FingridLiityntapiste = {
@@ -17,7 +17,7 @@ export type FingridLiityntapiste = {
 export async function haeFingridLiityntapisteet(): Promise<FingridLiityntapiste[]> {
   if (!supabaseYmparistoAsetettu()) return [];
   try {
-    const supabase = await luoPalvelinAsiakas();
+    const supabase = luoJulkinenAsiakas();
     const { data, error } = await supabase
       .from("fingrid_liityntapisteet")
       .select("id, nimi, lat, lon, jannite, lahde_url")

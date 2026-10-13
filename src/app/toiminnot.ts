@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
+import { revalidateJulkinenSisalto } from "@/lib/julkinen-revalidointi";
 import {
   LOMAKE_KENTAT,
   parsiIlmoitusLisalahteet,
@@ -182,6 +183,7 @@ export async function lahetaIlmoitus(formData: FormData): Promise<void> {
       .eq("id", data.id)
       .single();
     revalidatePath("/");
+    revalidateJulkinenSisalto({ hankeId: julkaistu?.hanke_id });
     revalidatePath("/yllapito");
     if (julkaistu?.hanke_id) {
       revalidatePath(`/hankkeet/${julkaistu.hanke_id}`);
@@ -390,6 +392,7 @@ export async function lahetaKenttapaivitys(formData: FormData): Promise<void> {
       );
     }
     revalidatePath("/");
+    revalidateJulkinenSisalto({ hankeId: hankeId });
     revalidatePath(`/hankkeet/${hankeId}`);
     revalidatePath("/yllapito");
     redirect(`/hankkeet/${hankeId}/paivita?kentta=${encodeURIComponent(kentta)}${vaihtoehto ? `&vaihtoehto=${encodeURIComponent(vaihtoehto)}` : ""}&valmis=julkaistu`);
@@ -468,6 +471,7 @@ export async function lahetaKenttaTarkistus(formData: FormData): Promise<void> {
       paivitysPaluu(hankeId, kentta, "", `${viesti} Ehdotus jäi tarkistusjonoon.`);
     }
     revalidatePath("/");
+    revalidateJulkinenSisalto({ hankeId: hankeId });
     revalidatePath(`/hankkeet/${hankeId}`);
     revalidatePath("/yllapito");
     redirect(
@@ -560,6 +564,7 @@ export async function lahetaKenttaTyhjennys(formData: FormData): Promise<void> {
       paivitysPaluu(hankeId, kentta, "", `${viesti} Ehdotus jäi jonoon.`);
     }
     revalidatePath("/");
+    revalidateJulkinenSisalto({ hankeId: hankeId });
     revalidatePath(`/hankkeet/${hankeId}`);
     revalidatePath("/yllapito");
     redirect(
@@ -650,6 +655,7 @@ export async function lahetaPaatos(formData: FormData): Promise<void> {
       paatosPaluu(hankeId, `${viesti} Ehdotus jäi tarkistusjonoon.`);
     }
     revalidatePath("/");
+    revalidateJulkinenSisalto({ hankeId: hankeId });
     revalidatePath(`/hankkeet/${hankeId}`);
     revalidatePath("/yllapito");
     redirect(`/hankkeet/${hankeId}/paatos?valmis=julkaistu`);
@@ -738,6 +744,7 @@ export async function lahetaKuva(formData: FormData): Promise<void> {
       kuvaPaluu(hankeId, `${viesti} Ehdotus jäi tarkistusjonoon.`);
     }
     revalidatePath("/");
+    revalidateJulkinenSisalto({ hankeId: hankeId });
     revalidatePath(`/hankkeet/${hankeId}`);
     revalidatePath("/yllapito");
     redirect(`/hankkeet/${hankeId}/kuva?valmis=julkaistu`);
@@ -782,6 +789,7 @@ export async function poistaKuvaToiminto(formData: FormData): Promise<void> {
   }
 
   revalidatePath("/");
+  revalidateJulkinenSisalto({ hankeId: hankeId });
   revalidatePath(`/hankkeet/${hankeId}`);
   revalidatePath("/yllapito");
   redirect(`${paluu}?kuva_poistettu=1`);
@@ -890,6 +898,7 @@ export async function hyvaksyEhdotusToiminto(formData: FormData): Promise<void> 
     redirect(`/yllapito/${id}?virhe=${encodeURIComponent(viesti)}`);
   }
   revalidatePath("/");
+  revalidateJulkinenSisalto();
   revalidatePath("/yllapito");
   revalidatePath("/hankkeet", "layout");
   revalidatePath(`/yllapito/${id}`);
@@ -922,6 +931,7 @@ export async function julkaiseHankeToiminto(formData: FormData): Promise<void> {
     redirect(`${paluu}?virhe=${encodeURIComponent(viesti)}`);
   }
   revalidatePath("/");
+  revalidateJulkinenSisalto({ hankeId: hankeId });
   revalidatePath("/yllapito");
   revalidatePath("/hakemisto");
   revalidatePath(`/hankkeet/${hankeId}`);
@@ -976,6 +986,7 @@ export async function merkitseHankeDuplikaatiksiToiminto(formData: FormData): Pr
     redirect(`${paluu}?virhe=${encodeURIComponent(viesti)}`);
   }
   revalidatePath("/");
+  revalidateJulkinenSisalto({ hankeId: duplikaattiId });
   revalidatePath("/yllapito");
   revalidatePath("/hankkeet", "layout");
   revalidatePath(`/hankkeet/${duplikaattiId}`);
@@ -1048,11 +1059,12 @@ export async function korjaaLinkkiLahdeToiminto(formData: FormData): Promise<voi
     redirect(`/yllapito/${id}?virhe=${encodeURIComponent(viesti)}`);
   }
 
-  revalidatePath("/");
-  revalidatePath("/yllapito");
-  revalidatePath("/hankkeet", "layout");
   const hankeId =
     ehdotus.hanke_id ?? (linkki.taulu === "hankkeet" ? linkki.rivi_id : null);
+  revalidatePath("/");
+  revalidateJulkinenSisalto({ hankeId });
+  revalidatePath("/yllapito");
+  revalidatePath("/hankkeet", "layout");
   if (hankeId) {
     revalidatePath(`/hankkeet/${hankeId}`);
   }
@@ -1087,6 +1099,7 @@ export async function kuitaaKentatToiminto(formData: FormData): Promise<void> {
     redirect(`/yllapito?virhe=${encodeURIComponent(viesti)}`);
   }
   revalidatePath("/");
+  revalidateJulkinenSisalto({ hankeId: hankeId });
   revalidatePath("/yllapito");
   revalidatePath(`/hankkeet/${hankeId}`);
   revalidatePath("/hankkeet", "layout");
@@ -1128,6 +1141,7 @@ export async function kuitaaKaikkiTaydennyksetToiminto(formData: FormData): Prom
   }
 
   revalidatePath("/");
+  revalidateJulkinenSisalto();
   revalidatePath("/yllapito");
   revalidatePath("/hankkeet", "layout");
   for (const hankeId of hankeittain.keys()) {
@@ -1279,6 +1293,7 @@ export async function kuitaaValitutToiminto(formData: FormData): Promise<void> {
   }
 
   revalidatePath("/");
+  revalidateJulkinenSisalto();
   revalidatePath("/yllapito");
   revalidatePath("/yllapito/kuittaus");
   revalidatePath("/hankkeet", "layout");
@@ -1374,6 +1389,7 @@ export async function hyvaksyKaikkiOdottavatToiminto(formData: FormData): Promis
   }
 
   revalidatePath("/");
+  revalidateJulkinenSisalto();
   revalidatePath("/yllapito");
   revalidatePath("/hankkeet", "layout");
 
@@ -1668,6 +1684,7 @@ export async function kasitteleLahdeselvitys13RatkaisuToiminto(
   }
 
   revalidatePath("/");
+  revalidateJulkinenSisalto();
   revalidatePath("/yllapito");
   revalidatePath("/hankkeet", "layout");
   revalidatePath(`/yllapito/${id}`);
@@ -2116,6 +2133,7 @@ export async function vahvistaUusiHankeTuontiToiminto(
 
   await poistaYllapitoLuonnos(supabase, user.id, UUSI_HANKE_ESIKATSELU_AVAIN);
   revalidatePath("/");
+  revalidateJulkinenSisalto();
   revalidatePath("/yllapito");
   revalidatePath("/hankkeet", "layout");
   if (kirjoitus.tila === "julkaistu") {

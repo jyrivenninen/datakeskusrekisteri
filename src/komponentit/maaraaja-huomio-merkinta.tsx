@@ -3,18 +3,16 @@ import {
   type MaaraajaHuomio,
 } from "@/lib/maaraaja-huomio";
 
-/** Näkyvä "! …"-merkintä + piilotettu aria-selite. */
+/** Näkyvä "! …"-merkintä + sr-only-selite (aria-label spanissa ei ole luotettava). */
 export function MaaraajaHuomioMerkinta({
   huomio,
 }: {
   huomio: MaaraajaHuomio;
 }) {
   return (
-    <span
-      className="ms-1 inline-block font-semibold text-foreground"
-      aria-label={huomio.ariaLabel}
-    >
-      {huomio.teksti}
+    <span className="inline-flex shrink-0 items-baseline font-semibold text-foreground">
+      <span aria-hidden="true">{huomio.teksti}</span>
+      <span className="sr-only">{huomio.ariaLabel}</span>
     </span>
   );
 }

@@ -4,7 +4,7 @@
  */
 
 import { FINGRID_TUOTANTO_DATASETIT, type FingridTuotantoNakyma } from "@/lib/fingrid";
-import { luoPalvelinAsiakas } from "@/lib/supabase/palvelin";
+import { luoJulkinenAsiakas } from "@/lib/supabase/palvelin";
 import { supabaseYmparistoAsetettu } from "@/lib/supabase/ymparisto";
 
 const JARJESTYS = [
@@ -18,7 +18,7 @@ export async function haeTallennettuFingridTuotanto(): Promise<FingridTuotantoNa
   if (!supabaseYmparistoAsetettu()) return null;
 
   try {
-    const supabase = await luoPalvelinAsiakas();
+    const supabase = luoJulkinenAsiakas();
     const { data, error } = await supabase
       .from("fingrid_tuotanto")
       .select("dataset_id, nimi, mw, mittaus_pvm, lahde_url");

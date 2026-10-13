@@ -17,6 +17,8 @@ import {
 } from "@/lib/supabase/kyselyt";
 import { kortinMetatiedot, SIVUSTON_OTSIKKO } from "@/lib/sivuston-metatiedot";
 
+export const revalidate = 60;
+
 export const metadata: Metadata = {
   ...kortinMetatiedot({
     otsikko: `Muutokset – ${SIVUSTON_OTSIKKO}`,

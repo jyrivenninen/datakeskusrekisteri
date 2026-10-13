@@ -36,9 +36,14 @@ export function AjankohtaKohta({
         piilotaKapealla ? "max-sm:hidden" : ""
       } ${maaraajaHuomioRiviLuokka(maaraajaHuomio != null)}`}
     >
-      <p className="truncate text-sm">
-        {ylarivi}
-        {maaraajaHuomio ? <MaaraajaHuomioMerkinta huomio={maaraajaHuomio} /> : null}
+      <p className="flex min-w-0 flex-wrap items-baseline gap-x-0 text-sm">
+        <span className="min-w-0 truncate">{ylarivi}</span>
+        {maaraajaHuomio ? (
+          <>
+            {" "}
+            <MaaraajaHuomioMerkinta huomio={maaraajaHuomio} />
+          </>
+        ) : null}
       </p>
       <p className="truncate text-sm">
         <a href={href} className="text-link underline">

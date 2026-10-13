@@ -51,8 +51,6 @@ import {
   haeKuntaSlugKartta,
 } from "@/lib/supabase/kyselyt";
 import { hankeOgKuvaus, kortinMetatiedot, SIVUSTON_KUVAUS, SIVUSTON_OTSIKKO } from "@/lib/sivuston-metatiedot";
-import { haeYllapitaja } from "@/lib/supabase/palvelin";
-import { supabasePalvelinAvainAsetettu } from "@/lib/supabase/yllapito-asiakas";
 import type { Hanke, KenttaLahde, KenttaTarkistus } from "@/lib/supabase/tietokanta";
 import { tehohavaintoTekstirivi } from "@/lib/tehohavainnot";
 
@@ -337,8 +335,6 @@ export default async function HankeSivu({
   const query = await searchParams;
   const ohjaus = await haeHankeOhjaus(id);
   if (ohjaus && ohjaus !== id) permanentRedirect(`/hankkeet/${ohjaus}`);
-  const { user: yllapitaja } = await haeYllapitaja();
-  const voiPoistaaKuvia = Boolean(yllapitaja && supabasePalvelinAvainAsetettu());
   const {
     hanke,
     lahteet,
@@ -589,7 +585,6 @@ export default async function HankeSivu({
           kuvat={kuvat}
           lahteet={kuvaLahteet}
           hankeId={hanke.id}
-          yllapito={voiPoistaaKuvia}
         />
       </section>
 
