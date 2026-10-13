@@ -6,6 +6,7 @@ export function proxy(request: NextRequest) {
   if (pitaaKirjataSivukatselu(request)) {
     kirjaaSivukatseluTaustalla(request.nextUrl.pathname);
   }
+  // paivitaIstunto lukee evästeitä vain /yllapito-poluille (ei julkista välimuistia).
   return paivitaIstunto(request);
 }
 

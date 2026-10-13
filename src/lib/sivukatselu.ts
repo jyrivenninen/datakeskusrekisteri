@@ -1,16 +1,25 @@
 import type { NextRequest } from "next/server";
-import { pyyntoNayttaaKirjautuneelta } from "@/lib/supabase/istunto";
 
 const BOT_KUVIO =
   /bot|crawler|spider|slurp|facebookexternalhit|preview|headless|curl|wget|python-requests|go-http-client/i;
 
-/** Kirjataanko tämä GET-pyyntö sivulataukseksi. */
+/**
+ * Kirjataanko tämä GET-pyyntö sivulataukseksi.
+ * Älä lue request.cookies täällä: Edge-proxy + cookies → Cache-Control: private.
+ */
 export function pitaaKirjataSivukatselu(request: NextRequest): boolean {
   if (request.method !== "GET") return false;
-  if (pyyntoNayttaaKirjautuneelta(request)) return false;
   const polku = request.nextUrl.pathname;
   if (!polku.startsWith("/")) return false;
   if (polku.startsWith("/_next") || polku.startsWith("/api")) return false;
+  // Ylläpito/kirjautuminen: ei laskuriin (polku, ei eväste — välimuisti säilyy julkisilla).
+  if (
+    polku.startsWith("/yllapito") ||
+    polku.startsWith("/kirjaudu") ||
+    polku.startsWith("/hakemisto")
+  ) {
+    return false;
+  }
   if (/\.(svg|png|jpe?g|gif|webp|ico|woff2?|css|js|map|json|csv|gpkg)$/i.test(polku)) {
     return false;
   }
