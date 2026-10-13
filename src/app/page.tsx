@@ -15,6 +15,8 @@ import {
 } from "@/lib/haku";
 import { haeKarttaTaydennys, kokoaKarttaSivuData } from "@/lib/kartta-sivu";
 import { ENERGIA_MAAKUNTA_TUOTANTO } from "@/lib/energiateollisuus-tuotanto";
+import { MaaraajaHuomioSelite } from "@/komponentit/maaraaja-huomio-merkinta";
+import { maaraajaHuomio } from "@/lib/maaraaja-huomio";
 import { MAARAAJA_NIMET, muotoilePvm, muotoileVaihtelvali } from "@/lib/naytto";
 import {
   ETUSIVU_RIVEJA,
@@ -134,11 +136,18 @@ export default async function Etusivu({
                       nimi={maaraaika.hanke.nimi}
                       kunta={maaraaika.hanke.kunta}
                       kuntaHref={kuntaHref(maaraaika.hanke.kunta)}
+                      maaraajaHuomio={maaraajaHuomio(
+                        maaraaika.alkaa_pvm,
+                        maaraaika.paattyy_pvm,
+                      )}
                     />
                   ))
                 )}
               </AjankohtaLista>
             )}
+            {maaraajat.some((m) => maaraajaHuomio(m.alkaa_pvm, m.paattyy_pvm)) ? (
+              <MaaraajaHuomioSelite />
+            ) : null}
             {maaraajaMaara > 0 ? (
               <p className="mt-3 text-sm">
                 {yhteensaLause(maaraajaMaara, "tuleva määräaika", "tulevaa määräaikaa")}{" "}

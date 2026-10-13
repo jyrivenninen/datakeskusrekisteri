@@ -1,3 +1,8 @@
+import {
+  MaaraajaHuomioMerkinta,
+  maaraajaHuomioRiviLuokka,
+} from "@/komponentit/maaraaja-huomio-merkinta";
+import type { MaaraajaHuomio } from "@/lib/maaraaja-huomio";
 import { lahdeLinkinNimi } from "@/lib/muutos-naytto";
 
 export function AjankohtaLista({ children }: { children: React.ReactNode }) {
@@ -15,6 +20,7 @@ export function AjankohtaKohta({
   kunta,
   kuntaHref,
   piilotaKapealla = false,
+  maaraajaHuomio = null,
 }: {
   ylarivi: string;
   href: string;
@@ -22,14 +28,18 @@ export function AjankohtaKohta({
   kunta: string;
   kuntaHref?: string | null;
   piilotaKapealla?: boolean;
+  maaraajaHuomio?: MaaraajaHuomio | null;
 }) {
   return (
     <li
       className={`flex h-14 flex-col justify-center border-b border-border last:border-b-0 ${
         piilotaKapealla ? "max-sm:hidden" : ""
-      }`}
+      } ${maaraajaHuomioRiviLuokka(maaraajaHuomio != null)}`}
     >
-      <p className="truncate text-sm">{ylarivi}</p>
+      <p className="truncate text-sm">
+        {ylarivi}
+        {maaraajaHuomio ? <MaaraajaHuomioMerkinta huomio={maaraajaHuomio} /> : null}
+      </p>
       <p className="truncate text-sm">
         <a href={href} className="text-link underline">
           {nimi}

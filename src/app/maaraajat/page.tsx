@@ -1,11 +1,19 @@
 import type { Metadata } from "next";
 import { HankkeetSuodatin } from "@/komponentit/hankkeet-suodatin";
+import {
+  MaaraajaHuomioMerkinta,
+  MaaraajaHuomioSelite,
+  maaraajaHuomioRiviLuokka,
+} from "@/komponentit/maaraaja-huomio-merkinta";
 import { Sivutus } from "@/komponentit/sivutus";
+import { maaraajaHuomio } from "@/lib/maaraaja-huomio";
 import { MAARAAJA_NIMET, muotoilePvm } from "@/lib/naytto";
 import { maaraajatPolku, parsiSivu, sivujaYhteensa, MUUTOS_SIVU_KOKO } from "@/lib/muutos-naytto";
 import { parsiSuodatus } from "@/lib/suodatus";
 import { haeJulkaistutHankkeet, haeTulevatMaaraajat } from "@/lib/supabase/kyselyt";
 import { kortinMetatiedot, SIVUSTON_OTSIKKO } from "@/lib/sivuston-metatiedot";
+
+export const revalidate = 60;
 
 export const metadata: Metadata = kortinMetatiedot({
   otsikko: `Tulevat määräajat – ${SIVUSTON_OTSIKKO}`,
@@ -59,22 +67,32 @@ export default async function MaaraajatSivu({
       ) : (
         <>
           <ul className="mt-6 divide-y divide-border border-y border-border">
-            {tulos.maaraajat.map((maaraaika) => (
-              <li key={maaraaika.id} className="py-3">
-                <p className="text-sm">
-                  {muotoilePvm(maaraaika.paattyy_pvm)}
-                  {" · "}
-                  {MAARAAJA_NIMET[maaraaika.tyyppi]}
-                </p>
-                <p className="mt-1">
-                  <a href={`/hankkeet/${maaraaika.hanke.id}`} className="text-link underline">
-                    {maaraaika.hanke.nimi}
-                  </a>
-                  <span className="text-muted"> ({maaraaika.hanke.kunta})</span>
-                </p>
-              </li>
-            ))}
+            {tulos.maaraajat.map((maaraaika) => {
+              const huomio = maaraajaHuomio(maaraaika.alkaa_pvm, maaraaika.paattyy_pvm);
+              return (
+                <li
+                  key={maaraaika.id}
+                  className={`py-3 ${maaraajaHuomioRiviLuokka(huomio != null)}`}
+                >
+                  <p className="text-sm">
+                    {muotoilePvm(maaraaika.paattyy_pvm)}
+                    {" · "}
+                    {MAARAAJA_NIMET[maaraaika.tyyppi]}
+                    {huomio ? <MaaraajaHuomioMerkinta huomio={huomio} /> : null}
+                  </p>
+                  <p className="mt-1">
+                    <a href={`/hankkeet/${maaraaika.hanke.id}`} className="text-link underline">
+                      {maaraaika.hanke.nimi}
+                    </a>
+                    <span className="text-muted"> ({maaraaika.hanke.kunta})</span>
+                  </p>
+                </li>
+              );
+            })}
           </ul>
+          {tulos.maaraajat.some((m) => maaraajaHuomio(m.alkaa_pvm, m.paattyy_pvm)) ? (
+            <MaaraajaHuomioSelite />
+          ) : null}
           <Sivutus sivu={Math.min(sivu, sivuja)} sivuja={sivuja} polku={polku} />
         </>
       )}

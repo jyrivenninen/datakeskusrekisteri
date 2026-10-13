@@ -94,12 +94,11 @@ export function HankeLaskurit({ yhteenveto }: { yhteenveto: HankeYhteenveto }) {
           </p>
           <p className="mt-1 text-sm text-muted">
             <KattavuusHankkeilla merkitty={yhteenveto.tehoMerkittyLkm} kaikki={hankeita} />
-            . Esitystapa 2: vaihteluväli on hankkeiden min–max-summa (IT → teho →
-            erittelemätön; YVA-vaihtoehdoissa alin–ylin). Pelkkä «enintään»-havainto
-            ei nosta minimiä eikä kasvata tätä väliä — se ilmoitetaan erikseen
-            «+ enintään … MW». Vaihe-, lupa- ja pelkkä tavoite-alaraja eivät mene
-            tähän summaan samalla tavalla kuin koko hankkeen luku; generaattorin
-            polttoainetehoa ei käytetä.
+            . Vaihteluväli on hankkeiden min–max-summa (IT-teho, jos merkitty, muuten
+            teho; YVA-vaihtoehdoissa alin–ylin). Luku voi olla hankkeen ensimmäisen
+            vaiheen, tavoitteen tai koko hankkeen teho. Lähde ei aina kerro, mikä
+            niistä, eikä sitä, onko kyse IT-tehosta vai kokonaistehosta.
+            Generaattorin polttoainetehoa ei käytetä.
           </p>
         </li>
         <li className="rounded border border-border bg-surface p-4">

@@ -2,7 +2,13 @@ import type { Metadata } from "next";
 import { notFound, permanentRedirect } from "next/navigation";
 import { AsiakirjaTaulukko } from "@/komponentit/asiakirja-kortti";
 import { AvattavaKortti, Korttiruudukko } from "@/komponentit/avattava-kortti";
+import {
+  MaaraajaHuomioMerkinta,
+  MaaraajaHuomioSelite,
+  maaraajaHuomioRiviLuokka,
+} from "@/komponentit/maaraaja-huomio-merkinta";
 import { KarttaViive } from "@/komponentit/kartta-viive";
+import { maaraajaHuomio } from "@/lib/maaraaja-huomio";
 import { onKonsulttiSivuRooli } from "@/lib/konsultti-roolit";
 import { konsulttiSivuPolku } from "@/lib/konsultti-slug";
 import { kuntaSivuPolku } from "@/lib/kunta-slug";
@@ -885,27 +891,44 @@ export default async function HankeSivu({
         {maaraajat.length === 0 ? (
           <p className="mt-3">Ei merkittyjä määräaikoja.</p>
         ) : (
-          <Korttiruudukko>
-            {maaraajat.map((maaraaika) => {
-              const menettely = menettelyt.find((rivi) => rivi.id === maaraaika.menettely_id);
-              return (
-                <AvattavaKortti
-                  key={maaraaika.id}
-                  nimi={MAARAAJA_NIMET[maaraaika.tyyppi]}
-                  arvo={`${menettely ? `${MENETTELY_LAJI_NIMET[menettely.laji]} · ` : ""}${maaraaika.alkaa_pvm ? `${muotoilePvm(maaraaika.alkaa_pvm)} – ` : ""}${muotoilePvm(maaraaika.paattyy_pvm)}`}
-                  tila={kentanTila(
-                    true,
-                    lahteetLiikennevalolle(
-                      maaraajaLahteet.filter((lahde) => lahde.rivi_id === maaraaika.id),
-                      urlTyypit,
-                    ),
-                  )}
-                  lahteet={maaraajaLahteet.filter((lahde) => lahde.rivi_id === maaraaika.id)}
-                  linkkiTekstit={linkkiTekstit}
-                />
-              );
-            })}
-          </Korttiruudukko>
+          <>
+            <Korttiruudukko>
+              {maaraajat.map((maaraaika) => {
+                const menettely = menettelyt.find((rivi) => rivi.id === maaraaika.menettely_id);
+                const huomio = maaraajaHuomio(maaraaika.alkaa_pvm, maaraaika.paattyy_pvm);
+                return (
+                  <div
+                    key={maaraaika.id}
+                    className={maaraajaHuomioRiviLuokka(huomio != null)}
+                  >
+                    <AvattavaKortti
+                      nimi={MAARAAJA_NIMET[maaraaika.tyyppi]}
+                      arvo={
+                        <>
+                          {menettely ? `${MENETTELY_LAJI_NIMET[menettely.laji]} · ` : ""}
+                          {maaraaika.alkaa_pvm ? `${muotoilePvm(maaraaika.alkaa_pvm)} – ` : ""}
+                          {muotoilePvm(maaraaika.paattyy_pvm)}
+                          {huomio ? <MaaraajaHuomioMerkinta huomio={huomio} /> : null}
+                        </>
+                      }
+                      tila={kentanTila(
+                        true,
+                        lahteetLiikennevalolle(
+                          maaraajaLahteet.filter((lahde) => lahde.rivi_id === maaraaika.id),
+                          urlTyypit,
+                        ),
+                      )}
+                      lahteet={maaraajaLahteet.filter((lahde) => lahde.rivi_id === maaraaika.id)}
+                      linkkiTekstit={linkkiTekstit}
+                    />
+                  </div>
+                );
+              })}
+            </Korttiruudukko>
+            {maaraajat.some((m) => maaraajaHuomio(m.alkaa_pvm, m.paattyy_pvm)) ? (
+              <MaaraajaHuomioSelite />
+            ) : null}
+          </>
         )}
       </section>
 

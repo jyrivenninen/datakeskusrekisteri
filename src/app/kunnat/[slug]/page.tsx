@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { AjankohtaKohta, AjankohtaLista, LahdeRivi } from "@/komponentit/ajankohta-lista";
 import { HankeLuetteloOsio } from "@/komponentit/hanke-luettelo-jarjestys";
+import { MaaraajaHuomioSelite } from "@/komponentit/maaraaja-huomio-merkinta";
 import { KarttaViive } from "@/komponentit/kartta-viive";
 import { VaiheMerkki } from "@/komponentit/vaihe-merkki";
 import { jarjestaHankkeet, parsiHankeJarjestys } from "@/lib/hanke-jarjestys";
@@ -9,6 +10,7 @@ import { hankeVaihtelvalit } from "@/lib/hanke-vaihtelvali";
 import { kokoaKarttaSivuData } from "@/lib/kartta-sivu";
 import { kuntaSivuPolku } from "@/lib/kunta-slug";
 import { naytaDokumenttiOtsikko } from "@/lib/lahde-metatiedot";
+import { maaraajaHuomio } from "@/lib/maaraaja-huomio";
 import { normalisoiKuntaNimi } from "@/lib/maakunta";
 import {
   MUUTOS_SIVU_KOKO,
@@ -157,10 +159,19 @@ export default async function KuntaSivu({ params, searchParams }: Props) {
                 href={`/hankkeet/${maaraaika.hanke.id}`}
                 nimi={maaraaika.hanke.nimi}
                 kunta={maaraaika.hanke.kunta}
+                maaraajaHuomio={maaraajaHuomio(
+                  maaraaika.alkaa_pvm,
+                  maaraaika.paattyy_pvm,
+                )}
               />
             ))}
           </AjankohtaLista>
         )}
+        {maaraajaTulos.maaraajat.some((m) =>
+          maaraajaHuomio(m.alkaa_pvm, m.paattyy_pvm),
+        ) ? (
+          <MaaraajaHuomioSelite />
+        ) : null}
       </section>
 
       <section className="mt-10" aria-labelledby="kartta-otsikko">
