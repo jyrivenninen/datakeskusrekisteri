@@ -68,24 +68,14 @@ body:has(.kartta-koko-naytto) footer {
   }
 }
 
-dialog.esiversio-ilmoitus {
-  position: fixed;
-  inset: auto;
-  margin: auto;
-  max-width: min(32rem, calc(100vw - 2rem));
-  opacity: 1;
+/* Ei-modaali banneri: dokumenttivirtaan, ei peitä sisältöä (myös ilman JS:ää). */
+.esiversio-ilmoitus {
+  display: block;
 }
 
-dialog.esiversio-ilmoitus::backdrop {
-  background: rgb(0 0 0 / 0.5);
-  opacity: 1;
-}
-
-@media (prefers-reduced-motion: no-preference) {
-  dialog.esiversio-ilmoitus,
-  dialog.esiversio-ilmoitus::backdrop {
-    transition: none;
-  }
+/* Inline-skripti asettaa attribuutin ennen maalia → ei välähdystä kuitanneille. */
+html[data-esiversio="kuitattu"] .esiversio-ilmoitus {
+  display: none !important;
 }
 
 .liikennevalo {

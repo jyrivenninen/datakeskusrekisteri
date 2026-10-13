@@ -2,8 +2,10 @@ import type { Metadata } from "next";
 import { Analytics } from "@vercel/analytics/next";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import { Geist, Geist_Mono } from "next/font/google";
-import { EsiversioPortti } from "@/komponentit/esiversio-portti";
+import Script from "next/script";
+import { EsiversioIlmoitus } from "@/komponentit/esiversio-ilmoitus";
 import { YllapitoHakemistoNav, YllapitoNav } from "@/komponentit/yllapito-nav-linkit";
+import { ESIVERSIO_INLINE_SKRIPTI } from "@/lib/esiversio";
 import { kortinMetatiedot, SIVUSTON_KUVAUS, SIVUSTON_OSOITE, SIVUSTON_OTSIKKO } from "@/lib/sivuston-metatiedot";
 import "./globals.css";
 
@@ -42,6 +44,11 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="flex min-h-full flex-col bg-background text-foreground">
+        <Script
+          id="esiversio-kuittaus"
+          strategy="beforeInteractive"
+          dangerouslySetInnerHTML={{ __html: ESIVERSIO_INLINE_SKRIPTI }}
+        />
         <a
           href="#sisalto"
           className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:bg-surface focus:px-3 focus:py-2 focus:text-foreground focus:underline"
@@ -85,7 +92,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
             </nav>
           </div>
         </header>
-        <EsiversioPortti />
+        <EsiversioIlmoitus />
         {children}
         <footer className="mt-auto border-t border-border bg-surface">
           <div className="sivuleveys flex flex-col gap-8 py-10 sm:flex-row sm:items-start sm:gap-16">

@@ -71,7 +71,11 @@ import {
   suodataKuittausRivit,
 } from "@/lib/kuittaus-suodatus";
 import { haeHankkeetYllapitoon, luoYllapitoAsiakas, poistetutHankeIdt, supabasePalvelinAvainAsetettu } from "@/lib/supabase/yllapito-asiakas";
-import { ESIVERSIO_EVASTE } from "@/lib/esiversio";
+import {
+  ESIVERSIO_EVASTE,
+  ESIVERSIO_EVASTE_ARVO,
+  ESIVERSIO_EVASTE_MAX_AGE_S,
+} from "@/lib/esiversio";
 import { lahdeUrlKieltoViesti } from "@/lib/lahde-url-kielto";
 
 function ilmoitusPaluu(tyyppi: string, virhe: string): never {
@@ -1708,15 +1712,36 @@ export async function kasitteleLahdeselvitys13RatkaisuToiminto(
   );
 }
 
+/**
+ * Tallentaa esiversiokuittauksen. httpOnly=false, jotta selain (inline-skripti
+ * ja layoutin asiakaskomponentti) voi lukea saman evästeen ilman cookies()-kutsua layoutissa.
+ */
 export async function kuittaaEsiversio(): Promise<void> {
   const evasteet = await cookies();
-  evasteet.set(ESIVERSIO_EVASTE, "kylla", {
+  evasteet.set(ESIVERSIO_EVASTE, ESIVERSIO_EVASTE_ARVO, {
     path: "/",
-    maxAge: 60 * 60 * 24 * 30,
+    maxAge: ESIVERSIO_EVASTE_MAX_AGE_S,
     sameSite: "lax",
-    httpOnly: true,
+    httpOnly: false,
   });
-  revalidatePath("/", "layout");
+}
+
+/**
+ * Jos palvelimella on jo kuittaus (myös vanha httpOnly-eväste), kirjoittaa
+ * JS-luettavan evästeen ja palauttaa true. Layout ei kutsu tätä — vain selain.
+ */
+export async function siirraEsiversioKuittausSelainlle(): Promise<boolean> {
+  const evasteet = await cookies();
+  if (evasteet.get(ESIVERSIO_EVASTE)?.value !== ESIVERSIO_EVASTE_ARVO) {
+    return false;
+  }
+  evasteet.set(ESIVERSIO_EVASTE, ESIVERSIO_EVASTE_ARVO, {
+    path: "/",
+    maxAge: ESIVERSIO_EVASTE_MAX_AGE_S,
+    sameSite: "lax",
+    httpOnly: false,
+  });
+  return true;
 }
 
 function palauteVirhe(viesti: string): never {
