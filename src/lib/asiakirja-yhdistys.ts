@@ -29,6 +29,7 @@ export function asiakirjanKayttoMonelle(
 
   for (const lahde of lahteet) {
     if (lahde.taulu === "dokumentit") continue;
+    if (lahde.tila === "ei_tue") continue;
     const osuu =
       (lahde.dokumentti_id != null && dokumenttiIdt.has(lahde.dokumentti_id)) ||
       urlit.has(lahde.lahde_url);

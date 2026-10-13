@@ -74,7 +74,9 @@ function lahteetRiville(
   lahteet: KenttaLahde[],
   urlTyypit?: ReadonlyMap<string, string>,
 ): AvoinDataLahde[] {
-  return lahteet.map((l) => serialisoiLahde(l, urlTyypit));
+  return lahteet
+    .filter((l) => l.tila === "voimassa" || l.tila === "korvattu")
+    .map((l) => serialisoiLahde(l, urlTyypit));
 }
 
 /** Kenttäkohtainen: onko vähintään yksi viranomaislähde. */
@@ -89,6 +91,8 @@ function kentatViranomaislahde(
     const on = tyyppi != null && VIRANOMAIS_TYYPIT.has(tyyppi);
     tulos[lahde.kentta] = Boolean(tulos[lahde.kentta]) || on;
   }
+  // JSON v1: avain säilyy, mutta huomautus on rekisterin oma tulkinta — ei viranomaislähde.
+  tulos.huomautus = false;
   return tulos;
 }
 

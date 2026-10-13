@@ -15,6 +15,7 @@ import { rakennaDokumenttiLinkkiTekstit } from "@/lib/lahde-metatiedot";
 import type { LahdeTyyppi } from "@/lib/lahde-metatiedot";
 import { lahteetLiikennevalolle } from "@/lib/kentan-tila-lahteet";
 import { muotoilePaatosKuvaus } from "@/lib/paatos-kuvaus";
+import { sijainninKentanTila } from "@/lib/sijainti-tila";
 import {
   JOHTO_TYYPPI_NIMET,
   HANKE_KENTTA_NIMET,
@@ -35,6 +36,7 @@ import {
   dieselVuosikulutusTeksti,
   polttoainevarastoTeksti,
 } from "@/lib/naytto";
+import type { SijaintiAlueTyyppi } from "@/lib/supabase/tietokanta";
 import type { KorvaavaDokumentti } from "@/komponentit/lahdeluettelo";
 import {
   haeHanke,
@@ -102,6 +104,7 @@ function Faktakortti({
   korvaavat,
   tarkistus,
   urlTyypit,
+  sijaintiAlueTyyppi,
 }: {
   hankeId: string;
   rivi: KenttaRivi;
@@ -110,15 +113,28 @@ function Faktakortti({
   korvaavat?: ReadonlyMap<string, KorvaavaDokumentti>;
   tarkistus?: KenttaTarkistus | null;
   urlTyypit: ReadonlyMap<string, LahdeTyyppi>;
+  sijaintiAlueTyyppi?: SijaintiAlueTyyppi | null;
 }) {
-  const naytettavat = kentanLahteet(lahteet, rivi.lahdeKentta ?? rivi.kentta);
+  const naytettavat = kentanLahteet(lahteet, rivi.lahdeKentta ?? rivi.kentta).filter(
+    (l) => l.tila === "voimassa" || l.tila === "korvattu",
+  );
   const lomakeKentta = lomakeKenttaKortista(rivi.kentta);
   const tyhja = rivi.arvo == null || rivi.arvo === "";
+  const lahdeKentta = rivi.lahdeKentta ?? rivi.kentta;
+  const tila =
+    lahdeKentta === "sijainti"
+      ? sijainninKentanTila(
+          sijaintiAlueTyyppi,
+          !tyhja,
+          naytettavat,
+          urlTyypit,
+        )
+      : kentanTila(!tyhja, lahteetLiikennevalolle(naytettavat, urlTyypit));
   return (
     <AvattavaKortti
       nimi={HANKE_KENTTA_NIMET[rivi.kentta] ?? rivi.kentta}
       arvo={kenttaArvoksi(rivi)}
-      tila={kentanTila(!tyhja, lahteetLiikennevalolle(naytettavat, urlTyypit))}
+      tila={tila}
       lahteet={naytettavat}
       linkkiTekstit={linkkiTekstit}
       korvaavat={korvaavat}
@@ -565,8 +581,10 @@ export default async function HankeSivu({
         <p className="mt-2 text-sm text-muted">
           Kenttä avaa lähteen ja päivityslomakkeen. Vihreä valo tarkoittaa
           viranomaislähdettä (päätös, viranomaisasiakirja tai rekisteri), jonka
-          ihminen on tarkistanut tukevan arvoa. Keltainen on julkaistu tai muulla
-          lähteellä tarkistettu, punainen puuttuu.
+          ihminen on tarkistanut tukevan arvoa. Sijainnissa vihreä vaatii lisäksi
+          tontin tai kaava-alueen sekä lainauksen, joka nimeää osoitteen tai
+          koordinaatit. Keltainen on julkaistu tai muulla lähteellä tarkistettu,
+          punainen puuttuu.
         </p>
         <div className="mt-6 space-y-8">
           {hankeRyhmat(hanke, ratkaistuMaakunta.maakunta).map((ryhma) => (
@@ -584,6 +602,7 @@ export default async function HankeSivu({
                     linkkiTekstit={linkkiTekstit}
                     korvaavat={korvaavat}
                     urlTyypit={urlTyypit}
+                    sijaintiAlueTyyppi={hanke.sijainti_alue_tyyppi}
                     tarkistus={tarkistukset.find(
                       (riviTarkistus) =>
                         riviTarkistus.kentta === (rivi.lahdeKentta ?? rivi.kentta),

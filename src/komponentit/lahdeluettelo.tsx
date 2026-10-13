@@ -11,17 +11,23 @@ export function Lahdeluettelo({
   linkkiTekstit,
   korvaavat,
   naytaKentta = false,
+  /** Julkisella sivulla false: vain voimassa ja korvattu. Ylläpito voi näyttää ei_tue. */
+  salliEiTue = false,
 }: {
   lahteet: KenttaLahde[];
   linkkiTekstit?: ReadonlyMap<string, string>;
   korvaavat?: ReadonlyMap<string, KorvaavaDokumentti>;
   naytaKentta?: boolean;
+  salliEiTue?: boolean;
 }) {
-  if (lahteet.length === 0) {
+  const julkiset = salliEiTue
+    ? lahteet
+    : lahteet.filter((l) => l.tila === "voimassa" || l.tila === "korvattu");
+  if (julkiset.length === 0) {
     return <p className="mt-3 text-sm text-muted">Lähdettä ei ole merkitty.</p>;
   }
 
-  const jarjestys = [...lahteet].sort((a, b) => {
+  const jarjestys = [...julkiset].sort((a, b) => {
     const aPassiivinen = a.tila === "korvattu" || a.tila === "ei_tue" ? 1 : 0;
     const bPassiivinen = b.tila === "korvattu" || b.tila === "ei_tue" ? 1 : 0;
     return aPassiivinen - bPassiivinen;

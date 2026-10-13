@@ -9,11 +9,20 @@ export type KehityslokiMerkinta = {
 
 export const KEHITYSLOKI: KehityslokiMerkinta[] = [
   {
+    pvm: "2026-10-13",
+    otsikko: "Lähdeluettelo, sijainnin vihreä ja JSON-huomautus",
+    kohdat: [
+      "Julkiselta hankesivulta, JSONista ja asiakirjojen kattaa-listasta poistetaan lähteet tilassa ei_tue (näkyvät edelleen ylläpidossa).",
+      "Sijainnin vihreä valo vain tontti- tai kaava-alueelle, kun lainaus nimeää osoitteen tai koordinaatit; geokoodaus- ja menetelmälähteet eivät riitä.",
+      "Avoimen datan kentat_viranomaislahde.huomautus on aina false: huomautus on rekisterin oma tulkinta, ei viranomaislähde (JSON v1, avain säilyy).",
+    ],
+  },
+  {
     pvm: "2026-10-12",
     otsikko: "Toimijasivut ja GLEIF-haku",
     kohdat: [
       "Hankkeesta vastaaville organisaatioille hakemisto /toimijat ja sivu /toimijat/[slug]. Ei konsernihierarkiaa.",
-      "Ylläpito: GLEIF-haku organisaatiosivulla (rekisterinumero tai nimi). LEI tallennetaan RPC:llä; emosuhteet hyväksyntäjonoon.",
+      "Ylläpito: GLEIF-haku organisaatiosivulla. LEI tallennetaan RPC:llä; tyhjä Y-tunnus täytetään GLEIF:stä, ristiriidasta ilmoitus; emosuhteet jonoon.",
       "Hankesivulla hankkeesta vastaava linkittyy toimijasivulle. Sivukartta, navigaatio ja Tietoa-sivu päivitetty.",
     ],
   },

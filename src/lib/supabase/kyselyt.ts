@@ -596,6 +596,7 @@ export function asiakirjanKaytto(lahteet: KenttaLahde[], dokumentti: Dokumentti)
   for (const lahde of lahteet) {
     if (lahde.dokumentti_id !== dokumentti.id && lahde.lahde_url !== dokumentti.url) continue;
     if (lahde.taulu === "dokumentit") continue;
+    if (lahde.tila === "ei_tue") continue;
     const avain = `${lahde.taulu}:${lahde.kentta}`;
     const aiempi = kartta.get(avain);
     if (aiempi) {

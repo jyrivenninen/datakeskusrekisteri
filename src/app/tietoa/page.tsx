@@ -64,7 +64,14 @@ export default async function TietoaPalvelustaSivu() {
             Hankesivun liikennevalo: vihreä tarkoittaa viranomaislähdettä
             (päätös, viranomaisasiakirja tai rekisteri), jonka ihminen on
             tarkistanut tukevan arvoa. Keltainen on julkaistua tai muulla
-            lähteellä tarkistettua, punainen puuttuvaa.
+            lähteellä tarkistettua, punainen puuttuvaa. Sijainnissa vihreä
+            edellyttää lisäksi tonttia tai kaava-aluetta sekä lainausta, joka
+            nimeää osoitteen tai koordinaatit.
+          </p>
+          <p>
+            Avoimen datan JSON-kenttä{" "}
+            <code className="text-sm">kentat_viranomaislahde.huomautus</code> on
+            aina false: huomautus on rekisterin oma tulkinta, ei viranomaislähde.
           </p>
           <p>
             Ilmoitus lomakkeella tai agentin ehdottama havainto ei siirry
