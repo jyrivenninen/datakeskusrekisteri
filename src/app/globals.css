@@ -68,14 +68,16 @@ body:has(.kartta-koko-naytto) footer {
   }
 }
 
-/* Ei-modaali banneri: dokumenttivirtaan, ei peitä sisältöä (myös ilman JS:ää). */
+/*
+ * Esiversio-banneri: kriittinen display-sääntö on myös layoutin <head>-styleissä.
+ * Oletus piilossa; näkyy vain html[data-esiversio="nayta"]. Ei transition/animation.
+ */
 .esiversio-ilmoitus {
-  display: block;
+  display: none;
 }
 
-/* Inline-skripti asettaa attribuutin ennen maalia → ei välähdystä kuitanneille. */
-html[data-esiversio="kuitattu"] .esiversio-ilmoitus {
-  display: none !important;
+html[data-esiversio="nayta"] .esiversio-ilmoitus {
+  display: block;
 }
 
 .liikennevalo {

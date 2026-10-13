@@ -2,10 +2,13 @@ import type { Metadata } from "next";
 import { Analytics } from "@vercel/analytics/next";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import { Geist, Geist_Mono } from "next/font/google";
-import Script from "next/script";
 import { EsiversioIlmoitus } from "@/komponentit/esiversio-ilmoitus";
 import { YllapitoHakemistoNav, YllapitoNav } from "@/komponentit/yllapito-nav-linkit";
-import { ESIVERSIO_INLINE_SKRIPTI } from "@/lib/esiversio";
+import {
+  ESIVERSIO_INLINE_SKRIPTI,
+  ESIVERSIO_KRITTIINEN_CSS,
+  ESIVERSIO_NOSCRIPT_CSS,
+} from "@/lib/esiversio";
 import { kortinMetatiedot, SIVUSTON_KUVAUS, SIVUSTON_OSOITE, SIVUSTON_OTSIKKO } from "@/lib/sivuston-metatiedot";
 import "./globals.css";
 
@@ -43,12 +46,24 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       lang="fi"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
-      <body className="flex min-h-full flex-col bg-background text-foreground">
-        <Script
+      <head>
+        {/* Synkroninen: attribuutti ennen ensimmäistä piirtoa (ei next/script). */}
+        <style
+          id="esiversio-kriittinen"
+          dangerouslySetInnerHTML={{ __html: ESIVERSIO_KRITTIINEN_CSS }}
+        />
+        <script
           id="esiversio-kuittaus"
-          strategy="beforeInteractive"
           dangerouslySetInnerHTML={{ __html: ESIVERSIO_INLINE_SKRIPTI }}
         />
+        <noscript>
+          <style
+            id="esiversio-noscript"
+            dangerouslySetInnerHTML={{ __html: ESIVERSIO_NOSCRIPT_CSS }}
+          />
+        </noscript>
+      </head>
+      <body className="flex min-h-full flex-col bg-background text-foreground">
         <a
           href="#sisalto"
           className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:bg-surface focus:px-3 focus:py-2 focus:text-foreground focus:underline"

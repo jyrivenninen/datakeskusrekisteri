@@ -1726,24 +1726,6 @@ export async function kuittaaEsiversio(): Promise<void> {
   });
 }
 
-/**
- * Jos palvelimella on jo kuittaus (myös vanha httpOnly-eväste), kirjoittaa
- * JS-luettavan evästeen ja palauttaa true. Layout ei kutsu tätä — vain selain.
- */
-export async function siirraEsiversioKuittausSelainlle(): Promise<boolean> {
-  const evasteet = await cookies();
-  if (evasteet.get(ESIVERSIO_EVASTE)?.value !== ESIVERSIO_EVASTE_ARVO) {
-    return false;
-  }
-  evasteet.set(ESIVERSIO_EVASTE, ESIVERSIO_EVASTE_ARVO, {
-    path: "/",
-    maxAge: ESIVERSIO_EVASTE_MAX_AGE_S,
-    sameSite: "lax",
-    httpOnly: false,
-  });
-  return true;
-}
-
 function palauteVirhe(viesti: string): never {
   redirect(`/yhteys?virhe=${encodeURIComponent(viesti)}`);
 }
