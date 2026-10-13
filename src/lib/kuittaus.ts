@@ -2,7 +2,7 @@ import type { EhdotusSisalto } from "@/lib/ehdotus";
 import {
   HANKE_KENTTA_NIMET,
   LUOTTAMUS_NIMET,
-  MERKINTA_NIMET,
+  merkintaNayttoteksti,
   SIJAINTI_ALUE_TYYPPI_NIMET,
   VAIHE_NIMET,
 } from "@/lib/naytto";
@@ -13,6 +13,7 @@ export type KuittausLahde = {
   kentta: string;
   luottamus: Luottamus;
   merkitty: Merkinta;
+  kuittaustapa?: string | null;
   lainaus: string | null;
   lahde_url: string | null;
 };
@@ -193,7 +194,7 @@ export function rakennaKuittausNakyma(
     const vanha: KuittausTila = {
       arvo,
       luottamus: LUOTTAMUS_NIMET[lahde.luottamus],
-      merkitty: MERKINTA_NIMET[lahde.merkitty],
+      merkitty: merkintaNayttoteksti(lahde.merkitty, lahde.kuittaustapa),
     };
 
     rivit.push({

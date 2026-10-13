@@ -29,7 +29,7 @@ import {
   HANKE_KENTTA_NIMET,
   LAHTEENVAHVISTUS_TULOS_NIMET,
   LUOTTAMUS_NIMET,
-  MERKINTA_NIMET,
+  merkintaNayttoteksti,
   PAATOS_KENTTA_NIMET,
   DOKUMENTTI_LAJI_NIMET,
   DOKUMENTTI_MUOTO_NIMET,
@@ -234,7 +234,10 @@ export default async function EhdotusSivu({
     if (lahdeRivi) {
       linkkiLahde = {
         luottamus: LUOTTAMUS_NIMET[lahdeRivi.luottamus as keyof typeof LUOTTAMUS_NIMET] ?? lahdeRivi.luottamus,
-        merkitty: MERKINTA_NIMET[lahdeRivi.merkitty as keyof typeof MERKINTA_NIMET] ?? lahdeRivi.merkitty,
+        merkitty: merkintaNayttoteksti(
+          lahdeRivi.merkitty as "koneen_ehdottama" | "ihmisen_vahvistama",
+          (lahdeRivi as { kuittaustapa?: string | null }).kuittaustapa,
+        ),
         lainaus: lahdeRivi.lainaus,
       };
     }

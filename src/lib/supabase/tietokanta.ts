@@ -497,6 +497,9 @@ export type KenttaLahde = {
   lainaus: string | null;
   merkitty: Merkinta;
   merkitty_pvm: string;
+  /** Ylläpitäjän lähdetarkistus: yksittain | era; null = vain hyväksyntä ilman kuittausmerkintää. */
+  kuittaustapa?: Kuittaustapa | null;
+  eratunniste?: string | null;
   luotu_pvm: string;
   tekninen_lahde: boolean;
   tila: "voimassa" | "korvattu" | "ei_tue";

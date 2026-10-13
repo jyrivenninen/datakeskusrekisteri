@@ -35,7 +35,7 @@
     "kunta:kartoitus": "tsx scripts/kartoita-kuntalahteet.ts",
     "test:rls": "npx supabase db query --linked -f supabase/tests/rls-oikeudet.sql",
     "test:rls:jwt": "tsx supabase/tests/rls-oikeudet.ts",
-    "test": "node --import tsx --test src/lib/haku.test.ts src/lib/avoin-data.test.ts src/lib/hanke-jarjestys.test.ts src/lib/geopackage.test.ts src/lib/dokumentti-otsikko.test.ts src/lib/lahde-geokoodaus-url.test.ts src/lib/oncloudos-otsikko.test.ts src/lib/sahkonkaytto-poiminta.test.ts src/lib/asiakirja-naytto.test.ts src/lib/asiakirja-yhdistys.test.ts src/lib/muutos-naytto.test.ts src/lib/ehdotus-lisalahde.test.ts src/lib/kunta-slug.test.ts src/lib/luvun-ristiriita.test.ts src/lib/organisaatio-nimi.test.ts src/lib/kohdistus-epavarma.test.ts src/lib/lahde-lainaus-tarkistus.test.ts src/lib/sijainti-tila.test.ts src/lib/maaraaja-huomio.test.ts src/lib/esiversio.test.ts",
+    "test": "node --import tsx --test src/lib/haku.test.ts src/lib/avoin-data.test.ts src/lib/hanke-jarjestys.test.ts src/lib/geopackage.test.ts src/lib/dokumentti-otsikko.test.ts src/lib/lahde-geokoodaus-url.test.ts src/lib/oncloudos-otsikko.test.ts src/lib/sahkonkaytto-poiminta.test.ts src/lib/asiakirja-naytto.test.ts src/lib/asiakirja-yhdistys.test.ts src/lib/muutos-naytto.test.ts src/lib/ehdotus-lisalahde.test.ts src/lib/kunta-slug.test.ts src/lib/luvun-ristiriita.test.ts src/lib/organisaatio-nimi.test.ts src/lib/kohdistus-epavarma.test.ts src/lib/lahde-lainaus-tarkistus.test.ts src/lib/sijainti-tila.test.ts src/lib/maaraaja-huomio.test.ts src/lib/esiversio.test.ts src/lib/merkinta-naytto.test.ts",
     "sahkonkaytto:skannaa": "tsx scripts/sahkonkaytto-skannaus.ts"
   },
   "dependencies": {

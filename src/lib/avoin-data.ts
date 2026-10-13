@@ -108,6 +108,19 @@ function kentatIhmisenVahvistama(lahteet: KenttaLahde[]): Record<string, boolean
   return tulos;
 }
 
+/** Kenttäkohtainen: onko voimassa oleva lähde, jolla kuittaustapa on asetettu. */
+function kentatLahdeTarkistettu(lahteet: KenttaLahde[]): Record<string, boolean> {
+  const tulos: Record<string, boolean> = {};
+  for (const lahde of lahteet) {
+    if (!lahdeVoimassaLaskentaan(lahde.tila) || lahde.tekninen_lahde) continue;
+    const tapa = lahde.kuittaustapa;
+    const on = tapa === "yksittain" || tapa === "era";
+    tulos[lahde.kentta] = Boolean(tulos[lahde.kentta]) || on;
+  }
+  tulos.huomautus = false;
+  return tulos;
+}
+
 function poistaJulkaisu<T extends { julkaistu?: boolean }>(
   rivi: T,
 ): Omit<T, "julkaistu"> {
@@ -200,8 +213,16 @@ export type AvoinDataHanke = {
   };
   /** Kenttä → onko sillä vähintään yksi viranomaislähde (paatos/viranomaisasiakirja/rekisteri). */
   kentat_viranomaislahde: Record<string, boolean>;
-  /** Kenttä → onko voimassa oleva lähde merkitty='ihmisen_vahvistama'. */
+  /**
+   * Kenttä → onko voimassa oleva lähde merkitty='ihmisen_vahvistama'
+   * (ylläpitäjän hyväksymä; ei välttämättä lähdetarkistusta).
+   */
   kentat_ihmisen_vahvistama: Record<string, boolean>;
+  /**
+   * Kenttä → onko voimassa oleva lähde, jolla kuittaustapa ei ole tyhjä
+   * (yksittain tai era = lähde tarkistettu).
+   */
+  kentat_lahde_tarkistettu: Record<string, boolean>;
   /** Additiivinen tehohavainnot[] (JSON v1). Tyhjä taulukko kun ei havaintoja. */
   tehohavainnot: AvoinDataTehohavainto[];
   lahteet: {
@@ -282,6 +303,7 @@ export function rakennaAvoinDataHanke(
     },
     kentat_viranomaislahde: kentatViranomaislahde(kaikkiHankeLahteet, urlTyypit),
     kentat_ihmisen_vahvistama: kentatIhmisenVahvistama(kaikkiHankeLahteet),
+    kentat_lahde_tarkistettu: kentatLahdeTarkistettu(kaikkiHankeLahteet),
     tehohavainnot,
     lahteet: {
       hankkeet: lahteetRiville(kysely.lahteet, urlTyypit),

@@ -593,9 +593,8 @@ export default async function HankeSivu({
           Tiedot ja lähteet
         </h2>
         <p className="mt-2 text-sm text-muted">
-          Kenttä avaa lähteen ja päivityslomakkeen. Vihreä valo tarkoittaa
-          viranomaislähdettä (päätös, viranomaisasiakirja tai rekisteri), jonka
-          ihminen on tarkistanut tukevan arvoa. Sijainnissa vihreä vaatii lisäksi
+          Kenttä avaa lähteen ja päivityslomakkeen. Vihreä: viranomaislähde,
+          jonka ylläpitäjä on hyväksynyt. Sijainnissa vihreä vaatii lisäksi
           tontin tai kaava-alueen sekä lainauksen, joka nimeää osoitteen tai
           koordinaatit. Keltainen on julkaistu tai muulla lähteellä tarkistettu,
           punainen puuttuu.

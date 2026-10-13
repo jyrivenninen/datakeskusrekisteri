@@ -61,28 +61,39 @@ export default async function TietoaPalvelustaSivu() {
             merkitään lähteineen. Tyhjä kenttä on parempi kuin arvattu.
           </p>
           <p>
-            Hankesivun liikennevalo: vihreä tarkoittaa viranomaislähdettä
-            (päätös, viranomaisasiakirja tai rekisteri), jonka ihminen on
-            tarkistanut tukevan arvoa. Keltainen on julkaistua tai muulla
-            lähteellä tarkistettua, punainen puuttuvaa. Sijainnissa vihreä
-            edellyttää lisäksi tonttia tai kaava-aluetta sekä lainausta, joka
-            nimeää osoitteen tai koordinaatit.
+            Hankesivun liikennevalo: vihreä: viranomaislähde, jonka ylläpitäjä on
+            hyväksynyt. Keltainen on julkaistua tai muulla lähteellä
+            tarkistettua, punainen puuttuvaa. Sijainnissa vihreä edellyttää
+            lisäksi tonttia tai kaava-aluetta sekä lainausta, joka nimeää
+            osoitteen tai koordinaatit.
+          </p>
+          <p>
+            Osa ylläpitäjän hyväksynnöistä on tehty erinä, joten hyväksyntä ei
+            aina tarkoita rivi riviltä tehtyä lähdetarkistusta. Kun ylläpitäjä on
+            tarkistanut lähteen yksittäin, tieto merkitään tekstillä Lähde
+            tarkistettu.
           </p>
           <p>
             Avoimen datan JSON-kenttä{" "}
             <code className="text-sm">kentat_viranomaislahde</code> tarkoittaa,
             että kentällä on vähintään yksi lähde tyyppiä päätös,
-            viranomaisasiakirja tai rekisteri; se ei tarkoita ihmisen tarkistusta.
-            Kenttä <code className="text-sm">kentat_ihmisen_vahvistama</code> on
-            true, kun kentällä on voimassa oleva lähde, jonka{" "}
-            <code className="text-sm">merkitty=ihmisen_vahvistama</code>. Hankesivun
-            vihreä valo vaatii ihmisen vahvistaman viranomaislähteen.{" "}
+            viranomaisasiakirja tai rekisteri; se ei tarkoita ylläpitäjän
+            hyväksyntää. Kenttä{" "}
+            <code className="text-sm">kentat_ihmisen_vahvistama</code> on true,
+            kun kentällä on voimassa oleva lähde, jonka{" "}
+            <code className="text-sm">merkitty=ihmisen_vahvistama</code>{" "}
+            (ylläpitäjän hyväksymä). Kenttä{" "}
+            <code className="text-sm">kentat_lahde_tarkistettu</code> on true,
+            kun voimassa olevalla lähteellä on{" "}
+            <code className="text-sm">kuittaustapa</code> (yksittäin tai erä).
+            Hankesivun vihreä valo vaatii ylläpitäjän hyväksymän
+            viranomaislähteen.{" "}
             <code className="text-sm">kentat_viranomaislahde.huomautus</code> on
             aina false: huomautus on rekisterin oma tulkinta, ei viranomaislähde.
           </p>
           <p>
             Ilmoitus lomakkeella tai agentin ehdottama havainto ei siirry
-            rekisteriin ennen kuin ylläpitäjä on tarkistanut lähteen.
+            rekisteriin ennen kuin ylläpitäjä on hyväksynyt sen.
           </p>
         </div>
       </section>

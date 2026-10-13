@@ -71,7 +71,7 @@ export const KENTAN_TILAT = ["vahvistettu", "vahvistamaton", "puuttuu"] as const
 export type KentanTila = (typeof KENTAN_TILAT)[number];
 
 export const KENTAN_TILA_NIMET: Record<KentanTila, string> = {
-  vahvistettu: "Viranomaislähde, jonka ihminen on tarkistanut",
+  vahvistettu: "Vihreä: viranomaislähde, jonka ylläpitäjä on hyväksynyt.",
   vahvistamaton: "Julkaistu tai muulla lähteellä tarkistettu",
   puuttuu: "Puuttuu",
 };
@@ -121,10 +121,48 @@ export function kentanTila(
   return "vahvistamaton";
 }
 
+/**
+ * Perusnimet ilman kuittaustapaa. Julkisessa näytössä käytä
+ * {@link merkintaNayttoteksti} — "ihmisen_vahvistama" ilman kuittaus­tapaa
+ * on "Ylläpitäjän hyväksymä", ei vanhaa "Ihmisen vahvistama".
+ */
 export const MERKINTA_NIMET: Record<Merkinta, string> = {
   koneen_ehdottama: "Koneen ehdottama",
-  ihmisen_vahvistama: "Ihmisen vahvistama",
+  ihmisen_vahvistama: "Ylläpitäjän hyväksymä",
 };
+
+export const MERKINTA_VIHJEET = {
+  yllapitajan_hyvaksyma:
+    "Ylläpitäjä on hyväksynyt tiedon. Hyväksyntä ei aina tarkoita rivi riviltä tehtyä lähteen tarkistusta; osa hyväksynnöistä on tehty erinä.",
+  lahde_tarkistettu:
+    "Ylläpitäjä on avannut lähteen ja tarkistanut, että se tukee tietoa.",
+  lahde_tarkistettu_era:
+    "Ylläpitäjä on tarkistanut lähteen erätyönä (esim. LS13-eräkuittaus): lähde on käyty läpi, mutta ei välttämättä yhtä syvällisesti kuin yksittäiskuittauksessa.",
+} as const;
+
+/**
+ * Julkinen merkintäteksti merkitty + kuittaustapa -yhdistelmälle.
+ * kuittaustapa 'era' = erässä tehty lähteen tarkistus (LS13 / aseta_lahde_kuittaustapa).
+ */
+export function merkintaNayttoteksti(
+  merkitty: Merkinta,
+  kuittaustapa?: string | null,
+): string {
+  if (merkitty === "koneen_ehdottama") return MERKINTA_NIMET.koneen_ehdottama;
+  if (kuittaustapa === "yksittain") return "Lähde tarkistettu";
+  if (kuittaustapa === "era") return "Lähde tarkistettu (erä)";
+  return "Ylläpitäjän hyväksymä";
+}
+
+export function merkintaVihje(
+  merkitty: Merkinta,
+  kuittaustapa?: string | null,
+): string | null {
+  if (merkitty === "koneen_ehdottama") return null;
+  if (kuittaustapa === "yksittain") return MERKINTA_VIHJEET.lahde_tarkistettu;
+  if (kuittaustapa === "era") return MERKINTA_VIHJEET.lahde_tarkistettu_era;
+  return MERKINTA_VIHJEET.yllapitajan_hyvaksyma;
+}
 
 export const MUUTOSEHDOTUS_TYYPPI_NIMET: Record<string, string> = {
   uusi_hanke: "Uusi hanke",
