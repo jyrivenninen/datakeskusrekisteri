@@ -70,6 +70,13 @@ export default async function TietoaPalvelustaSivu() {
           </p>
           <p>
             Avoimen datan JSON-kenttä{" "}
+            <code className="text-sm">kentat_viranomaislahde</code> tarkoittaa,
+            että kentällä on vähintään yksi lähde tyyppiä päätös,
+            viranomaisasiakirja tai rekisteri; se ei tarkoita ihmisen tarkistusta.
+            Kenttä <code className="text-sm">kentat_ihmisen_vahvistama</code> on
+            true, kun kentällä on voimassa oleva lähde, jonka{" "}
+            <code className="text-sm">merkitty=ihmisen_vahvistama</code>. Hankesivun
+            vihreä valo vaatii ihmisen vahvistaman viranomaislähteen.{" "}
             <code className="text-sm">kentat_viranomaislahde.huomautus</code> on
             aina false: huomautus on rekisterin oma tulkinta, ei viranomaislähde.
           </p>

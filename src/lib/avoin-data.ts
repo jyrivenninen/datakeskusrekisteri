@@ -96,6 +96,18 @@ function kentatViranomaislahde(
   return tulos;
 }
 
+/** Kenttäkohtainen: onko voimassa oleva lähde merkitty='ihmisen_vahvistama'. */
+function kentatIhmisenVahvistama(lahteet: KenttaLahde[]): Record<string, boolean> {
+  const tulos: Record<string, boolean> = {};
+  for (const lahde of lahteet) {
+    if (!lahdeVoimassaLaskentaan(lahde.tila) || lahde.tekninen_lahde) continue;
+    const on = lahde.merkitty === "ihmisen_vahvistama";
+    tulos[lahde.kentta] = Boolean(tulos[lahde.kentta]) || on;
+  }
+  tulos.huomautus = false;
+  return tulos;
+}
+
 function poistaJulkaisu<T extends { julkaistu?: boolean }>(
   rivi: T,
 ): Omit<T, "julkaistu"> {
@@ -169,6 +181,18 @@ function serialisoiAsiakirja(rivi: HankeAsiakirja) {
   return poistaJulkaisu(rivi);
 }
 
+export type AvoinDataTehohavainto = {
+  mw: number | null;
+  mw_min: number | null;
+  mw_max: number | null;
+  laji: string;
+  kohde: string;
+  rajaus: string;
+  tila: string;
+  havainto_pvm: string | null;
+  lahde: AvoinDataLahde | null;
+};
+
 export type AvoinDataHanke = {
   hanke: ReturnType<typeof serialisoiHanke> & {
     vanhin_vahvistettu_pvm: string | null;
@@ -176,6 +200,10 @@ export type AvoinDataHanke = {
   };
   /** Kenttä → onko sillä vähintään yksi viranomaislähde (paatos/viranomaisasiakirja/rekisteri). */
   kentat_viranomaislahde: Record<string, boolean>;
+  /** Kenttä → onko voimassa oleva lähde merkitty='ihmisen_vahvistama'. */
+  kentat_ihmisen_vahvistama: Record<string, boolean>;
+  /** Additiivinen tehohavainnot[] (JSON v1). Tyhjä taulukko kun ei havaintoja. */
+  tehohavainnot: AvoinDataTehohavainto[];
   lahteet: {
     hankkeet: AvoinDataLahde[];
     maaraajat: AvoinDataLahde[];
@@ -224,7 +252,28 @@ export function rakennaAvoinDataHanke(
     ...kysely.vaihtoehtoLahteet,
     ...kysely.kuvaLahteet,
     ...kysely.paatosLahteet,
+    ...(kysely.tehohavaintoLahteet ?? []),
   ];
+  const tehohavainnot = (kysely.tehohavainnot ?? []).map((h) => {
+    const lahde =
+      (kysely.tehohavaintoLahteet ?? []).find(
+        (l) =>
+          l.rivi_id === h.id &&
+          l.kentta === "havainto" &&
+          (l.tila === "voimassa" || l.tila === "korvattu"),
+      ) ?? null;
+    return {
+      mw: h.mw,
+      mw_min: h.mw_min,
+      mw_max: h.mw_max,
+      laji: h.laji,
+      kohde: h.kohde,
+      rajaus: h.rajaus,
+      tila: h.tila,
+      havainto_pvm: h.havainto_pvm,
+      lahde: lahde ? serialisoiLahde(lahde, urlTyypit) : null,
+    };
+  });
   return {
     hanke: {
       ...serialisoiHanke(kysely.hanke),
@@ -232,6 +281,8 @@ export function rakennaAvoinDataHanke(
       viimeisin_paatos: kysely.hanke.viimeisin_paatos,
     },
     kentat_viranomaislahde: kentatViranomaislahde(kaikkiHankeLahteet, urlTyypit),
+    kentat_ihmisen_vahvistama: kentatIhmisenVahvistama(kaikkiHankeLahteet),
+    tehohavainnot,
     lahteet: {
       hankkeet: lahteetRiville(kysely.lahteet, urlTyypit),
       maaraajat: lahteetRiville(kysely.maaraajaLahteet, urlTyypit),
@@ -317,6 +368,7 @@ export const CSV_SARAKKEET = [
   "vaihe",
   "teho_mw",
   "it_teho_mw",
+  "teho_erittelematon_mw",
   "pinta_ala_ha",
   "kaava_ala_ha",
   "sahkonkaytto_twh_a",
@@ -363,6 +415,7 @@ export function hankkeetCsv(hankkeet: AvoinDataHanke[]): string {
         h.vaihe,
         h.teho_mw,
         h.it_teho_mw,
+        h.teho_erittelematon_mw ?? null,
         h.pinta_ala_ha,
         h.kaava_ala_ha,
         h.sahkonkaytto_twh_a,

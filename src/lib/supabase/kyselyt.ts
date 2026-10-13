@@ -639,6 +639,8 @@ export async function haeHanke(id: string): Promise<{
   tarkistukset: KenttaTarkistus[];
   paatokset: PaatosNakyma[];
   paatosLahteet: KenttaLahde[];
+  tehohavainnot: import("@/lib/tehohavainnot").Tehohavainto[];
+  tehohavaintoLahteet: KenttaLahde[];
   virhe: string | null;
 }> {
   const tyhja = {
@@ -663,6 +665,8 @@ export async function haeHanke(id: string): Promise<{
     tarkistukset: [],
     paatokset: [],
     paatosLahteet: [],
+    tehohavainnot: [] as import("@/lib/tehohavainnot").Tehohavainto[],
+    tehohavaintoLahteet: [] as KenttaLahde[],
     virhe: null as string | null,
   };
 
@@ -694,6 +698,7 @@ export async function haeHanke(id: string): Promise<{
       { data: kuvat },
       { data: tarkistukset },
       { data: paatokset },
+      { data: tehohavainnotRaaka },
     ] = await Promise.all([
       supabase
         .from("kentta_lahteet")
@@ -763,6 +768,11 @@ export async function haeHanke(id: string): Promise<{
         .eq("hanke_id", id)
         .eq("julkaistu", true)
         .order("pvm", { ascending: false }),
+      supabase
+        .from("tehohavainnot")
+        .select("*")
+        .eq("hanke_id", id)
+        .order("havainto_pvm", { ascending: false }),
     ]);
 
     async function haeRiviLahteet(
@@ -788,6 +798,8 @@ export async function haeHanke(id: string): Promise<{
     const vaihtoehtoIdt = (vaihtoehdot ?? []).map((rivi) => rivi.id);
     const kuvaIdt = (kuvat ?? []).map((rivi) => rivi.id);
     const paatosIdt = (paatokset ?? []).map((rivi) => rivi.id);
+    const tehohavainnot = (tehohavainnotRaaka ?? []) as import("@/lib/tehohavainnot").Tehohavainto[];
+    const tehohavaintoIdt = tehohavainnot.map((rivi) => rivi.id);
 
     const [
       maaraajaLahteet,
@@ -799,6 +811,7 @@ export async function haeHanke(id: string): Promise<{
       vaihtoehtoLahteet,
       kuvaLahteet,
       paatosLahteet,
+      tehohavaintoLahteet,
     ] = await Promise.all([
         haeRiviLahteet("maaraajat", maaraajaIdt),
         haeRiviLahteet("hanke_kunnat", kuntaIdt),
@@ -809,6 +822,7 @@ export async function haeHanke(id: string): Promise<{
         haeRiviLahteet("hanke_vaihtoehdot", vaihtoehtoIdt),
         haeRiviLahteet("hanke_kuvat", kuvaIdt),
         haeRiviLahteet("paatokset", paatosIdt),
+        haeRiviLahteet("tehohavainnot", tehohavaintoIdt),
       ]);
 
     const kaikkiLahteet: KenttaLahde[] = [
@@ -821,6 +835,7 @@ export async function haeHanke(id: string): Promise<{
       ...vaihtoehtoLahteet,
       ...kuvaLahteet,
       ...paatosLahteet,
+      ...tehohavaintoLahteet,
     ];
     const paatosNakyma = (paatokset ?? []) as PaatosNakyma[];
 
@@ -864,6 +879,8 @@ export async function haeHanke(id: string): Promise<{
       tarkistukset: (tarkistukset ?? []) as KenttaTarkistus[],
       paatokset: paatosNakyma,
       paatosLahteet,
+      tehohavainnot,
+      tehohavaintoLahteet,
       virhe: null,
     };
   } catch (syy) {

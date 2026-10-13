@@ -26,6 +26,7 @@ import type {
   PaatosNakyma,
 } from "@/lib/supabase/tietokanta";
 import type { HankeListalla } from "@/lib/supabase/kyselyt";
+import type { Tehohavainto } from "@/lib/tehohavainnot";
 
 type HankeKysely = Awaited<ReturnType<typeof haeHanke>>;
 type Sivutettu<T> = { data: T[] | null; error: { message: string } | null };
@@ -92,6 +93,7 @@ export async function haeAvoinDataHankkeet(juuriUrl: string): Promise<{
       kuvat,
       tarkistukset,
       paatokset,
+      tehohavainnot,
     ] = await Promise.all([
       haeSivuttain(
         (alku, loppu) =>
@@ -202,6 +204,14 @@ export async function haeAvoinDataHankkeet(juuriUrl: string): Promise<{
             .order("id")
             .range(alku, loppu) as PromiseLike<Sivutettu<PaatosNakyma>>,
       ),
+      haeSivuttain(
+        (alku, loppu) =>
+          supabase
+            .from("tehohavainnot")
+            .select("*")
+            .order("id")
+            .range(alku, loppu) as PromiseLike<Sivutettu<Tehohavainto>>,
+      ),
     ]);
 
     const lahdeKartta = new Map<string, KenttaLahde[]>();
@@ -221,6 +231,7 @@ export async function haeAvoinDataHankkeet(juuriUrl: string): Promise<{
     const vaihtoehtoKartta = ryhmittele(vaihtoehdot);
     const kuvaKartta = ryhmittele(kuvat);
     const paatosKartta = ryhmittele(paatokset);
+    const tehohavaintoKartta = ryhmittele(tehohavainnot);
     const tarkistusKartta = new Map<string, KenttaTarkistus[]>();
     for (const tarkistus of tarkistukset) {
       const lista = tarkistusKartta.get(tarkistus.rivi_id) ?? [];
@@ -261,6 +272,14 @@ export async function haeAvoinDataHankkeet(juuriUrl: string): Promise<{
       });
       const hankeTarkistukset = (tarkistusKartta.get(id) ?? []).sort((a, b) =>
         a.kentta.localeCompare(b.kentta, "fi"),
+      );
+      const hankeTehohavainnot = (tehohavaintoKartta.get(id) ?? []).sort((a, b) =>
+        (b.havainto_pvm ?? "").localeCompare(a.havainto_pvm ?? ""),
+      );
+      const tehohavaintoLahteet = lahteetIdlle(
+        lahdeKartta,
+        "tehohavainnot",
+        hankeTehohavainnot.map((rivi) => rivi.id),
       );
 
       const hankeLahteet = lahteetIdlle(lahdeKartta, "hankkeet", [id]);
@@ -319,6 +338,7 @@ export async function haeAvoinDataHankkeet(juuriUrl: string): Promise<{
         ...vaihtoehtoLahteet,
         ...kuvaLahteet,
         ...paatosLahteet,
+        ...tehohavaintoLahteet,
       ];
       const dokByUrl = new Map(dokumentit.map((d) => [d.url, d]));
       const liittyvatUrllit = new Set(hankkeenFaktalahdeUrllit(kaikkiLahteet));
@@ -355,6 +375,8 @@ export async function haeAvoinDataHankkeet(juuriUrl: string): Promise<{
         tarkistukset: hankeTarkistukset,
         paatokset: hankePaatokset,
         paatosLahteet,
+        tehohavainnot: hankeTehohavainnot,
+        tehohavaintoLahteet,
         virhe: null,
       };
       const rivi = rakennaAvoinDataHanke(kysely, juuriUrl);

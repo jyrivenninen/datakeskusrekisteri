@@ -48,6 +48,7 @@ import { hankeOgKuvaus, kortinMetatiedot, SIVUSTON_KUVAUS, SIVUSTON_OTSIKKO } fr
 import { haeYllapitaja } from "@/lib/supabase/palvelin";
 import { supabasePalvelinAvainAsetettu } from "@/lib/supabase/yllapito-asiakas";
 import type { Hanke, KenttaLahde, KenttaTarkistus } from "@/lib/supabase/tietokanta";
+import { tehohavaintoTekstirivi } from "@/lib/tehohavainnot";
 
 export const revalidate = 60;
 
@@ -219,6 +220,13 @@ function hankeRyhmat(
           arvo: hanke.it_teho_mw != null ? muotoileLuku(hanke.it_teho_mw) : null,
         },
         {
+          kentta: "teho_erittelematon_mw",
+          arvo:
+            hanke.teho_erittelematon_mw != null
+              ? muotoileLuku(hanke.teho_erittelematon_mw)
+              : null,
+        },
+        {
           kentta: "pinta_ala_ha",
           arvo: hanke.pinta_ala_ha != null ? muotoileLuku(hanke.pinta_ala_ha) : null,
         },
@@ -346,6 +354,7 @@ export default async function HankeSivu({
     tarkistukset,
     paatokset,
     paatosLahteet,
+    tehohavainnot,
     virhe,
   } = await haeHanke(id);
 
@@ -405,6 +414,10 @@ export default async function HankeSivu({
             lat: hanke.sijainti_lat != null ? Number(hanke.sijainti_lat) : undefined,
             lon: hanke.sijainti_lon != null ? Number(hanke.sijainti_lon) : undefined,
             tehoMw: hankeTehoMw(hanke),
+            tavoiteTehoMw:
+              tehohavainnot.find(
+                (h) => h.tila === "voimassa" && h.kohde === "tavoite" && h.mw != null,
+              )?.mw ?? null,
             arvio: hanke.sijainti_alue_tyyppi === "arvio",
             alue,
             johdot: karttajohdot,
@@ -610,6 +623,16 @@ export default async function HankeSivu({
                   />
                 ))}
               </Korttiruudukko>
+              {ryhma.id === "teho-mitoitus" &&
+              tehohavainnot.some((h) => h.tila === "voimassa") ? (
+                <ul className="mt-3 list-disc space-y-1 pl-5 text-sm text-muted">
+                  {tehohavainnot
+                    .filter((h) => h.tila === "voimassa")
+                    .map((h) => (
+                      <li key={h.id}>{tehohavaintoTekstirivi(h)}</li>
+                    ))}
+                </ul>
+              ) : null}
             </section>
           ))}
         </div>

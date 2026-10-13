@@ -47,6 +47,8 @@ export type Karttamerkki = {
   lon?: number;
   /** IT-teho tai fallback kokonaisteho (MW); halo piirretään vain jos > 0. */
   tehoMw?: number | null;
+  /** Tavoite-teho (MW): katkoviivahalo, ei korvaa tehoMw-summaa. */
+  tavoiteTehoMw?: number | null;
   /** VE-minimi sähkönkäytöstä (TWh/a), jos lähde antaa vaihteluvälin. */
   sahkonkayttoTwhMin?: number | null;
   /** VE-maksimi sähkönkäytöstä (TWh/a). */
@@ -471,19 +473,34 @@ function lisaaTehoSuodatin(svg: SVGSVGElement) {
 function piirraTehoHalot(kartta: MapLibre, svg: SVGSVGElement, merkit: Karttamerkki[]) {
   const zoom = kartta.getZoom();
   for (const merkki of merkit) {
-    if (merkki.tehoMw == null || merkki.tehoMw <= 0) continue;
     const keskipiste = merkinKeskipiste(merkki);
     if (!keskipiste) continue;
     const xy = kartta.project([keskipiste.lon, keskipiste.lat]);
-    const sade = tehoSadePx(merkki.tehoMw, zoom);
-    const ympyra = document.createElementNS("http://www.w3.org/2000/svg", "circle");
-    ympyra.setAttribute("cx", xy.x.toFixed(1));
-    ympyra.setAttribute("cy", xy.y.toFixed(1));
-    ympyra.setAttribute("r", sade.toFixed(1));
-    ympyra.setAttribute("fill", interpoloiVari(TEHO_VARI_PYSAKIT, merkki.tehoMw));
-    ympyra.setAttribute("fill-opacity", interpoloiLuku(TEHO_PEITTO_PYSAKIT, merkki.tehoMw).toFixed(2));
-    ympyra.setAttribute("filter", "url(#teho-sumu)");
-    svg.appendChild(ympyra);
+    if (merkki.tehoMw != null && merkki.tehoMw > 0) {
+      const sade = tehoSadePx(merkki.tehoMw, zoom);
+      const ympyra = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+      ympyra.setAttribute("cx", xy.x.toFixed(1));
+      ympyra.setAttribute("cy", xy.y.toFixed(1));
+      ympyra.setAttribute("r", sade.toFixed(1));
+      ympyra.setAttribute("fill", interpoloiVari(TEHO_VARI_PYSAKIT, merkki.tehoMw));
+      ympyra.setAttribute("fill-opacity", interpoloiLuku(TEHO_PEITTO_PYSAKIT, merkki.tehoMw).toFixed(2));
+      ympyra.setAttribute("filter", "url(#teho-sumu)");
+      svg.appendChild(ympyra);
+    }
+    // Tavoite: katkoviivahalo (ei summaan).
+    if (merkki.tavoiteTehoMw != null && merkki.tavoiteTehoMw > 0) {
+      const sade = tehoSadePx(merkki.tavoiteTehoMw, zoom);
+      const kehys = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+      kehys.setAttribute("cx", xy.x.toFixed(1));
+      kehys.setAttribute("cy", xy.y.toFixed(1));
+      kehys.setAttribute("r", sade.toFixed(1));
+      kehys.setAttribute("fill", "none");
+      kehys.setAttribute("stroke", interpoloiVari(TEHO_VARI_PYSAKIT, merkki.tavoiteTehoMw));
+      kehys.setAttribute("stroke-opacity", "0.85");
+      kehys.setAttribute("stroke-width", "2");
+      kehys.setAttribute("stroke-dasharray", "6 4");
+      svg.appendChild(kehys);
+    }
   }
 }
 

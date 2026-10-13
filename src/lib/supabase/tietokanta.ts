@@ -484,7 +484,8 @@ export type KenttaLahde = {
     | "hanke_vaihtoehdot"
     | "hanke_kuvat"
     | "paatokset"
-    | "hanke_rakentamisvaiheet";
+    | "hanke_rakentamisvaiheet"
+    | "tehohavainnot";
   rivi_id: string;
   kentta: string;
   lahde_url: string;

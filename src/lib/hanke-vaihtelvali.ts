@@ -1,4 +1,9 @@
 import { hankeTehoMw, type KokoLuokka } from "@/lib/naytto";
+import {
+  hankeTehoVaihtelvaliB2,
+  TEHO_SULJE_PERUTUT,
+  type Tehohavainto,
+} from "@/lib/tehohavainnot";
 import type { Hanke, HankeVaihtoehto } from "@/lib/supabase/tietokanta";
 
 export type Vaihtelvali = { min: number; max: number };
@@ -56,13 +61,38 @@ function kentanVaihtelvali(
   return { min: hankeArvo, max: hankeArvo };
 }
 
-/** VE-luvut, jos merkitty; muuten hanketason luku. VE1 ja VE2 eivät yhdisty. */
+/**
+ * VE-luvut, jos merkitty; muuten hanketason luku. VE1 ja VE2 eivät yhdisty.
+ * Valinnainen tehohavainnot: tyhjällä taulukolla sama tulos kuin ennen (B2).
+ */
 export function hankeVaihtelvalit(
-  hanke: HankeLuvut,
+  hanke: HankeLuvut & {
+    vaihe?: Hanke["vaihe"];
+    teho_erittelematon_mw?: number | null;
+  },
   vaihtoehdot: readonly VaihtoehtoLuvut[],
+  tehohavainnot: readonly Tehohavainto[] = [],
+  opts?: { suljePerutut?: boolean },
 ): HankeVaihtelvalit {
+  const sulje = opts?.suljePerutut ?? TEHO_SULJE_PERUTUT;
+  // Push 1 (sulje=false): vanha kentanVaihtelvali / live 107.
+  // Laskentatapa tarkennettu (sulje=true): peruttu → null teho.
+  const teho =
+    sulje && hanke.vaihe === "peruttu"
+      ? null
+      : tehohavainnot.length > 0 || sulje
+        ? hankeTehoVaihtelvaliB2(
+            {
+              ...hanke,
+              vaihe: hanke.vaihe ?? "esiselvitys",
+            },
+            vaihtoehdot,
+            tehohavainnot,
+            { suljePerutut: sulje },
+          )
+        : kentanVaihtelvali(hankeTehoMw(hanke), vaihtoehdot, (ve) => hankeTehoMw(ve));
   return {
-    teho: kentanVaihtelvali(hankeTehoMw(hanke), vaihtoehdot, (ve) => hankeTehoMw(ve)),
+    teho,
     pintaAla: kentanVaihtelvali(luku(hanke.pinta_ala_ha), vaihtoehdot, (ve) =>
       luku(ve.pinta_ala_ha),
     ),
