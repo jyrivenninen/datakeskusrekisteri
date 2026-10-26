@@ -9,6 +9,16 @@ export type KehityslokiMerkinta = {
 
 export const KEHITYSLOKI: KehityslokiMerkinta[] = [
   {
+    pvm: "2026-10-26",
+    otsikko: "GeoPackage-lataus korjattu",
+    johdanto:
+      "GeoPackage-latauksen (hankkeet.gpkg) geometriat luettiin tyhjiksi, eivätkä kohteet näkyneet kartalla QGIS:ssä tai muissa GDAL-pohjaisissa ohjelmissa. Ominaisuustiedot olivat kunnossa. Vika johtui geometriaotsakkeen virheellisestä lippubitistä. Jos olet ladannut tiedoston ennen 26.10.2026, lataa se uudelleen.",
+    kohdat: [
+      "Vienti tarkistaa nyt jokaisen geometrian ennen tiedoston julkaisua, ja julkinen tiedosto avataan GDAL:lla automaattisesti jokaisen päivityksen jälkeen ja kerran päivässä.",
+      "Vika löytyi käyttäjän palautteen perusteella.",
+    ],
+  },
+  {
     pvm: "2026-10-13",
     otsikko: "Lähdeluettelo, sijainnin vihreä ja JSON-huomautus",
     kohdat: [
