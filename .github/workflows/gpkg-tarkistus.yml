@@ -1,0 +1,113 @@
+# Tuotannon GeoPackage tarkistetaan järjestelmän GDAL:lla.
+# Laukaisut: Vercelin onnistunut Production-deploy, kerran vuorokaudessa klo 05:00 UTC, käsin.
+
+name: gpkg-tarkistus
+
+on:
+  deployment_status:
+  schedule:
+    - cron: "0 5 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  gpkg:
+    if: >-
+      github.event_name != 'deployment_status' ||
+      (
+        github.event.deployment_status.state == 'success' &&
+        (
+          github.event.deployment_status.environment == 'Production' ||
+          github.event.deployment.environment == 'Production'
+        )
+      )
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Hae tarkistusskripti
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.repository.default_branch }}
+
+      - name: Asenna GDAL
+        run: |
+          sudo apt-get update
+          sudo DEBIAN_FRONTEND=noninteractive apt-get install -y gdal-bin python3-gdal
+
+      - name: Lataa tuotannon GeoPackage ja tarkista se GDAL:lla
+        env:
+          GPKG_URL: https://www.datakeskusrekisteri.fi/data/hankkeet.gpkg
+        run: |
+          set -euo pipefail
+          tiedosto="${RUNNER_TEMP}/hankkeet.gpkg"
+          otsikot="${RUNNER_TEMP}/hankkeet.gpkg.hdr"
+          curl_err="${RUNNER_TEMP}/curl.err"
+
+          # Julkinen reitti käyttää max-age 300 s. Deploy-tapahtuman jälkeen
+          # CDN voi vielä palauttaa edellisen tiedoston, joten GDAL-tarkistus
+          # yritetään uudelleen noin viiden minuutin ajan.
+          if [ "${GITHUB_EVENT_NAME}" = "deployment_status" ]; then
+            yritykset=6
+            tauko=60
+          else
+            yritykset=1
+            tauko=0
+          fi
+
+          lataa() {
+            local status=0
+            HTTP_KOODI="$(curl --fail --silent --show-error --location \
+              --output "$tiedosto" \
+              --dump-header "$otsikot" \
+              --write-out "%{http_code}" \
+              --max-time 120 \
+              "$GPKG_URL" 2>"$curl_err")" || status=$?
+
+            if [ "${HTTP_KOODI:-}" = "500" ]; then
+              echo "::error::Tuotantoreitti palautti HTTP 500. GeoPackage-vienti on hylännyt tiedoston eikä sitä julkaistu. Tyypillinen syy on viennin itsetarkistus, joka torjuu virheellisen koordinaatin."
+              if [ -s "$tiedosto" ]; then
+                echo "Vastauksen alku:"
+                head -c 400 "$tiedosto" || true
+                echo
+              fi
+              return 22
+            fi
+
+            if [ "$status" -ne 0 ]; then
+              echo "::error::GeoPackage-lataus epäonnistui (curl-poistumiskoodi $status, HTTP ${HTTP_KOODI:-ei koodia})."
+              cat "$curl_err" || true
+              return "$status"
+            fi
+
+            if grep -a -qi 'vercel.com/login' "$tiedosto"; then
+              echo "::error::Vastaus on Vercelin kirjautumissivu (vercel.com/login), ei rekisterin GeoPackage-tiedostoa."
+              return 1
+            fi
+
+            content_type="$(grep -i '^content-type:' "$otsikot" | tail -n 1 | tr -d '\r' || true)"
+            if printf '%s' "$content_type" | grep -qi 'text/html'; then
+              echo "::error::Vastaus on HTML-sivu (${content_type}), ei rekisterin GeoPackage-tiedostoa."
+              return 1
+            fi
+
+            echo "HTTP ${HTTP_KOODI}. Content-Type: ${content_type:-puuttuu}. Vastaus on rekisterin GeoPackage-lataus, ei Vercelin kirjautumissivu."
+            return 0
+          }
+
+          for ((i = 1; i <= yritykset; i++)); do
+            if ! lataa; then
+              exit 1
+            fi
+            if python3 scripts/tarkista_gpkg.py "$tiedosto"; then
+              exit 0
+            fi
+            if [ "$i" -lt "$yritykset" ]; then
+              echo "GDAL-tarkistus epäonnistui (yritys ${i}/${yritykset}). Välimuisti voi vielä tarjota edellistä tiedostoa. Odotetaan ${tauko} s."
+              sleep "$tauko"
+            fi
+          done
+
+          echo "::error::GDAL-tarkistus epäonnistui kaikkien yritysten jälkeen."
+          exit 1
