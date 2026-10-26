@@ -90,19 +90,90 @@ function wkbPolygoni(renkaat: number[][][]): Uint8Array {
   return buf;
 }
 
-function kuori(wkb: Uint8Array, laajuus: [number, number, number, number]): Uint8Array {
-  const out = new Uint8Array(40 + wkb.length);
+/** GeoPackage 1.3 -otsakkeen flags-tavu.
+ * bitti 0: little-endian, bitit 1–3: kehysindikaattori (<< 1, ei << 4),
+ * bitti 4: tyhjä geometria, bitti 5: extended = 0.
+ * XY + little-endian + ei-tyhjä = 0x03. Arvo 0x11 on tyhjä geometria ilman kehystä.
+ */
+function geometriaLiput(kehysKoodi: number, tyhja: boolean): number {
+  let liput = 0x01 | ((kehysKoodi & 0x07) << 1);
+  if (tyhja) liput |= 0x10;
+  return liput;
+}
+
+function hexTavuiksi(hex: string): Uint8Array {
+  const out = new Uint8Array(hex.length / 2);
+  for (let i = 0; i < out.length; i += 1) {
+    out[i] = Number.parseInt(hex.slice(i * 2, i * 2 + 2), 16);
+  }
+  return out;
+}
+
+/** Postgres-bytea `\xDEADBEEF`, kirjaimelliset `\xNN`-escapet tai pelkkä heksa. */
+function puraHexMerkkijono(teksti: string): Uint8Array | null {
+  if (/^(?:\\x[0-9a-fA-F]{2})+$/.test(teksti)) {
+    const osat = teksti.match(/[0-9a-fA-F]{2}/g);
+    if (!osat) return null;
+    return Uint8Array.from(osat, (osa) => Number.parseInt(osa, 16));
+  }
+  const postgres = teksti.match(/^\\x([0-9a-fA-F]*)$/);
+  if (postgres) {
+    const hex = postgres[1] ?? "";
+    if (hex.length % 2 !== 0) return null;
+    return hexTavuiksi(hex);
+  }
+  if (/^[0-9a-fA-F]+$/.test(teksti) && teksti.length % 2 === 0) {
+    return hexTavuiksi(teksti);
+  }
+  return null;
+}
+
+function puraWkb(syote: Uint8Array | string): Uint8Array {
+  if (syote instanceof Uint8Array) return syote;
+  const purettu = puraHexMerkkijono(syote.trim());
+  if (!purettu || purettu.length === 0) {
+    throw new Error("WKB on merkkijono, jota ei voitu purkaa binääriksi");
+  }
+  return purettu;
+}
+
+function wkbOnTyhja(wkb: Uint8Array): boolean {
+  if (wkb.length === 0) return true;
+  if (wkb[0] !== 0 && wkb[0] !== 1) {
+    throw new Error("WKB:n tavujärjestystavu puuttuu");
+  }
+  if (wkb.length < 5) {
+    throw new Error("WKB on liian lyhyt");
+  }
+  const little = wkb[0] === 1;
+  const view = new DataView(wkb.buffer, wkb.byteOffset, wkb.byteLength);
+  const tyyppi = view.getUint32(1, little) & 0xff;
+  if (tyyppi === 1) {
+    if (wkb.length < 21) return true;
+    return !Number.isFinite(view.getFloat64(5, little)) || !Number.isFinite(view.getFloat64(13, little));
+  }
+  if (wkb.length < 9) return true;
+  return view.getUint32(5, little) === 0;
+}
+
+function kuori(wkbSyote: Uint8Array | string, laajuus: [number, number, number, number]): Uint8Array {
+  const wkb = puraWkb(wkbSyote);
+  const tyhja = wkbOnTyhja(wkb);
+  const kehysKoodi = tyhja ? 0 : 1;
+  const out = new Uint8Array(8 + (tyhja ? 0 : 32 + wkb.length));
   const view = new DataView(out.buffer);
   out[0] = 0x47;
   out[1] = 0x50;
   out[2] = 0;
-  out[3] = 0x11;
+  out[3] = geometriaLiput(kehysKoodi, tyhja);
   view.setInt32(4, SRS_ID, true);
-  view.setFloat64(8, laajuus[0], true);
-  view.setFloat64(16, laajuus[1], true);
-  view.setFloat64(24, laajuus[2], true);
-  view.setFloat64(32, laajuus[3], true);
-  out.set(wkb, 40);
+  if (!tyhja) {
+    view.setFloat64(8, laajuus[0], true);
+    view.setFloat64(16, laajuus[1], true);
+    view.setFloat64(24, laajuus[2], true);
+    view.setFloat64(32, laajuus[3], true);
+    out.set(wkb, 40);
+  }
   return out;
 }
 
@@ -239,6 +310,77 @@ function teksti(arvo: string | number | null | undefined): string | number | nul
   return arvo;
 }
 
+const GEOMETRIA_TAULUT = ["hankkeet_pisteet", "hankkeet_alueet", "johtoreitit"] as const;
+const KEHYKSEN_DOUBLET = [0, 4, 6, 6, 8] as const;
+
+function kehysSuomessa(minX: number, maxX: number, minY: number, maxY: number): boolean {
+  const lon = (arvo: number) => arvo >= -180 && arvo <= 180 && arvo >= 19 && arvo <= 32;
+  const lat = (arvo: number) => arvo >= -90 && arvo <= 90 && arvo >= 59 && arvo <= 71;
+  return lon(minX) && lon(maxX) && lat(minY) && lat(maxY);
+}
+
+function tarkistaGeometriaRivi(taulu: string, rivi: number, sqlTyyppi: unknown, geom: unknown): void {
+  const kohta = `${taulu} rivi ${rivi}`;
+  if (sqlTyyppi !== "blob" || typeof geom === "string" || !(geom instanceof Uint8Array)) {
+    throw new Error(
+      `${kohta}: geometria ei ole binääri-BLOB (SQLite ${String(sqlTyyppi)}, JS ${typeof geom})`,
+    );
+  }
+  if (geom.length < 8 || geom[0] !== 0x47 || geom[1] !== 0x50) {
+    throw new Error(`${kohta}: GeoPackage-magic GP puuttuu`);
+  }
+  const flags = geom[3] ?? 0;
+  const little = (flags & 0x01) === 1;
+  const kehysKoodi = (flags >> 1) & 0x07;
+  const tyhjaLippu = (flags & 0x10) !== 0;
+  if (kehysKoodi > 4) {
+    throw new Error(`${kohta}: virheellinen kehysindikaattori ${kehysKoodi}`);
+  }
+  const otsake = 8 + (KEHYKSEN_DOUBLET[kehysKoodi] ?? 0) * 8;
+  if (geom.length < otsake) {
+    throw new Error(`${kohta}: geometria on otsaketta lyhyempi`);
+  }
+  if (tyhjaLippu) {
+    if (kehysKoodi !== 0 || geom.length !== 8) {
+      throw new Error(`${kohta}: tyhjän geometrian lippu on asetettu`);
+    }
+    return;
+  }
+  if (kehysKoodi !== 1 || geom.length < 45) {
+    throw new Error(`${kohta}: kehysindikaattori ${kehysKoodi} ei vastaa XY-kehystä`);
+  }
+  const wkb = geom.subarray(40);
+  if ((wkb[0] !== 0 && wkb[0] !== 1) || wkbOnTyhja(wkb)) {
+    throw new Error(`${kohta}: WKB puuttuu tai on tyhjä, mutta empty-lippua ei ole`);
+  }
+  const view = new DataView(geom.buffer, geom.byteOffset, geom.byteLength);
+  const minX = view.getFloat64(8, little);
+  const maxX = view.getFloat64(16, little);
+  const minY = view.getFloat64(24, little);
+  const maxY = view.getFloat64(32, little);
+  if (!kehysSuomessa(minX, maxX, minY, maxY)) {
+    throw new Error(
+      `${kohta}: kehys [${minX}, ${maxX}, ${minY}, ${maxY}] ei ole EPSG:4326-rajoissa ja Suomen alueella (lon 19–32, lat 59–71)`,
+    );
+  }
+}
+
+function tarkistaViedytGeometriat(db: Tietokanta): void {
+  for (const taulu of GEOMETRIA_TAULUT) {
+    const kysely = db.prepare(`SELECT typeof(geom), geom FROM ${taulu}`);
+    try {
+      let rivi = 0;
+      while (kysely.step()) {
+        rivi += 1;
+        const arvot = kysely.get();
+        tarkistaGeometriaRivi(taulu, rivi, arvot[0], arvot[1]);
+      }
+    } finally {
+      kysely.free();
+    }
+  }
+}
+
 export async function rakennaHankkeetGeopackage(hankkeet: AvoinDataHanke[]): Promise<Uint8Array> {
   const SQL = await lataaSqlJs();
   const db = new SQL.Database();
@@ -364,7 +506,10 @@ export async function rakennaHankkeetGeopackage(hankkeet: AvoinDataHanke[]): Pro
     );
   }
 
-  const tavuina = db.export();
-  db.close();
-  return tavuina;
+  try {
+    tarkistaViedytGeometriat(db);
+    return db.export();
+  } finally {
+    db.close();
+  }
 }
