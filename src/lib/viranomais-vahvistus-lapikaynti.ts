@@ -1,6 +1,13 @@
 /**
  * Kentät, joilla on viranomaislähde mutta ei ihmisen vahvistamaa viranomaislähdettä.
  * Käyttää samaa sääntöä kuin mittaa-viranomais-ilman-ihmisen-vahvistusta.
+ *
+ * Määritelmä (läpikäyntijonon «49»): kenttärivi (taulu + rivi_id + kentta), jolla on
+ * vähintään yksi lähde tyyppiä paatos | viranomaisasiakirja | rekisteri
+ * (`tehokasLahdeTyyppi`: DB-tyyppi, tai domain-ehdotus kun DB on vielä `muu`),
+ * eikä yhtään `ihmisen_vahvistama`-viranomaislähdettä. Tämä on eri luku kuin
+ * lähderivien laskenta «46» (voimassa + `lainauksen_luonne` null + DB-tyyppi
+ * suoraan viranomainen ilman domain-nostoa).
  */
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { lataaSitovuusHaku } from "@/lib/faktakentta-sitovuus-lataus";
@@ -263,11 +270,50 @@ export async function haeViranomaisVahvistusRivit(
   }
 
   rivit.sort((a, b) => {
+    const prioA = luonneJononPrioriteetti(a);
+    const prioB = luonneJononPrioriteetti(b);
+    if (prioA !== prioB) return prioA - prioB;
     const n = (a.hanke_nimi ?? "").localeCompare(b.hanke_nimi ?? "", "fi");
     if (n !== 0) return n;
     return a.kentta.localeCompare(b.kentta, "fi");
   });
   return rivit;
+}
+
+/**
+ * Pienempi = aiemmin jonossa.
+ * Ensin rivit, joissa luokittelematon lainaus sisältää julkisesti
+ * näytettävän lukuarvon (teho, pinta-ala ym.); sitten muut luokittelemattomat;
+ * lopuksi jo luokitellut.
+ */
+function luonneJononPrioriteetti(rivi: ViranomaisVahvistusRivi): number {
+  const luokittelemattomat = rivi.lahteet.filter((l) => !l.lainauksen_luonne);
+  if (luokittelemattomat.length === 0) return 40;
+  const arvo = (rivi.arvo ?? "").trim();
+  const arvoLuku = arvo.replace(",", ".");
+  const arvoVaikuttaa =
+    arvo !== "" &&
+    luokittelemattomat.some((l) => {
+      const t = l.lainaus ?? "";
+      if (!t) return false;
+      if (arvoLuku && /\d/.test(arvoLuku) && t.includes(arvoLuku)) return true;
+      if (arvo.includes(",") && t.includes(arvo)) return true;
+      // MW / hehtaari ilman desimaalia
+      const pelkka = arvoLuku.replace(/\.0+$/, "");
+      if (pelkka && new RegExp(`\\b${pelkka}\\s*(MW|megawatt|ha|hehtaar)`, "i").test(t)) {
+        return true;
+      }
+      return false;
+    });
+  if (arvoVaikuttaa) return 0;
+  if (rivi.kentta === "kuvaus" || rivi.kentta === "vaihe") {
+    const lainauksessaLuku = luokittelemattomat.some((l) =>
+      /\d[\d\s,.]*\s*(MW|megawatt|ha|hehtaar|m²|m2)/i.test(l.lainaus ?? ""),
+    );
+    if (lainauksessaLuku) return 10;
+    return 20;
+  }
+  return 30;
 }
 
 /** Satunnainen otos ilman sivuvaikutuksia. */

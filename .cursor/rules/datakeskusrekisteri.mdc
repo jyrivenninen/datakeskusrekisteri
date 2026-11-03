@@ -222,6 +222,16 @@ Jokainen migraatio, joka luo, korvaa tai vaihtaa funktion allekirjoituksen:
 - `kentta_lahteet.merkitty`-oletus on aina `koneen_ehdottama`. Arvo
   `ihmisen_vahvistama` vain eksplisiittisestä UI-hyväksynnästä / kuittauksesta
   (ei RPC-oletuksena puuttuvalle JSON-kentälle, ei massatuonnin oletuksena).
+- Julkinen näyttöteksti: `merkitty=ihmisen_vahvistama` ilman `kuittaustapa`-arvoa
+  → «Ylläpitäjän hyväksymä» (ei «Ihmisen vahvistama»). `kuittaustapa=yksittain`
+  → «Lähde tarkistettu»; `era` → «Lähde tarkistettu (erä)». DB-enumit eivät muutu.
+  Avoin data: `kentat_ihmisen_vahvistama` = merkitty; `kentat_lahde_tarkistettu` =
+  kuittaustapa asetettu. Vihreä valo (`kentanTila`) = ihmisen_vahvistama +
+  viranomais­tyyppi (paatos|viranomaisasiakirja|rekisteri); kuittaustapa ei
+  vielä vaikuta vihreään ennen erillistä päätöstä.
+- Luonnokset ja DO-testit: `supabase/luonnokset/` (ei `migrations/`).
+  Tuotantokirjoitukset / `db push` / migraatioajo vain eksplisiittisellä luvalla;
+  reversible DO (`TESTI_OK`) ok kuivana, jos master sallii.
 - Julkiset sivut käyttävät `export const revalidate` (tyypillisesti 60 s;
   kunnat/JSON/RSS/CSV/data 300 s) eivätkä `noStore()`:a. Julkiset haut
   käyttävät evästeetöntä `luoJulkinenAsiakas()`-asiakasta. Ylläpitäjän

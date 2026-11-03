@@ -6,6 +6,7 @@ import {
   vahvistaGleifLeiToiminto,
 } from "@/app/toiminnot";
 import { gleifTietueUrl, haeGleifLeiTietue, haeGleifNimella, haeGleifRekisterinumerolla } from "@/lib/gleif";
+import { gleifSuomalainenYtunnus } from "@/lib/gleif-ytunnus";
 import { hankeOrganisaatioRooliNimi, ORGANISAATIO_TYYPPI_NIMET } from "@/lib/naytto";
 import { toimijaSivuPolku } from "@/lib/toimija-slug";
 import { VaiheMerkki } from "@/komponentit/vaihe-merkki";
@@ -13,7 +14,8 @@ import { haeOrganisaatio } from "@/lib/supabase/kyselyt";
 import { haeYllapitaja } from "@/lib/supabase/palvelin";
 import { kortinMetatiedot, SIVUSTON_KUVAUS, SIVUSTON_OTSIKKO } from "@/lib/sivuston-metatiedot";
 
-export const revalidate = 60;
+/** Eväste/ylläpito: GLEIF-osio ei saa jäädä julkiseen välimuistiin. */
+export const dynamic = "force-dynamic";
 
 export async function generateMetadata({
   params,
@@ -64,6 +66,20 @@ export default async function OrganisaatioSivu({
   const onToimija = hankkeet.some((h) => h.roolit.includes("toimija"));
   const gleifVirhe = typeof sp.gleif_virhe === "string" ? sp.gleif_virhe : null;
   const gleifValmis = sp.gleif_valmis === "1";
+  const gleifYtunnus =
+    typeof sp.gleif_ytunnus === "string" ? sp.gleif_ytunnus : null;
+  const gleifYtunnusRistiriita =
+    typeof sp.gleif_ytunnus_ristiriita === "string"
+      ? sp.gleif_ytunnus_ristiriita
+      : null;
+  const gleifYtunnusNykyinen =
+    typeof sp.gleif_ytunnus_nykyinen === "string"
+      ? sp.gleif_ytunnus_nykyinen
+      : null;
+  const gleifYtunnusVarattu =
+    typeof sp.gleif_ytunnus_varattu === "string"
+      ? sp.gleif_ytunnus_varattu
+      : null;
   const gleifTila = typeof sp.gleif_tila === "string" ? sp.gleif_tila : null;
   const gleifTapa = typeof sp.tapa === "string" ? sp.tapa : null;
   const gleifQ = typeof sp.q === "string" ? sp.q : null;
@@ -190,13 +206,31 @@ export default async function OrganisaatioSivu({
           <h2 id="gleif-otsikko" className="text-xl font-semibold">
             GLEIF-haku
           </h2>
+          <p className="mt-1 text-sm text-muted">Vain ylläpito</p>
           <p className="mt-2 max-w-prose text-sm leading-relaxed text-muted">
-            Haku yhdelle organisaatiolle. LEI tallennetaan heti; emosuhteet menevät
-            hyväksyntäjonoon. Poikkeuskoodia ei näytetä julkisesti.
+            Haku yhdelle organisaatiolle. LEI tallennetaan heti; tyhjä Y-tunnus
+            täytetään GLEIF:stä jos se löytyy. Emosuhteet menevät hyväksyntäjonoon.
+            Poikkeuskoodia ei näytetä julkisesti.
           </p>
           {gleifValmis ? (
             <p className="mt-3 text-sm" role="status">
-              LEI tallennettu. Mahdolliset emosuhteet odottavat hyväksyntää.
+              LEI tallennettu
+              {gleifYtunnus ? ` ja Y-tunnus ${gleifYtunnus} merkitty` : ""}.
+              Mahdolliset emosuhteet odottavat hyväksyntää.
+            </p>
+          ) : null}
+          {gleifYtunnusRistiriita ? (
+            <p className="mt-3 text-sm" role="alert">
+              GLEIF:n rekisterinumero {gleifYtunnusRistiriita} ei vastaa
+              organisaation Y-tunnusta
+              {gleifYtunnusNykyinen ? ` ${gleifYtunnusNykyinen}` : ""}. LEI
+              tallennettiin; Y-tunnusta ei muutettu.
+            </p>
+          ) : null}
+          {gleifYtunnusVarattu ? (
+            <p className="mt-3 text-sm" role="alert">
+              GLEIF:n Y-tunnus {gleifYtunnusVarattu} on jo toisella organisaatiolla.
+              LEI tallennettiin; Y-tunnusta ei merkitty.
             </p>
           ) : null}
           {gleifVirhe || gleifHakuVirhe ? (
@@ -269,6 +303,37 @@ export default async function OrganisaatioSivu({
                   .filter(Boolean)
                   .join(" · ")}
               </p>
+              {(() => {
+                const gleifYt = gleifSuomalainenYtunnus(vahvistettava);
+                const orgYt = organisaatio.y_tunnus?.trim() || null;
+                if (!gleifYt) {
+                  return (
+                    <p className="mt-2 text-sm text-muted">
+                      GLEIF:stä ei tunnistettu suomalaista Y-tunnusta.
+                    </p>
+                  );
+                }
+                if (!orgYt) {
+                  return (
+                    <p className="mt-2 text-sm">
+                      Tallentaa myös Y-tunnuksen {gleifYt} (nyt tyhjä).
+                    </p>
+                  );
+                }
+                if (orgYt === gleifYt) {
+                  return (
+                    <p className="mt-2 text-sm text-muted">
+                      Y-tunnus {orgYt} vastaa GLEIF:ää.
+                    </p>
+                  );
+                }
+                return (
+                  <p className="mt-2 text-sm" role="alert">
+                    Huom: GLEIF:n Y-tunnus {gleifYt} ei vastaa merkittyä{" "}
+                    {orgYt}. LEI tallennetaan; Y-tunnusta ei muuteta.
+                  </p>
+                );
+              })()}
               <p className="mt-3 text-sm">
                 <a
                   href={vahvistettava.lahde_url}
@@ -304,7 +369,7 @@ export default async function OrganisaatioSivu({
                 <input type="hidden" name="organisaatio_id" value={organisaatio.id} />
                 <input type="hidden" name="lei" value={vahvistettava.lei} />
                 <button type="submit" className="text-link underline">
-                  Vahvista ja tallenna LEI
+                  Vahvista ja tallenna
                 </button>
               </form>
             </div>

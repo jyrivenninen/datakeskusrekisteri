@@ -8,7 +8,7 @@ import { haeHankekunnat, puuttuvatLahteet, haeSeuratutLahteet } from "./kuntakar
 const CKAN_HAKU = "https://avoindata.fi/data/api/3/action/package_search";
 const RSS_POLKU = "/cgi/DREQUEST.PHP?page=rss/meetingitems&show=30";
 const USER_AGENT =
-  "Datakeskusrekisteri/0.1 (+https://datakeskusrekisteri.vercel.app/; kuntakartoitus)";
+  "Datakeskusrekisteri/0.1 (+https://www.datakeskusrekisteri.fi/; kuntakartoitus)";
 
 const HAKUSANAT_AVOINDATA = [
   "päätökset kokoukset",

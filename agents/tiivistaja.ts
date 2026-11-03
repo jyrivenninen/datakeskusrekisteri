@@ -18,7 +18,7 @@ import { robotsSallii } from "./tarkistukset/robots";
 import { lataaPaikallinenYmparisto } from "./ymparisto";
 
 const USER_AGENT =
-  "Datakeskusrekisteri/0.1 (+https://datakeskusrekisteri.vercel.app/; tiivistaja)";
+  "Datakeskusrekisteri/0.1 (+https://www.datakeskusrekisteri.fi/; tiivistaja)";
 const EHDOTTAJA = "agents/tiivistaja";
 const SOVITIN = "tiivistaja";
 const TEKSTI_KATTO = 80_000;
@@ -37,6 +37,7 @@ const KENTTA_NIMET: Record<string, string> = {
   teho_mw: "Teho (MW)",
   it_teho_mw: "IT-teho (MW)",
   pinta_ala_ha: "Pinta-ala (ha)",
+  kaava_ala_ha: "Kaava-alue (ha)",
   sahkonkaytto_twh_a: "Sähkönkäyttö (TWh/a)",
   generaattorit_lkm: "Varavoimageneraattorit (kpl)",
   generaattorit_kaytossa_max_lkm: "Generaattoreita yhtä aikaa enintään (kpl)",

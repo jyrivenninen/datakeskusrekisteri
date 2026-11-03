@@ -7,6 +7,7 @@ import { revalidateJulkinenSisalto } from "@/lib/julkinen-revalidointi";
 import {
   LOMAKE_KENTAT,
   parsiIlmoitusLisalahteet,
+  HUKKALAMPO_LOMAKE_KENTAT,
   onPaivitettavaHankeKentta,
   onVaihtoehtoKentta,
   rakennaIlmoitusSisalto,
@@ -24,6 +25,7 @@ import {
   itTehoYlittaaTehon,
   kasittelijaMerkinta,
   lueMegawatti,
+  onHukkalampoTila,
   massaHyvaksyntaOhitettava,
   massaHyvaksyntaOhitettavaSisalto,
 } from "@/lib/naytto";
@@ -32,6 +34,7 @@ import {
   haeTurvallinenSeuraavaHavaintoPolku,
   kuuluuHavaintojonoon,
 } from "@/lib/seuraava-ehdotus";
+import { normalisoiVastausEmail } from "@/lib/palaute-email";
 import { LUOTTAMUSTASOT, PALAUTE_AIHEET, type Luottamus } from "@/lib/supabase/tietokanta";
 import { haeKirjautunutKayttaja, haeYllapitaja, luoPalvelinAsiakas, vaadiYllapitaja as vaadiYllapitajaSivu } from "@/lib/supabase/palvelin";
 import { hylkaaMuutosehdotus, hyvaksyMuutosehdotus, julkaiseDokumenttiLahdeMetatiedot, julkaiseHanke, kuitaaHankeKentat, merkitseHankeDuplikaatiksi, paivitaKenttaLahdeUrl, paivitaKuittausLuottamus, piilotaHankeKuva, yhdistaHankkeetEhdotuksesta } from "@/lib/supabase/hyvaksynta";
@@ -328,6 +331,26 @@ export async function lahetaKenttapaivitys(formData: FormData): Promise<void> {
     )
   ) {
     paivitysPaluu(hankeId, kentta, vaihtoehto, "Muiden sijaintien arvo ei ole sallittu.");
+  }
+  if (
+    (HUKKALAMPO_LOMAKE_KENTAT as readonly string[]).includes(kentta) &&
+    lainaus.trim() === ""
+  ) {
+    paivitysPaluu(
+      hankeId,
+      kentta,
+      vaihtoehto,
+      "Hukkalämpökenttä vaatii lainauksen lähteestä.",
+    );
+  }
+  if (kentta === "hukkalampo_tila" && !onHukkalampoTila(arvo.trim())) {
+    paivitysPaluu(hankeId, kentta, vaihtoehto, "Hukkalämmön tila ei ole sallittu.");
+  }
+  if (kentta === "hukkalampo_gwh_a" || kentta === "hukkalampo_mw") {
+    const luku = lueMegawatti(arvo);
+    if (luku == null || luku <= 0) {
+      paivitysPaluu(hankeId, kentta, vaihtoehto, "Luvun pitää olla suurempi kuin nolla.");
+    }
   }
   const { sisalto: pohja, virhe } = rakennaSisalto(
     lomakeKentat,
@@ -1740,6 +1763,11 @@ export async function lahetaPalaute(formData: FormData): Promise<void> {
     ? aiheRaaka
     : palauteVirhe("Valitse aihe.");
   const viesti = String(formData.get("viesti") ?? "").trim();
+  const haluaaVastauksen = String(formData.get("haluan_vastauksen") ?? "") === "1";
+  const vastaus = normalisoiVastausEmail(
+    haluaaVastauksen,
+    String(formData.get("vastaus_email") ?? ""),
+  );
 
   if (viesti.length < 12) {
     palauteVirhe("Kirjoita viesti (vähintään 12 merkkiä).");
@@ -1747,14 +1775,16 @@ export async function lahetaPalaute(formData: FormData): Promise<void> {
   if (viesti.length > 8000) {
     palauteVirhe("Viesti on liian pitkä.");
   }
+  if (vastaus.virhe) palauteVirhe(vastaus.virhe);
 
   const supabase = await luoPalvelinAsiakas();
   const { error } = await supabase.from("palautteet").insert({
     aihe,
     viesti,
     tila: "odottaa",
+    vastaus_email: vastaus.email,
   });
-  if (error) palauteVirhe(error.message);
+  if (error) palauteVirhe("Viestin lähetys ei onnistunut.");
   redirect("/yhteys?valmis=1");
 }
 
@@ -1825,8 +1855,13 @@ export async function merkitsePalauteKasitellyksi(formData: FormData): Promise<v
   const { kasittelija } = await vaadiYllapitaja();
   const id = String(formData.get("id") ?? "");
   const huomautus = String(formData.get("huomautus") ?? "").trim() || null;
-  const { supabase } = await haeKirjautunutKayttaja();
-  const { error } = await supabase
+  if (!supabasePalvelinAvainAsetettu()) {
+    redirect(
+      `/yllapito/palaute/${id}?virhe=${encodeURIComponent("Käsittely vaatii palvelinavaimen.")}`,
+    );
+  }
+  const yllapito = luoYllapitoAsiakas();
+  const { error } = await yllapito
     .from("palautteet")
     .update({
       tila: "kasitelty",

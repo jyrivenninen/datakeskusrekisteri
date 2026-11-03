@@ -14,9 +14,17 @@ import { createClient } from "@supabase/supabase-js";
 import { lataaPaikallinenYmparisto } from "../agents/ymparisto";
 
 const USER_AGENT =
-  "Datakeskusrekisteri/0.1 (+https://datakeskusrekisteri.vercel.app/; geokoodaus-varmistus)";
+  "Datakeskusrekisteri/0.1 (+https://www.datakeskusrekisteri.fi/; geokoodaus-varmistus)";
 const VIIVE_MS = 1100;
 const MAX_KM = 1;
+
+type NominatimOsuma = {
+  lat: number;
+  lon: number;
+  display: string;
+  osm_type?: string;
+  osm_id?: number;
+};
 
 type Rivi = {
   hanke_id: string;
@@ -177,9 +185,15 @@ function odota(ms: number) {
   return new Promise((r) => setTimeout(r, ms));
 }
 
-async function haeNominatim(
-  hakusana: string,
-): Promise<{ lat: number; lon: number; display: string } | null> {
+function normalisoiOsmTyyppi(osmType: string): string {
+  const t = osmType.toLowerCase();
+  if (t === "n" || t === "node") return "node";
+  if (t === "w" || t === "way") return "way";
+  if (t === "r" || t === "relation") return "relation";
+  return osmType;
+}
+
+async function haeNominatim(hakusana: string): Promise<NominatimOsuma | null> {
   const u = new URL("https://nominatim.openstreetmap.org/search");
   u.searchParams.set("q", hakusana);
   u.searchParams.set("format", "json");
@@ -195,6 +209,8 @@ async function haeNominatim(
     lat?: string;
     lon?: string;
     display_name?: string;
+    osm_type?: string;
+    osm_id?: number;
   }>;
   const eka = data[0];
   if (!eka?.lat || !eka?.lon) return null;
@@ -202,6 +218,8 @@ async function haeNominatim(
     lat: Number(eka.lat),
     lon: Number(eka.lon),
     display: eka.display_name ?? "",
+    osm_type: eka.osm_type ? normalisoiOsmTyyppi(eka.osm_type) : undefined,
+    osm_id: eka.osm_id != null ? Number(eka.osm_id) : undefined,
   };
 }
 
@@ -367,7 +385,9 @@ async function main() {
     console.log(`  uusi:  ${e.uusi_url}`);
   }
 
-  const tasmat: Array<Ehdotus & { km: number; haettu: string }> = [];
+  const tasmat: Array<
+    Ehdotus & { km: number; haettu: string; osuma: NominatimOsuma | null }
+  > = [];
   const eiTasmat: Array<
     Ehdotus & { km: number | null; haettu: string | null; syy: string }
   > = [];
@@ -394,7 +414,12 @@ async function main() {
         const km = haversineKm(e.rivi.lat, e.rivi.lon, tulos.lat, tulos.lon);
         if (km < MAX_KM) {
           console.log(`OK ${km.toFixed(3)} km`);
-          tasmat.push({ ...e, km, haettu: tulos.display });
+          tasmat.push({
+            ...e,
+            km,
+            haettu: tulos.display,
+            osuma: e.palvelu === "nominatim" ? tulos : null,
+          });
         } else {
           console.log(`EI ${km.toFixed(3)} km → ${tulos.display.slice(0, 60)}`);
           eiTasmat.push({
@@ -439,10 +464,25 @@ async function main() {
       });
       if (error) {
         console.log(`✗ ${e.rivi.nimi}: ${error.message}`);
-      } else {
-        ok += 1;
-        console.log(`✓ ${e.rivi.nimi} → ${e.uusi_url}`);
+        continue;
       }
+      if (e.osuma?.osm_type && e.osuma.osm_id != null) {
+        const tunniste = `OSM ${e.osuma.osm_type}/${e.osuma.osm_id} @ ${e.osuma.lat.toFixed(6)}, ${e.osuma.lon.toFixed(6)}`;
+        const pohja = e.rivi.lainaus
+          .replace(/\s*\[OSM (?:node|way|relation)\/\d+ @ [0-9.,\-\s]+\]\s*$/i, "")
+          .trim();
+        const { error: lVirhe } = await sb.rpc("paivita_kentta_lahde_sisalto", {
+          p_lahde_id: e.rivi.lahde_id,
+          p_lainaus: `${pohja} [${tunniste}]`,
+          p_tarkistettu: true,
+        });
+        if (lVirhe) {
+          console.log(`✗ ${e.rivi.nimi} (lainaus): ${lVirhe.message}`);
+          continue;
+        }
+      }
+      ok += 1;
+      console.log(`✓ ${e.rivi.nimi} → ${e.uusi_url}`);
     }
     console.log(`Päivitetty: ${ok}/${tasmat.length}`);
   } else if (!kirjoita) {

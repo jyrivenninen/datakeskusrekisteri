@@ -1,0 +1,11 @@
+--- live/julkaise_agentti_ehdotus.sql
++++ uusi/julkaise_agentti_ehdotus.sql
+@@ -242,3 +242,8 @@
+   );
+ END;
+ $function$
++
++
++REVOKE ALL ON FUNCTION public.julkaise_agentti_ehdotus(uuid)
++  FROM PUBLIC, anon, authenticated, agentti;
++GRANT EXECUTE ON FUNCTION public.julkaise_agentti_ehdotus(uuid) TO service_role;

@@ -12,6 +12,7 @@ import {
 import {
   HANKE_ORGANISAATIO_ROOLIT,
   HANKE_VAIHEET,
+  HUKKALAMPO_TILAT,
   SIJAINTI_ALUE_TYYPIT,
   type HankeVaihe,
   type LahdeLaji,
@@ -121,6 +122,10 @@ export const UUSI_HANKE_TUONTI_KENTAT = [
   "muut_sijainnit",
   "kiinteistotunnus",
   "huomautus",
+  "hukkalampo_tila",
+  "hukkalampo_vastaanottaja_nimi",
+  "hukkalampo_gwh_a",
+  "hukkalampo_mw",
 ] as const;
 
 const SALLITUT_KENTAT = new Set<string>(UUSI_HANKE_TUONTI_KENTAT);
@@ -129,7 +134,7 @@ function sallitutKentatViesti(): string {
   return UUSI_HANKE_TUONTI_KENTAT.join(", ");
 }
 
-const ORGANISAATIO_KENTAT = new Set(["toimija_nimi"]);
+const ORGANISAATIO_KENTAT = new Set(["toimija_nimi", "hukkalampo_vastaanottaja_nimi"]);
 
 const ROOLIT = new Set<string>(HANKE_ORGANISAATIO_ROOLIT);
 
@@ -351,6 +356,24 @@ export function parsiJaValidoiUusiHankeTuonti(raaka: unknown): TuontiValidointi 
       }
       if (kentta === "vaihe" && !(HANKE_VAIHEET as readonly string[]).includes(arvo)) {
         virheet.push({ polku: `${polku}.arvo`, viesti: "Vaiheen arvo ei ole sallittu." });
+      }
+      if (
+        kentta === "hukkalampo_tila" &&
+        !(HUKKALAMPO_TILAT as readonly string[]).includes(arvo)
+      ) {
+        virheet.push({
+          polku: `${polku}.arvo`,
+          viesti: `hukkalampo_tila ∈ ${HUKKALAMPO_TILAT.join(", ")}.`,
+        });
+      }
+      if (
+        (kentta === "hukkalampo_gwh_a" || kentta === "hukkalampo_mw") &&
+        !(Number(arvo.replace(",", ".")) > 0)
+      ) {
+        virheet.push({
+          polku: `${polku}.arvo`,
+          viesti: "Luvun pitää olla suurempi kuin nolla.",
+        });
       }
       if (
         kentta === "sijainti_alue_tyyppi" &&

@@ -96,6 +96,9 @@ export type EhdotusSisalto = {
     muuttunut: boolean;
     ei_loydy: boolean;
     ehdota_tunnus?: boolean;
+    ehdota_verkkotunnus?: boolean;
+    verkkotunnus_ehdotus?: string | null;
+    website_ytj?: string | null;
   };
   dokumentti?: {
     dokumentti_id: string;
@@ -320,6 +323,8 @@ const NUMEERISET = new Set([
   "diesel_vuosikulutus_maara",
   "varavoima_paastot_t_co2e",
   "polttoainevarasto_maara",
+  "hukkalampo_gwh_a",
+  "hukkalampo_mw",
   "sijainti_lat",
   "sijainti_lon",
 ]);
@@ -438,6 +443,17 @@ export const PAIVITETTAVAT_HANKE_KENTAT = [
   "sijainti_alue_tyyppi",
   "sijaintiperustelu",
   "muut_sijainnit",
+  "hukkalampo_tila",
+  "hukkalampo_vastaanottaja_nimi",
+  "hukkalampo_gwh_a",
+  "hukkalampo_mw",
+] as const;
+
+export const HUKKALAMPO_LOMAKE_KENTAT = [
+  "hukkalampo_tila",
+  "hukkalampo_vastaanottaja_nimi",
+  "hukkalampo_gwh_a",
+  "hukkalampo_mw",
 ] as const;
 
 export type PaivitettavaHankeKentta = (typeof PAIVITETTAVAT_HANKE_KENTAT)[number];
@@ -451,6 +467,7 @@ export function onPaivitettavaHankeKentta(
 /** Kortin tunniste → lomakkeen kenttänimi. */
 export function lomakeKenttaKortista(korttiKentta: string): string | null {
   if (korttiKentta === "toimija_organisaatio_id") return "toimija_nimi";
+  if (korttiKentta === "hukkalampo_vastaanottaja_id") return "hukkalampo_vastaanottaja_nimi";
   if (korttiKentta === "sijainti") return "sijainti_lat";
   if (onPaivitettavaHankeKentta(korttiKentta)) return korttiKentta;
   return null;
@@ -459,6 +476,7 @@ export function lomakeKenttaKortista(korttiKentta: string): string | null {
 /** Tyhjän hankekentän tarkistus ilman julkista lähdettä. */
 export function tarkistusKenttaLomakkeesta(kentta: string): string | null {
   if (kentta === "toimija_nimi") return "toimija_organisaatio_id";
+  if (kentta === "hukkalampo_vastaanottaja_nimi") return "hukkalampo_vastaanottaja_id";
   if (
     kentta === "sijainti_lat" ||
     kentta === "sijainti_lon" ||

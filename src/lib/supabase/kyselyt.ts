@@ -59,6 +59,7 @@ export async function haeHankeOhjaus(vanhaId: string): Promise<string | null> {
 
 export type HankeListalla = Hanke & {
   toimija: Pick<Organisaatio, "id" | "nimi" | "slug"> | null;
+  hukkalampo_vastaanottaja?: Pick<Organisaatio, "id" | "nimi" | "slug"> | null;
   vaihtoehdot: HankeVaihtoehto[];
   vanhin_vahvistettu_pvm: string | null;
   viimeisin_paatos: PaatosNakyma | null;
@@ -98,6 +99,9 @@ export async function haeJulkaistutHankkeet(
     }
     if (suodatus.vaihe) {
       kysely = kysely.eq("vaihe", suodatus.vaihe);
+    }
+    if (suodatus.hukkalampo) {
+      kysely = kysely.eq("hukkalampo_tila", suodatus.hukkalampo);
     }
 
     const { data, error } = await kysely;
@@ -203,7 +207,14 @@ export async function rajaaHankelista(
   suodatus: HankeSuodatus,
 ): Promise<{ hankkeet: HankeListalla[]; johdot: HankeJohto[]; virhe: string | null }> {
   if (tulos.virhe) return tulos;
-  if (!suodatus.q && !suodatus.kunta && !suodatus.vaihe && !suodatus.koko && !suodatus.kuvalliset) {
+  if (
+    !suodatus.q &&
+    !suodatus.kunta &&
+    !suodatus.vaihe &&
+    !suodatus.koko &&
+    !suodatus.kuvalliset &&
+    !suodatus.hukkalampo
+  ) {
     return tulos;
   }
 
@@ -213,6 +224,10 @@ export async function rajaaHankelista(
   }
   if (suodatus.vaihe) {
     hankkeet = hankkeet.filter((hanke) => hanke.vaihe === suodatus.vaihe);
+  }
+  if (suodatus.hukkalampo) {
+    const tila = suodatus.hukkalampo;
+    hankkeet = hankkeet.filter((hanke) => hanke.hukkalampo_tila === tila);
   }
   if (suodatus.koko) {
     const kokoLuokka = suodatus.koko;
@@ -677,7 +692,9 @@ export async function haeHanke(id: string): Promise<{
     const supabase = luoJulkinenAsiakas();
     const { data: hanke, error: hankeVirhe } = await supabase
       .from("hankkeet")
-      .select("*, toimija:toimija_organisaatio_id(id, nimi, slug)")
+      .select(
+        "*, toimija:toimija_organisaatio_id(id, nimi, slug), hukkalampo_vastaanottaja:hukkalampo_vastaanottaja_id(id, nimi, slug)",
+      )
       .eq("id", id)
       .eq("julkaistu", true)
       .maybeSingle();

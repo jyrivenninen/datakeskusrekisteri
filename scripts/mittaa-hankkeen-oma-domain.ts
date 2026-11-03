@@ -13,7 +13,7 @@ import {
 
 const YTJ_JUURI = "https://avoindata.prh.fi/opendata-ytj-api/v3/companies";
 const USER_AGENT =
-  "Datakeskusrekisteri/0.1 (+https://datakeskusrekisteri.vercel.app/; ytj-mittaus)";
+  "Datakeskusrekisteri/0.1 (+https://www.datakeskusrekisteri.fi/; ytj-mittaus)";
 
 async function haeYtjWebsite(yTunnus: string): Promise<string | null> {
   const u = new URL(YTJ_JUURI);

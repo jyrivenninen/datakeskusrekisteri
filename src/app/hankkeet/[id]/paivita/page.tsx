@@ -13,6 +13,7 @@ import {
 import {
   HANKE_KENTTA_NIMET,
   HANKETASON_VAIHTOEHTO_OHJE,
+  HUKKALAMPO_TILA_NIMET,
   LUOTTAMUS_NIMET,
   MUUT_SIJAINNIT_NIMET,
   VAIHE_NIMET,
@@ -22,6 +23,7 @@ import { haeHanke, haeHankeOhjaus, type HankeListalla } from "@/lib/supabase/kys
 import { haeYllapitaja } from "@/lib/supabase/palvelin";
 import {
   HANKE_VAIHEET,
+  HUKKALAMPO_TILAT,
   LUOTTAMUSTASOT,
   MUUT_SIJAINNIT_ARVOT,
   type HankeVaihe,
@@ -41,11 +43,22 @@ const LUKUKENTAT = new Set([
   "diesel_vuosikulutus_maara",
   "varavoima_paastot_t_co2e",
   "polttoainevarasto_maara",
+  "hukkalampo_gwh_a",
+  "hukkalampo_mw",
 ]);
 
 function nykyinenHankeArvo(hanke: HankeListalla, kentta: PaivitettavaHankeKentta): string {
   if (kentta === "toimija_nimi") return hanke.toimija?.nimi ?? "";
-  const arvo = hanke[kentta as Exclude<PaivitettavaHankeKentta, "toimija_nimi">];
+  if (kentta === "hukkalampo_vastaanottaja_nimi") {
+    return hanke.hukkalampo_vastaanottaja?.nimi ?? "";
+  }
+  const arvo =
+    hanke[
+      kentta as Exclude<
+        PaivitettavaHankeKentta,
+        "toimija_nimi" | "hukkalampo_vastaanottaja_nimi"
+      >
+    ];
   if (arvo == null || arvo === "") return "";
   return String(arvo);
 }
@@ -64,6 +77,9 @@ function naytaNykyinen(kentta: string, arvo: string, yksikko?: string | null): s
   }
   if (kentta === "muut_sijainnit" && arvo in MUUT_SIJAINNIT_NIMET) {
     return MUUT_SIJAINNIT_NIMET[arvo as keyof typeof MUUT_SIJAINNIT_NIMET];
+  }
+  if (kentta === "hukkalampo_tila" && arvo in HUKKALAMPO_TILA_NIMET) {
+    return HUKKALAMPO_TILA_NIMET[arvo as keyof typeof HUKKALAMPO_TILA_NIMET];
   }
   const teksti = LUKUKENTAT.has(kentta) ? muotoileLuku(arvo) : arvo;
   const yksikkoNimi = yksikkoTeksti(yksikko);
@@ -203,7 +219,12 @@ export default async function KenttapaivitysSivu({
                   arvo,
                   nimi: MUUT_SIJAINNIT_NIMET[arvo],
                 }))
-              : undefined
+              : kentta === "hukkalampo_tila"
+                ? HUKKALAMPO_TILAT.map((tila) => ({
+                    arvo: tila,
+                    nimi: HUKKALAMPO_TILA_NIMET[tila],
+                  }))
+                : undefined
           }
           pitkaTeksti={kentta === "sijaintiperustelu"}
           yksikko={
@@ -217,7 +238,11 @@ export default async function KenttapaivitysSivu({
           lainausPakollinen={
             kentta === "varavoima_paastot_t_co2e" ||
             kentta === "sijaintiperustelu" ||
-            kentta === "muut_sijainnit"
+            kentta === "muut_sijainnit" ||
+            kentta === "hukkalampo_tila" ||
+            kentta === "hukkalampo_vastaanottaja_nimi" ||
+            kentta === "hukkalampo_gwh_a" ||
+            kentta === "hukkalampo_mw"
           }
           julkaiseSuoraan={julkaiseSuoraan}
           luottamusValinnat={LUOTTAMUSTASOT.map((taso) => ({
@@ -237,6 +262,33 @@ export default async function KenttapaivitysSivu({
             kun molemmat on merkitty. Jos lähde antaa vain yhden erittelemättömän
             megawattiluvun, merkitse se vain toiseen kenttään. Jos lähde sanoo IT
             capacity tai IT load, luku on IT-teho. Muuten teho.
+          </>
+        ) : null}
+        {kentta === "hukkalampo_tila" ? (
+          <>
+            {" "}
+            Toimitetaan verkkoon tarkoittaa, että lämpöä toimitetaan
+            kaukolämpöverkkoon. Sopimus tehty on sitova sopimus, joka ei ole
+            vielä käytössä. Aiesopimus tai suunnitelma kattaa aiesopimuksen,
+            selvityksen ja hankkeen oman suunnitelman. Ei hyödynnetä vain, jos
+            lähde sanoo sen. Tyhjä kenttä tarkoittaa, ettei julkista lähdettä
+            ole löytynyt.
+          </>
+        ) : null}
+        {kentta === "hukkalampo_vastaanottaja_nimi" ? (
+          <>
+            {" "}
+            Kirjoita energiayhtiön nimi sellaisena kuin se on lähteessä.
+            Yhtiö kytketään toimijarekisteriin.
+          </>
+        ) : null}
+        {kentta === "hukkalampo_gwh_a" || kentta === "hukkalampo_mw" ? (
+          <>
+            {" "}
+            {kentta === "hukkalampo_gwh_a"
+              ? "Luku on toimitettu lämpö gigawattitunteina vuodessa."
+              : "Luku on lämmön talteenoton teho megawatteina."}{" "}
+            Lämpöyhtiön ilmoitus on vahvempi lähde kuin datakeskuksen oma tiedote.
           </>
         ) : null}
         {vaihtoehto ? (

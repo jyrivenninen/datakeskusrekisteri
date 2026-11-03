@@ -20,6 +20,7 @@ import {
   ehdotusLuokkaRiviLuokka,
 } from "@/komponentit/ehdotus-tila";
 import { SivukatseluYhteenveto } from "@/komponentit/sivukatselu-yhteenveto";
+import { KopioiOsoite } from "@/komponentit/kopioi-osoite";
 import { YllapitoOhjeet } from "@/komponentit/yllapito-ohjeet";
 import { haeSivukatseluYhteenveto } from "@/lib/supabase/sivukatselu-kysely";
 import {
@@ -27,6 +28,7 @@ import {
   haeHankkeetYllapitoon,
   haeJulkaisemattomatHankkeet,
   haePoistetutHankkeet,
+  luoYllapitoAsiakas,
   poistetutHankeIdt,
   supabasePalvelinAvainAsetettu,
 } from "@/lib/supabase/yllapito-asiakas";
@@ -94,6 +96,18 @@ export default async function YllapitoSivu({
     .from("palautteet")
     .select("id, aihe, viesti, tila, luotu_pvm, kasittelija, kasitelty_pvm")
     .order("luotu_pvm", { ascending: false });
+  const vastausOsoitteet = new Map<string, string>();
+  if (supabasePalvelinAvainAsetettu()) {
+    const { data: osoitteet, error: osoiteVirhe } = await luoYllapitoAsiakas()
+      .from("palautteet")
+      .select("id, vastaus_email")
+      .not("vastaus_email", "is", null);
+    if (!osoiteVirhe) {
+      for (const rivi of osoitteet ?? []) {
+        if (rivi.vastaus_email) vastausOsoitteet.set(rivi.id, rivi.vastaus_email);
+      }
+    }
+  }
   const odottavatPalautteet = (palautteet ?? []).filter((rivi) => rivi.tila === "odottaa");
   const kasitellytPalautteet = (palautteet ?? []).filter((rivi) => rivi.tila !== "odottaa");
   const jarjestetyt = jarjestaMuutosehdotukset(ehdotukset ?? []).filter(
@@ -315,6 +329,9 @@ export default async function YllapitoSivu({
                   {PALAUTE_AIHE_NIMET[palaute.aihe] ?? palaute.aihe}
                 </a>
                 <p className="mt-1 text-sm text-muted">{muotoilePvm(palaute.luotu_pvm)}</p>
+                {vastausOsoitteet.get(palaute.id) ? (
+                  <KopioiOsoite osoite={vastausOsoitteet.get(palaute.id)!} />
+                ) : null}
                 <p className="mt-1 max-w-prose text-sm">{palaute.viesti.slice(0, 160)}</p>
               </li>
             ))

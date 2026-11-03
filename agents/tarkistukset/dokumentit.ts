@@ -6,6 +6,9 @@
  * Muutos → muutosehdotukset tyypillä dokumentti_muuttunut.
  * Sisältötiiviste (raaka-tavut) dokumentit-tauluun RPC:llä
  * aseta_dokumentti_sisalto_tiiviste — ei suoralla .update():lla.
+ * Tavutiiviste lasketaan ennen unpdf-uuttoa (unpdf voi irrottaa puskurin).
+ * Tyhjää sisältöä ei kirjoiteta tiivisteeksi; syy merkitään
+ * merkitse_dokumentti_sisalto_nouto_epaonnistui-RPC:llä.
  *
  * Ympäristö: NEXT_PUBLIC_SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY
  * Valinnainen: DOKUMENTIT_VIIVE_MS (oletus 1000), DOKUMENTIT_KATTO, DOKUMENTIT_KUIVA=1,
@@ -20,7 +23,7 @@ import { lataaPaikallinenYmparisto } from "../ymparisto";
 type TietokantaAsiakas = SupabaseClient;
 
 const USER_AGENT =
-  "Datakeskusrekisteri/0.1 (+https://datakeskusrekisteri.vercel.app/; dokumentit)";
+  "Datakeskusrekisteri/0.1 (+https://www.datakeskusrekisteri.fi/; dokumentit)";
 const EHDOTTAJA = "agents/tarkistukset/dokumentit";
 const SOVITIN = "dokumentit";
 const MAX_BAITIT = 25 * 1024 * 1024;
@@ -105,6 +108,29 @@ async function nouda(url: string): Promise<{
     tavuja: puskuri,
     ms: Date.now() - alku,
   };
+}
+
+function httpNoutoSyy(tila: number): string {
+  if (tila === 403) return "http_403";
+  if (tila === 429) return "http_429";
+  if (tila >= 400 && tila < 500) return "http_4xx";
+  if (tila >= 500) return "http_5xx";
+  return "muu";
+}
+
+async function merkitseNoutoEpaonnistui(
+  supabase: TietokantaAsiakas,
+  dokumenttiId: string,
+  syy: string,
+  kuiva: boolean,
+): Promise<void> {
+  console.log(`nouto epäonnistui (${syy}): ${dokumenttiId}`);
+  if (kuiva) return;
+  const { error } = await supabase.rpc("merkitse_dokumentti_sisalto_nouto_epaonnistui", {
+    p_dokumentti_id: dokumenttiId,
+    p_syy: syy,
+  });
+  if (error) throw new Error(error.message);
 }
 
 async function main() {
@@ -195,6 +221,7 @@ async function main() {
       }
       if (!(await robotsSallii(osoite, USER_AGENT))) {
         console.log(`robots.txt estää: ${dok.url}`);
+        await merkitseNoutoEpaonnistui(supabase, dok.id, "robots", kuiva);
         ohitettu += 1;
         await odota(viiveMs());
         continue;
@@ -206,6 +233,7 @@ async function main() {
       } catch (syy) {
         const viesti = syy instanceof Error ? syy.message : "Nouto epäonnistui.";
         console.error(`${dok.url}: ${viesti}`);
+        await merkitseNoutoEpaonnistui(supabase, dok.id, "nouto_virhe", kuiva);
         await odota(viiveMs());
         continue;
       }
@@ -213,13 +241,30 @@ async function main() {
       tarkistettu += 1;
       if (nouto.tila >= 400) {
         console.log(`${nouto.tila} ${nouto.ms}ms ${dok.url}`);
+        await merkitseNoutoEpaonnistui(
+          supabase,
+          dok.id,
+          httpNoutoSyy(nouto.tila),
+          kuiva,
+        );
         await odota(viiveMs());
         continue;
       }
 
+      if (nouto.tavuja.byteLength === 0) {
+        console.log(`tyhjä sisältö ${dok.url}`);
+        await merkitseNoutoEpaonnistui(supabase, dok.id, "tyhja_sisalto", kuiva);
+        ohitettu += 1;
+        await odota(viiveMs());
+        continue;
+      }
+
+      // unpdf voi irrottaa ArrayBufferin — tavutiiviste ennen tekstiuuttoa.
+      const sisaltoTiiviste = createHash("sha256").update(nouto.tavuja).digest("hex");
+      const onPdfDok = onPdf(dok.muoto, nouto.tyyppi, dok.url);
       let teksti: string | null = null;
       try {
-        if (onPdf(dok.muoto, nouto.tyyppi, dok.url)) {
+        if (onPdfDok) {
           teksti = await pdfTekstiksi(nouto.tavuja);
         } else if (onHtml(dok.muoto, nouto.tyyppi) || dok.muoto == null) {
           const raaka = new TextDecoder("utf-8", { fatal: false }).decode(nouto.tavuja);
@@ -230,20 +275,27 @@ async function main() {
       } catch (syy) {
         const viesti = syy instanceof Error ? syy.message : "Tekstin uutto epäonnistui.";
         console.error(`${dok.url}: ${viesti}`);
+        await merkitseNoutoEpaonnistui(supabase, dok.id, "nouto_virhe", kuiva);
         await odota(viiveMs());
         continue;
       }
 
       if (teksti == null) {
         console.log(`ohitettu muoto ${dok.muoto ?? nouto.tyyppi} ${dok.url}`);
+        await merkitseNoutoEpaonnistui(supabase, dok.id, "muoto_ei_tuettu", kuiva);
         ohitettu += 1;
         await odota(viiveMs());
         continue;
       }
 
+      // Skannattu PDF: tavuja on → tavutiiviste ok (dedup). Tyhjä teksti ≠ tyhjä sisältö.
+      const skannattuPdf = onPdfDok && teksti.length === 0;
+
       const tiivisteArvo = tiiviste(teksti);
       const merkkimaara = teksti.length;
-      console.log(`${nouto.tila} ${nouto.ms}ms ${merkkimaara} merkkiä ${dok.url}`);
+      console.log(
+        `${nouto.tila} ${nouto.ms}ms ${merkkimaara} merkkiä${skannattuPdf ? " (skannattu)" : ""} ${dok.url}`,
+      );
 
       const { data: vanhaRivi } = await supabase
         .from("dokumentti_tiivisteet")
@@ -265,7 +317,6 @@ async function main() {
         });
         if (tiivisteVirhe) throw new Error(tiivisteVirhe.message);
 
-        const sisaltoTiiviste = createHash("sha256").update(nouto.tavuja).digest("hex");
         const { error: sisaltoVirhe } = await supabase.rpc(
           "aseta_dokumentti_sisalto_tiiviste",
           {

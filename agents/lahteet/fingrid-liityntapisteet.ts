@@ -8,7 +8,7 @@ import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import { lataaPaikallinenYmparisto } from "../ymparisto";
 
 const USER_AGENT =
-  "Datakeskusrekisteri/0.1 (+https://datakeskusrekisteri.vercel.app/; fingrid-liityntapisteet)";
+  "Datakeskusrekisteri/0.1 (+https://www.datakeskusrekisteri.fi/; fingrid-liityntapisteet)";
 const SOVITIN = "fingrid-liityntapisteet";
 const OVERPASS = "https://overpass-api.de/api/interpreter";
 

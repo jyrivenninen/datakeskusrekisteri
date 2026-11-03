@@ -1,0 +1,19 @@
+--- live/julkaise_kentta_tyhjennys.sql
++++ uusi/julkaise_kentta_tyhjennys.sql
+@@ -87,6 +87,7 @@
+     SET
+       maakunta = CASE WHEN v_kentta = 'maakunta' THEN NULL ELSE maakunta END,
+       teho_mw = CASE WHEN v_kentta = 'teho_mw' THEN NULL ELSE teho_mw END,
++      teho_erittelematon_mw = CASE WHEN v_kentta = 'teho_erittelematon_mw' THEN NULL ELSE teho_erittelematon_mw END,
+       it_teho_mw = CASE WHEN v_kentta = 'it_teho_mw' THEN NULL ELSE it_teho_mw END,
+       pinta_ala_ha = CASE WHEN v_kentta = 'pinta_ala_ha' THEN NULL ELSE pinta_ala_ha END,
+       kaava_ala_ha = CASE WHEN v_kentta = 'kaava_ala_ha' THEN NULL ELSE kaava_ala_ha END,
+@@ -152,3 +153,8 @@
+   END IF;
+ END;
+ $function$
++
++
++REVOKE ALL ON FUNCTION public.julkaise_kentta_tyhjennys(uuid, text)
++  FROM PUBLIC, anon, authenticated, agentti;
++GRANT EXECUTE ON FUNCTION public.julkaise_kentta_tyhjennys(uuid, text) TO service_role;

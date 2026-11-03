@@ -1,0 +1,20 @@
+--- live/agentti_saako_julkaista_kentan (20260903210000)
++++ malli_b (luonnos)
+@@
++  v_sallitut text[] := ARRAY['kunta', 'maakunta', 'kaavatunnus', 'kortteli', 'nimi'];
+   BEGIN
+     v_lahde_kentta := agentti_lahde_kentta(p_kentta);
++
++  IF NOT (v_lahde_kentta = ANY (v_sallitut) OR p_kentta = ANY (v_sallitut)) THEN
++    RETURN false;
++  END IF;
+@@
+-  IF v_tyhja IS TRUE THEN
+-    RETURN true;
+-  END IF;
+-
+-  v_nyky_arvo := hanke_kentta_arvo(p_hanke, p_kentta);
+-  ...
+-  RETURN v_uusi_taso > v_nyky_taso;
++  -- tyhjä: true; sama arvo + korkeampi luottamus: true; muu arvonvaihto: false
++  RETURN false;  -- kun arvo vaihtuu (ei pelkkä luottamusnosto)

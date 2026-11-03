@@ -1,5 +1,5 @@
 import type { HankeSuodatus } from "@/lib/suodatus";
-import { KOKO_LUOKAT, VAIHE_NIMET } from "@/lib/naytto";
+import { HUKKALAMPO_TILA_NIMET, KOKO_LUOKAT, VAIHE_NIMET } from "@/lib/naytto";
 import type { HankeVaihe } from "@/lib/supabase/tietokanta";
 
 export const HAKU_MAX_PITUUS = 200;
@@ -30,7 +30,14 @@ export function hankkeSopiiHakuun(
 }
 
 export function onAktiivinenSuodatus(suodatus: HankeSuodatus): boolean {
-  return Boolean(suodatus.q || suodatus.kunta || suodatus.vaihe || suodatus.koko || suodatus.kuvalliset);
+  return Boolean(
+    suodatus.q ||
+      suodatus.kunta ||
+      suodatus.vaihe ||
+      suodatus.koko ||
+      suodatus.kuvalliset ||
+      suodatus.hukkalampo,
+  );
 }
 
 export function hankkeetSuodatusParametrit(suodatus: HankeSuodatus): URLSearchParams {
@@ -40,6 +47,7 @@ export function hankkeetSuodatusParametrit(suodatus: HankeSuodatus): URLSearchPa
   if (suodatus.vaihe) p.set("vaihe", suodatus.vaihe);
   if (suodatus.koko) p.set("koko", suodatus.koko);
   if (suodatus.kuvalliset) p.set("kuvalliset", "1");
+  if (suodatus.hukkalampo) p.set("hukkalampo", suodatus.hukkalampo);
   if (suodatus.jarjestys) p.set("jarjestys", suodatus.jarjestys);
   return p;
 }
@@ -91,6 +99,13 @@ export function aktiivisetEhdot(suodatus: HankeSuodatus): AktiivinenEhto[] {
       avain: "koko",
       nimi: `Koko: ${nimi}`,
       poista: { ...suodatus, koko: undefined },
+    });
+  }
+  if (suodatus.hukkalampo) {
+    ehdot.push({
+      avain: "hukkalampo",
+      nimi: `Hukkalämpö: ${HUKKALAMPO_TILA_NIMET[suodatus.hukkalampo]}`,
+      poista: { ...suodatus, hukkalampo: undefined },
     });
   }
   if (suodatus.kuvalliset) {

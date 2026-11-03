@@ -18,7 +18,7 @@ import { robotsSallii } from "../tarkistukset/robots";
 import { lataaPaikallinenYmparisto } from "../ymparisto";
 
 const USER_AGENT =
-  "Datakeskusrekisteri/0.1 (+https://datakeskusrekisteri.vercel.app/; kuulutukset)";
+  "Datakeskusrekisteri/0.1 (+https://www.datakeskusrekisteri.fi/; kuulutukset)";
 const SOVITIN = "syke-kuulutukset";
 
 const SEURATUT: { id: string; url: string; kuvaus: string }[] = [

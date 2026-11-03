@@ -22,6 +22,7 @@ export default async function KarttaSivu({
     vaihe?: string;
     koko?: string;
     kuvalliset?: string;
+    hukkalampo?: string;
   }>;
 }) {
   const params = await searchParams;

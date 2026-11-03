@@ -1,9 +1,11 @@
-# Kuukausittainen lomakeviestien poisto (yli 12 kk). Ei kielimallia. Cron UTC.
+# Päivittäin vastausosoitteen tyhjennys (yli 89 pv, jotta 90 pv:n lupaus ehtii). Kuukauden 1. päivä myös
+# yli 12 kk vanhojen rivien poisto. Ei kielimallia. Cron UTC.
 
 name: palautteet-poisto
 
 on:
   schedule:
+    - cron: "20 4 * * *"
     - cron: "30 6 1 * *"
   workflow_dispatch:
 
@@ -18,8 +20,9 @@ jobs:
           node-version: "22"
           cache: npm
       - run: npm ci
-      - name: Poista vanhat palautteet
+      - name: Tyhjennä vanhat vastausosoitteet ja poista vanhat rivit
         env:
           NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          PALAUTTEET_POISTA_RIVIT: ${{ github.event_name == 'workflow_dispatch' || github.event.schedule == '30 6 1 * *' }}
         run: npx tsx agents/tarkistukset/palautteet-poisto.ts

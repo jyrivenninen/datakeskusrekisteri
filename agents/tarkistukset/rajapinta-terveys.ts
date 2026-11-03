@@ -13,7 +13,7 @@ import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import { lataaPaikallinenYmparisto } from "../ymparisto";
 
 const USER_AGENT =
-  "Datakeskusrekisteri/0.1 (+https://datakeskusrekisteri.vercel.app/; rajapinta-terveys)";
+  "Datakeskusrekisteri/0.1 (+https://www.datakeskusrekisteri.fi/; rajapinta-terveys)";
 const SOVITIN = "rajapinta-terveys";
 const RSS_URL = "https://rajapinnat.ymparisto.fi/api/rss/feed.xml";
 const SYKE_USERID = process.env.SYKE_RAJAPINTA_TUNNISTE?.trim() || "datakeskusrekisteri";

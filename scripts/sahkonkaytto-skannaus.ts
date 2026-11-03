@@ -33,7 +33,7 @@ import type { HankeVaihe } from "../src/lib/supabase/tietokanta";
 
 const EHDOTTAJA = "scripts/sahkonkaytto-skannaus";
 const UA =
-  "Datakeskusrekisteri/0.1 (+https://datakeskusrekisteri.vercel.app/; sahkonkaytto-skannaus)";
+  "Datakeskusrekisteri/0.1 (+https://www.datakeskusrekisteri.fi/; sahkonkaytto-skannaus)";
 
 type TulosLuokka = "löytyi" | "ei_löydy" | "malliin" | "ohitettu";
 

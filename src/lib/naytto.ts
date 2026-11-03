@@ -3,6 +3,7 @@ import type {
   HankeKuntaRooli,
   HankeOrganisaatioRooli,
   HankeVaihe,
+  HukkalampoTila,
   JohtoTyyppi,
   Luottamus,
   MaaraajaTyyppi,
@@ -17,7 +18,7 @@ import type {
   DokumenttiKieli,
   MuutosehdotusTila,
 } from "@/lib/supabase/tietokanta";
-import { HANKE_VAIHEET, ORGANISAATIO_TYYPIT } from "@/lib/supabase/tietokanta";
+import { HANKE_VAIHEET, HUKKALAMPO_TILAT, ORGANISAATIO_TYYPIT } from "@/lib/supabase/tietokanta";
 import type { LahdeTyyppi } from "@/lib/lahde-metatiedot";
 import { VARMISTAVAT_LAHDE_TYYPIT } from "@/lib/kentta-varmistus";
 import {
@@ -392,6 +393,7 @@ export const ORGANISAATIO_TYYPPI_NIMET: Record<OrganisaatioTyyppi, string> = {
   avi: "AVI",
   ministerio: "Ministeriö",
   jarjesto: "Järjestö",
+  rahasto: "Rahasto",
   muu: "Muu",
 };
 
@@ -424,6 +426,11 @@ export const HANKE_KENTTA_NIMET: Record<string, string> = {
   polttoainevarasto_yksikko: "Polttoainevaraston yksikkö",
   toimija_organisaatio_id: "Hankkeesta vastaava",
   toimija_nimi: "Hankkeesta vastaava",
+  hukkalampo_tila: "Hukkalämmön tila",
+  hukkalampo_vastaanottaja_id: "Lämmön vastaanottaja",
+  hukkalampo_vastaanottaja_nimi: "Lämmön vastaanottaja",
+  hukkalampo_gwh_a: "Toimitettu lämpö (GWh/a)",
+  hukkalampo_mw: "Lämmön talteenoton teho (MW)",
   yva_diaarinumero: "YVA-diaarinumero",
   kaavatunnus: "Kaavatunnus",
   kortteli: "Kortteli",
@@ -543,6 +550,19 @@ export type KokoLuokka = (typeof KOKO_LUOKAT)[number]["arvo"];
 
 export function onHankeVaihe(arvo: string): arvo is HankeVaihe {
   return (HANKE_VAIHEET as readonly string[]).includes(arvo);
+}
+
+export const HUKKALAMPO_TILA_NIMET: Record<HukkalampoTila, string> = {
+  toimitetaan_verkkoon: "Toimitetaan verkkoon",
+  sopimus_tehty: "Sopimus tehty",
+  aie_tai_suunnitelma: "Aiesopimus tai suunnitelma",
+  ei_hyodynneta: "Ei hyödynnetä",
+};
+
+export const HUKKALAMPO_TYHJA_TEKSTI = "Ei julkista tietoa";
+
+export function onHukkalampoTila(arvo: string): arvo is HukkalampoTila {
+  return (HUKKALAMPO_TILAT as readonly string[]).includes(arvo);
 }
 
 export function onKokoLuokka(arvo: string): arvo is KokoLuokka {

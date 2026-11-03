@@ -12,7 +12,7 @@ import { robotsSallii } from "../tarkistukset/robots";
 import { lataaPaikallinenYmparisto } from "../ymparisto";
 
 const USER_AGENT =
-  "Datakeskusrekisteri/0.1 (+https://datakeskusrekisteri.vercel.app/; hakemisto)";
+  "Datakeskusrekisteri/0.1 (+https://www.datakeskusrekisteri.fi/; hakemisto)";
 const SOVITIN = "hakemisto-kunta";
 const API_VERSIO = "1";
 const KUNTA_KOELMA = `https://api.ymparisto.fi/hakemisto/odata/Kunta?api-version=${API_VERSIO}`;

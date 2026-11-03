@@ -17,7 +17,7 @@ import { robotsSallii } from "../tarkistukset/robots";
 import { lataaPaikallinenYmparisto } from "../ymparisto";
 
 const USER_AGENT =
-  "Datakeskusrekisteri/0.1 (+https://datakeskusrekisteri.vercel.app/; mml)";
+  "Datakeskusrekisteri/0.1 (+https://www.datakeskusrekisteri.fi/; mml)";
 const SOVITIN = "mml-geokoodaus";
 const EHDOTTAJA = "agents/lahteet/mml";
 const JUURI = "https://avoin-paikkatieto.maanmittauslaitos.fi";
@@ -211,7 +211,15 @@ async function main() {
       if (kohde) osumia += 1;
       const p = kohde?.properties ?? {};
       const mmlNimi = ominaisuus(p, ["label", "name"]);
-      const mmlKunta = ominaisuus(p, ["localadmin", "locality", "county"]);
+      // Käänteishaku palauttaa kunnan nimen label:kuntatunnus-kentässä.
+      // localadmin ei ole tässä vastauksessa.
+      const mmlKunta = ominaisuus(p, [
+        "label:kuntatunnus",
+        "label:municipality",
+        "localadmin",
+        "locality",
+        "county",
+      ]);
       const kiinteistotunnus = ominaisuus(p, [
         "kiinteistotunnus",
         "propertyIdentifier",
@@ -240,7 +248,7 @@ async function main() {
         !vertaaNimi(String(hanke.kunta), mmlKunta)
       ) {
         havainnot.push(
-          `Rekisterissä kunta on ${hanke.kunta}, MML-geokoodauksessa localadmin on ${mmlKunta}.`,
+          `Rekisterissä kunta on ${hanke.kunta}, MML-käänteisgeokoodauksessa kunta on ${mmlKunta}.`,
         );
       }
 
