@@ -3,7 +3,7 @@ import { createHash } from "node:crypto";
 import { extractText } from "unpdf";
 
 const OLETUS_UA =
-  "Datakeskusrekisteri/0.1 (+https://datakeskusrekisteri.vercel.app/; dokumentti)";
+  "Datakeskusrekisteri/0.1 (+https://www.datakeskusrekisteri.fi/; dokumentti)";
 const MAX_BAITIT = 25 * 1024 * 1024;
 
 export type DokumenttiNouto = {
@@ -71,6 +71,8 @@ export async function noudaDokumenttiTeksti(
     throw new Error(`Tiedosto on liian suuri (${puskuri.byteLength} tavua).`);
   }
   const tyyppi = (vastaus.headers.get("content-type") ?? "").toLowerCase();
+  // unpdf voi irrottaa ArrayBufferin — tavutiiviste ennen tekstiuuttoa.
+  const sisalto_tiiviste = createHash("sha256").update(puskuri).digest("hex");
   let teksti: string;
   if (onPdf(tyyppi, url)) {
     teksti = await pdfTekstiksi(puskuri);
@@ -82,7 +84,7 @@ export async function noudaDokumenttiTeksti(
     tila: vastaus.status,
     teksti,
     tiiviste: tiiviste(teksti),
-    sisalto_tiiviste: createHash("sha256").update(puskuri).digest("hex"),
+    sisalto_tiiviste,
     merkkimaara: teksti.length,
     ms: Date.now() - alku,
   };

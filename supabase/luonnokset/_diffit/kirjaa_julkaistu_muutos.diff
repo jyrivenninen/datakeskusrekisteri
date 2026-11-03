@@ -1,0 +1,20 @@
+--- live/kirjaa_julkaistu_muutos.sql
++++ uusi/kirjaa_julkaistu_muutos.sql
+@@ -69,6 +69,8 @@
+         OLD.it_teho_mw IS DISTINCT FROM NEW.it_teho_mw
+       UNION ALL SELECT 'teho_mw', julkaistu_muutos_numero(NEW.teho_mw),
+         OLD.teho_mw IS DISTINCT FROM NEW.teho_mw
++      UNION ALL SELECT 'teho_erittelematon_mw', julkaistu_muutos_numero(NEW.teho_erittelematon_mw),
++        OLD.teho_erittelematon_mw IS DISTINCT FROM NEW.teho_erittelematon_mw
+       UNION ALL SELECT 'pinta_ala_ha', julkaistu_muutos_numero(NEW.pinta_ala_ha),
+         OLD.pinta_ala_ha IS DISTINCT FROM NEW.pinta_ala_ha
+       UNION ALL SELECT 'kaava_ala_ha', julkaistu_muutos_numero(NEW.kaava_ala_ha),
+@@ -154,3 +156,8 @@
+   RETURN NEW;
+ END;
+ $function$
++
++
++REVOKE ALL ON FUNCTION public.kirjaa_julkaistu_muutos()
++  FROM PUBLIC, anon, authenticated, agentti;
++GRANT EXECUTE ON FUNCTION public.kirjaa_julkaistu_muutos() TO service_role;

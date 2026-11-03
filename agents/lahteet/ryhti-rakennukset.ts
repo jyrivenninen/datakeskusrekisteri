@@ -12,7 +12,7 @@ import {
 import { lataaPaikallinenYmparisto } from "../ymparisto";
 
 const USER_AGENT =
-  "Datakeskusrekisteri/0.1 (+https://datakeskusrekisteri.vercel.app/; ryhti-rakennukset)";
+  "Datakeskusrekisteri/0.1 (+https://www.datakeskusrekisteri.fi/; ryhti-rakennukset)";
 const SOVITIN = "ryhti-rakennus";
 const EHDOTTAJA = "agents/lahteet/ryhti-rakennukset";
 

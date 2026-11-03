@@ -1,6 +1,6 @@
 /** HTML-sivun <title> ilman koko sivun tekstin purkua. */
 const OLETUS_UA =
-  "Datakeskusrekisteri/0.1 (+https://datakeskusrekisteri.vercel.app/; lahde-otsikko)";
+  "Datakeskusrekisteri/0.1 (+https://www.datakeskusrekisteri.fi/; lahde-otsikko)";
 const MAX_SIVU = 800_000;
 
 function puhdistaOtsikko(raw: string): string {

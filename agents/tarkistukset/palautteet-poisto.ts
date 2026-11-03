@@ -1,9 +1,11 @@
 /**
- * Poistaa yli 12 kk vanhat lomakeviestit (palautteet). Ei kielimallia.
- * Ajo kirjataan lahdeajot-tauluun.
+ * Tyhjentää yli 89 päivää vanhat vastausosoitteet ja poistaa yli 12 kk vanhat
+ * lomakeviestit. Ei kielimallia. Ajo kirjataan lahdeajot-tauluun.
+ * Osoitteita ei tulosteta.
  *
  * Ympäristö: NEXT_PUBLIC_SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY
- * Valinnainen: PALAUTTEET_SAILYTYKSKK (oletus 12), PALAUTTEET_POISTO_KUIVA=1
+ * Valinnainen: PALAUTTEET_SAILYTYKSKK (oletus 12), PALAUTTEET_EMAIL_PAIVIA (oletus 89),
+ * PALAUTTEET_POISTA_RIVIT=false (ohita rivien poisto), PALAUTTEET_POISTO_KUIVA=1
  */
 import { createClient } from "@supabase/supabase-js";
 import { lataaPaikallinenYmparisto } from "../ymparisto";
@@ -16,6 +18,11 @@ function kuukautta(): number {
   return Number.isFinite(n) && n > 0 ? Math.floor(n) : 12;
 }
 
+function paivia(): number {
+  const n = Number(process.env.PALAUTTEET_EMAIL_PAIVIA ?? "89");
+  return Number.isFinite(n) && n > 0 ? Math.floor(n) : 89;
+}
+
 async function main() {
   lataaPaikallinenYmparisto();
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -26,7 +33,9 @@ async function main() {
     );
   }
   const kuiva = process.env.PALAUTTEET_POISTO_KUIVA === "1";
+  const poistaRivit = process.env.PALAUTTEET_POISTA_RIVIT !== "false";
   const kynnys = kuukautta();
+  const emailPaivia = paivia();
   const supabase = createClient(url, avain, {
     auth: { persistSession: false, autoRefreshToken: false },
   });
@@ -43,24 +52,46 @@ async function main() {
   }
 
   try {
-    const raja = new Date();
-    raja.setMonth(raja.getMonth() - kynnys);
+    const emailRaja = new Date();
+    emailRaja.setDate(emailRaja.getDate() - emailPaivia);
+    const riviRaja = new Date();
+    riviRaja.setMonth(riviRaja.getMonth() - kynnys);
 
-    let poistettu: number;
+    let tyhjennetty: number;
     if (kuiva) {
-      const { count, error: laskuVirhe } = await supabase
+      const { count, error: emailLaskuVirhe } = await supabase
         .from("palautteet")
         .select("id", { count: "exact", head: true })
-        .lt("luotu_pvm", raja.toISOString());
-      if (laskuVirhe) throw new Error(laskuVirhe.message);
-      poistettu = count ?? 0;
-      console.log(`kuiva: poistettaisiin ${poistettu} riviä (>${kynnys} kk)`);
+        .not("vastaus_email", "is", null)
+        .lt("luotu_pvm", emailRaja.toISOString());
+      if (emailLaskuVirhe) throw new Error(emailLaskuVirhe.message);
+      tyhjennetty = count ?? 0;
+      console.log(`kuiva: osoite tyhjennettäisiin ${tyhjennetty} riviltä (>${emailPaivia} pv)`);
     } else {
-      const { data, error } = await supabase.rpc("poista_vanhat_palautteet", {
-        p_kuukautta: kynnys,
+      const { data, error } = await supabase.rpc("tyhjenna_vanhat_vastaus_email", {
+        p_paivia: emailPaivia,
       });
       if (error) throw new Error(error.message);
-      poistettu = typeof data === "number" ? data : Number(data ?? 0);
+      tyhjennetty = typeof data === "number" ? data : Number(data ?? 0);
+    }
+
+    let poistettu = 0;
+    if (poistaRivit) {
+      if (kuiva) {
+        const { count, error: laskuVirhe } = await supabase
+          .from("palautteet")
+          .select("id", { count: "exact", head: true })
+          .lt("luotu_pvm", riviRaja.toISOString());
+        if (laskuVirhe) throw new Error(laskuVirhe.message);
+        poistettu = count ?? 0;
+        console.log(`kuiva: poistettaisiin ${poistettu} riviä (>${kynnys} kk)`);
+      } else {
+        const { data, error } = await supabase.rpc("poista_vanhat_palautteet", {
+          p_kuukautta: kynnys,
+        });
+        if (error) throw new Error(error.message);
+        poistettu = typeof data === "number" ? data : Number(data ?? 0);
+      }
     }
 
     if (ajoId) {
@@ -69,14 +100,14 @@ async function main() {
         .update({
           tila: "valmis",
           paattyi_pvm: new Date().toISOString(),
-          osumia: poistettu,
+          osumia: poistettu + tyhjennetty,
         })
         .eq("id", ajoId);
       if (paivitysVirhe) throw new Error(paivitysVirhe.message);
     }
 
     console.log(
-      `${EHDOTTAJA}: poistettu ${poistettu} palautetta (>${kynnys} kk)${kuiva ? " (kuiva-ajo)" : ""}.`,
+      `${EHDOTTAJA}: osoite tyhjennetty ${tyhjennetty} riviltä (>${emailPaivia} pv), poistettu ${poistettu} palautetta${poistaRivit ? ` (>${kynnys} kk)` : " (rivien poisto ohitettu)"}${kuiva ? " (kuiva-ajo)" : ""}.`,
     );
   } catch (syy) {
     const viesti = syy instanceof Error ? syy.message : "Palautteiden poisto epäonnistui.";

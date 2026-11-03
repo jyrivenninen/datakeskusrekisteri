@@ -9,7 +9,7 @@ import { lataaPaikallinenYmparisto } from "../agents/ymparisto";
 
 const CKAN_HAKU = "https://avoindata.fi/data/api/3/action/package_search";
 const USER_AGENT =
-  "Datakeskusrekisteri/0.1 (+https://datakeskusrekisteri.vercel.app/; avoindata-etsi)";
+  "Datakeskusrekisteri/0.1 (+https://www.datakeskusrekisteri.fi/; avoindata-etsi)";
 
 const HAKUSANAT = [
   "päätökset kokoukset",

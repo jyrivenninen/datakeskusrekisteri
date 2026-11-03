@@ -1,7 +1,7 @@
 import type { Asia, Kokous, KuntaSovitin } from "../tyypit";
 
 const USER_AGENT =
-  "Datakeskusrekisteri/0.1 (+https://datakeskusrekisteri.vercel.app/; html)";
+  "Datakeskusrekisteri/0.1 (+https://www.datakeskusrekisteri.fi/; html)";
 const KOKOUS_KATTO = Number(process.env.KUNTA_HTML_KOKOUS_KATTO ?? "15");
 
 /** Helsinki paatokset.hel.fi — keskeiset toimielimet datacenter-aiheille. */

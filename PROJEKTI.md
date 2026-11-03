@@ -133,6 +133,15 @@ ovat valmiit — ne ovat helppo osa, kun tietomalli on kunnossa.
 - [x] Tietokantatason pakotteet: `NOT NULL`, `CHECK`-ehdot, ei lähteetöntä
       faktakenttää
 - [x] Row Level Security: julkinen luku vain julkaistuun tietoon
+- **Huom. migraatioversiot:** Kun migraatio ajetaan Supabase MCP:n
+  `apply_migration`-työkalulla, etähistorian versio on ajohetken aikaleima
+  (esim. `20261012182111`), ei välttämättä repon tiedostonimen etuliite
+  (esim. `20261017200000_…sql`). `supabase migration list` / `db push`
+  vertaa näitä; uudet paikalliset versiot pidetään suurempina kuin etähistorian
+  suurin, eikä vanhoja tiedostonimiä nimetä uudelleen pelkän MCP-eron takia.
+  Esim. B2 `tehohavainnot_b2` sai MCP-version `20261013000423` (repon tiedosto
+  samanniminen); ajohetken leima voi olla pienempi kuin aiempi
+  `20261014100000`.
 
 ### Vaihe 3 — Ensimmäinen hanke käsin
 - [x] Jokelan (Tuusula) hanke syötettynä loppuun asti
@@ -247,6 +256,46 @@ selkeän, numeroidun ohjeen ja odottaa vahvistusta:
 
 Cursor ei koskaan pyydä käyttäjää liittämään API-avainta chattiin — avaimet
 menevät suoraan `.env.local`-tiedostoon tai Vercelin asetuksiin.
+
+### Migraatio-oikeudet
+
+Sitova yksityiskohta: `.cursor/rules/datakeskusrekisteri.mdc` §10
+(eksplisiittinen REVOKE/GRANT, DROP vanhalle allekirjoitukselle, RLS,
+security_invoker, DO-katalogitesti, yksilöllinen versio, ei avaimia).
+
+### Service role- ja sb_secret-avaimen kierrätys
+
+`SUPABASE_SERVICE_ROLE_KEY` (ja mahdollinen `sb_secret`-muotoinen palvelinavain)
+on täysi kirjoitus-/ohitusoikeus Postgresiin PostgREST:n kautta. Sitä ei
+koskaan tulosteta chattiin eikä commitoida.
+
+**Missä avainta käytetään**
+
+1. **Vercel** — ympäristömuuttuja `SUPABASE_SERVICE_ROLE_KEY` (Production /
+   Preview / Development). Server Actions (hyväksyntä, julkaisu) ja palvelin-
+   renderöinti lukevat sen täältä.
+2. **Paikallinen `.env.local`** — sama nimi. Käytössä `next dev`, ylläpito-
+   polut ja `tsx`-skriptit (`scripts/*`, `agents/*`). Tiedosto on `.gitignore`ssa.
+3. **Agenttiskriptit / cron** — lukevat `process.env.SUPABASE_SERVICE_ROLE_KEY`
+   (GitHub Actions secrets, jos cron käytössä). Anon-avain ei riitä RPC-
+   kirjoituksiin, joissa vaaditaan service_role.
+
+**Kierrätys (kun avain vuotaa tai vuorotellaan)**
+
+1. Supabase Dashboard → Project Settings → API → **Reset** service_role
+   (tai luo uusi secret). Vanha avain lakkaa toimimasta heti.
+2. Kopioi uusi arvo Verceliin (`vercel env` / Dashboard) kaikkiin ympäristöihin.
+   Tee redeploy, jotta uudet arvot ovat runtime-muuttujissa.
+3. Päivitä paikallinen `.env.local` (älä liitä avainta chattiin).
+4. Päivitä GitHub Actions / muut cron-salaisuudet, jos käytössä.
+5. Varmista: yksi hyväksyntä ylläpidosta ja yksi agenttiskriptin kuiva ajo
+   (ei kirjoitusta) lukevat uuden avaimen ilman 401/JWT-virhettä.
+6. Anon / `NEXT_PUBLIC_SUPABASE_ANON_KEY` ei yleensä kierrätetä samalla;
+   jos sekin vuotaa, kierrätä erikseen ja päivitä Vercel + `.env.local`.
+
+`sb_secret_*`-muotoiset avaimet noudattavat samaa listaa: jokainen paikka,
+johon vanha arvo on tallennettu, vaihdetaan uuteen ennen kuin vanha
+mitätöidään (tai heti mitätöinnin jälkeen, jos vuoto on jo tapahtunut).
 
 ---
 

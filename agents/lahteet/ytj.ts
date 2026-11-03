@@ -18,7 +18,7 @@ import { robotsSallii } from "../tarkistukset/robots";
 import { lataaPaikallinenYmparisto } from "../ymparisto";
 
 const USER_AGENT =
-  "Datakeskusrekisteri/0.1 (+https://datakeskusrekisteri.vercel.app/; ytj)";
+  "Datakeskusrekisteri/0.1 (+https://www.datakeskusrekisteri.fi/; ytj)";
 const SOVITIN = "ytj-prh";
 const EHDOTTAJA = "agents/lahteet/ytj";
 const JUURI = "https://avoindata.prh.fi/opendata-ytj-api/v3/companies";

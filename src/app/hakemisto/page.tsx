@@ -28,7 +28,8 @@ export default async function HakemistoSivu({
       <h1 className="text-3xl font-semibold tracking-tight">Hakemisto</h1>
       <p className="mt-4 leading-relaxed text-muted">
         Julkaistut organisaatiot. Henkilönimiä tai suoria yhteystietoja ei
-        julkaista. Hakemisto on toistaiseksi vain ylläpitäjille.
+        julkaista. Hakemisto on toistaiseksi vain ylläpitäjille. GLEIF-haku
+        (LEI) on organisaation sivulla.
       </p>
 
       <form method="get" className="mt-6 flex flex-col gap-2 sm:max-w-xs">

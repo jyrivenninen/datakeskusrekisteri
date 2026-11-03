@@ -13,7 +13,7 @@ import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import { lataaPaikallinenYmparisto } from "../ymparisto";
 
 const USER_AGENT =
-  "Datakeskusrekisteri/0.1 (+https://datakeskusrekisteri.vercel.app/; pxweb)";
+  "Datakeskusrekisteri/0.1 (+https://www.datakeskusrekisteri.fi/; pxweb)";
 const SOVITIN = "pxweb-vaesto";
 const JUURI = "https://pxdata.stat.fi/PxWeb/api/v1/fi/StatFin/vaerak";
 const TAULUKKO = "11re.px";

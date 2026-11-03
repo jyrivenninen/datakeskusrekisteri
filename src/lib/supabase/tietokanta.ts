@@ -20,6 +20,16 @@ export const HANKE_VAIHEET = [
 
 export type HankeVaihe = (typeof HANKE_VAIHEET)[number];
 
+/** NULL = ei julkista tietoa. Ei tarkoita, ettei lämpöä hyödynnetä. */
+export const HUKKALAMPO_TILAT = [
+  "toimitetaan_verkkoon",
+  "sopimus_tehty",
+  "aie_tai_suunnitelma",
+  "ei_hyodynneta",
+] as const;
+
+export type HukkalampoTila = (typeof HUKKALAMPO_TILAT)[number];
+
 export const ORGANISAATIO_TYYPIT = [
   "yritys",
   "kunta",
@@ -28,6 +38,7 @@ export const ORGANISAATIO_TYYPIT = [
   "avi",
   "ministerio",
   "jarjesto",
+  "rahasto",
   "muu",
 ] as const;
 
@@ -165,6 +176,10 @@ export const HANKE_FAKTAKENTAT_EHDOLLISET = [
   "diesel_vuosikulutus_yksikko",
   "varavoima_paastot_t_co2e",
   "toimija_organisaatio_id",
+  "hukkalampo_tila",
+  "hukkalampo_vastaanottaja_id",
+  "hukkalampo_gwh_a",
+  "hukkalampo_mw",
   "yva_diaarinumero",
   "kaavatunnus",
   "kortteli",
@@ -273,6 +288,10 @@ export type Hanke = {
   polttoainevarasto_maara: number | null;
   polttoainevarasto_yksikko: string | null;
   toimija_organisaatio_id: string | null;
+  hukkalampo_tila: HukkalampoTila | null;
+  hukkalampo_vastaanottaja_id: string | null;
+  hukkalampo_gwh_a: number | null;
+  hukkalampo_mw: number | null;
   yva_diaarinumero: string | null;
   huomautus: string | null;
   sijaintiperustelu: string | null;
@@ -595,4 +614,6 @@ export type Palaute = {
   kasitelty_pvm: string | null;
   kasittelija: string | null;
   huomautus: string | null;
+  /** Vain ylläpidon palvelinavaimella. Ei kuulu julkisiin kyselyihin. */
+  vastaus_email?: string | null;
 };

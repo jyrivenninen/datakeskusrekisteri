@@ -47,6 +47,7 @@ export default async function Etusivu({
     vaihe?: string;
     koko?: string;
     kuvalliset?: string;
+    hukkalampo?: string;
     jarjestys?: string;
   }>;
 }) {

@@ -1,6 +1,6 @@
 import type { KuntaSovitin, Kokous } from "../tyypit";
 
-const USER_AGENT = "Datakeskusrekisteri/0.1 (+https://datakeskusrekisteri.vercel.app/; casem)";
+const USER_AGENT = "Datakeskusrekisteri/0.1 (+https://www.datakeskusrekisteri.fi/; casem)";
 const KOKOUS_KATTO = Number(process.env.KUNTA_CASEM_KOKOUS_KATTO ?? "20");
 
 function decodeHtml(raaka: string): string {

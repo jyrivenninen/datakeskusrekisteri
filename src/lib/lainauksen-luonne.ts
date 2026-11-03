@@ -1,6 +1,8 @@
 /**
- * Lainauksen rooli asiakirjassa. Heuristiikka otoslaskentaan;
- * tallennettu arvo kentta_lahteet.lainauksen_luonne.
+ * Lainauksen rooli asiakirjassa.
+ * Julkisessa listassa näytetään vain ihmisen tallentama
+ * kentta_lahteet.lainauksen_luonne. Heuristiikka on vain
+ * läpikäyntiapu: sitä ei lasketa päätösosiksi eikä hyväksytä erässä.
  */
 
 export const LAINAUKSEN_LUONTEET = [
@@ -18,6 +20,22 @@ export const LAINAUKSEN_LUONNE_NIMET: Record<LainauksenLuonne, string> = {
   valmisteluteksti: "Valmisteluteksti",
   muu: "Muu",
 };
+
+/** Ihmisen tallentama luokka; null/heuristiikka ≠ päätösosa. */
+export function tallennettuLainauksenLuonne(
+  arvo: string | null | undefined,
+): LainauksenLuonne | null {
+  if (!arvo) return null;
+  return (LAINAUKSEN_LUONTEET as readonly string[]).includes(arvo)
+    ? (arvo as LainauksenLuonne)
+    : null;
+}
+
+export function onTallennettuPaatososa(
+  arvo: string | null | undefined,
+): boolean {
+  return tallennettuLainauksenLuonne(arvo) === "paatososa";
+}
 
 /** Heuristiikka lainauksen tekstistä (ei korvaa ihmisen merkintää). */
 export function luokitteleLainauksenLuonne(

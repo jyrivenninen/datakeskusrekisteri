@@ -1,0 +1,2 @@
+-- Korvattu migraatiolla 20261017200000_paivita_kentta_lahde_sisalto_tarkistettu.sql
+-- p_tarkistettu boolean DEFAULT false; päivä kun lainaus/URL muuttuu tai lippu true.

@@ -12,7 +12,8 @@ import {
   onAktiivinenSuodatus,
   parsiHakusana,
 } from "@/lib/haku";
-import { KOKO_LUOKAT, VAIHE_NIMET } from "@/lib/naytto";
+import { HUKKALAMPO_TILA_NIMET, KOKO_LUOKAT, VAIHE_NIMET, onHukkalampoTila } from "@/lib/naytto";
+import { HUKKALAMPO_TILAT } from "@/lib/supabase/tietokanta";
 
 function HakuKuvake() {
   return (
@@ -226,6 +227,32 @@ export function HankkeetSuodatin({
             {KOKO_LUOKAT.map((luokka) => (
               <option key={luokka.arvo} value={luokka.arvo}>
                 {luokka.nimi}
+              </option>
+            ))}
+          </select>
+        </p>
+
+        <p className="flex flex-col gap-1 sm:col-span-1">
+          <label htmlFor="hukkalampo" className="text-sm font-medium">
+            Hukkalämpö
+          </label>
+          <select
+            id="hukkalampo"
+            name="hukkalampo"
+            value={suodatus.hukkalampo ?? ""}
+            className="min-h-11 rounded-lg border border-border bg-background px-3 py-2 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-link"
+            onChange={(tapahtuma) => {
+              const arvo = tapahtuma.target.value;
+              paivitaUrl({
+                ...suodatus,
+                hukkalampo: arvo && onHukkalampoTila(arvo) ? arvo : undefined,
+              });
+            }}
+          >
+            <option value="">Kaikki</option>
+            {HUKKALAMPO_TILAT.map((tila) => (
+              <option key={tila} value={tila}>
+                {HUKKALAMPO_TILA_NIMET[tila]}
               </option>
             ))}
           </select>

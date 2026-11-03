@@ -21,7 +21,7 @@ import { robotsSallii } from "../tarkistukset/robots";
 import { lataaPaikallinenYmparisto } from "../ymparisto";
 
 const USER_AGENT_POHJA =
-  "Datakeskusrekisteri/0.1 (+https://datakeskusrekisteri.vercel.app/; ryhti)";
+  "Datakeskusrekisteri/0.1 (+https://www.datakeskusrekisteri.fi/; ryhti)";
 const SOVITIN = "ryhti-kaava";
 const EHDOTTAJA = "agents/lahteet/ryhti";
 const JUURI =

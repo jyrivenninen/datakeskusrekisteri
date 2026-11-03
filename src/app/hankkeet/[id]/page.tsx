@@ -25,6 +25,8 @@ import { sijainninKentanTila } from "@/lib/sijainti-tila";
 import {
   JOHTO_TYYPPI_NIMET,
   HANKE_KENTTA_NIMET,
+  HUKKALAMPO_TILA_NIMET,
+  HUKKALAMPO_TYHJA_TEKSTI,
   HANKE_KUNTA_ROOLI_NIMET,
   hankeOrganisaatioRooliNimi,
   MAARAAJA_NIMET,
@@ -81,10 +83,14 @@ type KenttaRivi = {
   arvo: string | null;
   href?: string | null;
   lahdeKentta?: string;
+  /** Näytetään, kun arvo on tyhjä. Oletus on «Ei merkitty». */
+  tyhjaTeksti?: string;
 };
 
 function kenttaArvoksi(rivi: KenttaRivi) {
-  if (!rivi.arvo) return <span className="text-muted">Ei merkitty</span>;
+  if (!rivi.arvo) {
+    return <span className="text-muted">{rivi.tyhjaTeksti ?? "Ei merkitty"}</span>;
+  }
   if (rivi.href) {
     return (
       <a href={rivi.href} className="text-link underline">
@@ -162,11 +168,15 @@ function Faktakortti({
 }
 
 function hankeRyhmat(
-  hanke: Hanke & { toimija: { id: string; nimi: string; slug: string } | null },
+  hanke: Hanke & {
+    toimija: { id: string; nimi: string; slug: string } | null;
+    hukkalampo_vastaanottaja?: { id: string; nimi: string; slug: string } | null;
+  },
   maakunta: string | null,
 ): {
   id: string;
   otsikko: string;
+  selite?: string;
   rivit: KenttaRivi[];
 }[] {
   return [
@@ -287,6 +297,39 @@ function hankeRyhmat(
             hanke.varavoima_paastot_t_co2e != null
               ? muotoileLuku(hanke.varavoima_paastot_t_co2e)
               : null,
+        },
+      ],
+    },
+    {
+      id: "hukkalampo",
+      otsikko: "Hukkalämpö",
+      selite:
+        "Toteutuma ja suunnitelma erotellaan. Lämpöyhtiön ilmoitus on vahvempi lähde kuin datakeskuksen oma tiedote. Tyhjä tieto tarkoittaa, ettei julkista lähdettä ole löytynyt.",
+      rivit: [
+        {
+          kentta: "hukkalampo_tila",
+          arvo: hanke.hukkalampo_tila ? HUKKALAMPO_TILA_NIMET[hanke.hukkalampo_tila] : null,
+          tyhjaTeksti: HUKKALAMPO_TYHJA_TEKSTI,
+        },
+        {
+          kentta: "hukkalampo_vastaanottaja_id",
+          arvo: hanke.hukkalampo_vastaanottaja?.nimi ?? null,
+          href: hanke.hukkalampo_vastaanottaja?.slug
+            ? toimijaSivuPolku(hanke.hukkalampo_vastaanottaja.slug)
+            : hanke.hukkalampo_vastaanottaja
+              ? `/organisaatiot/${hanke.hukkalampo_vastaanottaja.id}`
+              : null,
+        },
+        {
+          kentta: "hukkalampo_gwh_a",
+          arvo:
+            hanke.hukkalampo_gwh_a != null
+              ? `${muotoileLuku(hanke.hukkalampo_gwh_a)} GWh/a`
+              : null,
+        },
+        {
+          kentta: "hukkalampo_mw",
+          arvo: hanke.hukkalampo_mw != null ? `${muotoileLuku(hanke.hukkalampo_mw)} MW` : null,
         },
       ],
     },
@@ -605,6 +648,9 @@ export default async function HankeSivu({
               <h3 id={ryhma.id} className="text-base font-semibold">
                 {ryhma.otsikko}
               </h3>
+              {ryhma.selite ? (
+                <p className="mt-2 max-w-prose text-sm leading-relaxed text-muted">{ryhma.selite}</p>
+              ) : null}
               <Korttiruudukko>
                 {ryhma.rivit.map((rivi) => (
                   <Faktakortti

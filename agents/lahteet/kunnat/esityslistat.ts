@@ -29,7 +29,7 @@ import { twebSovitin } from "./sovittimet/tweb";
 import type { HankeKunnassa, KuntaDokumentti, KuntaLahde, KuntaSovitin } from "./tyypit";
 
 const USER_AGENT =
-  "Datakeskusrekisteri/0.1 (+https://datakeskusrekisteri.vercel.app/; kuntakokoukset)";
+  "Datakeskusrekisteri/0.1 (+https://www.datakeskusrekisteri.fi/; kuntakokoukset)";
 const SOVITIN = "kunta-esityslista";
 const EHDOTTAJA = "agents/lahteet/kunnat/esityslistat";
 

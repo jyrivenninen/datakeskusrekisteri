@@ -140,6 +140,12 @@ export default async function TietoaPalvelustaSivu() {
             koskeviin ilmoituksiin, eikä siihen pidä kirjoittaa arkaluonteisia tietoja.
           </p>
           <p>
+            Palautelomake. Voit halutessasi antaa sähköpostiosoitteen, jos haluat vastauksen
+            palautteeseesi. Osoitetta käytetään vain vastaamiseen. Sitä ei julkaista eikä luovuteta
+            eteenpäin. Osoite poistetaan, kun palaute on käsitelty, viimeistään 90 päivän kuluttua
+            palautteen saapumisesta. Palautetta voi lähettää myös antamatta yhteystietoja.
+          </p>
+          <p>
             Rekisterinpitäjä on Jyri Venninen yksityishenkilönä. Tieto päivitetään, kun toiminta
             siirtyy perusteilla olevalle yhdistykselle. Yhteydenotot{" "}
             <a href="/yhteys" className="text-link underline">

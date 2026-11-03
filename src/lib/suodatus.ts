@@ -1,6 +1,7 @@
 import { parsiHakusana } from "@/lib/haku";
 import { parsiHankeJarjestys, type HankeJarjestys } from "@/lib/hanke-jarjestys";
-import { onHankeVaihe, onKokoLuokka, type KokoLuokka } from "@/lib/naytto";
+import { onHankeVaihe, onHukkalampoTila, onKokoLuokka, type KokoLuokka } from "@/lib/naytto";
+import type { HukkalampoTila } from "@/lib/supabase/tietokanta";
 import type { HankeVaihe } from "@/lib/supabase/tietokanta";
 
 /** URL-suodattimet etusivun hankelistauksessa. Client-safe (ei server-importteja). */
@@ -10,6 +11,7 @@ export type HankeSuodatus = {
   vaihe?: HankeVaihe;
   koko?: KokoLuokka;
   kuvalliset?: boolean;
+  hukkalampo?: HukkalampoTila;
   jarjestys?: HankeJarjestys;
 };
 
@@ -19,6 +21,7 @@ export function parsiSuodatus(params: {
   vaihe?: string;
   koko?: string;
   kuvalliset?: string;
+  hukkalampo?: string;
   jarjestys?: string;
 }): HankeSuodatus {
   const jarjestys = parsiHankeJarjestys(params.jarjestys);
@@ -28,6 +31,10 @@ export function parsiSuodatus(params: {
     vaihe: params.vaihe && onHankeVaihe(params.vaihe) ? params.vaihe : undefined,
     koko: params.koko && onKokoLuokka(params.koko) ? params.koko : undefined,
     kuvalliset: params.kuvalliset === "1",
+    hukkalampo:
+      params.hukkalampo && onHukkalampoTila(params.hukkalampo)
+        ? params.hukkalampo
+        : undefined,
     jarjestys: jarjestys === "nimi" ? undefined : jarjestys,
   };
 }

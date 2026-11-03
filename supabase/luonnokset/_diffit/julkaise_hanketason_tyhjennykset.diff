@@ -1,0 +1,19 @@
+--- live/julkaise_hanketason_tyhjennykset.sql
++++ uusi/julkaise_hanketason_tyhjennykset.sql
+@@ -47,6 +47,7 @@
+     END IF;
+     IF v_kentta NOT IN (
+       'teho_mw',
++      'teho_erittelematon_mw',
+       'it_teho_mw',
+       'pinta_ala_ha',
+       'sahkonkaytto_twh_a',
+@@ -94,3 +95,8 @@
+   END IF;
+ END;
+ $function$
++
++
++REVOKE ALL ON FUNCTION public.julkaise_hanketason_tyhjennykset(uuid, text)
++  FROM PUBLIC, anon, authenticated, agentti;
++GRANT EXECUTE ON FUNCTION public.julkaise_hanketason_tyhjennykset(uuid, text) TO service_role;

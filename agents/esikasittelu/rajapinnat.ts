@@ -33,7 +33,7 @@ function sykeUserid(): string {
 }
 
 function userAgent(): string {
-  return `Datakeskusrekisteri/0.1 (+https://datakeskusrekisteri.vercel.app/; esikasittelu) sykeuserid/${sykeUserid()}`;
+  return `Datakeskusrekisteri/0.1 (+https://www.datakeskusrekisteri.fi/; esikasittelu) sykeuserid/${sykeUserid()}`;
 }
 
 function osoiteSykeTunnisteella(url: string): string {

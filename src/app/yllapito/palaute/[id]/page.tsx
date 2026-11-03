@@ -1,8 +1,10 @@
 import { notFound, redirect } from "next/navigation";
 import { merkitsePalauteKasitellyksi } from "@/app/toiminnot";
+import { KopioiOsoite } from "@/komponentit/kopioi-osoite";
 import { PALAUTE_AIHE_NIMET, PALAUTE_TILA_NIMET, muotoileAika } from "@/lib/naytto";
 import { haeKirjautunutKayttaja } from "@/lib/supabase/palvelin";
 import type { Palaute } from "@/lib/supabase/tietokanta";
+import { luoYllapitoAsiakas, supabasePalvelinAvainAsetettu } from "@/lib/supabase/yllapito-asiakas";
 
 async function vaadiYllapitaja() {
   const { user, supabase } = await haeKirjautunutKayttaja();
@@ -26,8 +28,21 @@ export default async function PalauteSivu({
   const { id } = await params;
   const query = await searchParams;
   const supabase = await vaadiYllapitaja();
-  const { data } = await supabase.from("palautteet").select("*").eq("id", id).maybeSingle();
+  const { data } = await supabase
+    .from("palautteet")
+    .select("id, aihe, viesti, tila, luotu_pvm, kasitelty_pvm, kasittelija, huomautus")
+    .eq("id", id)
+    .maybeSingle();
   if (!data) notFound();
+  let vastausEmail: string | null = null;
+  if (supabasePalvelinAvainAsetettu()) {
+    const { data: osoite, error: osoiteVirhe } = await luoYllapitoAsiakas()
+      .from("palautteet")
+      .select("vastaus_email")
+      .eq("id", id)
+      .maybeSingle();
+    if (!osoiteVirhe) vastausEmail = osoite?.vastaus_email ?? null;
+  }
   const palaute = data as Palaute;
   const odottaa = palaute.tila === "odottaa";
 
@@ -56,6 +71,14 @@ export default async function PalauteSivu({
           <dt className="font-medium">Viesti</dt>
           <dd className="mt-1 whitespace-pre-wrap">{palaute.viesti}</dd>
         </div>
+        {vastausEmail ? (
+          <div className="py-3">
+            <dt className="font-medium">Vastausosoite</dt>
+            <dd className="mt-1">
+              <KopioiOsoite osoite={vastausEmail} />
+            </dd>
+          </div>
+        ) : null}
         {palaute.huomautus ? (
           <div className="py-3">
             <dt className="font-medium">Ylläpidon merkintä</dt>

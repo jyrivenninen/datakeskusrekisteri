@@ -83,7 +83,11 @@ export default async function ViranomaisVahvistusSivu({
         Sitovuudeltaan merkitykselliset kentät, joilla on vähintään yksi
         viranomaislähde (päätös, viranomaisasiakirja tai rekisteri), mutta ei
         yhtään ihmisen vahvistamaa viranomaislähdettä. Tarkista, tukeeko
-        lainaus kentän arvoa.
+        lainaus kentän arvoa. Lainauksen luonteen heuristiikka on vain apu:
+        sitä ei lasketa päätösosiksi eikä hyväksytä erässä. Julkisessa
+        listassa näkyy vain ihmisen tallentama luokka. Jono on järjestetty
+        niin, että ensin tulevat rivit, joiden luokittelu vaikuttaa
+        julkisesti näytettävään lukuun.
       </p>
 
       <ul className="mt-4 flex flex-wrap gap-3 text-sm">

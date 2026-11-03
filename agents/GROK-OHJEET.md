@@ -2,11 +2,12 @@
 
 ## 1. Oikeudet (sinulle, ennen Grok-konfiguraatiota)
 
-Agentille on oma Postgres-rooli `agentti`. Se lukee julkaistua dataa,
-kirjoittaa `muutosehdotukset`-tauluun ja voi **julkaista uutta tietoa
-automaattisesti** RPC:llä `julkaise_agentti_ehdotus`. Muutokset samalla
-luottamustasolla ja päätökset vaativat ihmisen hyväksynnän.
-Tarkat säännöt: `PROJEKTI-lisays-agentti-julkaisu.md`.
+Agentille on oma Postgres-rooli `agentti`. Se lukee julkaistua dataa ja
+kirjoittaa `muutosehdotukset`-tauluun (`tila='odottaa'`,
+`ehdottaja_tyyppi='agentti'`). **Automaattijulkaisu on suljettu**
+(2026-10-13): `julkaise_agentti_ehdotus` ei ole enää `agentti`-roolin
+kutsuttavissa (vain `service_role`). Kaikki agentin ehdotukset jäävät
+hyväksyntäjonoon. Tarkat säännöt: `PROJEKTI-lisays-agentti-julkaisu.md`.
 
 ### Vaiheet
 
@@ -85,7 +86,7 @@ testiä ja raportoi tulokset käyttäjälle:
 |---|-------|-----------|--------------|
 | 1 | **API-luku** | `GET hankkeet?select=id,nimi,kunta,vaihe&julkaistu=eq.true&limit=3` | Status 200, rivit palautuvat |
 | 2 | **Analyysi ilman kirjoitusta** | Hae kaikki hankkeet + `kentta_lahteet`. Valitse **yksi** hanke ja listaa 5 tyhjintä kenttää sekä mistä julkisesta lähteestä ne voisi täyttää | Raportti valmis, ei INSERTejä |
-| 3 | **Yksi kirjoitustesti** | Luo **yksi** pieni `taydennys` (yksi tyhjä kenttä, vahva viranomaislähde) TAI yksi `uusi_hanke` jos löydät selvästi puuttuvan hankkeen. Kutsu `julkaise_agentti_ehdotus`. | RPC palauttaa `julkaistu_kentat` tai selkeän `jonossa`-syy |
+| 3 | **Yksi kirjoitustesti** | Luo **yksi** pieni `taydennys` (yksi tyhjä kenttä, vahva viranomaislähde) TAI yksi `uusi_hanke` jos löydät selvästi puuttuvan hankkeen. **Älä** kutsu `julkaise_agentti_ehdotus` (suljettu). Jätä rivi tilaan `odottaa`. | INSERT onnistuu; ehdotus näkyy jonossa `tila=odottaa` |
 
 Testiraportin jälkeen **pysähdy** ja kysy käyttäjältä:
 
@@ -126,7 +127,7 @@ Authorization: Bearer <SUPABASE_AGENTTI_KEY>
 ### Työnkulku jokaiselle sisältömuutokselle
 
 1. `POST /rest/v1/muutosehdotukset` → tallenna palautuva `id`
-2. `POST /rest/v1/rpc/julkaise_agentti_ehdotus` body: `{"p_ehdotus_id": "<uuid>"}`
+2. ~~`POST /rest/v1/rpc/julkaise_agentti_ehdotus`~~ — **suljettu** (permission denied / ei EXECUTE). Jätä ehdotus jonoon.
 3. Tulkitse vastaus:
    - `tila: hyvaksytty` + `julkaistu_kentat` → julkaistu rekisteriin (`merkitty: koneen_ehdottama`).
      Tieto näkyy sivustolla, mutta **ei ole vielä ihmisen kuittaama**. Ylläpito käsittelee
@@ -201,7 +202,7 @@ kaatuu hyväksynnässä tai näyttää ylläpidossa tyhjältä.
 
 ## Kuittaus ja luottamus — mitä agentin pitää tietää
 
-Automaattijulkaisun (`julkaise_agentti_ehdotus`) jälkeen kentät ovat julkisia, mutta
+Kun ihminen hyväksyy jonosta, kentät ovat julkisia. (Automaattijulkaisu `julkaise_agentti_ehdotus` on suljettu.) Aiemmin automaattijulkaisun jälkeen kentät olivat julkisia, mutta
 merkitty **`koneen_ehdottama`**. Ylläpitäjä käsittelee ne sivulla **`/yllapito/kuittaus`**
 ( ei `/yllapito` -pääsivun muutosehdotusjono ).
 
@@ -256,7 +257,7 @@ kuittausnäkymässä», ei «hyväksy muutosehdotuksia».
 
 **Ehto:** Vähintään `nimi`, `kunta`, `vaihe` + lähde jokaiselle.
 
-**Työnkulku:** INSERT → `julkaise_agentti_ehdotus`. Osittainen julkaisu mahdollinen;
+**Työnkulku:** INSERT `muutosehdotukset` (`tila=odottaa`). **Älä** kutsu `julkaise_agentti_ehdotus` (suljettu). Ihmisen hyväksyntä julkaisee;
 loput kentät voivat jäädä jonoon `taydennys`-tyyppisenä.
 
 **Älä:** Luo uutta, jos sama hanke löytyy nimellä, kunnalla, YVA-diaarinumerolla tai
@@ -760,7 +761,7 @@ Kysymysmuoto (aina todennettava):
 
 | Tilanne | Toimenpide |
 |---------|------------|
-| Tyhjä kenttä, luku lähteestä | `taydennys` + `julkaise_agentti_ehdotus` |
+| Tyhjä kenttä, luku lähteestä | `taydennys` → jono (`odottaa`); ei automaattijulkaisua |
 | Tyhjä, ei lukua | `kentta_tarkistus` (ei RPC) |
 | Arvo olemassa, eri luku lähteessä | `korjaus` + RPC (jonoon) |
 | Vain VE:ssä arvo | `taydennys` vaihtoehtoriville |
@@ -959,8 +960,11 @@ rakenteella — se on ihmisen tuontia varten.
 #### `kentat[]` — sallitut `kentta`-nimet
 
 Jokaisella rivillä: `kentta`, `arvo`, `lahteet[]` (vähintään yksi). Vapaaehtoinen
-`yksikko` (esim. `ha`, `litra`). **Älä käytä muita nimiä** (esim. `latitude`,
-`lon`, `sijainti`) — validointi hylkää ne.
+`yksikko` (esim. `ha`, `litra`); **pakollinen** kentille `pinta_ala_ha`,
+`kaava_ala_ha`, `diesel_vuosikulutus_maara` ja `polttoainevarasto_maara`.
+Pinta-alat palautetaan **siinä yksikössä kuin asiakirjassa** (älä muunna);
+jos yksikköä ei ole, `yksikko`: `ei_merkitty`. **Älä käytä muita nimiä**
+(esim. `latitude`, `lon`, `sijainti`) — validointi hylkää ne.
 
 | `kentta` | Pakollinen | Huomio |
 |----------|------------|--------|
@@ -978,8 +982,8 @@ Jokaisella rivillä: `kentta`, `arvo`, `lahteet[]` (vähintään yksi). Vapaaeht
 | `yva_diaarinumero` | ei | Viranomaislähde |
 | `teho_mw` | ei | Koko laitoksen sähköteho MW |
 | `it_teho_mw` | ei | IT-kuorma MW; vain jos lähde sanoo IT capacity / IT load |
-| `pinta_ala_ha` | ei | Maa- tai tonttiala |
-| `kaava_ala_ha` | ei | Kaava-alueen ala (≠ `pinta_ala_ha`) |
+| `pinta_ala_ha` | ei | Maa- tai tonttiala. **Arvo asiakirjan yksikössä**; rivin `yksikko` pakollinen (`ha`, `m2`, …). Jos yksikköä ei ole merkitty, `yksikko`: `ei_merkitty`. Älä muunna m²→ha itse. |
+| `kaava_ala_ha` | ei | Kaava-alueen ala (≠ `pinta_ala_ha`). Sama `yksikko`-sääntö kuin `pinta_ala_ha`. |
 | `sahkonkaytto_twh_a` | ei | |
 | `generaattorit_lkm` | ei | |
 | `generaattorit_kaytossa_max_lkm` | ei | |
@@ -1130,7 +1134,7 @@ laatijan lähteeksi.
 
 ### Uusi hanke — agentin muutosehdotus (RPC)
 
-Agentin suora INSERT + `julkaise_agentti_ehdotus` käyttää edelleen
+Agentin suora INSERT jonoon käyttää edelleen (automaattijulkaisu suljettu); aiemmin INSERT + `julkaise_agentti_ehdotus` käytti
 `sisalto.kentat`-muotoa:
 
 ```json

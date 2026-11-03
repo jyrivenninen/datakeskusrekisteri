@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { lahetaPalaute } from "@/app/toiminnot";
+import { VastausEmailKentta } from "@/komponentit/vastaus-email-kentta";
 import { LomakeLahetysNappi } from "@/komponentit/lomake-lahetysnappi";
 import { PALAUTE_AIHE_NIMET } from "@/lib/naytto";
 import { PALAUTE_AIHEET } from "@/lib/supabase/tietokanta";
@@ -23,8 +24,9 @@ export default async function YhteysSivu({
       <h1 className="text-3xl font-semibold tracking-tight">Ota yhteyttä</h1>
       <p className="mt-4 max-w-prose leading-relaxed text-muted">
         Voit jättää palautetta, kysymyksen tai muun viestin ylläpidolle. Viesti
-        ei näy julkisella sivustolla, eikä siitä lähde sähköpostia. Lomake ei
-        kerää nimeä eikä yhteystietoja. Hanketiedot merkitään lähteineen{" "}
+        ei näy julkisella sivustolla, eikä siitä lähde sähköpostia. Palautteen
+        voi lähettää nimettömänä. Jos haluat vastauksen, voit jättää
+        sähköpostiosoitteen. Hanketiedot merkitään lähteineen{" "}
         <a href="/ilmoitus" className="text-link underline">
           ilmoituslomakkeella
         </a>
@@ -79,6 +81,7 @@ export default async function YhteysSivu({
             className="rounded border border-border bg-surface px-2 py-2"
           />
         </p>
+        <VastausEmailKentta />
         <LomakeLahetysNappi valmis="Lähetä" odottaa="Lähetetään…" />
       </form>
     </main>

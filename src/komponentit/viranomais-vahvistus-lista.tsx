@@ -167,7 +167,7 @@ export function ViranomaisVahvistusLista({
               </p>
               {tallennettu ? (
                 <p className="mt-1 text-muted">
-                  Lainauksen luonne:{" "}
+                  Lainauksen luonne (ihmisten tallentama):{" "}
                   {LAINAUKSEN_LUONNE_NIMET[
                     tallennettu as keyof typeof LAINAUKSEN_LUONNE_NIMET
                   ] ?? tallennettu}
@@ -175,9 +175,15 @@ export function ViranomaisVahvistusLista({
               ) : (
                 <p className="mt-1 text-muted">
                   Lainauksen luonne: ei luokiteltu
-                  {heur
-                    ? ` · heuristinen arvio: ${LAINAUKSEN_LUONNE_NIMET[heur]}`
-                    : ""}
+                  {heur ? (
+                    <>
+                      {" · "}
+                      <span className="font-medium text-foreground">
+                        heuristiikka (ei päätös): {LAINAUKSEN_LUONNE_NIMET[heur]}
+                      </span>
+                      {" — ei lasketa päätösosiksi eikä hyväksytä erässä"}
+                    </>
+                  ) : null}
                 </p>
               )}
               {kysyLuonne && !vainLuku && !tallennettu ? (

@@ -1,7 +1,7 @@
 import type { Asia, KuntaDokumentti } from "../tyypit";
 
 const USER_AGENT =
-  "Datakeskusrekisteri/0.1 (+https://datakeskusrekisteri.vercel.app/; dynasty)";
+  "Datakeskusrekisteri/0.1 (+https://www.datakeskusrekisteri.fi/; dynasty)";
 
 function decodeHtml(raaka: string): string {
   return raaka

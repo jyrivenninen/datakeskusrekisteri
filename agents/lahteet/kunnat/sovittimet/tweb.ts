@@ -1,7 +1,7 @@
 import type { Asia, Kokous, KuntaSovitin } from "../tyypit";
 
 const USER_AGENT =
-  "Datakeskusrekisteri/0.1 (+https://datakeskusrekisteri.vercel.app/; tweb)";
+  "Datakeskusrekisteri/0.1 (+https://www.datakeskusrekisteri.fi/; tweb)";
 const KOKOUS_KATTO = Number(process.env.KUNTA_TWEB_KOKOUS_KATTO ?? "15");
 
 /** Oulu asiakirjat.ouka.fi — datacenter-aiheisiin liittyvät toimielimet. */

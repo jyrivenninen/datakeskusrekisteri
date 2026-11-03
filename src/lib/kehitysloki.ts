@@ -9,6 +9,20 @@ export type KehityslokiMerkinta = {
 
 export const KEHITYSLOKI: KehityslokiMerkinta[] = [
   {
+    pvm: "2026-11-03",
+    otsikko: "Hukkalämmön tiedot hankkeille",
+    kohdat: [
+      "Hankkeille lisätty hukkalämmön tiedot: tila (toimitetaan kaukolämpöverkkoon, sopimus tehty, aiesopimus tai suunnitelma, ei hyödynnetä), lämmön vastaanottava energiayhtiö sekä lämpömäärä ja -teho. Hankelistaa voi suodattaa hukkalämmön tilan mukaan. Lisäys perustuu käyttäjäpalautteeseen.",
+    ],
+  },
+  {
+    pvm: "2026-11-03",
+    otsikko: "Vastausosoite palautelomakkeessa",
+    kohdat: [
+      "Palautelomakkeeseen lisätty vapaaehtoinen sähköpostikenttä, jos palautteeseen haluaa vastauksen. Tietosuojaselostetta päivitetty.",
+    ],
+  },
+  {
     pvm: "2026-10-26",
     otsikko: "GeoPackage-lataus korjattu",
     johdanto:

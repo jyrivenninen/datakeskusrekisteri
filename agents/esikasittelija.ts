@@ -22,7 +22,7 @@ import { robotsSallii } from "./tarkistukset/robots";
 import { lataaPaikallinenYmparisto } from "./ymparisto";
 
 const USER_AGENT =
-  "Datakeskusrekisteri/0.1 (+https://datakeskusrekisteri.vercel.app/; esikasittelija)";
+  "Datakeskusrekisteri/0.1 (+https://www.datakeskusrekisteri.fi/; esikasittelija)";
 const EHDOTTAJA = "agents/esikasittelija";
 const SOVITIN = "esikasittelija";
 
@@ -33,6 +33,7 @@ const TAYDENNETTAVAT = [
   "kaavatunnus",
   "it_teho_mw",
   "pinta_ala_ha",
+  "kaava_ala_ha",
   "sahkonkaytto_twh_a",
   "generaattorit_lkm",
   "generaattorit_kaytossa_max_lkm",

@@ -384,6 +384,14 @@ export async function hyvaksyMuutosehdotus(
       if (rpcVirhe) throw new Error(rpcVirhe.message);
       return "ok";
     }
+    if (ytj?.ehdota_verkkotunnus) {
+      const { error: rpcVirhe } = await supabase.rpc("julkaise_organisaation_verkkotunnus", {
+        p_ehdotus_id: ehdotusId,
+        p_kasittelija: kasittelija,
+      });
+      if (rpcVirhe) throw new Error(rpcVirhe.message);
+      return "ok";
+    }
   }
 
   if (ehdotus.tyyppi === "kentta_tarkistus") {
@@ -703,6 +711,10 @@ export async function hyvaksyMuutosehdotus(
       hanke.toimija_nimi = tieto.arvo;
       continue;
     }
+    if (kentta === "hukkalampo_vastaanottaja_nimi") {
+      hanke.hukkalampo_vastaanottaja_nimi = tieto.arvo;
+      continue;
+    }
     if (kentta === "sijainti_alue" && onSijaintiAluePolygon(tieto.arvo)) {
       hanke.sijainti_alue = tieto.arvo as unknown as object;
       continue;
@@ -715,7 +727,11 @@ export async function hyvaksyMuutosehdotus(
     .filter(([kentta]) => !SIJAINTI_KENTAT.has(kentta))
     .flatMap(([kentta, tieto]) => {
       const kohde =
-        kentta === "toimija_nimi" ? "toimija_organisaatio_id" : kentta;
+        kentta === "toimija_nimi"
+          ? "toimija_organisaatio_id"
+          : kentta === "hukkalampo_vastaanottaja_nimi"
+            ? "hukkalampo_vastaanottaja_id"
+            : kentta;
       const rivit = [lahdeRivi(kohde, tieto, "vahvistettu")];
       for (const lisa of tieto.lisalahteet ?? []) {
         rivit.push(

@@ -129,7 +129,10 @@ function poistaJulkaisu<T extends { julkaistu?: boolean }>(
 }
 
 function serialisoiHanke(
-  hanke: Hanke & { toimija?: Pick<Organisaatio, "id" | "nimi"> | null },
+  hanke: Hanke & {
+    toimija?: Pick<Organisaatio, "id" | "nimi"> | null;
+    hukkalampo_vastaanottaja?: Pick<Organisaatio, "id" | "nimi"> | null;
+  },
 ) {
   const {
     julkaistu: _j,
@@ -138,11 +141,15 @@ function serialisoiHanke(
     poistettu_pvm: _pp,
     poistettu_kasittelija: _pk,
     toimija,
+    hukkalampo_vastaanottaja,
     ...julkinen
   } = hanke;
   return {
     ...julkinen,
     toimija: toimija ?? null,
+    hukkalampo_vastaanottaja: hukkalampo_vastaanottaja
+      ? { id: hukkalampo_vastaanottaja.id, nimi: hukkalampo_vastaanottaja.nimi }
+      : null,
   };
 }
 
@@ -398,6 +405,10 @@ export const CSV_SARAKKEET = [
   "yva_diaarinumero",
   "kaavatunnus",
   "toimija_nimi",
+  "hukkalampo_tila",
+  "hukkalampo_vastaanottaja",
+  "hukkalampo_gwh_a",
+  "hukkalampo_mw",
   "huomautus",
   "sijaintiperustelu",
   "muut_sijainnit",
@@ -445,6 +456,10 @@ export function hankkeetCsv(hankkeet: AvoinDataHanke[]): string {
         h.yva_diaarinumero,
         h.kaavatunnus,
         h.toimija?.nimi ?? null,
+        h.hukkalampo_tila,
+        h.hukkalampo_vastaanottaja?.nimi ?? null,
+        h.hukkalampo_gwh_a,
+        h.hukkalampo_mw,
         h.huomautus,
         h.sijaintiperustelu,
         h.muut_sijainnit,

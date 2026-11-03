@@ -1,0 +1,194 @@
+--- live/julkaise_ehdotetut_tiedot.sql
++++ uusi/julkaise_ehdotetut_tiedot.sql
+@@ -1,10 +1,22 @@
+-CREATE OR REPLACE FUNCTION public.julkaise_ehdotetut_tiedot(p_tyyppi text, p_hanke_id uuid, p_hanke jsonb, p_lahteet jsonb, p_ehdotus_id uuid, p_kasittelija text, p_vaihtoehdot jsonb DEFAULT '[]'::jsonb, p_paivita_ehdotus boolean DEFAULT true)
++DROP FUNCTION IF EXISTS public.julkaise_ehdotetut_tiedot(text, uuid, jsonb, jsonb, uuid, text, jsonb, boolean);
++CREATE FUNCTION public.julkaise_ehdotetut_tiedot(p_tyyppi text, p_hanke_id uuid, p_hanke jsonb, p_lahteet jsonb, p_ehdotus_id uuid, p_kasittelija text, p_vaihtoehdot jsonb DEFAULT '[]'::jsonb, p_paivita_ehdotus boolean DEFAULT true, p_tehohavainnot jsonb DEFAULT NULL)
+  RETURNS uuid
+  LANGUAGE plpgsql
+  SECURITY DEFINER
+  SET search_path TO 'public', 'pg_temp'
+ AS $function$
+ DECLARE
++
++  v_th jsonb;
++  v_th_lahde jsonb;
++  v_th_id uuid;
++  v_merkitty text;
++  v_korvaa_id uuid;
++  v_poista_id uuid;
++  v_laji text;
++  v_mw numeric;
++  v_mw_min numeric;
++  v_mw_max numeric;
+   v_hanke_id uuid;
+   v_lahde jsonb;
+   v_toimija_id uuid;
+@@ -201,7 +213,7 @@
+         (v_lahde ->> 'vahvistettu_pvm')::date,
+         v_lahde ->> 'luottamus',
+         NULLIF(v_lahde ->> 'lainaus', ''),
+-        v_lahde ->> 'merkitty',
++        COALESCE(NULLIF(btrim(v_lahde ->> 'merkitty'), ''), 'koneen_ehdottama'),
+         vaadi_lahde_laji(v_lahde)
+       );
+     ELSIF v_lahde ->> 'kentta' = 'sijainti_alue' THEN
+@@ -214,7 +226,7 @@
+         (v_lahde ->> 'vahvistettu_pvm')::date,
+         v_lahde ->> 'luottamus',
+         NULLIF(v_lahde ->> 'lainaus', ''),
+-        v_lahde ->> 'merkitty',
++        COALESCE(NULLIF(btrim(v_lahde ->> 'merkitty'), ''), 'koneen_ehdottama'),
+         vaadi_lahde_laji(v_lahde)
+       );
+     ELSE
+@@ -227,7 +239,7 @@
+         (v_lahde ->> 'vahvistettu_pvm')::date,
+         v_lahde ->> 'luottamus',
+         NULLIF(v_lahde ->> 'lainaus', ''),
+-        v_lahde ->> 'merkitty',
++        COALESCE(NULLIF(btrim(v_lahde ->> 'merkitty'), ''), 'koneen_ehdottama'),
+         vaadi_lahde_laji(v_lahde)
+       );
+     END IF;
+@@ -350,7 +362,7 @@
+         (v_lahde ->> 'vahvistettu_pvm')::date,
+         v_lahde ->> 'luottamus',
+         NULLIF(v_lahde ->> 'lainaus', ''),
+-        v_lahde ->> 'merkitty',
++        COALESCE(NULLIF(btrim(v_lahde ->> 'merkitty'), ''), 'koneen_ehdottama'),
+         vaadi_lahde_laji(v_lahde)
+       );
+     END LOOP;
+@@ -362,7 +374,120 @@
+     AND NOT v_hanke_kenttia
+     AND jsonb_array_length(v_vaihtoehdot) = 0 THEN
+     RAISE EXCEPTION 'Taydennyksessa ei ole kenttia eika vaihtoehtoja';
++  END IF;
++
++  -- merkitty: vain sallitut; puuttuva -> koneen_ehdottama (ei ihmisen_vahvistama)
++  FOR v_lahde IN SELECT value FROM jsonb_array_elements(v_lahteet)
++  LOOP
++    v_merkitty := COALESCE(NULLIF(btrim(COALESCE(v_lahde ->> 'merkitty', '')), ''), 'koneen_ehdottama');
++    IF v_merkitty NOT IN ('ihmisen_vahvistama', 'koneen_ehdottama') THEN
++      RAISE EXCEPTION 'merkitty virheellinen: %', v_lahde ->> 'merkitty';
++    END IF;
++  END LOOP;
++
++  IF p_tehohavainnot IS NOT NULL THEN
++    IF jsonb_typeof(p_tehohavainnot) <> 'array' THEN
++      RAISE EXCEPTION 'p_tehohavainnot on oltava taulukko tai NULL';
++    END IF;
++    FOR v_th IN SELECT value FROM jsonb_array_elements(p_tehohavainnot)
++    LOOP
++      v_poista_id := NULLIF(v_th ->> 'poista_id', '')::uuid;
++      IF v_poista_id IS NOT NULL THEN
++        IF NOT EXISTS (SELECT 1 FROM tehohavainnot t WHERE t.id = v_poista_id AND t.hanke_id = v_hanke_id) THEN
++          RAISE EXCEPTION 'poista_id ei kuulu hankkeeseen %', v_hanke_id;
++        END IF;
++        UPDATE tehohavainnot SET tila = 'ei_tue' WHERE id = v_poista_id;
++        CONTINUE;
++      END IF;
++
++      v_th_lahde := COALESCE(v_th -> 'lahde', '{}'::jsonb);
++      IF NULLIF(btrim(COALESCE(v_th_lahde ->> 'lahde_url', '')), '') IS NULL THEN
++        RAISE EXCEPTION 'p_tehohavainnot: lahde_url pakollinen';
++      END IF;
++      IF NULLIF(btrim(COALESCE(v_th_lahde ->> 'lainaus', '')), '') IS NULL THEN
++        RAISE EXCEPTION 'p_tehohavainnot: lainaus pakollinen';
++      END IF;
++      v_laji := NULLIF(btrim(COALESCE(v_th ->> 'laji', '')), '');
++      IF v_laji IS NULL THEN
++        RAISE EXCEPTION 'p_tehohavainnot: laji pakollinen';
++      END IF;
++      IF NULLIF(btrim(COALESCE(v_th ->> 'kohde', '')), '') IS NULL THEN
++        RAISE EXCEPTION 'p_tehohavainnot: kohde pakollinen';
++      END IF;
++      IF NULLIF(btrim(COALESCE(v_th ->> 'rajaus', '')), '') IS NULL THEN
++        RAISE EXCEPTION 'p_tehohavainnot: rajaus pakollinen';
++      END IF;
++      v_mw := NULLIF(v_th ->> 'mw', '')::numeric;
++      v_mw_min := NULLIF(v_th ->> 'mw_min', '')::numeric;
++      v_mw_max := NULLIF(v_th ->> 'mw_max', '')::numeric;
++      IF v_mw IS NOT NULL AND (v_mw_min IS NOT NULL OR v_mw_max IS NOT NULL) THEN
++        RAISE EXCEPTION 'p_tehohavainnot: mw ja mw_min/mw_max eivät saa olla yhdessä';
++      END IF;
++      IF v_mw IS NULL AND v_mw_min IS NULL AND v_mw_max IS NULL THEN
++        RAISE EXCEPTION 'p_tehohavainnot: mw tai mw_min/mw_max vaaditaan';
++      END IF;
++      IF (v_mw_min IS NOT NULL) <> (v_mw_max IS NOT NULL) THEN
++        RAISE EXCEPTION 'p_tehohavainnot: mw_min ja mw_max yhdessä';
++      END IF;
++      IF v_mw_min IS NOT NULL AND v_mw_min > v_mw_max THEN
++        RAISE EXCEPTION 'p_tehohavainnot: mw_min > mw_max';
++      END IF;
++      -- rajaus määrää muodon: vali => mw_min+mw_max; muutoin mw
++      IF NULLIF(btrim(COALESCE(v_th ->> 'rajaus', '')), '') = 'vali' THEN
++        IF v_mw_min IS NULL OR v_mw_max IS NULL OR v_mw IS NOT NULL THEN
++          RAISE EXCEPTION 'p_tehohavainnot: rajaus=vali vaatii mw_min ja mw_max (ei mw)';
++        END IF;
++      ELSE
++        IF v_mw IS NULL OR v_mw_min IS NOT NULL OR v_mw_max IS NOT NULL THEN
++          RAISE EXCEPTION 'p_tehohavainnot: rajaus<>vali vaatii mw (ei mw_min/mw_max)';
++        END IF;
++      END IF;
++
++      v_merkitty := COALESCE(NULLIF(btrim(COALESCE(v_th_lahde ->> 'merkitty', '')), ''), 'koneen_ehdottama');
++      IF v_merkitty NOT IN ('ihmisen_vahvistama', 'koneen_ehdottama') THEN
++        RAISE EXCEPTION 'p_tehohavainnot: merkitty virheellinen';
++      END IF;
++
++      v_korvaa_id := NULLIF(v_th ->> 'korvaa_id', '')::uuid;
++      IF v_korvaa_id IS NOT NULL THEN
++        IF NOT EXISTS (SELECT 1 FROM tehohavainnot t WHERE t.id = v_korvaa_id AND t.hanke_id = v_hanke_id) THEN
++          RAISE EXCEPTION 'korvaa_id ei kuulu hankkeeseen %', v_hanke_id;
++        END IF;
++      END IF;
++
++      INSERT INTO tehohavainnot (
++        hanke_id, laji, kohde, rajaus, mw, mw_min, mw_max, tila, havainto_pvm
++      ) VALUES (
++        v_hanke_id,
++        v_laji,
++        NULLIF(v_th ->> 'kohde', ''),
++        NULLIF(v_th ->> 'rajaus', ''),
++        v_mw, v_mw_min, v_mw_max,
++        'voimassa',
++        COALESCE(NULLIF(v_th ->> 'havainto_pvm', '')::date, CURRENT_DATE)
++      ) RETURNING id INTO v_th_id;
++
++      PERFORM tallenna_kentta_lahde(
++        'tehohavainnot',
++        v_th_id,
++        'havainto',
++        v_th_lahde ->> 'lahde_url',
++        NULLIF(v_th_lahde ->> 'lahde_sivu', '')::integer,
++        COALESCE(NULLIF(v_th_lahde ->> 'vahvistettu_pvm', '')::date, CURRENT_DATE),
++        COALESCE(NULLIF(v_th_lahde ->> 'luottamus', ''), 'epavarma'),
++        NULLIF(v_th_lahde ->> 'lainaus', ''),
++        v_merkitty,
++        vaadi_lahde_laji(v_th_lahde)
++      );
++
++      IF v_korvaa_id IS NOT NULL THEN
++        UPDATE tehohavainnot
++        SET tila = 'korvattu', korvaava_id = v_th_id
++        WHERE id = v_korvaa_id;
++      END IF;
++    END LOOP;
+   END IF;
++
+   IF p_paivita_ehdotus THEN
+     UPDATE muutosehdotukset
+     SET
+@@ -379,3 +504,10 @@
+   RETURN v_hanke_id;
+ END;
+ $function$
++
++
++
++REVOKE ALL ON FUNCTION public.julkaise_ehdotetut_tiedot(text, uuid, jsonb, jsonb, uuid, text, jsonb, boolean, jsonb)
++  FROM PUBLIC, anon, authenticated, agentti;
++GRANT EXECUTE ON FUNCTION public.julkaise_ehdotetut_tiedot(text, uuid, jsonb, jsonb, uuid, text, jsonb, boolean, jsonb)
++  TO service_role;
